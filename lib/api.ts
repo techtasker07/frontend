@@ -1,5 +1,5 @@
 // API configuration and utilities
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mipripity-web.onrender.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mipripity-web-3fk2.onrender.com';
 
 export interface ApiResponse<T> {
   success: boolean;
