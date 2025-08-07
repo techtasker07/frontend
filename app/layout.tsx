@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/lib/auth'
-import { Navbar } from '@/components/layout/navbar'
+import { Sidebar } from '@/components/layout/sidebar' // Import Sidebar
 import { Footer } from '@/components/layout/footer'
-import { Toaster } from 'sonner' // Import Toaster from sonner
+import { Toaster } from 'sonner'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -22,15 +22,17 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <AuthProvider>
-          <div className="min-h-screen flex flex-col">
-            <Navbar />
-            <main className="flex-1">
-              {children}
-            </main>
-            <Footer />
+          <div className="flex min-h-screen">
+            <Sidebar /> {/* Render the Sidebar */}
+            <div className="flex flex-col flex-1 md:ml-64"> {/* Adjust margin for desktop sidebar */}
+              <main className="flex-1">
+                {children}
+              </main>
+              <Footer />
+            </div>
           </div>
         </AuthProvider>
-        <Toaster /> {/* Render the Toaster component */}
+        <Toaster />
       </body>
     </html>
   )
