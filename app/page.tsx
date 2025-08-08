@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image' // Import Image component
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -86,6 +87,16 @@ export default function HomePage() {
     <div className="container mx-auto px-4 py-8">
       {/* Hero Section */}
       <section className="text-center py-12 mb-12">
+        <div className="flex justify-center mb-6">
+          <Image
+            src="/images/mipripity.png"
+            alt="Mipripity Logo"
+            width={200}
+            height={200}
+            className="h-auto w-auto"
+            priority
+          />
+        </div>
         <h1 className="text-4xl md:text-6xl font-bold mb-6">
           Hello Mipripity!
         </h1>

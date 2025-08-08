@@ -33,7 +33,8 @@ export const query = async <T extends QueryResultRow>(text: string, params?: any
   }
 };
 
-// You can optionally add a connection test for logging
+// Call connectDB once when the module is loaded (e.g., when the first route handler is warmed up)
+// This is typical for serverless environments where modules might persist.
 export const connectDB = async () => {
   try {
     await pool.query('SELECT 1');
