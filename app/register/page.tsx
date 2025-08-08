@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useAuth } from '@/lib/auth'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import Image from 'next/image'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -90,9 +91,7 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <div className="mx-auto h-12 w-12 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-lg">M</span>
-          </div>
+          <Image src="/images/mipripity.png" alt="Mipripity Logo" width={48} height={48} className="mx-auto" />
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
             Create your account
           </h2>

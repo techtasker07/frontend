@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['mipripity-web-3fk2.onrender.com', 'picsum.photos'],
+    domains: ['mipripity-web-3fk2.onrender.com', 'picsum.photos', 'blob.v0.dev'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -15,10 +15,13 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'blob.v0.dev',
+        port: '',
+        pathname: '/**',
+      },
     ],
-  },
-  env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://mipripity-web-3fk2.onrender.com',
   },
 }
 

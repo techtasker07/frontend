@@ -9,6 +9,7 @@ import { Home, Plus, BarChart3, User, LogOut, Brain, Menu } from 'lucide-react'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
+import Image from 'next/image'
 
 export function Sidebar() {
   const { user, logout, isAuthenticated } = useAuth()
@@ -58,9 +59,7 @@ export function Sidebar() {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col h-screen w-64 border-r bg-sidebar text-sidebar-foreground p-4 fixed top-0 left-0">
         <div className="flex items-center gap-2 mb-6">
-          <div className="h-8 w-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
-            <span className="text-sidebar-primary-foreground font-bold text-sm">M</span>
-          </div>
+          <Image src="/images/mipripity.png" alt="Mipripity Logo" width={32} height={32} />
           <span className="font-bold text-xl">Mipripity</span>
         </div>
 
@@ -123,9 +122,7 @@ export function Sidebar() {
           </SheetTrigger>
           <SheetContent side="left" className="flex flex-col w-64 bg-sidebar text-sidebar-foreground p-4">
             <div className="flex items-center gap-2 mb-6">
-              <div className="h-8 w-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
-                <span className="text-sidebar-primary-foreground font-bold text-sm">M</span>
-              </div>
+              <Image src="/images/mipripity.png" alt="Mipripity Logo" width={32} height={32} />
               <span className="font-bold text-xl">Mipripity</span>
             </div>
             {isAuthenticated && user ? (
@@ -171,9 +168,7 @@ export function Sidebar() {
           </SheetContent>
         </Sheet>
         <Link href="/" className="flex items-center space-x-2">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">M</span>
-          </div>
+          <Image src="/images/mipripity.png" alt="Mipripity Logo" width={32} height={32} />
           <span className="font-bold text-xl">Mipripity</span>
         </Link>
       </header>

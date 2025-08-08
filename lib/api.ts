@@ -1,5 +1,5 @@
 // API configuration and utilities
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mipripity-web-3fk2.onrender.com';
+// Removed API_BASE_URL as all calls will now be relative to the Next.js app's origin
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -111,10 +111,11 @@ export interface AIAnalysis {
 }
 
 class ApiClient {
-  private baseURL: string;
+  // Base URL is no longer needed as API routes are relative
+  // private baseURL: string;
 
-  constructor(baseURL: string = API_BASE_URL) {
-    this.baseURL = baseURL;
+  constructor() {
+    // this.baseURL = API_BASE_URL;
   }
 
   private getAuthHeaders(): HeadersInit {
@@ -122,7 +123,7 @@ class ApiClient {
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'Origin': typeof window !== 'undefined' ? window.location.origin : '',
+      // 'Origin': typeof window !== 'undefined' ? window.location.origin : '', // Origin header is handled by browser automatically for same-origin requests
       ...(token && { Authorization: `Bearer ${token}` }),
     };
   }
@@ -131,24 +132,27 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
-    const url = `${this.baseURL}/api${endpoint}`;
+    // Construct URL without a base URL, making it relative to the current origin
+    const url = `/api${endpoint}`;
 
     try {
       const response = await fetch(url, {
         ...options,
-        mode: 'cors',
-        credentials: 'omit',
+        // mode: 'cors', // Not needed for same-origin requests, can cause issues
+        credentials: 'omit', // No longer need 'include' as session management is internal
         headers: this.getAuthHeaders(),
       });
 
+      // Handle non-2xx responses
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        const errorData = await response.json(); // Attempt to parse JSON error
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
       return data;
-    } catch (error) {
+    } catch (error: any) {
+      // Re-throw the error for the calling component to handle
       throw error;
     }
   }
@@ -255,11 +259,11 @@ class ApiClient {
       });
     }
     const queryString = searchParams.toString();
-    return this.request(`/prospect_properties${queryString ? `?${queryString}` : ''}`);
+    return this.request(`/prospect-properties${queryString ? `?${queryString}` : ''}`);
   }
 
   async getProspectProperty(id: number): Promise<ApiResponse<ProspectProperty>> {
-    return this.request(`/prospect_properties/${id}`);
+    return this.request(`/prospect-properties/${id}`);
   }
 
   async createProspectProperty(prospectData: {
@@ -271,7 +275,7 @@ class ApiClient {
     year_of_construction?: number;
     image_url?: string;
   }): Promise<ApiResponse<ProspectProperty>> {
-    return this.request('/prospect_properties', {
+    return this.request('/prospect-properties', {
       method: 'POST',
       body: JSON.stringify(prospectData),
     });
@@ -303,11 +307,11 @@ class ApiClient {
 
   // Vote options methods
   async getVoteOptions(): Promise<ApiResponse<VoteOption[]>> {
-    return this.request('/vote_options');
+    return this.request('/vote-options');
   }
 
   async getVoteOptionsByCategory(categoryId: number): Promise<ApiResponse<VoteOption[]>> {
-    return this.request(`/vote_options/category/${categoryId}`);
+    return this.request(`/vote-options/category/${categoryId}`);
   }
 
   // Statistics methods
@@ -321,6 +325,7 @@ class ApiClient {
     total_votes: number;
     total_images: number;
     recent_activity: any[];
+    total_prospect_properties: number; // Added missing prop
   }>> {
     return this.request('/stats');
   }
