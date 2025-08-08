@@ -12,9 +12,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 import { api, Property, VoteOption, PropertyStats } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
-import { MapPin, Calendar, DollarSign, User, Phone, Mail, Vote, BarChart3, ArrowLeft, Loader2, CheckCircle, PhoneIcon as Whatsapp } from 'lucide-react' // Added Whatsapp icon
+import { MapPin, Calendar, DollarSign, User, Phone, Mail, Vote, BarChart3, ArrowLeft, Loader2, CheckCircle, PhoneIcon as Whatsapp } from 'lucide-react'
 import { toast } from 'sonner'
-import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar' // Import Avatar components
 
 export default function PropertyDetailsPage() {
   const params = useParams()

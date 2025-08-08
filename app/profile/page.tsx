@@ -14,7 +14,6 @@ import { useAuth } from '@/lib/auth'
 import { User, Mail, Phone, Calendar, Loader2, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import Image from 'next/image'
 
 export default function ProfilePage() {
   const [formData, setFormData] = useState({
@@ -22,13 +21,13 @@ export default function ProfilePage() {
     last_name: '',
     email: '',
     phone_number: '',
-    profile_picture: '', // New field for profile picture URL
   })
+  const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null); // State for profile picture file
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  const { user, isAuthenticated, refreshUser } = useAuth() // Added refreshUser from useAuth
+  const { user, isAuthenticated, refreshUser } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
@@ -43,7 +42,6 @@ export default function ProfilePage() {
         last_name: user.last_name || '',
         email: user.email || '',
         phone_number: user.phone_number || '',
-        profile_picture: user.profile_picture || '', // Initialize with existing picture
       })
     }
   }, [isAuthenticated, user])
@@ -55,6 +53,14 @@ export default function ProfilePage() {
       [name]: value
     }))
   }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setProfilePictureFile(e.target.files[0]);
+    } else {
+      setProfilePictureFile(null);
+    }
+  };
 
   const validateForm = () => {
     if (!formData.first_name.trim()) {
@@ -83,13 +89,32 @@ export default function ProfilePage() {
 
     setLoading(true)
 
+    let profilePictureUrl: string | undefined = user.profile_picture; // Default to existing URL
+
+    if (profilePictureFile) {
+      try {
+        const uploadResponse = await api.uploadFile(profilePictureFile);
+        if (uploadResponse.success) {
+          profilePictureUrl = uploadResponse.data.url;
+          toast.success('Profile picture uploaded successfully!');
+        } else {
+          throw new Error(uploadResponse.error || 'Failed to upload profile picture');
+        }
+      } catch (uploadError: any) {
+        toast.error(`Failed to upload profile picture: ${uploadError.message}`);
+        setError(`Failed to upload profile picture: ${uploadError.message}`);
+        setLoading(false);
+        return; // Stop submission if image fails to upload
+      }
+    }
+
     try {
       const response = await api.updateUser(user.id, {
         first_name: formData.first_name.trim(),
         last_name: formData.last_name.trim(),
         email: formData.email.trim(),
         phone_number: formData.phone_number.trim() || undefined,
-        profile_picture: formData.profile_picture.trim() || undefined, // Include profile_picture
+        profile_picture: profilePictureUrl, // Use the new URL or existing one
       })
       
       if (response.success) {
@@ -234,17 +259,21 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="profile_picture">Profile Picture URL</Label>
+                <Label htmlFor="profile_picture_upload">Profile Picture</Label>
                 <Input
-                  id="profile_picture"
-                  name="profile_picture"
-                  type="url"
-                  value={formData.profile_picture}
-                  onChange={handleChange}
-                  placeholder="e.g., https://example.com/your-profile.jpg"
+                  id="profile_picture_upload"
+                  name="profile_picture_upload"
+                  type="file"
+                  onChange={handleFileChange}
                   disabled={loading}
+                  accept="image/*"
                 />
-                <p className="text-xs text-muted-foreground">Paste a direct URL to your profile image.</p>
+                <p className="text-xs text-muted-foreground">Upload a new profile image.</p>
+                {profilePictureFile && (
+                  <div className="text-sm text-muted-foreground">
+                    Selected: {profilePictureFile.name}
+                  </div>
+                )}
               </div>
 
               <Separator />

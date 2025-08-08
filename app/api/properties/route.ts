@@ -1,14 +1,9 @@
-// Handles GET /api/properties and POST /api/properties
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { protect, AuthNextRequest } from '@/lib/authUtils';
 import { Property, PropertyImage } from '@/lib/api';
 
-// Helper function to fetch primary image URL
-const getPrimaryImageUrl = async (propertyId: number): Promise<string | null> => {
-  const imageResult = await query('SELECT image_url FROM property_images WHERE property_id = $1 AND is_primary = TRUE LIMIT 1', [propertyId]);
-  return imageResult.rows.length > 0 ? imageResult.rows[0].image_url : null;
-};
+// Handles GET /api/properties and POST /api/properties
 
 // @route   GET /api/properties
 // @desc    Get all properties or properties by category/user
@@ -23,7 +18,7 @@ export async function GET(req: NextRequest) {
   let queryString = `
     SELECT
       p.id, p.title, p.description, p.location, p.user_id, p.category_id,
-      p.current_worth, p.year_of_construction, p.created_at, p.updated_at,
+      p.current_worth, p.year_of_construction, p.created_at, p.updated_at, p.lister_phone_number,
       u.first_name || ' ' || u.last_name AS owner_name,
       u.email AS owner_email,
       u.phone_number AS owner_phone,

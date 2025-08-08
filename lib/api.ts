@@ -23,7 +23,6 @@ export interface User {
 }
 
 export interface Property {
-  lister_phone_number: any;
   id: number;
   title: string;
   description: string;
@@ -32,6 +31,7 @@ export interface Property {
   category_id: number;
   current_worth?: number;
   year_of_construction?: number;
+  lister_phone_number?: string; // Added for lister's specific phone number
   created_at: string;
   updated_at: string;
   owner_name?: string;
@@ -135,7 +135,7 @@ class ApiClient {
       const response = await fetch(url, {
         ...options,
         credentials: 'omit',
-        headers: this.getAuthHeaders(),
+        headers: options.headers || this.getAuthHeaders(), // Allow overriding headers for file uploads
       });
 
       if (!response.ok) {
@@ -229,7 +229,6 @@ class ApiClient {
   async updateProperty(id: number, propertyData: Partial<Property>): Promise<ApiResponse<Property>> {
     return this.request(`/properties/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(propertyData),
     });
   }
 
@@ -323,6 +322,30 @@ class ApiClient {
     total_prospect_properties: number;
   }>> {
     return this.request('/stats');
+  }
+
+  // New upload method
+  async uploadFile(file: File): Promise<ApiResponse<{ url: string }>> {
+    const formData = new FormData();
+    formData.append('file', file); // Append the file directly
+
+    // Use a direct fetch call for file upload to avoid JSON.stringify on FormData
+    const response = await fetch(`/api/upload?filename=${file.name}`, {
+      method: 'POST',
+      body: file, // Send the file directly as body
+      headers: {
+        // Do NOT set 'Content-Type': 'multipart/form-data' here, browser does it automatically with boundary
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return { success: true, data: { url: data.url } };
   }
 }
 

@@ -30,9 +30,9 @@ export default function AddPropertyPage() {
     category_id: '',
     current_worth: '',
     year_of_construction: '',
-    lister_phone_number: '', // New field
-    image_urls_input: '', // New field for comma-separated image URLs
+    lister_phone_number: '',
   })
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]); // State to hold selected files
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [voteOptions, setVoteOptions] = useState<VoteOption[]>([])
@@ -66,6 +66,12 @@ export default function AddPropertyPage() {
       [name]: value
     }))
   }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setSelectedFiles(Array.from(e.target.files));
+    }
+  };
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({
@@ -105,10 +111,22 @@ export default function AddPropertyPage() {
     setLoading(true)
 
     try {
-      const image_urls = formData.image_urls_input
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url !== '');
+      const uploadedImageUrls: string[] = [];
+      for (const file of selectedFiles) {
+        try {
+          const uploadResponse = await api.uploadFile(file);
+          if (uploadResponse.success) {
+            uploadedImageUrls.push(uploadResponse.data.url);
+          } else {
+            throw new Error(uploadResponse.error || 'Failed to upload image');
+          }
+        } catch (uploadError: any) {
+          toast.error(`Failed to upload image ${file.name}: ${uploadError.message}`);
+          setError(`Failed to upload image ${file.name}: ${uploadError.message}`);
+          setLoading(false);
+          return; // Stop submission if any image fails to upload
+        }
+      }
 
       const propertyData = {
         title: formData.title.trim(),
@@ -117,8 +135,8 @@ export default function AddPropertyPage() {
         category_id: parseInt(formData.category_id),
         ...(formData.current_worth && { current_worth: parseFloat(formData.current_worth) }),
         ...(formData.year_of_construction && { year_of_construction: parseInt(formData.year_of_construction) }),
-        ...(formData.lister_phone_number && { lister_phone_number: formData.lister_phone_number.trim() }), // Include new field
-        ...(image_urls.length > 0 && { image_urls }), // Include new field
+        ...(formData.lister_phone_number && { lister_phone_number: formData.lister_phone_number.trim() }),
+        image_urls: uploadedImageUrls, // Send uploaded URLs to backend
       }
 
       const response = await api.createProperty(propertyData)
@@ -295,17 +313,22 @@ export default function AddPropertyPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="image_urls_input">Property Image URLs (comma-separated)</Label>
-              <Textarea
-                id="image_urls_input"
-                name="image_urls_input"
-                value={formData.image_urls_input}
-                onChange={handleChange}
-                placeholder="Paste image URLs separated by commas. First image will be primary."
-                rows={3}
+              <Label htmlFor="images">Property Images</Label>
+              <Input
+                id="images"
+                name="images"
+                type="file"
+                multiple
+                onChange={handleFileChange}
                 disabled={loading}
+                accept="image/*"
               />
-              <p className="text-xs text-muted-foreground">e.g., https://example.com/img1.jpg, https://example.com/img2.png</p>
+              <p className="text-xs text-muted-foreground">Select one or more image files. First image will be primary.</p>
+              {selectedFiles.length > 0 && (
+                <div className="text-sm text-muted-foreground">
+                  Selected: {selectedFiles.map(file => file.name).join(', ')}
+                </div>
+              )}
             </div>
 
             <div className="flex gap-4">
