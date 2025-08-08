@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
@@ -9,9 +9,9 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { api, Property, ProspectProperty } from '@/lib/api'
-import { useAuth } from '@/lib/auth'
-import { Search, MapPin, Calendar, DollarSign, Vote, TrendingUp, Users, Building } from 'lucide-react'
+import { Search, MapPin, Calendar, DollarSign, Plus, Building } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAuth } from '@/lib/auth'
 
 const categories = [
   { value: 'all', label: 'All Categories' },
@@ -24,21 +24,23 @@ const categories = [
 export default function HomePage() {
   const [properties, setProperties] = useState<Property[]>([])
   const [prospectProperties, setProspectProperties] = useState<ProspectProperty[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loadingProperties, setLoadingProperties] = useState(true)
+  const [loadingProspects, setLoadingProspects] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
-  const [stats, setStats] = useState<any>(null)
+
   const { isAuthenticated } = useAuth()
 
   useEffect(() => {
     fetchProperties()
-    fetchStats()
-    fetchProspectPropertiesPreview()
-  }, [selectedCategory])
+    if (isAuthenticated) {
+      fetchProspectProperties()
+    }
+  }, [selectedCategory, isAuthenticated])
 
   const fetchProperties = async () => {
     try {
-      setLoading(true)
+      setLoadingProperties(true)
       const params = selectedCategory !== 'all' ? { category: selectedCategory } : {}
       const response = await api.getProperties(params)
       if (response.success) {
@@ -49,31 +51,24 @@ export default function HomePage() {
     } catch (error) {
       toast.error('Error fetching properties. Please try again later.')
     } finally {
-      setLoading(false)
+      setLoadingProperties(false)
     }
   }
 
-  const fetchStats = async () => {
+  const fetchProspectProperties = async () => {
     try {
-      const response = await api.getPlatformStats()
-      if (response.success) {
-        setStats(response.data)
-      }
-    } catch (error) {
-      console.error('Failed to fetch stats:', error)
-    }
-  }
-
-  const fetchProspectPropertiesPreview = async () => {
-    try {
-      const response = await api.getProspectProperties({ limit: 3, category: selectedCategory !== 'all' ? selectedCategory : undefined })
+      setLoadingProspects(true)
+      const params = selectedCategory !== 'all' ? { category: selectedCategory } : {}
+      const response = await api.getProspectProperties(params)
       if (response.success) {
         setProspectProperties(response.data)
       } else {
-        console.error('Failed to fetch prospect properties preview:', response.error)
+        toast.error('Error fetching prospect properties. Please try again later.')
       }
     } catch (error) {
-      console.error('Failed to fetch prospect properties preview:', error)
+      toast.error('Error fetching prospect properties. Please try again later.')
+    } finally {
+      setLoadingProspects(false)
     }
   }
 
@@ -83,80 +78,24 @@ export default function HomePage() {
     property.description.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  const filteredProspectProperties = prospectProperties.filter(prospect =>
+    prospect.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    prospect.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    prospect.description.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Hero Section */}
-      <section className="text-center py-12 mb-12">
-        <div className="flex justify-center mb-6">
-          <Image
-            src="/images/mipripity.png"
-            alt="Mipripity Logo"
-            width={200}
-            height={200}
-            className="h-auto w-auto"
-            priority
-          />
-        </div>
-        <h1 className="text-4xl md:text-6xl font-bold mb-6">
-          Hello Mipripity!
-        </h1>
-        <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-          If you see this, your frontend is loading!
-        </p>
-        {!isAuthenticated && (
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" asChild>
-              <Link href="/register">Get Started</Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link href="/login">Sign In</Link>
-            </Button>
-          </div>
-        )}
-      </section>
-      {/* Stats Section */}
-      {stats && (
-        <section className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Properties</CardTitle>
-              <Building className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total_properties || 0}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Votes</CardTitle>
-              <Vote className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total_votes || 0}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total_users || 0}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Property Images</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total_images || 0}</div>
-            </CardContent>
-          </Card>
-        </section>
-      )}
-      {/* Search and Filter Section */}
       <section className="mb-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">Properties for Evaluation</h1>
+          <Button asChild>
+            <Link href="/add-property">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Property
+            </Link>
+          </Button>
+        </div>
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -181,19 +120,9 @@ export default function HomePage() {
           </Select>
         </div>
       </section>
-      {/* Properties Grid */}
-      <section>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">
-            {selectedCategory === 'all' ? 'All Properties' : `${selectedCategory} Properties`}
-          </h2>
-          {isAuthenticated && (
-            <Button asChild>
-              <Link href="/add-property">Add Property</Link>
-            </Button>
-          )}
-        </div>
-        {loading ? (
+
+      <section className="mb-12">
+        {loadingProperties ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
               <Card key={i} className="animate-pulse">
@@ -202,7 +131,7 @@ export default function HomePage() {
                   <div className="h-3 bg-muted rounded w-1/2"></div>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-20 bg-muted rounded mb-4"></div>
+                  <div className="h-40 bg-muted rounded mb-4"></div>
                   <div className="space-y-2">
                     <div className="h-3 bg-muted rounded"></div>
                     <div className="h-3 bg-muted rounded w-2/3"></div>
@@ -226,14 +155,18 @@ export default function HomePage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {property.images && property.images.length > 0 && (
+                  {property.images && property.images.length > 0 ? (
                     <div className="relative h-40 w-full mb-4 rounded-md overflow-hidden">
                       <Image
-                        src={property.images.find(img => img.is_primary)?.image_url || property.images[0].image_url || "/placeholder.svg"}
+                        src={property.images.find(img => img.is_primary)?.image_url || property.images[0].image_url}
                         alt={property.title}
                         fill
                         className="object-cover"
                       />
+                    </div>
+                  ) : (
+                    <div className="h-40 w-full mb-4 rounded-md bg-muted flex items-center justify-center text-muted-foreground">
+                      No Image
                     </div>
                   )}
                   <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
@@ -252,21 +185,10 @@ export default function HomePage() {
                         <span>Built in {property.year_of_construction}</span>
                       </div>
                     )}
-                    <div className="flex items-center text-sm">
-                      <Vote className="h-3 w-3 mr-1" />
-                      <span>{property.vote_count || 0} votes</span>
-                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button asChild className="flex-1">
-                      <Link href={`/properties/${property.id}`}>View Details</Link>
-                    </Button>
-                    {isAuthenticated && (
-                      <Button variant="outline" asChild>
-                        <Link href={`/properties/${property.id}#vote`}>Vote</Link>
-                      </Button>
-                    )}
-                  </div>
+                  <Button asChild className="w-full">
+                    <Link href={`/properties/${property.id}`}>View Details</Link>
+                  </Button>
                 </CardContent>
               </Card>
             ))}
@@ -278,103 +200,108 @@ export default function HomePage() {
             <p className="text-muted-foreground mb-4">
               {searchTerm
                 ? "Try adjusting your search terms or filters"
-                : "Be the first to add a property in this category"
+                : "Be the first to add a property for evaluation"
               }
             </p>
-            {isAuthenticated && (
-              <Button asChild>
-                <Link href="/add-property">Add Property</Link>
-              </Button>
-            )}
-          </div>
-        )}
-      </section>
-      {/* Prospect Properties Preview */}
-      <section className="mt-12">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Prospect Properties Preview</h2>
-          {isAuthenticated && (
             <Button asChild>
-              <Link href="/prospect-properties">View All Prospects</Link>
+              <Link href="/add-property">Add Property</Link>
             </Button>
-          )}
-        </div>
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader>
-                  <div className="h-4 bg-muted rounded w-3/4"></div>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-20 bg-muted rounded mb-4"></div>
-                  <div className="space-y-2">
-                    <div className="h-3 bg-muted rounded"></div>
-                    <div className="h-3 bg-muted rounded w-2/3"></div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : prospectProperties.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {prospectProperties.map((prospect) => (
-              <Card key={prospect.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg">{prospect.title}</CardTitle>
-                    <Badge variant="secondary">{prospect.category_name}</Badge>
-                  </div>
-                  <CardDescription className="flex items-center text-sm">
-                    <MapPin className="h-3 w-3 mr-1" />
-                    {prospect.location}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {prospect.image_url && (
-                    <div className="relative h-40 w-full mb-4 rounded-md overflow-hidden">
-                      <Image
-                        src={prospect.image_url || "/placeholder.svg"}
-                        alt={prospect.title}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  )}
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                    {prospect.description}
-                  </p>
-                  <div className="space-y-2 mb-4">
-                    {prospect.estimated_worth && (
-                      <div className="flex items-center text-sm">
-                        <DollarSign className="h-3 w-3 mr-1" />
-                        <span>₦{prospect.estimated_worth.toLocaleString()} (Est.)</span>
-                      </div>
-                    )}
-                    {prospect.year_of_construction && (
-                      <div className="flex items-center text-sm">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        <span>Built in {prospect.year_of_construction}</span>
-                      </div>
-                    )}
-                  </div>
-                  <Button asChild className="w-full">
-                    <Link href={isAuthenticated ? `/prospect-properties/${prospect.id}` : '/login'}>
-                      View Details
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-6">
-            <Building className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-            <p className="text-muted-foreground">No prospect properties available for preview.</p>
           </div>
         )}
       </section>
+
+      {/* Prospect Properties Section on Homepage */}
+      {isAuthenticated && (
+        <section>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-3xl font-bold">Your Prospect Properties</h2>
+            <Button asChild>
+              <Link href="/prospect-properties/add">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Prospect
+              </Link>
+            </Button>
+          </div>
+
+          {loadingProspects ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(3)].map((_, i) => (
+                <Card key={i} className="animate-pulse">
+                  <CardHeader>
+                    <div className="h-4 bg-muted rounded w-3/4"></div>
+                    <div className="h-3 bg-muted rounded w-1/2"></div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-20 bg-muted rounded mb-4"></div>
+                    <div className="space-y-2">
+                      <div className="h-3 bg-muted rounded"></div>
+                      <div className="h-3 bg-muted rounded w-2/3"></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : filteredProspectProperties.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProspectProperties.slice(0, 3).map((prospect) => ( // Show max 3 prospects on homepage
+                <Card key={prospect.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-lg">{prospect.title}</CardTitle>
+                      <Badge variant="secondary">{prospect.category_name}</Badge>
+                    </div>
+                    <CardDescription className="flex items-center text-sm">
+                      <MapPin className="h-3 w-3 mr-1" />
+                      {prospect.location}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {prospect.image_url && (
+                      <div className="relative h-40 w-full mb-4 rounded-md overflow-hidden">
+                        <img src={prospect.image_url || "/placeholder.svg"} alt={prospect.title} className="object-cover w-full h-full" />
+                      </div>
+                    )}
+                    <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+                      {prospect.description}
+                    </p>
+                    <div className="space-y-2 mb-4">
+                      {prospect.estimated_worth && (
+                        <div className="flex items-center text-sm">
+                          <DollarSign className="h-3 w-3 mr-1" />
+                          <span>₦{prospect.estimated_worth.toLocaleString()} (Est.)</span>
+                        </div>
+                      )}
+                      {prospect.year_of_construction && (
+                        <div className="flex items-center text-sm">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          <span>Built in {prospect.year_of_construction}</span>
+                        </div>
+                      )}
+                    </div>
+                    <Button asChild className="w-full">
+                      <Link href={`/prospect-properties/${prospect.id}`}>View Details</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <p className="text-muted-foreground mb-4">You don't have any prospect properties yet.</p>
+              <Button asChild>
+                <Link href="/prospect-properties/add">Add Your First Prospect</Link>
+              </Button>
+            </div>
+          )}
+          {filteredProspectProperties.length > 3 && (
+            <div className="text-center mt-6">
+              <Button variant="outline" asChild>
+                <Link href="/prospect-properties">View All Prospects</Link>
+              </Button>
+            </div>
+          )}
+        </section>
+      )}
     </div>
   )
 }

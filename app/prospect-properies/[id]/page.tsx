@@ -7,58 +7,46 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
+import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { api, ProspectProperty, AIAnalysis } from '@/lib/api'
+import { Separator } from '@/components/ui/separator'
+import { api, ProspectProperty } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
-import { MapPin, Calendar, DollarSign, ArrowLeft, Loader2, Brain, Lightbulb, ShieldAlert, TrendingUp } from 'lucide-react'
+import { MapPin, Calendar, DollarSign, User, FlaskConical, Lightbulb, TrendingUp, ShieldAlert, ArrowLeft, Loader2, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function ProspectPropertyDetailsPage() {
   const params = useParams()
   const router = useRouter()
-  const { isAuthenticated } = useAuth()
+  const { user, isAuthenticated } = useAuth()
 
-  const [prospect, setProspect] = useState<ProspectProperty | null>(null)
+  const [prospectProperty, setProspectProperty] = useState<ProspectProperty | null>(null)
   const [loading, setLoading] = useState(true)
-  const [aiLoading, setAiLoading] = useState(false)
-  const [aiError, setAiError] = useState('')
 
-  const prospectId = parseInt(params.id as string)
+  const prospectPropertyId = parseInt(params.id as string)
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      toast.error('You must be logged in to view prospect property details.')
-      router.push('/login')
-      return
-    }
-    if (prospectId) {
+    if (prospectPropertyId) {
       fetchProspectProperty()
     }
-  }, [prospectId, isAuthenticated])
+  }, [prospectPropertyId, isAuthenticated])
 
   const fetchProspectProperty = async () => {
     try {
       setLoading(true)
-      setAiError('')
-      const response = await api.getProspectProperty(prospectId)
+      const response = await api.getProspectProperty(prospectPropertyId)
       if (response.success) {
-        setProspect(response.data)
+        setProspectProperty(response.data)
       } else {
         toast.error('Prospect property not found')
         router.push('/prospect-properties')
       }
-    } catch (error: any) {
-      setAiError(error.message || 'Failed to fetch prospect details or AI analysis.')
-      toast.error('Failed to fetch prospect property details.')
+    } catch (error) {
+      toast.error('Failed to fetch prospect property details')
       router.push('/prospect-properties')
     } finally {
       setLoading(false)
     }
-  }
-
-  if (!isAuthenticated) {
-    return null // Will redirect to login
   }
 
   if (loading) {
@@ -85,7 +73,7 @@ export default function ProspectPropertyDetailsPage() {
     )
   }
 
-  if (!prospect) {
+  if (!prospectProperty) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
@@ -100,6 +88,7 @@ export default function ProspectPropertyDetailsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Back Button */}
       <Button variant="ghost" asChild className="mb-6">
         <Link href="/prospect-properties">
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -111,53 +100,52 @@ export default function ProspectPropertyDetailsPage() {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Prospect Image */}
-          {prospect.image_url ? (
-            <div className="relative h-64 md:h-96 rounded-lg overflow-hidden">
+          <div className="relative h-64 md:h-96 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+            {prospectProperty.image_url ? (
               <Image
-                src={prospect.image_url || "/placeholder.svg"}
-                alt={prospect.title}
+                src={prospectProperty.image_url || "/placeholder.svg"}
+                alt={prospectProperty.title}
                 fill
                 className="object-cover"
+                onError={(e) => (e.currentTarget.src = "/placeholder.svg")} // Fallback if image fails to load
               />
-            </div>
-          ) : (
-            <div className="h-64 md:h-96 bg-muted rounded-lg flex items-center justify-center">
+            ) : (
               <p className="text-muted-foreground">No image available</p>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Prospect Details */}
           <Card>
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle className="text-2xl">{prospect.title}</CardTitle>
+                  <CardTitle className="text-2xl">{prospectProperty.title}</CardTitle>
                   <CardDescription className="flex items-center mt-2">
                     <MapPin className="h-4 w-4 mr-1" />
-                    {prospect.location}
+                    {prospectProperty.location}
                   </CardDescription>
                 </div>
                 <Badge variant="secondary" className="text-sm">
-                  {prospect.category_name}
+                  {prospectProperty.category_name}
                 </Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-muted-foreground">{prospect.description}</p>
+              <p className="text-muted-foreground">{prospectProperty.description}</p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {prospect.estimated_worth && (
+                {prospectProperty.estimated_worth && (
                   <div className="flex items-center space-x-2">
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">
-                      <strong>₦{prospect.estimated_worth.toLocaleString()} (Estimated)</strong>
+                      <strong>₦{prospectProperty.estimated_worth.toLocaleString()}</strong> (Est.)
                     </span>
                   </div>
                 )}
-                {prospect.year_of_construction && (
+                {prospectProperty.year_of_construction && (
                   <div className="flex items-center space-x-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">Built in {prospect.year_of_construction}</span>
+                    <span className="text-sm">Built in {prospectProperty.year_of_construction}</span>
                   </div>
                 )}
               </div>
@@ -165,83 +153,82 @@ export default function ProspectPropertyDetailsPage() {
           </Card>
         </div>
 
-        {/* Sidebar - AI Analysis */}
-        <div className="space-y-6">
+        {/* AI Analysis Sidebar */}
+        {isAuthenticated && prospectProperty.ai_analysis && (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <FlaskConical className="mr-2 h-5 w-5" />
+                  AI Analysis
+                </CardTitle>
+                <CardDescription>
+                  Insights generated on {new Date(prospectProperty.ai_analysis.last_analyzed).toLocaleDateString()}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4 text-sm">
+                <div>
+                  <h3 className="font-semibold flex items-center mb-1">
+                    <Lightbulb className="mr-2 h-4 w-4 text-primary" /> Overall Sentiment:
+                  </h3>
+                  <p>{prospectProperty.ai_analysis.overall_sentiment}</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold flex items-center mb-1">
+                    <TrendingUp className="mr-2 h-4 w-4 text-primary" /> Estimated ROI:
+                  </h3>
+                  <p>{prospectProperty.ai_analysis.estimated_roi}</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold flex items-center mb-1">
+                    <CheckCircle className="mr-2 h-4 w-4 text-primary" /> Key Insights:
+                  </h3>
+                  <ul className="list-disc pl-5 space-y-1">
+                    {prospectProperty.ai_analysis.key_insights.map((insight, index) => (
+                      <li key={index}>{insight}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="font-semibold flex items-center mb-1">
+                    <Lightbulb className="mr-2 h-4 w-4 text-primary" /> Strategic Recommendations:
+                  </h3>
+                  <ul className="list-disc pl-5 space-y-1">
+                    {prospectProperty.ai_analysis.strategic_recommendations.map((rec, index) => (
+                      <li key={index}>{rec}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="font-semibold flex items-center mb-1">
+                    <ShieldAlert className="mr-2 h-4 w-4 text-destructive" /> Risk Factors:
+                  </h3>
+                  <p>{prospectProperty.ai_analysis.risk_factors}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+        {!isAuthenticated && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Brain className="mr-2 h-5 w-5" />
+                <FlaskConical className="mr-2 h-5 w-5" />
                 AI Analysis
               </CardTitle>
-              <CardDescription>
-                Automated insights and recommendations for this prospect.
-              </CardDescription>
             </CardHeader>
             <CardContent>
-              {aiLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                  <p className="text-muted-foreground">Analyzing...</p>
-                </div>
-              ) : aiError ? (
-                <Alert variant="destructive">
-                  <AlertDescription>{aiError}</AlertDescription>
-                </Alert>
-              ) : prospect.ai_analysis ? (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">Overall Sentiment:</span>
-                    <Badge variant={prospect.ai_analysis.overall_sentiment === 'Positive' ? 'default' : prospect.ai_analysis.overall_sentiment === 'Negative' ? 'destructive' : 'secondary'}>
-                      {prospect.ai_analysis.overall_sentiment}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">Confidence Score:</span>
-                    <span className="text-muted-foreground">{prospect.ai_analysis.confidence_score * 100}%</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">Estimated ROI:</span>
-                    <span className="text-muted-foreground">{prospect.ai_analysis.estimated_roi}</span>
-                  </div>
-                  <Separator />
-                  <div className="space-y-2">
-                    <h4 className="font-semibold flex items-center text-sm">
-                      <Lightbulb className="mr-1 h-4 w-4" /> Key Insights:
-                    </h4>
-                    <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                      {prospect.ai_analysis.key_insights.map((insight, index) => (
-                        <li key={index}>{insight}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-semibold flex items-center text-sm">
-                      <TrendingUp className="mr-1 h-4 w-4" /> Strategic Recommendations:
-                    </h4>
-                    <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                      {prospect.ai_analysis.strategic_recommendations.map((rec, index) => (
-                        <li key={index}>{rec}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-semibold flex items-center text-sm">
-                      <ShieldAlert className="mr-1 h-4 w-4" /> Risk Factors:
-                    </h4>
-                    <p className="text-sm text-muted-foreground">{prospect.ai_analysis.risk_factors}</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground text-right">
-                    Last analyzed: {new Date(prospect.ai_analysis.last_analyzed).toLocaleDateString()}
-                  </p>
-                </div>
-              ) : (
-                <p className="text-muted-foreground text-center py-4">
-                  AI analysis not available for this prospect.
-                </p>
-              )}
+              <Alert>
+                <AlertDescription>
+                  Log in to view detailed AI analysis for this prospect property.{' '}
+                  <Link href="/login" className="font-medium text-primary hover:underline">
+                    Sign in here
+                  </Link>
+                </AlertDescription>
+              </Alert>
             </CardContent>
           </Card>
-        </div>
+        )}
       </div>
     </div>
   )

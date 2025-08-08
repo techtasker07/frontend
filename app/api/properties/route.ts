@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { protect, AuthNextRequest } from '@/lib/authUtils';
+import { Property, PropertyImage } from '@/lib/api';
 
 // Helper function to fetch primary image URL
 const getPrimaryImageUrl = async (propertyId: number): Promise<string | null> => {
@@ -10,66 +11,70 @@ const getPrimaryImageUrl = async (propertyId: number): Promise<string | null> =>
 };
 
 // @route   GET /api/properties
-// @desc    Get all properties (with optional filters)
+// @desc    Get all properties or properties by category/user
 // @access  Public
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const category = searchParams.get('category');
-  const user_id = searchParams.get('user_id');
+  const userId = searchParams.get('user_id');
   const limit = searchParams.get('limit');
   const offset = searchParams.get('offset');
 
-  let queryText = `
+  let queryString = `
     SELECT
-      p.*,
-      u.first_name AS owner_first_name,
-      u.last_name AS owner_last_name,
+      p.id, p.title, p.description, p.location, p.user_id, p.category_id,
+      p.current_worth, p.year_of_construction, p.created_at, p.updated_at,
+      u.first_name || ' ' || u.last_name AS owner_name,
       u.email AS owner_email,
       u.phone_number AS owner_phone,
+      u.profile_picture AS owner_profile_picture, -- Added owner_profile_picture
       c.name AS category_name,
-      (SELECT COUNT(*) FROM votes WHERE property_id = p.id) AS vote_count
+      COUNT(v.id) AS vote_count
     FROM properties p
     JOIN users u ON p.user_id = u.id
     JOIN categories c ON p.category_id = c.id
+    LEFT JOIN votes v ON p.id = v.property_id
   `;
   const queryParams: (string | number)[] = [];
-  const conditions = [];
+  const conditions: string[] = [];
 
   if (category) {
-    conditions.push(`c.name ILIKE $${conditions.length + 1}`);
+    conditions.push('c.name = $1');
     queryParams.push(category);
   }
-  if (user_id) {
-    conditions.push(`p.user_id = $${conditions.length + 1}`);
-    queryParams.push(parseInt(user_id));
+  if (userId) {
+    conditions.push(`p.user_id = $${queryParams.length + 1}`);
+    queryParams.push(parseInt(userId));
   }
 
   if (conditions.length > 0) {
-    queryText += ` WHERE ${conditions.join(' AND ')}`;
+    queryString += ` WHERE ${conditions.join(' AND ')}`;
   }
 
-  queryText += ` ORDER BY p.created_at DESC`;
+  queryString += ` GROUP BY p.id, u.id, c.id ORDER BY p.created_at DESC`;
 
   if (limit) {
-    queryText += ` LIMIT $${conditions.length + 1}`;
+    queryString += ` LIMIT $${queryParams.length + 1}`;
     queryParams.push(parseInt(limit));
   }
   if (offset) {
-    queryText += ` OFFSET $${conditions.length + 1}`;
+    queryString += ` OFFSET $${queryParams.length + 1}`;
     queryParams.push(parseInt(offset));
   }
 
   try {
-    const result = await query(queryText, queryParams);
-    const properties = await Promise.all(result.rows.map(async p => {
-      const primary_image_url = await getPrimaryImageUrl(p.id);
-      return {
-        ...p,
-        owner_name: `${p.owner_first_name} ${p.owner_last_name}`,
-        images: primary_image_url ? [{ image_url: primary_image_url, is_primary: true }] : [],
-      };
+    const result = await query<Property>(queryString, queryParams);
+
+    // Fetch images for each property
+    const propertiesWithImages = await Promise.all(result.rows.map(async (property) => {
+      const imageResult = await query<PropertyImage>(
+        'SELECT id, property_id, image_url, is_primary, created_at FROM property_images WHERE property_id = $1 ORDER BY is_primary DESC, created_at ASC',
+        [property.id]
+      );
+      return { ...property, images: imageResult.rows };
     }));
-    return NextResponse.json({ success: true, data: properties, count: properties.length });
+
+    return NextResponse.json({ success: true, data: propertiesWithImages, count: propertiesWithImages.length });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
@@ -77,7 +82,7 @@ export async function GET(req: NextRequest) {
 }
 
 // @route   POST /api/properties
-// @desc    Create a new property
+// @desc    Add a new property
 // @access  Private
 export async function POST(req: NextRequest) {
   const authResponse = await protect(req as AuthNextRequest);
@@ -85,20 +90,34 @@ export async function POST(req: NextRequest) {
     return authResponse;
   }
 
-  const { title, description, location, category_id, current_worth, year_of_construction } = await req.json();
-  const user_id = (req as AuthNextRequest).user!.id; // User is guaranteed to exist after protect
+  const { title, description, location, category_id, current_worth, year_of_construction, lister_phone_number, image_urls } = await req.json();
+  const userId = (req as AuthNextRequest).user!.id;
 
   if (!title || !description || !location || !category_id) {
-    return NextResponse.json({ success: false, error: 'Please include all required fields' }, { status: 400 });
+    return NextResponse.json({ success: false, error: 'Please include all required fields: title, description, location, category_id' }, { status: 400 });
   }
 
   try {
-    const result = await query(
-      `INSERT INTO properties (title, description, location, user_id, category_id, current_worth, year_of_construction)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [title, description, location, user_id, category_id, current_worth, year_of_construction]
+    const propertyResult = await query<Property>(
+      `INSERT INTO properties (title, description, location, user_id, category_id, current_worth, year_of_construction, lister_phone_number)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [title, description, location, userId, category_id, current_worth, year_of_construction, lister_phone_number]
     );
-    const newProperty = result.rows[0];
+
+    const newProperty = propertyResult.rows[0];
+
+    // Insert images if provided
+    if (image_urls && Array.isArray(image_urls) && image_urls.length > 0) {
+      const imageInsertPromises = image_urls.map((url: string, index: number) => {
+        const isPrimary = index === 0; // First image is primary
+        return query(
+          'INSERT INTO property_images (property_id, image_url, is_primary) VALUES ($1, $2, $3)',
+          [newProperty.id, url, isPrimary]
+        );
+      });
+      await Promise.all(imageInsertPromises);
+    }
+
     return NextResponse.json({ success: true, data: newProperty }, { status: 201 });
   } catch (error) {
     console.error(error);

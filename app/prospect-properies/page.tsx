@@ -11,6 +11,7 @@ import { api, ProspectProperty } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
 import { Search, MapPin, Calendar, DollarSign, Plus, Building } from 'lucide-react'
 import { toast } from 'sonner'
+import Image from 'next/image'
 
 const categories = [
   { value: 'all', label: 'All Categories' },
@@ -145,8 +146,14 @@ export default function ProspectPropertiesPage() {
                 </CardHeader>
                 <CardContent>
                   {prospect.image_url && (
-                    <div className="relative h-40 w-full mb-4 rounded-md overflow-hidden">
-                      <img src={prospect.image_url || "/placeholder.svg"} alt={prospect.title} className="object-cover w-full h-full" />
+                    <div className="relative h-40 w-full mb-4 rounded-md overflow-hidden bg-muted flex items-center justify-center">
+                      <Image 
+                        src={prospect.image_url || "/placeholder.svg"} 
+                        alt={prospect.title} 
+                        fill 
+                        className="object-cover" 
+                        onError={(e) => (e.currentTarget.src = "/placeholder.svg")} // Fallback
+                      />
                     </div>
                   )}
                   <p className="text-sm text-muted-foreground mb-4 line-clamp-3">

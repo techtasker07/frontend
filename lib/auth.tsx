@@ -16,6 +16,7 @@ interface AuthContextType {
     phone_number?: string;
   }) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>; // Added refreshUser function
   loading: boolean;
   isAuthenticated: boolean;
 }
@@ -28,31 +29,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Helper function to fetch current user data
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await api.getCurrentUser();
+      if (response.success) {
+        setUser(response.data.user);
+      } else {
+        // Token is invalid, remove it
+        localStorage.removeItem('token');
+        setToken(null);
+        setUser(null);
+      }
+    } catch (error) {
+      console.error('Failed to fetch user data:', error);
+      // Token is invalid, remove it
+      localStorage.removeItem('token');
+      setToken(null);
+      setUser(null);
+    }
+  };
+
   useEffect(() => {
     // Check for stored token on mount
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
       setToken(storedToken);
       // Verify token and get user data
-      api.getCurrentUser()
-        .then((response) => {
-          if (response.success) {
-            setUser(response.data.user);
-          } else {
-            // Token is invalid, remove it
-            localStorage.removeItem('token');
-            setToken(null);
-          }
-        })
-        .catch((error) => {
-          console.error('Token verification failed:', error);
-          // Token is invalid, remove it
-          localStorage.removeItem('token');
-          setToken(null);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
+      fetchCurrentUser().finally(() => {
+        setLoading(false);
+      });
     } else {
       setLoading(false);
     }
@@ -102,12 +108,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('token');
   };
 
+  // New refreshUser function to refetch user data
+  const refreshUser = async () => {
+    if (token) {
+      await fetchCurrentUser();
+    }
+  };
+
   const value: AuthContextType = { // Explicitly type the value object
     user,
     token,
     login,
     register,
     logout,
+    refreshUser, // Added refreshUser to the context value
     loading,
     isAuthenticated: !!user && !!token,
   };

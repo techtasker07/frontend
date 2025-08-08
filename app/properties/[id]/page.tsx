@@ -12,8 +12,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 import { api, Property, VoteOption, PropertyStats } from '@/lib/api'
 import { useAuth } from '@/lib/auth'
-import { MapPin, Calendar, DollarSign, User, Phone, Mail, Vote, BarChart3, ArrowLeft, Loader2, CheckCircle } from 'lucide-react'
+import { MapPin, Calendar, DollarSign, User, Phone, Mail, Vote, BarChart3, ArrowLeft, Loader2, CheckCircle, PhoneIcon as Whatsapp } from 'lucide-react' // Added Whatsapp icon
 import { toast } from 'sonner'
+import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar'
 
 export default function PropertyDetailsPage() {
   const params = useParams()
@@ -139,6 +140,8 @@ export default function PropertyDetailsPage() {
     )
   }
 
+  const primaryImage = property.images?.find((img: any) => img.is_primary)?.image_url || property.images?.[0]?.image_url || "/placeholder.svg";
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Back Button */}
@@ -153,20 +156,19 @@ export default function PropertyDetailsPage() {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Property Images */}
-          {property.images && property.images.length > 0 ? (
-            <div className="relative h-64 md:h-96 rounded-lg overflow-hidden">
+          <div className="relative h-64 md:h-96 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+            {primaryImage !== "/placeholder.svg" ? (
               <Image
-                src={property.images.find((img: any) => img.is_primary)?.image_url || property.images[0].image_url || "/placeholder.svg"}
+                src={primaryImage || "/placeholder.svg"}
                 alt={property.title}
                 fill
                 className="object-cover"
+                onError={(e) => (e.currentTarget.src = "/placeholder.svg")} // Fallback if image fails to load
               />
-            </div>
-          ) : (
-            <div className="h-64 md:h-96 bg-muted rounded-lg flex items-center justify-center">
+            ) : (
               <p className="text-muted-foreground">No images available</p>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Property Details */}
           <Card>
@@ -215,19 +217,33 @@ export default function PropertyDetailsPage() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <User className="mr-2 h-5 w-5" />
-                Property Owner
+                Property Lister
               </CardTitle>
             </CardHeader>
             <CardContent>
+              <div className="flex items-center space-x-4 mb-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={property.owner_profile_picture || "/placeholder.svg"} alt={property.owner_name} />
+                  <AvatarFallback className="text-lg">
+                    {property.owner_name ? `${property.owner_name.split(' ')[0][0]}${property.owner_name.split(' ')[1]?.[0] || ''}`.toUpperCase() : 'LS'}
+                  </AvatarFallback>
+                </Avatar>
+                <p className="font-medium text-lg">{property.owner_name}</p>
+              </div>
               <div className="space-y-2">
-                <p className="font-medium">{property.owner_name}</p>
                 {property.owner_email && (
                   <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                     <Mail className="h-4 w-4" />
                     <span>{property.owner_email}</span>
                   </div>
                 )}
-                {property.owner_phone && (
+                {property.lister_phone_number && ( // Display lister's specific phone number
+                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                    <Whatsapp className="h-4 w-4" /> {/* Changed to Whatsapp icon */}
+                    <span>{property.lister_phone_number}</span>
+                  </div>
+                )}
+                 {property.owner_phone && !property.lister_phone_number && ( // Fallback to owner_phone if lister_phone_number not provided
                   <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                     <Phone className="h-4 w-4" />
                     <span>{property.owner_phone}</span>

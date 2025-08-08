@@ -17,12 +17,13 @@ export interface User {
   email: string;
   phone_number?: string;
   firebase_uid: string;
-  profile_picture?: string;
+  profile_picture?: string; // Added for user's own profile picture
   created_at: string;
   updated_at: string;
 }
 
 export interface Property {
+  lister_phone_number: any;
   id: number;
   title: string;
   description: string;
@@ -36,6 +37,7 @@ export interface Property {
   owner_name?: string;
   owner_email?: string;
   owner_phone?: string;
+  owner_profile_picture?: string; // Added for lister's profile picture
   category_name?: string;
   vote_count?: number;
   images?: PropertyImage[];
@@ -111,11 +113,7 @@ export interface AIAnalysis {
 }
 
 class ApiClient {
-  // Base URL is no longer needed as API routes are relative
-  // private baseURL: string;
-
   constructor() {
-    // this.baseURL = API_BASE_URL;
   }
 
   private getAuthHeaders(): HeadersInit {
@@ -123,7 +121,6 @@ class ApiClient {
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      // 'Origin': typeof window !== 'undefined' ? window.location.origin : '', // Origin header is handled by browser automatically for same-origin requests
       ...(token && { Authorization: `Bearer ${token}` }),
     };
   }
@@ -132,27 +129,23 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
-    // Construct URL without a base URL, making it relative to the current origin
     const url = `/api${endpoint}`;
 
     try {
       const response = await fetch(url, {
         ...options,
-        // mode: 'cors', // Not needed for same-origin requests, can cause issues
-        credentials: 'omit', // No longer need 'include' as session management is internal
+        credentials: 'omit',
         headers: this.getAuthHeaders(),
       });
 
-      // Handle non-2xx responses
       if (!response.ok) {
-        const errorData = await response.json(); // Attempt to parse JSON error
+        const errorData = await response.json();
         throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
       return data;
     } catch (error: any) {
-      // Re-throw the error for the calling component to handle
       throw error;
     }
   }
@@ -224,6 +217,8 @@ class ApiClient {
     category_id: number;
     current_worth?: number;
     year_of_construction?: number;
+    lister_phone_number?: string; // New field
+    image_urls?: string[]; // New field for multiple image URLs
   }): Promise<ApiResponse<Property>> {
     return this.request('/properties', {
       method: 'POST',
@@ -325,7 +320,7 @@ class ApiClient {
     total_votes: number;
     total_images: number;
     recent_activity: any[];
-    total_prospect_properties: number; // Added missing prop
+    total_prospect_properties: number;
   }>> {
     return this.request('/stats');
   }
