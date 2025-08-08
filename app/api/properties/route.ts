@@ -1,26 +1,12 @@
-// Handles GET /api/properties and POST /api/properties
+// Handles GET, PUT, DELETE for specific properties
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { protect, AuthNextRequest } from '@/lib/authUtils';
 
-// Helper function to fetch primary image URL
-const getPrimaryImageUrl = async (propertyId: number): Promise<string | null> => {
-  const imageResult = await query('SELECT image_url FROM property_images WHERE property_id = $1 AND is_primary = TRUE LIMIT 1', [propertyId]);
-  return imageResult.rows.length > 0 ? imageResult.rows[0].image_url : null;
-};
-
-// @route   GET /api/properties
-// @desc    Get all properties (with optional filters)
-// @access  Public
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const category = searchParams.get('category');
-  const user_id = searchParams.get('user_id');
-  const limit = searchParams.get('limit');
-  const offset = searchParams.get('offset');
-
-  let queryText = `
-    SELECT
+// Helper function to fetch property details with owner info, category, and vote count
+const getPropertyDetails = async (propertyId: number) => {
+  const propertyResult = await query(
+    `SELECT
       p.*,
       u.first_name AS owner_first_name,
       u.last_name AS owner_last_name,
@@ -31,75 +17,119 @@ export async function GET(req: NextRequest) {
     FROM properties p
     JOIN users u ON p.user_id = u.id
     JOIN categories c ON p.category_id = c.id
-  `;
-  const queryParams: (string | number)[] = [];
-  const conditions = [];
+    WHERE p.id = $1`,
+    [propertyId]
+  );
 
-  if (category) {
-    conditions.push(`c.name ILIKE $${conditions.length + 1}`);
-    queryParams.push(category);
-  }
-  if (user_id) {
-    conditions.push(`p.user_id = $${conditions.length + 1}`);
-    queryParams.push(parseInt(user_id));
+  if (propertyResult.rows.length === 0) {
+    return null;
   }
 
-  if (conditions.length > 0) {
-    queryText += ` WHERE ${conditions.join(' AND ')}`;
-  }
+  const property = propertyResult.rows[0];
 
-  queryText += ` ORDER BY p.created_at DESC`;
+  // Fetch images
+  const imagesResult = await query('SELECT id, image_url, is_primary FROM property_images WHERE property_id = $1 ORDER BY is_primary DESC, id ASC', [propertyId]);
+  property.images = imagesResult.rows;
 
-  if (limit) {
-    queryText += ` LIMIT $${conditions.length + 1}`;
-    queryParams.push(parseInt(limit));
-  }
-  if (offset) {
-    queryText += ` OFFSET $${conditions.length + 1}`;
-    queryParams.push(parseInt(offset));
+  // Fetch vote options for the property's category
+  const voteOptionsResult = await query('SELECT id, name FROM vote_options WHERE category_id = $1', [property.category_id]);
+  property.vote_options = voteOptionsResult.rows;
+
+  // Combine owner name
+  property.owner_name = `${property.owner_first_name} ${property.owner_last_name}`;
+  delete property.owner_first_name;
+  delete property.owner_last_name;
+
+  return property;
+};
+
+// @route   GET /api/properties/:id
+// @desc    Get single property by ID
+// @access  Public
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  const propertyId = parseInt(params.id);
+  if (isNaN(propertyId)) {
+    return NextResponse.json({ success: false, error: 'Invalid property ID' }, { status: 400 });
   }
 
   try {
-    const result = await query(queryText, queryParams);
-    const properties = await Promise.all(result.rows.map(async p => {
-      const primary_image_url = await getPrimaryImageUrl(p.id);
-      return {
-        ...p,
-        owner_name: `${p.owner_first_name} ${p.owner_last_name}`,
-        images: primary_image_url ? [{ image_url: primary_image_url, is_primary: true }] : [],
-      };
-    }));
-    return NextResponse.json({ success: true, data: properties, count: properties.length });
+    const property = await getPropertyDetails(propertyId);
+    if (!property) {
+      return NextResponse.json({ success: false, error: 'Property not found' }, { status: 404 });
+    }
+    return NextResponse.json({ success: true, data: property });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
   }
 }
 
-// @route   POST /api/properties
-// @desc    Create a new property
-// @access  Private
-export async function POST(req: NextRequest) {
+// @route   PUT /api/properties/:id
+// @desc    Update a property
+// @access  Private (owner only)
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   const authResponse = await protect(req as AuthNextRequest);
   if (authResponse instanceof NextResponse) {
     return authResponse;
   }
 
-  const { title, description, location, category_id, current_worth, year_of_construction } = await req.json();
-  const user_id = (req as AuthNextRequest).user!.id; // User is guaranteed to exist after protect
-
-  if (!title || !description || !location || !category_id) {
-    return NextResponse.json({ success: false, error: 'Please include all required fields' }, { status: 400 });
+  const propertyId = parseInt(params.id);
+  if (isNaN(propertyId)) {
+    return NextResponse.json({ success: false, error: 'Invalid property ID' }, { status: 400 });
   }
 
+  const userId = (req as AuthNextRequest).user!.id;
+  const { title, description, location, category_id, current_worth, year_of_construction } = await req.json();
+
   try {
+    const propertyResult = await query('SELECT user_id FROM properties WHERE id = $1', [propertyId]);
+    if (propertyResult.rows.length === 0) {
+      return NextResponse.json({ success: false, error: 'Property not found' }, { status: 404 });
+    }
+    if (propertyResult.rows[0].user_id !== userId) {
+      return NextResponse.json({ success: false, error: 'Not authorized to update this property' }, { status: 403 });
+    }
+
     const result = await query(
-      `INSERT INTO properties (title, description, location, user_id, category_id, current_worth, year_of_construction)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [title, description, location, user_id, category_id, current_worth, year_of_construction]
+      `UPDATE properties
+       SET title = $1, description = $2, location = $3, category_id = $4, current_worth = $5, year_of_construction = $6, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $7 RETURNING *`,
+      [title, description, location, category_id, current_worth, year_of_construction, propertyId]
     );
-    const newProperty = result.rows[0];
-    return NextResponse.json({ success: true, data: newProperty }, { status: 201 });
+    return NextResponse.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
+  }
+}
+
+// @route   DELETE /api/properties/:id
+// @desc    Delete a property
+// @access  Private (owner only)
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  const authResponse = await protect(req as AuthNextRequest);
+  if (authResponse instanceof NextResponse) {
+    return authResponse;
+  }
+
+  const propertyId = parseInt(params.id);
+  if (isNaN(propertyId)) {
+    return NextResponse.json({ success: false, error: 'Invalid property ID' }, { status: 400 });
+  }
+
+  const userId = (req as AuthNextRequest).user!.id;
+
+  try {
+    const propertyResult = await query('SELECT user_id FROM properties WHERE id = $1', [propertyId]);
+    if (propertyResult.rows.length === 0) {
+      return NextResponse.json({ success: false, error: 'Property not found' }, { status: 404 });
+    }
+    if (propertyResult.rows[0].user_id !== userId) {
+      return NextResponse.json({ success: false, error: 'Not authorized to delete this property' }, { status: 403 });
+    }
+
+    await query('DELETE FROM properties WHERE id = $1', [propertyId]);
+    return NextResponse.json({ success: true, message: 'Property deleted successfully' });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
