@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image' // Import Image component
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -226,6 +226,16 @@ export default function HomePage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
+                  {property.images && property.images.length > 0 && (
+                    <div className="relative h-40 w-full mb-4 rounded-md overflow-hidden">
+                      <Image
+                        src={property.images.find(img => img.is_primary)?.image_url || property.images[0].image_url || "/placeholder.svg"}
+                        alt={property.title}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
                   <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
                     {property.description}
                   </p>
@@ -324,7 +334,12 @@ export default function HomePage() {
                 <CardContent>
                   {prospect.image_url && (
                     <div className="relative h-40 w-full mb-4 rounded-md overflow-hidden">
-                      <img src={prospect.image_url || "/placeholder.svg"} alt={prospect.title} className="object-cover w-full h-full" />
+                      <Image
+                        src={prospect.image_url || "/placeholder.svg"}
+                        alt={prospect.title}
+                        fill
+                        className="object-cover"
+                      />
                     </div>
                   )}
                   <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
