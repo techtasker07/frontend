@@ -23,8 +23,8 @@ export default function AddProspectPropertyPage() {
     category_id: '',
     estimated_worth: '',
     year_of_construction: '',
-    image_url: '',
   })
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]) // For image files
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [categories, setCategories] = useState<Category[]>([])
@@ -66,6 +66,12 @@ export default function AddProspectPropertyPage() {
     }))
   }
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setSelectedFiles(Array.from(e.target.files))
+    }
+  }
+
   const validateForm = () => {
     if (!formData.title.trim()) {
       setError('Prospect title is required')
@@ -83,8 +89,8 @@ export default function AddProspectPropertyPage() {
       setError('Prospect category is required')
       return false
     }
-    if (!formData.image_url.trim()) {
-      setError('Image URL is required')
+    if (selectedFiles.length === 0) {
+      setError('At least one image is required')
       return false
     }
     return true
@@ -101,6 +107,24 @@ export default function AddProspectPropertyPage() {
     setLoading(true)
 
     try {
+      const uploadedImageUrls: string[] = []
+
+      for (const file of selectedFiles) {
+        try {
+          const uploadResponse = await api.uploadFile(file)
+          if (uploadResponse.success) {
+            uploadedImageUrls.push(uploadResponse.data.url)
+          } else {
+            throw new Error(uploadResponse.error || 'Failed to upload image')
+          }
+        } catch (uploadError: any) {
+          toast.error(`Failed to upload image ${file.name}: ${uploadError.message}`)
+          setError(`Failed to upload image ${file.name}: ${uploadError.message}`)
+          setLoading(false)
+          return
+        }
+      }
+
       const prospectData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
@@ -108,11 +132,11 @@ export default function AddProspectPropertyPage() {
         category_id: parseInt(formData.category_id),
         ...(formData.estimated_worth && { estimated_worth: parseFloat(formData.estimated_worth) }),
         ...(formData.year_of_construction && { year_of_construction: parseInt(formData.year_of_construction) }),
-        image_url: formData.image_url.trim(),
+        image_urls: uploadedImageUrls, // array instead of single URL
       }
 
       const response = await api.createProspectProperty(prospectData)
-      
+
       if (response.success) {
         toast.success('Prospect property added successfully!')
         router.push(`/prospect-properties/${response.data.id}`)
@@ -125,7 +149,7 @@ export default function AddProspectPropertyPage() {
   }
 
   if (!isAuthenticated) {
-    return null // Will redirect to login
+    return null
   }
 
   return (
@@ -250,17 +274,22 @@ export default function AddProspectPropertyPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="image_url">Image URL *</Label>
+              <Label htmlFor="images">Prospect Images *</Label>
               <Input
-                id="image_url"
-                name="image_url"
-                type="url"
-                value={formData.image_url}
-                onChange={handleChange}
-                placeholder="e.g., https://picsum.photos/800/600"
-                required
+                id="images"
+                name="images"
+                type="file"
+                multiple
+                onChange={handleFileChange}
                 disabled={loading}
+                accept="image/*"
               />
+              <p className="text-xs text-muted-foreground">Select one or more image files. First image will be primary.</p>
+              {selectedFiles.length > 0 && (
+                <div className="text-sm text-muted-foreground">
+                  Selected: {selectedFiles.map(file => file.name).join(', ')}
+                </div>
+              )}
             </div>
 
             <div className="flex gap-4">
