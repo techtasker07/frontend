@@ -95,10 +95,11 @@ export interface ProspectProperty {
   category_id: number;
   estimated_worth?: number;
   year_of_construction?: number;
+  image_url?: string; // Keep for backward compatibility
   created_at: string;
   updated_at: string;
   category_name?: string;
-  images?: ProspectPropertyImage[]; // Added images support
+  images?: ProspectPropertyImage[]; // New images array support
   ai_analysis?: AIAnalysis; // Only available on detail page for logged-in users
 }
 
@@ -235,7 +236,7 @@ class ApiClient {
     current_worth?: number;
     year_of_construction?: number;
     lister_phone_number?: string; // New field
-    image_url?: string[]; // New field for multiple image URLs
+    image_urls?: string[]; // New field for multiple image URLs
   }): Promise<ApiResponse<Property>> {
     return this.request('/properties', {
       method: 'POST',
@@ -287,7 +288,7 @@ class ApiClient {
     category_id: number;
     estimated_worth?: number;
     year_of_construction?: number;
-    image_url?: string[]; // Changed from image_url to image_url array
+    image_urls?: string[]; // Changed from image_url to image_urls array
   }): Promise<ApiResponse<ProspectProperty>> {
     return this.request('/prospect_properties', {
       method: 'POST',

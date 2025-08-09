@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   let queryString = `
     SELECT
       pp.id, pp.title, pp.description, pp.location, pp.category_id,
-      pp.estimated_worth, pp.year_of_construction, pp.created_at, pp.updated_at,
+      pp.estimated_worth, pp.year_of_construction, pp.image_url, pp.created_at, pp.updated_at,
       c.name AS category_name
     FROM prospect_properties pp
     JOIN categories c ON pp.category_id = c.id
@@ -66,11 +66,21 @@ export async function GET(req: NextRequest) {
 
     // Fetch images for each prospect property (if you have a prospect_property_images table)
     const prospectPropertiesWithImages = await Promise.all(result.rows.map(async (property) => {
-      const imageResult = await query<ProspectPropertyImage>(
-        'SELECT id, prospect_property_id, image_url, is_primary, created_at FROM prospect_property_images WHERE prospect_property_id = $1 ORDER BY is_primary DESC, created_at ASC',
-        [property.id]
-      );
-      return { ...property, images: imageResult.rows };
+      // Try to fetch from prospect_property_images table first
+      let images: ProspectPropertyImage[] = [];
+      try {
+        const imageResult = await query<ProspectPropertyImage>(
+          'SELECT id, prospect_property_id, image_url, is_primary, created_at FROM prospect_property_images WHERE prospect_property_id = $1 ORDER BY is_primary DESC, created_at ASC',
+          [property.id]
+        );
+        images = imageResult.rows;
+      } catch (error) {
+        // If prospect_property_images table doesn't exist, create empty array
+        console.log('prospect_property_images table might not exist, using image_url field');
+        images = [];
+      }
+      
+      return { ...property, images };
     }));
 
     return NextResponse.json({ 
@@ -100,7 +110,8 @@ export async function POST(req: NextRequest) {
     category_id, 
     estimated_worth, 
     year_of_construction, 
-    image_url 
+    image_url, // Keep for backward compatibility
+    image_urls  // New array support
   } = await req.json();
   
   const userId = (req as AuthNextRequest).user!.id;
@@ -114,23 +125,27 @@ export async function POST(req: NextRequest) {
 
   try {
     const prospectPropertyResult = await query<ProspectProperty>(
-      `INSERT INTO prospect_properties (title, description, location, user_id, category_id, estimated_worth, year_of_construction)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [title, description, location, userId, category_id, estimated_worth, year_of_construction]
+      `INSERT INTO prospect_properties (title, description, location, user_id, category_id, estimated_worth, year_of_construction, image_url)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [title, description, location, userId, category_id, estimated_worth, year_of_construction, image_url]
     );
 
     const newProspectProperty = prospectPropertyResult.rows[0];
 
-    // Insert images if provided (assuming you have a prospect_property_images table)
-    if (image_url && Array.isArray(image_url) && image_url.length > 0) {
-      const imageInsertPromises = image_url.map((url: string, index: number) => {
-        const isPrimary = index === 0; // First image is primary
-        return query(
-          'INSERT INTO prospect_property_images (prospect_property_id, image_url, is_primary) VALUES ($1, $2, $3)',
-          [newProspectProperty.id, url, isPrimary]
-        );
-      });
-      await Promise.all(imageInsertPromises);
+    // Insert images if provided (for new multiple image support)
+    if (image_urls && Array.isArray(image_urls) && image_urls.length > 0) {
+      try {
+        const imageInsertPromises = image_urls.map((url: string, index: number) => {
+          const isPrimary = index === 0; // First image is primary
+          return query(
+            'INSERT INTO prospect_property_images (prospect_property_id, image_url, is_primary) VALUES ($1, $2, $3)',
+            [newProspectProperty.id, url, isPrimary]
+          );
+        });
+        await Promise.all(imageInsertPromises);
+      } catch (error) {
+        console.log('prospect_property_images table might not exist, using image_url field only');
+      }
     }
 
     return NextResponse.json({ success: true, data: newProspectProperty }, { status: 201 });
