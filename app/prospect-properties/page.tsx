@@ -26,21 +26,29 @@ export default function ProspectPropertiesPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
-  
+  const [page, setPage] = useState(1)
+  const limit = 9
+
   const { isAuthenticated } = useAuth()
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      toast.error('You must be logged in to view prospect properties.')
-      return
-    }
     fetchProspectProperties()
-  }, [selectedCategory, isAuthenticated])
+  }, [selectedCategory, searchTerm, page])
 
   const fetchProspectProperties = async () => {
     try {
       setLoading(true)
-      const params = selectedCategory !== 'all' ? { category: selectedCategory } : {}
+      const params: Record<string, string | number> = {
+        limit,
+        offset: (page - 1) * limit
+      }
+      if (selectedCategory !== 'all') {
+        params.category = selectedCategory
+      }
+      if (searchTerm.trim()) {
+        params.searchTerm = searchTerm
+      }
+
       const response = await api.getProspectProperties(params)
       if (response.success) {
         setProspectProperties(response.data)
@@ -54,23 +62,16 @@ export default function ProspectPropertiesPage() {
     }
   }
 
-  const filteredProspectProperties = prospectProperties.filter(prospect =>
-    prospect.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    prospect.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    prospect.description.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
-  if (!isAuthenticated) {
+  const ProspectImage = ({ src, alt }: { src: string, alt: string }) => {
+    const [imgSrc, setImgSrc] = useState(src || '/placeholder.svg')
     return (
-      <div className="container mx-auto px-4 py-8 text-center">
-        <h2 className="text-2xl font-bold mb-4">Access Denied</h2>
-        <p className="text-muted-foreground mb-6">
-          Please log in to view and manage prospect properties.
-        </p>
-        <Button asChild>
-          <Link href="/login">Login</Link>
-        </Button>
-      </div>
+      <Image
+        src={imgSrc}
+        alt={alt}
+        fill
+        className="object-cover"
+        onError={() => setImgSrc('/placeholder.svg')}
+      />
     )
   }
 
@@ -79,24 +80,35 @@ export default function ProspectPropertiesPage() {
       <section className="mb-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Prospect Properties</h1>
-          <Button asChild>
-            <Link href="/prospect-properties/add">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Prospect
-            </Link>
-          </Button>
+          {isAuthenticated && (
+            <Button asChild>
+              <Link href="/prospect-properties/add">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Prospect
+              </Link>
+            </Button>
+          )}
         </div>
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
-              placeholder="Search prospects by title, location, or description..."
+              placeholder="Search prospects..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value)
+                setPage(1)
+              }}
               className="pl-10"
             />
           </div>
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <Select
+            value={selectedCategory}
+            onValueChange={(value) => {
+              setSelectedCategory(value)
+              setPage(1)
+            }}
+          >
             <SelectTrigger className="w-full md:w-[200px]">
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
@@ -130,56 +142,56 @@ export default function ProspectPropertiesPage() {
               </Card>
             ))}
           </div>
-        ) : filteredProspectProperties.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProspectProperties.map((prospect) => (
-              <Card key={prospect.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg">{prospect.title}</CardTitle>
-                    <Badge variant="secondary">{prospect.category_name}</Badge>
-                  </div>
-                  <CardDescription className="flex items-center text-sm">
-                    <MapPin className="h-3 w-3 mr-1" />
-                    {prospect.location}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {prospect.image_url && (
-                    <div className="relative h-40 w-full mb-4 rounded-md overflow-hidden bg-muted flex items-center justify-center">
-                      <Image 
-                        src={prospect.image_url || "/placeholder.svg"} 
-                        alt={prospect.title} 
-                        fill 
-                        className="object-cover" 
-                        onError={(e) => (e.currentTarget.src = "/placeholder.svg")} // Fallback
-                      />
+        ) : prospectProperties.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {prospectProperties.map((prospect) => (
+                <Card key={prospect.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-lg">{prospect.title}</CardTitle>
+                      <Badge variant="secondary">{prospect.category_name}</Badge>
                     </div>
-                  )}
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                    {prospect.description}
-                  </p>
-                  <div className="space-y-2 mb-4">
-                    {prospect.estimated_worth && (
-                      <div className="flex items-center text-sm">
-                        <DollarSign className="h-3 w-3 mr-1" />
-                        <span>₦{prospect.estimated_worth.toLocaleString()} (Est.)</span>
-                      </div>
-                    )}
-                    {prospect.year_of_construction && (
-                      <div className="flex items-center text-sm">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        <span>Built in {prospect.year_of_construction}</span>
-                      </div>
-                    )}
-                  </div>
-                  <Button asChild className="w-full">
-                    <Link href={`/prospect-properties/${prospect.id}`}>View Details</Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    <CardDescription className="flex items-center text-sm">
+                      <MapPin className="h-3 w-3 mr-1" />
+                      {prospect.location}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="relative h-40 w-full mb-4 rounded-md overflow-hidden bg-muted flex items-center justify-center">
+                      <ProspectImage src={prospect.image_url || '/placeholder.svg'} alt={prospect.title} />
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+                      {prospect.description}
+                    </p>
+                    <div className="space-y-2 mb-4">
+                      {prospect.estimated_worth && (
+                        <div className="flex items-center text-sm">
+                          <DollarSign className="h-3 w-3 mr-1" />
+                          <span>₦{prospect.estimated_worth.toLocaleString()} (Est.)</span>
+                        </div>
+                      )}
+                      {prospect.year_of_construction && (
+                        <div className="flex items-center text-sm">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          <span>Built in {prospect.year_of_construction}</span>
+                        </div>
+                      )}
+                    </div>
+                    <Button asChild className="w-full">
+                      <Link href={`/prospect-properties/${prospect.id}`}>View Details</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Pagination controls */}
+            <div className="flex justify-center mt-8 gap-4">
+              <Button disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
+              <Button onClick={() => setPage((p) => p + 1)}>Next</Button>
+            </div>
+          </>
         ) : (
           <div className="text-center py-12">
             <Building className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -187,12 +199,13 @@ export default function ProspectPropertiesPage() {
             <p className="text-muted-foreground mb-4">
               {searchTerm
                 ? "Try adjusting your search terms or filters"
-                : "Be the first to add a prospect property"
-              }
+                : "Be the first to add a prospect property"}
             </p>
-            <Button asChild>
-              <Link href="/prospect-properties/add">Add Prospect Property</Link>
-            </Button>
+            {isAuthenticated && (
+              <Button asChild>
+                <Link href="/prospect-properties/add">Add Prospect Property</Link>
+              </Button>
+            )}
           </div>
         )}
       </section>

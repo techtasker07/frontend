@@ -4,13 +4,14 @@ import { query } from '@/lib/db';
 import { protect, AuthNextRequest } from '@/lib/authUtils';
 
 // @route   GET /api/prospect_properties
-// @desc    Get all prospect properties (accessible to logged-in users)
-// @access  Private (for full details), Public (for preview)
+// @desc    Get all prospect properties (accessible to everyone, login gives full results)
+// @access  Public
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const limit = searchParams.get('limit');
   const offset = searchParams.get('offset');
   const category = searchParams.get('category');
+  const searchTerm = searchParams.get('searchTerm');
 
   let queryText = `
     SELECT pp.*, c.name AS category_name
@@ -18,11 +19,20 @@ export async function GET(req: NextRequest) {
     JOIN categories c ON pp.category_id = c.id
   `;
   const queryParams: (string | number)[] = [];
-  const conditions = [];
+  const conditions: string[] = [];
 
-  if (category) {
-    conditions.push(`c.name ILIKE $${conditions.length + 1}`);
-    queryParams.push(category);
+  if (category && category.toLowerCase() !== 'all') {
+    conditions.push(`c.name ILIKE $${queryParams.length + 1}`);
+    queryParams.push(`%${category}%`);
+  }
+
+  if (searchTerm) {
+    conditions.push(`(
+      pp.title ILIKE $${queryParams.length + 1}
+      OR pp.location ILIKE $${queryParams.length + 1}
+      OR pp.description ILIKE $${queryParams.length + 1}
+    )`);
+    queryParams.push(`%${searchTerm}%`);
   }
 
   if (conditions.length > 0) {
@@ -32,11 +42,11 @@ export async function GET(req: NextRequest) {
   queryText += ` ORDER BY pp.created_at DESC`;
 
   if (limit) {
-    queryText += ` LIMIT $${conditions.length + 1}`;
+    queryText += ` LIMIT $${queryParams.length + 1}`;
     queryParams.push(parseInt(limit));
   }
   if (offset) {
-    queryText += ` OFFSET $${conditions.length + 1}`;
+    queryText += ` OFFSET $${queryParams.length + 1}`;
     queryParams.push(parseInt(offset));
   }
 

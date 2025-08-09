@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { api, Property, ProspectProperty } from '@/lib/api'
-import { Search, MapPin, Calendar, DollarSign, Plus, Building } from 'lucide-react'
+import { Search, MapPin, Calendar, Plus, Building } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/lib/auth'
 
@@ -41,14 +41,17 @@ export default function HomePage() {
   const fetchProperties = async () => {
     try {
       setLoadingProperties(true)
-      const params = selectedCategory !== 'all' ? { category: selectedCategory } : {}
+      const params: Record<string, string> = {}
+      if (selectedCategory !== 'all') {
+        params.category = selectedCategory
+      }
       const response = await api.getProperties(params)
       if (response.success) {
         setProperties(response.data)
       } else {
         toast.error('Error fetching properties. Please try again later.')
       }
-    } catch (error) {
+    } catch {
       toast.error('Error fetching properties. Please try again later.')
     } finally {
       setLoadingProperties(false)
@@ -58,14 +61,17 @@ export default function HomePage() {
   const fetchProspectProperties = async () => {
     try {
       setLoadingProspects(true)
-      const params = selectedCategory !== 'all' ? { category: selectedCategory } : {}
+      const params: Record<string, string | number> = { limit: 3 }
+      if (selectedCategory !== 'all') {
+        params.category = selectedCategory
+      }
       const response = await api.getProspectProperties(params)
       if (response.success) {
         setProspectProperties(response.data)
       } else {
         toast.error('Error fetching prospect properties. Please try again later.')
       }
-    } catch (error) {
+    } catch {
       toast.error('Error fetching prospect properties. Please try again later.')
     } finally {
       setLoadingProspects(false)
@@ -73,19 +79,20 @@ export default function HomePage() {
   }
 
   const filteredProperties = properties.filter(property =>
-    property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    property.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    property.description.toLowerCase().includes(searchTerm.toLowerCase())
+    [property.title, property.location, property.description].some(text =>
+      text.toLowerCase().includes(searchTerm.toLowerCase())
+    )
   )
 
   const filteredProspectProperties = prospectProperties.filter(prospect =>
-    prospect.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    prospect.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    prospect.description.toLowerCase().includes(searchTerm.toLowerCase())
+    [prospect.title, prospect.location, prospect.description].some(text =>
+      text.toLowerCase().includes(searchTerm.toLowerCase())
+    )
   )
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* --- Properties for Evaluation --- */}
       <section className="mb-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Properties for Evaluation</h1>
@@ -100,7 +107,7 @@ export default function HomePage() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
-              placeholder="Search properties by title, location, or description..."
+              placeholder="Search properties..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -121,95 +128,49 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* --- Properties Grid --- */}
       <section className="mb-12">
         {loadingProperties ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader>
-                  <div className="h-4 bg-muted rounded w-3/4"></div>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-40 bg-muted rounded mb-4"></div>
-                  <div className="space-y-2">
-                    <div className="h-3 bg-muted rounded"></div>
-                    <div className="h-3 bg-muted rounded w-2/3"></div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <p>Loading properties...</p>
         ) : filteredProperties.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredProperties.map((property) => (
-              <Card key={property.id} className="hover:shadow-lg transition-shadow">
+              <Card key={property.id}>
                 <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg">{property.title}</CardTitle>
-                    <Badge variant="secondary">{property.category_name}</Badge>
+                  <div className="flex justify-between">
+                    <CardTitle>{property.title}</CardTitle>
+                    <Badge variant="secondary">{property.category_name || 'Uncategorized'}</Badge>
                   </div>
-                  <CardDescription className="flex items-center text-sm">
-                    <MapPin className="h-3 w-3 mr-1" />
+                  <CardDescription>
+                    <MapPin className="inline-block h-3 w-3 mr-1" />
                     {property.location}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {property.images && property.images.length > 0 ? (
-                    <div className="relative h-40 w-full mb-4 rounded-md overflow-hidden">
-                      <Image
-                        src={property.images.find(img => img.is_primary)?.image_url || property.images[0].image_url}
-                        alt={property.title}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
+                  {property.images?.length ? (
+                    <Image
+                      src={property.images.find(img => img.is_primary)?.image_url || property.images[0].image_url}
+                      alt={property.title}
+                      width={400}
+                      height={200}
+                      className="rounded-md object-cover w-full"
+                    />
                   ) : (
-                    <div className="h-40 w-full mb-4 rounded-md bg-muted flex items-center justify-center text-muted-foreground">
+                    <div className="h-40 bg-muted flex items-center justify-center text-muted-foreground">
                       No Image
                     </div>
                   )}
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                    {property.description}
-                  </p>
-                  <div className="space-y-2 mb-4">
-                    {property.current_worth && (
-                      <div className="flex items-center text-sm">
-                        <span>₦{property.current_worth.toLocaleString()}</span>
-                      </div>
-                    )}
-                    {property.year_of_construction && (
-                      <div className="flex items-center text-sm">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        <span>Built in {property.year_of_construction}</span>
-                      </div>
-                    )}
-                  </div>
-                  <Button asChild className="w-full">
-                    <Link href={`/properties/${property.id}`}>View Details</Link>
-                  </Button>
+                  <p className="text-sm text-muted-foreground mt-2">{property.description}</p>
                 </CardContent>
               </Card>
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <Building className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No properties found</h3>
-            <p className="text-muted-foreground mb-4">
-              {searchTerm
-                ? "Try adjusting your search terms or filters"
-                : "Be the first to add a property for evaluation"
-              }
-            </p>
-            <Button asChild>
-              <Link href="/add-property">Add Property</Link>
-            </Button>
-          </div>
+          <p>No properties found</p>
         )}
       </section>
 
-      {/* Prospect Properties Section on Homepage */}
+      {/* --- Prospect Properties --- */}
       {isAuthenticated && (
         <section>
           <div className="flex justify-between items-center mb-6">
@@ -223,80 +184,36 @@ export default function HomePage() {
           </div>
 
           {loadingProspects ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(3)].map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardHeader>
-                    <div className="h-4 bg-muted rounded w-3/4"></div>
-                    <div className="h-3 bg-muted rounded w-1/2"></div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-20 bg-muted rounded mb-4"></div>
-                    <div className="space-y-2">
-                      <div className="h-3 bg-muted rounded"></div>
-                      <div className="h-3 bg-muted rounded w-2/3"></div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <p>Loading prospects...</p>
           ) : filteredProspectProperties.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProspectProperties.slice(0, 3).map((prospect) => ( // Show max 3 prospects on homepage
-                <Card key={prospect.id} className="hover:shadow-lg transition-shadow">
+              {filteredProspectProperties.map((prospect) => (
+                <Card key={prospect.id}>
                   <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-lg">{prospect.title}</CardTitle>
-                      <Badge variant="secondary">{prospect.category_name}</Badge>
+                    <div className="flex justify-between">
+                      <CardTitle>{prospect.title}</CardTitle>
+                      <Badge variant="secondary">{prospect.category_name || 'Uncategorized'}</Badge>
                     </div>
-                    <CardDescription className="flex items-center text-sm">
-                      <MapPin className="h-3 w-3 mr-1" />
+                    <CardDescription>
+                      <MapPin className="inline-block h-3 w-3 mr-1" />
                       {prospect.location}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {prospect.image_url && (
-                      <div className="relative h-40 w-full mb-4 rounded-md overflow-hidden">
-                        <img src={prospect.image_url || "/placeholder.svg"} alt={prospect.title} className="object-cover w-full h-full" />
-                      </div>
-                    )}
-                    <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                      {prospect.description}
-                    </p>
-                    <div className="space-y-2 mb-4">
-                      {prospect.estimated_worth && (
-                        <div className="flex items-center text-sm">
-                          <span>₦{prospect.estimated_worth.toLocaleString()} (Est.)</span>
-                        </div>
-                      )}
-                      {prospect.year_of_construction && (
-                        <div className="flex items-center text-sm">
-                          <Calendar className="h-3 w-3 mr-1" />
-                          <span>Built in {prospect.year_of_construction}</span>
-                        </div>
-                      )}
-                    </div>
-                    <Button asChild className="w-full">
-                      <Link href={`/prospect-properties/${prospect.id}`}>View Details</Link>
-                    </Button>
+                    <Image
+                      src={prospect.image_url || '/placeholder.svg'}
+                      alt={prospect.title}
+                      width={400}
+                      height={200}
+                      className="rounded-md object-cover w-full"
+                    />
+                    <p className="text-sm text-muted-foreground mt-2">{prospect.description}</p>
                   </CardContent>
                 </Card>
               ))}
             </div>
           ) : (
-            <div className="text-center py-6">
-              <p className="text-muted-foreground mb-4">You don't have any prospect properties yet.</p>
-              <Button asChild>
-                <Link href="/prospect-properties/add">Add Your First Prospect</Link>
-              </Button>
-            </div>
-          )}
-          {filteredProspectProperties.length > 3 && (
-            <div className="text-center mt-6">
-              <Button variant="outline" asChild>
-                <Link href="/prospect-properties">View All Prospects</Link>
-              </Button>
-            </div>
+            <p>No prospect properties found</p>
           )}
         </section>
       )}

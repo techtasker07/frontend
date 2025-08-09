@@ -253,11 +253,11 @@ class ApiClient {
       });
     }
     const queryString = searchParams.toString();
-    return this.request(`/prospect-properties${queryString ? `?${queryString}` : ''}`);
+    return this.request(`/prospect_properties${queryString ? `?${queryString}` : ''}`);
   }
 
   async getProspectProperty(id: number): Promise<ApiResponse<ProspectProperty>> {
-    return this.request(`/prospect-properties/${id}`);
+    return this.request(`/prospect_properties/${id}`);
   }
 
   async createProspectProperty(prospectData: {
@@ -269,11 +269,12 @@ class ApiClient {
     year_of_construction?: number;
     image_url?: string;
   }): Promise<ApiResponse<ProspectProperty>> {
-    return this.request('/prospect-properties', {
+    return this.request('/prospect_properties', {
       method: 'POST',
       body: JSON.stringify(prospectData),
     });
   }
+
 
   // Categories methods
   async getCategories(): Promise<ApiResponse<Category[]>> {
