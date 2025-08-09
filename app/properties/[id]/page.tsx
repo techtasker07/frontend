@@ -192,7 +192,6 @@ export default function PropertyDetailsPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {property.current_worth && (
                   <div className="flex items-center space-x-2">
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">
                       <strong>₦{property.current_worth.toLocaleString()}</strong>
                     </span>

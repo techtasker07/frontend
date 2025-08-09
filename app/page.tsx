@@ -175,7 +175,6 @@ export default function HomePage() {
                   <div className="space-y-2 mb-4">
                     {property.current_worth && (
                       <div className="flex items-center text-sm">
-                        <DollarSign className="h-3 w-3 mr-1" />
                         <span>₦{property.current_worth.toLocaleString()}</span>
                       </div>
                     )}
@@ -267,7 +266,6 @@ export default function HomePage() {
                     <div className="space-y-2 mb-4">
                       {prospect.estimated_worth && (
                         <div className="flex items-center text-sm">
-                          <DollarSign className="h-3 w-3 mr-1" />
                           <span>₦{prospect.estimated_worth.toLocaleString()} (Est.)</span>
                         </div>
                       )}
