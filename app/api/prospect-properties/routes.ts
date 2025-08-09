@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
     category_id, 
     estimated_worth, 
     year_of_construction, 
-    image_urls 
+    image_url 
   } = await req.json();
   
   const userId = (req as AuthNextRequest).user!.id;
@@ -122,8 +122,8 @@ export async function POST(req: NextRequest) {
     const newProspectProperty = prospectPropertyResult.rows[0];
 
     // Insert images if provided (assuming you have a prospect_property_images table)
-    if (image_urls && Array.isArray(image_urls) && image_urls.length > 0) {
-      const imageInsertPromises = image_urls.map((url: string, index: number) => {
+    if (image_url && Array.isArray(image_url) && image_url.length > 0) {
+      const imageInsertPromises = image_url.map((url: string, index: number) => {
         const isPrimary = index === 0; // First image is primary
         return query(
           'INSERT INTO prospect_property_images (prospect_property_id, image_url, is_primary) VALUES ($1, $2, $3)',
