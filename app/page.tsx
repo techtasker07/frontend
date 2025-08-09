@@ -215,7 +215,7 @@ export default function HomePage() {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold">Prospect Properties for you</h2>
             <Button asChild>
-              <Link href="/prospect_properties">
+              <Link href="/prospect-properties">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Prospect
               </Link>
