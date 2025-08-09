@@ -95,11 +95,20 @@ export interface ProspectProperty {
   category_id: number;
   estimated_worth?: number;
   year_of_construction?: number;
-  image_url?: string;
   created_at: string;
   updated_at: string;
   category_name?: string;
+  images?: ProspectPropertyImage[]; // Added images support
   ai_analysis?: AIAnalysis; // Only available on detail page for logged-in users
+}
+
+// Added ProspectPropertyImage interface
+export interface ProspectPropertyImage {
+  id: number;
+  prospect_property_id: number;
+  image_url: string;
+  is_primary: boolean;
+  created_at: string;
 }
 
 export interface AIAnalysis {
@@ -132,20 +141,28 @@ class ApiClient {
     const url = `/api${endpoint}`;
 
     try {
+      console.log('Making API request to:', url); // Debug log
+      console.log('Request options:', options); // Debug log
+      
       const response = await fetch(url, {
         ...options,
         credentials: 'omit',
         headers: options.headers || this.getAuthHeaders(), // Allow overriding headers for file uploads
       });
 
+      console.log('Response status:', response.status); // Debug log
+
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        console.error('API Error:', errorData); // Debug log
         throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('API Response:', data); // Debug log
       return data;
     } catch (error: any) {
+      console.error('API Request failed:', error); // Debug log
       throw error;
     }
   }
@@ -238,11 +255,13 @@ class ApiClient {
     });
   }
 
-  // Prospect Properties methods
+  // Fixed Prospect Properties methods
   async getProspectProperties(params?: {
     category?: string;
+    user_id?: number;
     limit?: number;
     offset?: number;
+    searchTerm?: string; // Added missing searchTerm parameter
   }): Promise<ApiResponse<ProspectProperty[]>> {
     const searchParams = new URLSearchParams();
     if (params) {
@@ -260,6 +279,7 @@ class ApiClient {
     return this.request(`/prospect_properties/${id}`);
   }
 
+  // Fixed createProspectProperty to match updated API
   async createProspectProperty(prospectData: {
     title: string;
     description: string;
@@ -267,14 +287,13 @@ class ApiClient {
     category_id: number;
     estimated_worth?: number;
     year_of_construction?: number;
-    image_url?: string;
+    image_urls?: string[]; // Changed from image_url to image_urls array
   }): Promise<ApiResponse<ProspectProperty>> {
     return this.request('/prospect_properties', {
       method: 'POST',
       body: JSON.stringify(prospectData),
     });
   }
-
 
   // Categories methods
   async getCategories(): Promise<ApiResponse<Category[]>> {

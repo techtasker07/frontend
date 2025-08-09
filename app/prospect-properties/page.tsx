@@ -38,25 +38,40 @@ export default function ProspectPropertiesPage() {
   const fetchProspectProperties = async () => {
     try {
       setLoading(true)
-      const params: Record<string, string | number> = {
+      console.log('Fetching prospect properties...') // Debug log
+      
+      // Fix: Use proper parameter types that match the API client
+      const params: {
+        category?: string;
+        limit?: number;
+        offset?: number;
+        searchTerm?: string;
+      } = {
         limit,
         offset: (page - 1) * limit
       }
+      
       if (selectedCategory !== 'all') {
         params.category = selectedCategory
       }
       if (searchTerm.trim()) {
-        params.searchTerm = searchTerm
+        params.searchTerm = searchTerm.trim()
       }
 
+      console.log('API params:', params) // Debug log
       const response = await api.getProspectProperties(params)
+      console.log('API response:', response) // Debug log
+      
       if (response.success) {
         setProspectProperties(response.data)
+        console.log('Successfully fetched', response.data.length, 'prospect properties') // Debug log
       } else {
-        toast.error('Error fetching prospects. Please try again later.')
+        console.error('API returned error:', response.error) // Debug log
+        toast.error(response.error || 'Error fetching prospects. Please try again later.')
       }
     } catch (error) {
-      toast.error('Error fetching prospects. Please try again later.')
+      console.error('Fetch prospect properties error:', error) // Debug log
+      toast.error('Error fetching prospects. Please check your connection and try again.')
     } finally {
       setLoading(false)
     }
@@ -133,7 +148,7 @@ export default function ProspectPropertiesPage() {
                   <div className="h-3 bg-muted rounded w-1/2"></div>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-20 bg-muted rounded mb-4"></div>
+                  <div className="h-40 bg-muted rounded mb-4"></div>
                   <div className="space-y-2">
                     <div className="h-3 bg-muted rounded"></div>
                     <div className="h-3 bg-muted rounded w-2/3"></div>
@@ -149,17 +164,31 @@ export default function ProspectPropertiesPage() {
                 <Card key={prospect.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex justify-between items-start">
-                      <CardTitle className="text-lg">{prospect.title}</CardTitle>
-                      <Badge variant="secondary">{prospect.category_name}</Badge>
+                      <CardTitle className="text-lg line-clamp-1">{prospect.title}</CardTitle>
+                      <Badge variant="secondary">{prospect.category_name || 'Uncategorized'}</Badge>
                     </div>
                     <CardDescription className="flex items-center text-sm">
-                      <MapPin className="h-3 w-3 mr-1" />
-                      {prospect.location}
+                      <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
+                      <span className="line-clamp-1">{prospect.location}</span>
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="relative h-40 w-full mb-4 rounded-md overflow-hidden bg-muted flex items-center justify-center">
-                      <ProspectImage src={prospect.image_url || '/placeholder.svg'} alt={prospect.title} />
+                      {/* Fix: Handle both old image_url and new images array structure */}
+                      {prospect.images && prospect.images.length > 0 ? (
+                        <Image
+                          src={prospect.images.find(img => img.is_primary)?.image_url || prospect.images[0].image_url}
+                          alt={prospect.title}
+                          fill
+                          className="object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/placeholder.svg';
+                          }}
+                        />
+                      ) : (
+                        <Building className="h-8 w-8 text-muted-foreground" />
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
                       {prospect.description}
@@ -167,13 +196,13 @@ export default function ProspectPropertiesPage() {
                     <div className="space-y-2 mb-4">
                       {prospect.estimated_worth && (
                         <div className="flex items-center text-sm">
-                          <DollarSign className="h-3 w-3 mr-1" />
+                          <DollarSign className="h-3 w-3 mr-1 flex-shrink-0" />
                           <span>₦{prospect.estimated_worth.toLocaleString()} (Est.)</span>
                         </div>
                       )}
                       {prospect.year_of_construction && (
                         <div className="flex items-center text-sm">
-                          <Calendar className="h-3 w-3 mr-1" />
+                          <Calendar className="h-3 w-3 mr-1 flex-shrink-0" />
                           <span>Built in {prospect.year_of_construction}</span>
                         </div>
                       )}
@@ -188,25 +217,42 @@ export default function ProspectPropertiesPage() {
 
             {/* Pagination controls */}
             <div className="flex justify-center mt-8 gap-4">
-              <Button disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
-              <Button onClick={() => setPage((p) => p + 1)}>Next</Button>
+              <Button 
+                variant="outline" 
+                disabled={page === 1} 
+                onClick={() => setPage((p) => p - 1)}
+              >
+                Previous
+              </Button>
+              <span className="flex items-center px-4 text-sm text-muted-foreground">
+                Page {page}
+              </span>
+              <Button 
+                variant="outline"
+                disabled={prospectProperties.length < limit}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next
+              </Button>
             </div>
           </>
         ) : (
-          <div className="text-center py-12">
-            <Building className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No prospect properties found</h3>
-            <p className="text-muted-foreground mb-4">
-              {searchTerm
-                ? "Try adjusting your search terms or filters"
-                : "Be the first to add a prospect property"}
-            </p>
-            {isAuthenticated && (
-              <Button asChild>
-                <Link href="/prospect-properties/add">Add Prospect Property</Link>
-              </Button>
-            )}
-          </div>
+          <Card>
+            <CardContent className="text-center py-12">
+              <Building className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No prospect properties found</h3>
+              <p className="text-muted-foreground mb-4">
+                {searchTerm || selectedCategory !== 'all'
+                  ? "Try adjusting your search terms or filters"
+                  : "Be the first to add a prospect property"}
+              </p>
+              {isAuthenticated && (
+                <Button asChild>
+                  <Link href="/prospect-properties/add">Add Prospect Property</Link>
+                </Button>
+              )}
+            </CardContent>
+          </Card>
         )}
       </section>
     </div>
