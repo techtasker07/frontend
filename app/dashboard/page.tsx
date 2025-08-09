@@ -167,23 +167,6 @@ return (
           </p>
         </CardContent>
       </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Portfolio Value</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
-            ${userProperties
-              .reduce((sum, p) => sum + (p.current_worth || 0), 0)
-              .toLocaleString()}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Total estimated value
-          </p>
-        </CardContent>
-      </Card>
     </div>
 
     {/* Main Content Tabs */}
@@ -218,8 +201,9 @@ return (
                   <div className="space-y-2 mb-4">
                     {property.current_worth && (
                       <div className="flex items-center text-sm">
-                        <DollarSign className="h-3 w-3 mr-1" />
-                        <span>${property.current_worth.toLocaleString()}</span>
+                        <span>
+                          ₦{property.current_worth.toLocaleString("en-NG")}
+                        </span>
                       </div>
                     )}
                     {property.year_of_construction && (
