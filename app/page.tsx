@@ -90,12 +90,12 @@ export default function HomePage() {
         <section className="text-center mb-16 py-20">
           <div className="relative">
             <h1 className="text-6xl md:text-8xl font-black bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-6 animate-pulse">
-              PROPTECH
+              MIPRIPITY
             </h1>
             <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-full h-2 bg-gradient-to-r from-transparent via-cyan-400 to-transparent blur-sm"></div>
           </div>
           <p className="text-xl md:text-2xl text-slate-300 mb-8 max-w-3xl mx-auto leading-relaxed">
-            Next-generation property evaluation platform powered by AI and blockchain technology
+            Next-generation property evaluation platform powered by Techtasker Solutions
           </p>
           <div className="flex justify-center gap-4 mb-8">
             <div className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-full">
@@ -232,7 +232,7 @@ export default function HomePage() {
                     {property.current_worth && (
                       <div className="mt-4 p-3 bg-gradient-to-r from-green-500/10 to-cyan-500/10 border border-green-500/20 rounded-lg">
                         <p className="text-lg font-bold text-transparent bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text">
-                          ₦{property.current_worth.toLocaleString()}
+                          ₦{new Intl.NumberFormat('en-NG').format(property.current_worth)}
                         </p>
                         <p className="text-xs text-slate-500 mt-1">Current Market Value</p>
                       </div>
