@@ -14,7 +14,7 @@ interface SidebarProps {
 const navigation = [
   { name: "Home", href: "/", icon: Home },
   { name: "Dashboard", href: "/dashboard", icon: Home },
-  { name: "Properties", href: "/api/properties", icon: Building },
+  { name: "Properties", href: "/properties", icon: Building },
   { name: "Prospect Properties", href: "/prospectProperties", icon: Lightbulb },
   { name: "Add Property", href: "/add-property", icon: Plus },
 ]

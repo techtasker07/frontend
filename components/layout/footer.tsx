@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from "lucide-react"
+import { Facebook, Twitter, Instagram, Linkedin, ChartArea, Mail, Phone, MapPin } from "lucide-react"
 
 export function Footer() {
   return (
@@ -15,13 +15,13 @@ export function Footer() {
               Revolutionary property evaluation platform powered by community insights and AI technology.
             </p>
             <div className="flex space-x-4">
-              <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+              <Link href="https://facebook.com/techtasker_solutions" className="text-gray-400 hover:text-white transition-colors">
                 <Facebook className="h-5 w-5" />
               </Link>
               <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Twitter className="h-5 w-5" />
+                <ChartArea className="h-5 w-5" />
               </Link>
-              <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+              <Link href="https://instagram.com/techtasker_solutions" className="text-gray-400 hover:text-white transition-colors">
                 <Instagram className="h-5 w-5" />
               </Link>
               <Link href="#" className="text-gray-400 hover:text-white transition-colors">
@@ -90,15 +90,15 @@ export function Footer() {
             <div className="space-y-3 text-sm">
               <div className="flex items-center space-x-2">
                 <Mail className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-300">info@mipripity.com</span>
+                <span className="text-gray-300">mipripity@gmail.com</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Phone className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-300">+234 (0) 123 456 7890</span>
+                <span className="text-gray-300">+234 8022414124</span>
               </div>
               <div className="flex items-start space-x-2">
                 <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
-                <span className="text-gray-300">Lagos, Nigeria</span>
+                <span className="text-gray-300">34, Rafiu Crescent, Mafoluku Oshodi, Lagos</span>
               </div>
             </div>
           </div>
@@ -109,7 +109,20 @@ export function Footer() {
           <p className="text-gray-400 text-sm text-center sm:text-left">
             © 2024 Mipripity by Techtasker Solutions. All rights reserved.
           </p>
-          <p className="text-gray-400 text-sm text-center sm:text-right">Made with ❤️ in Nigeria</p>
+          <div className="flex flex-wrap justify-center sm:justify-end gap-4 text-xs text-gray-400">
+            <Link href="/privacy" className="hover:text-white transition-colors">
+              Privacy
+            </Link>
+            <Link href="/terms" className="hover:text-white transition-colors">
+              Terms
+            </Link>
+            <Link href="/contact" className="hover:text-white transition-colors">
+              Contact
+            </Link>
+            <Link href="/help" className="hover:text-white transition-colors">
+              Help
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
