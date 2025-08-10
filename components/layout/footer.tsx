@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Facebook, Twitter, Instagram, Linkedin, ChartArea, Mail, Phone, MapPin } from "lucide-react"
+import { Facebook, Twitter, Instagram, Linkedin, MessageCircleCodeIcon, Mail, Phone, MapPin } from "lucide-react"
 
 export function Footer() {
   return (
@@ -19,7 +19,7 @@ export function Footer() {
                 <Facebook className="h-5 w-5" />
               </Link>
               <Link href="#" className="text-gray-400 hover:text-white transition-colors">
-                <ChartArea className="h-5 w-5" />
+                <MessageCircleCodeIcon className="h-5 w-5" />
               </Link>
               <Link href="https://instagram.com/techtasker_solutions" className="text-gray-400 hover:text-white transition-colors">
                 <Instagram className="h-5 w-5" />

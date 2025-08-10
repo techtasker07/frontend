@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Menu, Bell, User } from "lucide-react"
+import { Menu, Bell, User, Home } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth"
 
@@ -19,23 +19,25 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
         <Menu className="h-6 w-6" />
       </Button>
 
-      {/* Logo */}
-      <Link href="/" className="flex items-center">
-        <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          MIPRIPITY
-        </span>
-      </Link>
-
       {/* Right Actions */}
       <div className="flex items-center space-x-2">
         {isAuthenticated ? (
           <>
+            <Link href="/" passHref>
+            <Button variant="ghost" size="sm" className="p-2">
+                <Home className="h-5 w-5" />
+            </Button>
+            </Link>
+            <Link href="/notifications" passHref>
             <Button variant="ghost" size="sm" className="p-2">
               <Bell className="h-5 w-5" />
             </Button>
+            </Link>
+            <Link href="/profile" passHref>
             <Button variant="ghost" size="sm" className="p-2">
               <User className="h-5 w-5" />
             </Button>
+            </Link>
           </>
         ) : (
           <Button asChild size="sm" className="text-xs px-3 py-1">
