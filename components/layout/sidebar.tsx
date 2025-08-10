@@ -1,177 +1,143 @@
-'use client'
+"use client"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Separator } from "@/components/ui/separator"
+import { useAuth } from "@/lib/auth"
+import { Home, Building, Lightbulb, Plus, User, Settings, LogOut, X, BarChart3, Search } from "lucide-react"
 
-import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { useAuth } from '@/lib/auth'
-import { Home, Plus, BarChart3, User, LogOut, Brain, Menu } from 'lucide-react'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
-import { Separator } from '@/components/ui/separator'
-import { cn } from '@/lib/utils'
-import Image from 'next/image'
+interface SidebarProps {
+  onClose?: () => void
+}
 
-export function Sidebar() {
-  const { user, logout, isAuthenticated } = useAuth()
-  const router = useRouter()
+const navigation = [
+  { name: "Dashboard", href: "/", icon: Home },
+  { name: "Properties", href: "/properties", icon: Building },
+  { name: "Prospect Properties", href: "/prospectProperties", icon: Lightbulb },
+  { name: "Add Property", href: "/add-property", icon: Plus },
+  { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  { name: "Search", href: "/search", icon: Search },
+]
+
+export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname()
-
-  const handleLogout = () => {
-    logout()
-    router.push('/')
-  }
-
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
-  }
-
-  const navItems = [
-    { href: '/', icon: Home, label: 'Home', requiresAuth: false },
-    { href: '/add-property', icon: Plus, label: 'Add Property', requiresAuth: true },
-    { href: '/dashboard', icon: BarChart3, label: 'Dashboard', requiresAuth: true },
-    { href: '/prospectProperties', icon: Brain, label: 'Prospects', requiresAuth: true },
-  ]
-
-  const renderNavLinks = (isMobile = false) => (
-    <nav className={cn("space-y-1", isMobile ? "flex flex-col" : "")}>
-      {navItems.map((item) => (
-        (item.requiresAuth && !isAuthenticated) ? null : (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-              {
-                "bg-muted text-primary": pathname === item.href,
-              }
-            )}
-          >
-            <item.icon className="h-4 w-4" />
-            {item.label}
-          </Link>
-        )
-      ))}
-    </nav>
-  )
+  const { user, isAuthenticated, logout } = useAuth()
 
   return (
-    <>
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col h-screen w-64 border-r bg-sidebar text-sidebar-foreground p-4 fixed top-0 left-0">
-        <div className="flex items-center gap-2 mb-6">
-          <Image src="/images/mipripity.png" alt="Mipripity Logo" width={32} height={32} />
-          <span className="font-bold text-xl">Mipripity</span>
-        </div>
+    <div className="flex h-full w-64 flex-col bg-white border-r border-gray-200 shadow-lg">
+      {/* Header */}
+      <div className="flex h-16 items-center justify-between px-6 border-b border-gray-200">
+        <Link href="/" className="flex items-center">
+          <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            MIPRIPITY
+          </span>
+        </Link>
+        {onClose && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="p-2 md:hidden hover:bg-gray-100"
+            aria-label="Close menu"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        )}
+      </div>
 
-        {isAuthenticated && user ? (
-          <div className="flex flex-col items-center text-center mb-6">
-            <Avatar className="h-16 w-16 mb-2">
-              <AvatarImage src={user.profile_picture || "/placeholder.svg"} alt={user.first_name} />
-              <AvatarFallback className="text-lg">
-                {getInitials(user.first_name, user.last_name)}
-              </AvatarFallback>
-            </Avatar>
-            <p className="font-semibold text-lg">{user.first_name} {user.last_name}</p>
-            <p className="text-sm text-muted-foreground truncate w-full px-2">{user.email}</p>
-            <Button variant="ghost" size="sm" asChild className="mt-2">
-              <Link href="/profile">
-                <User className="mr-2 h-4 w-4" />
+      {/* Navigation */}
+      <ScrollArea className="flex-1 px-3 py-4">
+        <nav className="space-y-2">
+          {navigation.map((item) => {
+            const isActive = pathname === item.href
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                onClick={onClose} // Close mobile sidebar on navigation
+                className={`
+                  flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200
+                  ${
+                    isActive
+                      ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700"
+                      : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  }
+                `}
+              >
+                <item.icon className={`mr-3 h-5 w-5 ${isActive ? "text-blue-700" : "text-gray-500"}`} />
+                {item.name}
+              </Link>
+            )
+          })}
+        </nav>
+      </ScrollArea>
+
+      {/* User Section */}
+      <div className="border-t border-gray-200 p-4">
+        {isAuthenticated ? (
+          <div className="space-y-3">
+            <div className="flex items-center space-x-3 px-3 py-2">
+              <div className="flex-shrink-0">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                  <span className="text-sm font-medium text-white">
+                    {user?.first_name?.[0]}
+                    {user?.last_name?.[0]}
+                  </span>
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {user?.first_name} {user?.last_name}
+                </p>
+                <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+              </div>
+            </div>
+            <Separator />
+            <div className="space-y-1">
+              <Link
+                href="/profile"
+                onClick={onClose}
+                className="flex items-center px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <User className="mr-3 h-4 w-4" />
                 Profile
               </Link>
-            </Button>
-            <Separator className="my-4" />
+              <Link
+                href="/settings"
+                onClick={onClose}
+                className="flex items-center px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <Settings className="mr-3 h-4 w-4" />
+                Settings
+              </Link>
+              <button
+                onClick={() => {
+                  logout()
+                  onClose?.()
+                }}
+                className="flex w-full items-center px-3 py-2 text-sm text-red-700 rounded-lg hover:bg-red-50 transition-colors"
+              >
+                <LogOut className="mr-3 h-4 w-4" />
+                Sign out
+              </button>
+            </div>
           </div>
         ) : (
-          <div className="mb-6 space-y-2">
-            <Button asChild className="w-full">
-              <Link href="/login">Sign In</Link>
+          <div className="space-y-2">
+            <Button asChild className="w-full" size="sm">
+              <Link href="/login" onClick={onClose}>
+                Sign In
+              </Link>
             </Button>
-            <Button variant="outline" asChild className="w-full">
-              <Link href="/register">Sign Up</Link>
-            </Button>
-            <Separator className="my-4" />
-          </div>
-        )}
-
-        <div className="flex-1 overflow-y-auto">
-          {renderNavLinks()}
-        </div>
-
-        {isAuthenticated && (
-          <div className="mt-auto pt-4 border-t border-sidebar-border">
-            <Button variant="ghost" onClick={handleLogout} className="w-full justify-start">
-              <LogOut className="mr-2 h-4 w-4" />
-              Log out
+            <Button asChild variant="outline" className="w-full bg-transparent" size="sm">
+              <Link href="/register" onClick={onClose}>
+                Sign Up
+              </Link>
             </Button>
           </div>
         )}
-      </aside>
-
-      {/* Mobile Header with Sheet */}
-      <header className="md:hidden sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4">
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="shrink-0 md:hidden"
-            >
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle navigation menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="flex flex-col w-64 bg-sidebar text-sidebar-foreground p-4">
-            <div className="flex items-center gap-2 mb-6">
-              <Image src="/images/mipripity.png" alt="Mipripity Logo" width={32} height={32} />
-              <span className="font-bold text-xl">Mipripity</span>
-            </div>
-            {isAuthenticated && user ? (
-              <div className="flex flex-col items-center text-center mb-6">
-                <Avatar className="h-16 w-16 mb-2">
-                  <AvatarImage src={user.profile_picture || "/placeholder.svg"} alt={user.first_name} />
-                  <AvatarFallback className="text-lg">
-                    {getInitials(user.first_name, user.last_name)}
-                  </AvatarFallback>
-                </Avatar>
-                <p className="font-semibold text-lg">{user.first_name} {user.last_name}</p>
-                <p className="text-sm text-muted-foreground truncate w-full px-2">{user.email}</p>
-                <Button variant="ghost" size="sm" asChild className="mt-2">
-                  <Link href="/profile">
-                    <User className="mr-2 h-4 w-4" />
-                    Profile
-                  </Link>
-                </Button>
-                <Separator className="my-4" />
-              </div>
-            ) : (
-              <div className="mb-6 space-y-2">
-                <Button asChild className="w-full">
-                  <Link href="/login">Sign In</Link>
-                </Button>
-                <Button variant="outline" asChild className="w-full">
-                  <Link href="/register">Sign Up</Link>
-                </Button>
-                <Separator className="my-4" />
-              </div>
-            )}
-            <div className="flex-1 overflow-y-auto">
-              {renderNavLinks(true)}
-            </div>
-            {isAuthenticated && (
-              <div className="mt-auto pt-4 border-t border-sidebar-border">
-                <Button variant="ghost" onClick={handleLogout} className="w-full justify-start">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Log out
-                </Button>
-              </div>
-            )}
-          </SheetContent>
-        </Sheet>
-        <Link href="/" className="flex items-center space-x-2">
-          <Image src="/images/mipripity.png" alt="Mipripity Logo" width={32} height={32} />
-          <span className="font-bold text-xl">Mipripity</span>
-        </Link>
-      </header>
-    </>
+      </div>
+    </div>
   )
 }

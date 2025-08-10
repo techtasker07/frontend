@@ -1,16 +1,36 @@
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
-import { AuthProvider } from '@/lib/auth'
-import { Sidebar } from '@/components/layout/sidebar' // Import Sidebar
-import { Footer } from '@/components/layout/footer'
-import { Toaster } from 'sonner'
+import type React from "react"
+import type { Metadata, Viewport } from "next"
+import { Inter } from "next/font/google"
+import "./globals.css"
+import { AuthProvider } from "@/lib/auth"
+import { ResponsiveLayout } from "@/components/layout/responsive-layout"
+import { Toaster } from "sonner"
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: 'Mipripity - Property Polling Platform',
-  description: 'Community-driven property evaluation and polling platform',
+  title: "Mipripity - Property Polling Platform",
+  description: "Community-driven property evaluation and polling platform",
+  keywords: ["property", "polling", "evaluation", "real estate", "community"],
+  authors: [{ name: "Techtasker Solutions" }],
+  creator: "Techtasker Solutions",
+  publisher: "Techtasker Solutions",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "white" },
+    { media: "(prefers-color-scheme: dark)", color: "black" },
+  ],
 }
 
 export default function RootLayout({
@@ -19,20 +39,22 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.className} antialiased`}>
         <AuthProvider>
-          <div className="flex min-h-screen">
-            <Sidebar /> {/* Render the Sidebar */}
-            <div className="flex flex-col flex-1 md:ml-64"> {/* Adjust margin for desktop sidebar */}
-              <main className="flex-1">
-                {children}
-              </main>
-              <Footer />
-            </div>
-          </div>
+          <ResponsiveLayout>{children}</ResponsiveLayout>
         </AuthProvider>
-        <Toaster />
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: "white",
+              color: "black",
+              border: "1px solid #e2e8f0",
+            },
+          }}
+        />
       </body>
     </html>
   )
