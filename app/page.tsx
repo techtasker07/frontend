@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { api, Property } from '@/lib/api'
-import { Search, MapPin, Plus, Building } from 'lucide-react'
+import { Search, MapPin, Plus, Building, Zap, Globe, TrendingUp } from 'lucide-react'
 import { toast } from 'sonner'
 
 const categories = [
@@ -65,118 +65,248 @@ export default function HomePage() {
   )
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* --- Properties for Evaluation --- */}
-      <section className="mb-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Properties for Evaluation</h1>
-          <Button asChild>
-            <Link href="/add-property">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Property
-            </Link>
-          </Button>
-        </div>
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search properties..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-full md:w-[200px]">
-              <SelectValue placeholder="Select category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((category) => (
-                <SelectItem key={category.value} value={category.value}>
-                  {category.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </section>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900">
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+        <div className="absolute top-0 -right-4 w-72 h-72 bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+      </div>
 
-      {/* --- Properties Grid --- */}
-      <section className="mb-12">
-        {loadingProperties ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader>
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2 mt-2"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-40 bg-gray-200 rounded"></div>
-                </CardContent>
-              </Card>
-            ))}
+      {/* Grid Pattern Overlay */}
+      <div 
+        className="fixed inset-0 opacity-10 pointer-events-none"
+        style={{
+          backgroundImage: `
+            linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+          `,
+          backgroundSize: '50px 50px'
+        }}
+      ></div>
+
+      <div className="relative container mx-auto px-4 py-8">
+        {/* Hero Section */}
+        <section className="text-center mb-16 py-20">
+          <div className="relative">
+            <h1 className="text-6xl md:text-8xl font-black bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-6 animate-pulse">
+              PROPTECH
+            </h1>
+            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-full h-2 bg-gradient-to-r from-transparent via-cyan-400 to-transparent blur-sm"></div>
           </div>
-        ) : filteredProperties.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProperties.map((property) => (
-              <Card key={property.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="line-clamp-1">{property.title}</CardTitle>
-                    <Badge variant="secondary">{property.category_name || 'Uncategorized'}</Badge>
-                  </div>
-                  <CardDescription>
-                    <MapPin className="inline-block h-3 w-3 mr-1" />
-                    {property.location}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Link href={`/properties/${property.id}`}>
-                    {property.images && property.images.length > 0 ? (
-                      <Image
-                        src={
-                          property.images.find((img) => img.is_primary)?.image_url ||
-                          property.images[0].image_url
-                        }
-                        alt={property.title}
-                        width={400}
-                        height={200}
-                        className="rounded-md object-cover w-full h-40 hover:opacity-90 transition-opacity"
-                      />
-                    ) : (
-                      <div className="h-40 bg-muted flex items-center justify-center text-muted-foreground rounded-md">
-                        <Building className="h-8 w-8" />
+          <p className="text-xl md:text-2xl text-slate-300 mb-8 max-w-3xl mx-auto leading-relaxed">
+            Next-generation property evaluation platform powered by AI and blockchain technology
+          </p>
+          <div className="flex justify-center gap-4 mb-8">
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-full">
+              <Zap className="h-4 w-4 text-yellow-400" />
+              <span className="text-slate-300">Lightning Fast</span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-full">
+              <Globe className="h-4 w-4 text-blue-400" />
+              <span className="text-slate-300">Global Network</span>
+            </div>
+            <div className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-full">
+              <TrendingUp className="h-4 w-4 text-green-400" />
+              <span className="text-slate-300">AI Powered</span>
+            </div>
+          </div>
+        </section>
+
+        {/* Properties Section */}
+        <section className="mb-8">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h2 className="text-4xl font-bold bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent mb-2">
+                Properties for Evaluation
+              </h2>
+              <div className="h-1 w-32 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full"></div>
+            </div>
+            <Button 
+              asChild 
+              className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 border-0 shadow-lg shadow-purple-500/25 transition-all duration-300 hover:shadow-purple-500/40 hover:scale-105"
+            >
+              <Link href="/add-property">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Property
+              </Link>
+            </Button>
+          </div>
+
+          {/* Search and Filter Controls */}
+          <div className="flex flex-col md:flex-row gap-4 mb-8">
+            <div className="relative flex-1 group">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5 transition-colors group-focus-within:text-cyan-400" />
+              <Input
+                placeholder="Search properties in the metaverse..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-12 bg-slate-800/50 backdrop-blur-sm border-slate-700 text-slate-100 placeholder-slate-400 focus:border-cyan-400 focus:ring-cyan-400/20 transition-all duration-300 h-12"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-md opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+            </div>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-full md:w-[240px] bg-slate-800/50 backdrop-blur-sm border-slate-700 text-slate-100 focus:border-purple-400 focus:ring-purple-400/20 h-12">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-slate-700">
+                {categories.map((category) => (
+                  <SelectItem key={category.value} value={category.value} className="text-slate-100 focus:bg-slate-700">
+                    {category.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </section>
+
+        {/* Properties Grid */}
+        <section className="mb-12">
+          {loadingProperties ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="bg-slate-800/30 backdrop-blur-sm border-slate-700 animate-pulse">
+                  <CardHeader>
+                    <div className="h-4 bg-slate-700 rounded w-3/4"></div>
+                    <div className="h-3 bg-slate-700 rounded w-1/2 mt-2"></div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-48 bg-slate-700 rounded-lg"></div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : filteredProperties.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredProperties.map((property, index) => (
+                <Card 
+                  key={property.id} 
+                  className="group bg-slate-800/30 backdrop-blur-sm border-slate-700 hover:border-cyan-400/50 transition-all duration-500 hover:shadow-2xl hover:shadow-cyan-500/20 hover:-translate-y-2 overflow-hidden"
+                  style={{
+                    animationDelay: `${index * 100}ms`
+                  }}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="line-clamp-1 text-slate-100 group-hover:text-cyan-400 transition-colors">
+                        {property.title}
+                      </CardTitle>
+                      <Badge 
+                        variant="secondary" 
+                        className="bg-gradient-to-r from-purple-500/20 to-cyan-500/20 text-slate-200 border border-slate-600"
+                      >
+                        {property.category_name || 'Uncategorized'}
+                      </Badge>
+                    </div>
+                    <CardDescription className="text-slate-400">
+                      <MapPin className="inline-block h-3 w-3 mr-1 text-cyan-400" />
+                      {property.location}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Link href={`/properties/${property.id}`} className="block mb-4">
+                      <div className="relative overflow-hidden rounded-lg">
+                        {property.images && property.images.length > 0 ? (
+                          <Image
+                            src={
+                              property.images.find((img) => img.is_primary)?.image_url ||
+                              property.images[0].image_url
+                            }
+                            alt={property.title}
+                            width={400}
+                            height={240}
+                            className="object-cover w-full h-48 group-hover:scale-110 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="h-48 bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center text-slate-500 rounded-lg group-hover:from-slate-600 group-hover:to-slate-700 transition-all duration-300">
+                            <Building className="h-12 w-12" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div className="absolute top-2 right-2 w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                      </div>
+                    </Link>
+                    <p className="text-sm text-slate-400 mt-3 line-clamp-2 leading-relaxed">
+                      {property.description}
+                    </p>
+                    {property.current_worth && (
+                      <div className="mt-4 p-3 bg-gradient-to-r from-green-500/10 to-cyan-500/10 border border-green-500/20 rounded-lg">
+                        <p className="text-lg font-bold text-transparent bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text">
+                          ₦{property.current_worth.toLocaleString()}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-1">Current Market Value</p>
                       </div>
                     )}
-                  </Link>
-                  <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                    {property.description}
-                  </p>
-                  {property.current_worth && (
-                    <p className="text-sm font-semibold mt-2 text-green-600">
-                      ₦{property.current_worth.toLocaleString()}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="text-center py-8">
-              <Building className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">
-                No properties found for the selected category
-              </p>
-              <Button asChild className="mt-4">
-                <Link href="/add-property">Add the first property</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </section>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="bg-slate-800/30 backdrop-blur-sm border-slate-700">
+              <CardContent className="text-center py-16">
+                <div className="relative mb-8">
+                  <Building className="h-20 w-20 text-slate-600 mx-auto" />
+                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-cyan-400 to-purple-400 rounded-full animate-pulse"></div>
+                </div>
+                <h3 className="text-xl font-semibold text-slate-300 mb-2">No Properties Found</h3>
+                <p className="text-slate-500 mb-6">
+                  No properties found for the selected category. Be the first to add one!
+                </p>
+                <Button 
+                  asChild 
+                  className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 shadow-lg shadow-purple-500/25"
+                >
+                  <Link href="/add-property">Launch Your First Property</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </section>
+      </div>
+
+      {/* Custom CSS for animations */}
+      <style jsx global>{`
+        @keyframes blob {
+          0% {
+            transform: translate(0px, 0px) scale(1);
+          }
+          33% {
+            transform: translate(30px, -50px) scale(1.1);
+          }
+          66% {
+            transform: translate(-20px, 20px) scale(0.9);
+          }
+          100% {
+            transform: translate(0px, 0px) scale(1);
+          }
+        }
+        
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+        
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+
+        .line-clamp-1 {
+          display: -webkit-box;
+          -webkit-line-clamp: 1;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+      `}</style>
     </div>
   )
 }
