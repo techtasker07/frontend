@@ -208,7 +208,7 @@ export default function ProspectPropertiesPage() {
                       )}
                     </div>
                     <Button asChild className="w-full">
-                      <Link href={`/prospect-properties/${prospect.id}`}>View Details</Link>
+                      <Link href={`/prospect_properties/${prospect.id}`}>View Details</Link>
                     </Button>
                   </CardContent>
                 </Card>
