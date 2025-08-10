@@ -87,50 +87,15 @@ export interface PropertyStats {
   total_votes: number;
 }
 
-export interface ProspectProperty {
-  id: number;
-  title: string;
-  description: string;
-  location: string;
-  category_id: number;
-  estimated_worth?: number;
-  year_of_construction?: number;
-  image_url?: string; // Keep for backward compatibility
-  created_at: string;
-  updated_at: string;
-  category_name?: string;
-  images?: ProspectPropertyImage[]; // New images array support
-  ai_analysis?: AIAnalysis; // Only available on detail page for logged-in users
-}
-
-// Added ProspectPropertyImage interface
-export interface ProspectPropertyImage {
-  id: number;
-  prospect_property_id: number;
-  image_url: string;
-  is_primary: boolean;
-  created_at: string;
-}
-
-export interface AIAnalysis {
-  overall_sentiment: string;
-  confidence_score: number;
-  key_insights: string[];
-  strategic_recommendations: string[];
-  risk_factors: string;
-  estimated_roi: string;
-  last_analyzed: string;
-}
-
 class ApiClient {
-  constructor() {
-  }
+  constructor() {}
 
   private getAuthHeaders(): HeadersInit {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
     return {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      "Content-Type": "application/json",
+      Accept: "application/json",
       ...(token && { Authorization: `Bearer ${token}` }),
     };
   }
@@ -142,28 +107,32 @@ class ApiClient {
     const url = `/api${endpoint}`;
 
     try {
-      console.log('Making API request to:', url); // Debug log
-      console.log('Request options:', options); // Debug log
-      
+      console.log("Making API request to:", url); // Debug log
+      console.log("Request options:", options); // Debug log
+
       const response = await fetch(url, {
         ...options,
-        credentials: 'omit',
+        credentials: "omit",
         headers: options.headers || this.getAuthHeaders(), // Allow overriding headers for file uploads
       });
 
-      console.log('Response status:', response.status); // Debug log
+      console.log("Response status:", response.status); // Debug log
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
-        console.error('API Error:', errorData); // Debug log
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: `HTTP ${response.status}` }));
+        console.error("API Error:", errorData); // Debug log
+        throw new Error(
+          errorData.error || `HTTP error! status: ${response.status}`
+        );
       }
 
       const data = await response.json();
-      console.log('API Response:', data); // Debug log
+      console.log("API Response:", data); // Debug log
       return data;
     } catch (error: any) {
-      console.error('API Request failed:', error); // Debug log
+      console.error("API Request failed:", error); // Debug log
       throw error;
     }
   }
@@ -176,8 +145,8 @@ class ApiClient {
     password: string;
     phone_number?: string;
   }): Promise<ApiResponse<{ user: User; token: string }>> {
-    return this.request('/auth/register', {
-      method: 'POST',
+    return this.request("/auth/register", {
+      method: "POST",
       body: JSON.stringify(userData),
     });
   }
@@ -186,20 +155,23 @@ class ApiClient {
     email: string;
     password: string;
   }): Promise<ApiResponse<{ user: User; token: string }>> {
-    return this.request('/auth/login', {
-      method: 'POST',
+    return this.request("/auth/login", {
+      method: "POST",
       body: JSON.stringify(credentials),
     });
   }
 
   async getCurrentUser(): Promise<ApiResponse<{ user: User }>> {
-    return this.request('/auth/me');
+    return this.request("/auth/me");
   }
 
   // Users methods
-  async updateUser(id: number, userData: Partial<User>): Promise<ApiResponse<User>> {
+  async updateUser(
+    id: number,
+    userData: Partial<User>
+  ): Promise<ApiResponse<User>> {
     return this.request(`/users/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(userData),
     });
   }
@@ -221,7 +193,9 @@ class ApiClient {
     }
 
     const queryString = searchParams.toString();
-    return this.request(`/properties${queryString ? `?${queryString}` : ''}`);
+    return this.request(
+      `/properties${queryString ? `?${queryString}` : ""}`
+    );
   }
 
   async getProperty(id: number): Promise<ApiResponse<Property>> {
@@ -235,78 +209,43 @@ class ApiClient {
     category_id: number;
     current_worth?: number;
     year_of_construction?: number;
-    lister_phone_number?: string; // New field
-    image_urls?: string[]; // New field for multiple image URLs
+    lister_phone_number?: string;
+    image_urls?: string[];
   }): Promise<ApiResponse<Property>> {
-    return this.request('/properties', {
-      method: 'POST',
+    return this.request("/properties", {
+      method: "POST",
       body: JSON.stringify(propertyData),
     });
   }
 
-  async updateProperty(id: number, propertyData: Partial<Property>): Promise<ApiResponse<Property>> {
+  async updateProperty(
+    id: number,
+    propertyData: Partial<Property>
+  ): Promise<ApiResponse<Property>> {
     return this.request(`/properties/${id}`, {
-      method: 'PUT',
+      method: "PUT",
     });
   }
 
   async deleteProperty(id: number): Promise<ApiResponse<Property>> {
     return this.request(`/properties/${id}`, {
-      method: 'DELETE',
-    });
-  }
-
-  // Fixed Prospect Properties methods
-  async getProspectProperties(params?: {
-    category?: string;
-    user_id?: number;
-    limit?: number;
-    offset?: number;
-    searchTerm?: string; // Added missing searchTerm parameter
-  }): Promise<ApiResponse<ProspectProperty[]>> {
-    const searchParams = new URLSearchParams();
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
-    const queryString = searchParams.toString();
-    return this.request(`/prospect_properties${queryString ? `?${queryString}` : ''}`);
-  }
-
-  async getProspectProperty(id: number): Promise<ApiResponse<ProspectProperty>> {
-    return this.request(`/prospect_properties/${id}`);
-  }
-
-  // Fixed createProspectProperty to match updated API
-  async createProspectProperty(prospectData: {
-    title: string;
-    description: string;
-    location: string;
-    category_id: number;
-    estimated_worth?: number;
-    year_of_construction?: number;
-    image_urls?: string[]; // Changed from image_url to image_urls array
-  }): Promise<ApiResponse<ProspectProperty>> {
-    return this.request('/prospect_properties', {
-      method: 'POST',
-      body: JSON.stringify(prospectData),
+      method: "DELETE",
     });
   }
 
   // Categories methods
   async getCategories(): Promise<ApiResponse<Category[]>> {
-    return this.request('/categories');
+    return this.request("/categories");
   }
 
   // Votes methods
   async getVotes(): Promise<ApiResponse<Vote[]>> {
-    return this.request('/votes');
+    return this.request("/votes");
   }
 
-  async getVotesByProperty(propertyId: number): Promise<ApiResponse<Vote[]>> {
+  async getVotesByProperty(
+    propertyId: number
+  ): Promise<ApiResponse<Vote[]>> {
     return this.request(`/votes/property/${propertyId}`);
   }
 
@@ -314,55 +253,60 @@ class ApiClient {
     property_id: number;
     vote_option_id: number;
   }): Promise<ApiResponse<Vote>> {
-    return this.request('/votes', {
-      method: 'POST',
+    return this.request("/votes", {
+      method: "POST",
       body: JSON.stringify(voteData),
     });
   }
 
   // Vote options methods
   async getVoteOptions(): Promise<ApiResponse<VoteOption[]>> {
-    return this.request('/vote-options');
+    return this.request("/vote-options");
   }
 
-  async getVoteOptionsByCategory(categoryId: number): Promise<ApiResponse<VoteOption[]>> {
+  async getVoteOptionsByCategory(
+    categoryId: number
+  ): Promise<ApiResponse<VoteOption[]>> {
     return this.request(`/vote-options/category/${categoryId}`);
   }
 
   // Statistics methods
-  async getPropertyStats(propertyId: number): Promise<ApiResponse<PropertyStats>> {
+  async getPropertyStats(
+    propertyId: number
+  ): Promise<ApiResponse<PropertyStats>> {
     return this.request(`/properties/${propertyId}/stats`);
   }
 
-  async getPlatformStats(): Promise<ApiResponse<{
-    total_users: number;
-    total_properties: number;
-    total_votes: number;
-    total_images: number;
-    recent_activity: any[];
-    total_prospect_properties: number;
-  }>> {
-    return this.request('/stats');
+  async getPlatformStats(): Promise<
+    ApiResponse<{
+      total_users: number;
+      total_properties: number;
+      total_votes: number;
+      total_images: number;
+      recent_activity: any[];
+    }>
+  > {
+    return this.request("/stats");
   }
 
   // New upload method
   async uploadFile(file: File): Promise<ApiResponse<{ url: string }>> {
     const formData = new FormData();
-    formData.append('file', file); // Append the file directly
+    formData.append("file", file);
 
-    // Use a direct fetch call for file upload to avoid JSON.stringify on FormData
     const response = await fetch(`/api/upload?filename=${file.name}`, {
-      method: 'POST',
-      body: file, // Send the file directly as body
+      method: "POST",
+      body: file,
       headers: {
-        // Do NOT set 'Content-Type': 'multipart/form-data' here, browser does it automatically with boundary
-        'Accept': 'application/json',
+        Accept: "application/json",
       },
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      throw new Error(
+        errorData.error || `HTTP error! status: ${response.status}`
+      );
     }
 
     const data = await response.json();
