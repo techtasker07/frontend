@@ -29,7 +29,7 @@ export function Sidebar() {
     { href: '/', icon: Home, label: 'Home', requiresAuth: false },
     { href: '/add-property', icon: Plus, label: 'Add Property', requiresAuth: true },
     { href: '/dashboard', icon: BarChart3, label: 'Dashboard', requiresAuth: true },
-    { href: '/prospect-properties', icon: Brain, label: 'Prospects', requiresAuth: true },
+    { href: '/prospectProperties', icon: Brain, label: 'Prospects', requiresAuth: true },
   ]
 
   const renderNavLinks = (isMobile = false) => (
