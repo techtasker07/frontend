@@ -104,35 +104,17 @@ export default function HomePage() {
         {/* Enhanced Hero Section */}
         <section className="text-center mb-20 py-24">
           <div className="relative">
-            <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full text-sm font-medium text-purple-800 mb-6">
-              <Star className="w-4 h-4 mr-2 text-yellow-500" />
-              Next-Generation Property Platform
-            </div>
-            <h1 className="text-7xl md:text-9xl font-black bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-8 leading-tight">
+            <h3 className="text-6xl font-bold bg-gradient-to-r from-[oklch(0.2_0.15_265)] to-[oklch(0.75_0.18_60)] bg-clip-text text-transparent">
               MIPRIPITY
-            </h1>
+            </h3>
             <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-full h-3 bg-gradient-to-r from-transparent via-indigo-500 to-transparent blur-lg opacity-30"></div>
           </div>
-          <p className="text-2xl md:text-3xl text-slate-700 mb-12 max-w-4xl mx-auto leading-relaxed font-light">
+          <p className="text-lg md:text-xl text-slate-700 mb-12 max-w-4xl mx-auto leading-relaxed font-light">
             Revolutionary property evaluation platform powered by{" "}
             <span className="font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
               Techtasker Solutions
             </span>
           </p>
-          <div className="flex flex-wrap justify-center gap-6 mb-12">
-            <div className="flex items-center gap-3 px-6 py-3 bg-white/90 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
-              <Zap className="h-5 w-5 text-yellow-500" />
-              <span className="text-slate-700 font-medium">Lightning Fast</span>
-            </div>
-            <div className="flex items-center gap-3 px-6 py-3 bg-white/90 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
-              <Globe className="h-5 w-5 text-blue-500" />
-              <span className="text-slate-700 font-medium">Global Network</span>
-            </div>
-            <div className="flex items-center gap-3 px-6 py-3 bg-white/90 backdrop-blur-sm border border-slate-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
-              <TrendingUp className="h-5 w-5 text-green-500" />
-              <span className="text-slate-700 font-medium">AI Powered</span>
-            </div>
-          </div>
         </section>
 
         {/* AI-Powered Prospect Properties Section */}
@@ -142,9 +124,9 @@ export default function HomePage() {
               <Lightbulb className="w-4 h-4 mr-2 text-yellow-500" />
               AI-Powered Intelligence
             </div>
-            <h2 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
+            <h4 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
               Property Prospects
-            </h2>
+            </h4>
             <p className="text-xl text-slate-600 max-w-3xl mx-auto mb-8">
               Discover investment opportunities with intelligent AI suggestions and comprehensive market analysis
             </p>
@@ -290,7 +272,7 @@ export default function HomePage() {
                 <Building className="w-4 h-4 mr-2 text-blue-600" />
                 Property Evaluation
               </div>
-              <h2 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent mb-6">
+              <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent mb-6">
                 Featured Properties
               </h2>
               <p className="text-xl text-slate-600 max-w-2xl">

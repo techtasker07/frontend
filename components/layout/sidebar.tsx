@@ -12,12 +12,11 @@ interface SidebarProps {
 }
 
 const navigation = [
-  { name: "Dashboard", href: "/", icon: Home },
-  { name: "Properties", href: "/properties", icon: Building },
+  { name: "Home", href: "/", icon: Home },
+  { name: "Dashboard", href: "/dashboard", icon: Home },
+  { name: "Properties", href: "/api/properties", icon: Building },
   { name: "Prospect Properties", href: "/prospectProperties", icon: Lightbulb },
   { name: "Add Property", href: "/add-property", icon: Plus },
-  { name: "Analytics", href: "/analytics", icon: BarChart3 },
-  { name: "Search", href: "/search", icon: Search },
 ]
 
 export function Sidebar({ onClose }: SidebarProps) {
@@ -102,14 +101,6 @@ export function Sidebar({ onClose }: SidebarProps) {
               >
                 <User className="mr-3 h-4 w-4" />
                 Profile
-              </Link>
-              <Link
-                href="/settings"
-                onClick={onClose}
-                className="flex items-center px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <Settings className="mr-3 h-4 w-4" />
-                Settings
               </Link>
               <button
                 onClick={() => {

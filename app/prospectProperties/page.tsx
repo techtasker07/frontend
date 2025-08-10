@@ -26,6 +26,7 @@ import { api, type ProspectProperty, type Category } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 import { MapPin, Calendar, DollarSign, Plus, Search, Filter, Loader2, Lightbulb } from "lucide-react"
 import { toast } from "sonner"
+import { ImageUpload } from "@/components/ui/image-upload"
 
 export default function ProspectPropertiesPage() {
   const router = useRouter()
@@ -37,6 +38,7 @@ export default function ProspectPropertiesPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all") // Updated default value
   const [searchTerm, setSearchTerm] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [error, setError] = useState<string>("") // Declare setError variable
 
   // Form state
   const [formData, setFormData] = useState({
@@ -48,6 +50,9 @@ export default function ProspectPropertiesPage() {
     year_of_construction: "",
     image_url: "",
   })
+
+  // Add after the existing formData state
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
 
   useEffect(() => {
     fetchProperties()
@@ -88,6 +93,26 @@ export default function ProspectPropertiesPage() {
 
     setCreating(true)
     try {
+      let imageUrl: string | undefined = formData.image_url
+
+      // Handle file upload if a file is selected
+      if (selectedImageFile) {
+        try {
+          const uploadResponse = await api.uploadFile(selectedImageFile)
+          if (uploadResponse.success) {
+            imageUrl = uploadResponse.data.url
+            toast.success("Image uploaded successfully!")
+          } else {
+            throw new Error(uploadResponse.error || "Failed to upload image")
+          }
+        } catch (uploadError: any) {
+          toast.error(`Failed to upload image: ${uploadError.message}`)
+          setError(`Failed to upload image: ${uploadError.message}`)
+          setCreating(false)
+          return
+        }
+      }
+
       const propertyData = {
         ...formData,
         category_id: Number.parseInt(formData.category_id),
@@ -95,6 +120,7 @@ export default function ProspectPropertiesPage() {
         year_of_construction: formData.year_of_construction
           ? Number.parseInt(formData.year_of_construction)
           : undefined,
+        image_url: imageUrl, // Use uploaded URL or manual URL
       }
 
       const response = await api.createProspectProperty(propertyData)
@@ -110,12 +136,21 @@ export default function ProspectPropertiesPage() {
           year_of_construction: "",
           image_url: "",
         })
+        setSelectedImageFile(null) // Reset file selection
         fetchProperties()
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to create property")
     } finally {
       setCreating(false)
+    }
+  }
+
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedImageFile(e.target.files[0])
+    } else {
+      setSelectedImageFile(null)
     }
   }
 
@@ -160,100 +195,160 @@ export default function ProspectPropertiesPage() {
                 Add Property
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <form onSubmit={handleCreateProperty}>
-                <DialogHeader>
+            <DialogContent className="sm:max-w-[80vw] max-h-[80vh] w-[80vw] h-[80vh] flex flex-col">
+              <form onSubmit={handleCreateProperty} className="flex flex-col h-full">
+                <DialogHeader className="flex-shrink-0">
                   <DialogTitle>Add New Prospect Property</DialogTitle>
                   <DialogDescription>
                     Add a property to get AI-powered development and investment suggestions.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="title">Title</Label>
-                    <Input
-                      id="title"
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="location">Location</Label>
-                    <Input
-                      id="location"
-                      value={formData.location}
-                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="category">Category</Label>
-                    <Select
-                      value={formData.category_id}
-                      onValueChange={(value) => setFormData({ ...formData, category_id: value })}
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.id.toString()}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="estimated_worth">Estimated Worth (₦)</Label>
-                    <Input
-                      id="estimated_worth"
-                      type="number"
-                      value={formData.estimated_worth}
-                      onChange={(e) => setFormData({ ...formData, estimated_worth: e.target.value })}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="year_of_construction">Year of Construction</Label>
-                    <Input
-                      id="year_of_construction"
-                      type="number"
-                      value={formData.year_of_construction}
-                      onChange={(e) => setFormData({ ...formData, year_of_construction: e.target.value })}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="image_url">Image URL</Label>
-                    <Input
-                      id="image_url"
-                      type="url"
-                      value={formData.image_url}
-                      onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                    />
+
+                <div className="flex-1 overflow-y-auto py-4">
+                  <div className="grid gap-6 px-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="title">Title</Label>
+                        <Input
+                          id="title"
+                          value={formData.title}
+                          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                          required
+                          className="h-11"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="location">Location</Label>
+                        <Input
+                          id="location"
+                          value={formData.location}
+                          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                          required
+                          className="h-11"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        required
+                        rows={4}
+                        className="resize-none"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="category">Category</Label>
+                        <Select
+                          value={formData.category_id}
+                          onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+                          required
+                        >
+                          <SelectTrigger className="h-11">
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.id.toString()}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="year_of_construction">Year of Construction</Label>
+                        <Input
+                          id="year_of_construction"
+                          type="number"
+                          value={formData.year_of_construction}
+                          onChange={(e) => setFormData({ ...formData, year_of_construction: e.target.value })}
+                          className="h-11"
+                          min="1800"
+                          max={new Date().getFullYear()}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="estimated_worth">Estimated Worth (₦)</Label>
+                      <Input
+                        id="estimated_worth"
+                        type="number"
+                        value={formData.estimated_worth}
+                        onChange={(e) => setFormData({ ...formData, estimated_worth: e.target.value })}
+                        className="h-11"
+                        min="0"
+                        step="1000"
+                        placeholder="e.g., 25000000"
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <ImageUpload
+                        value={formData.image_url}
+                        onChange={(url) => setFormData({ ...formData, image_url: url })}
+                        onFileSelect={setSelectedImageFile}
+                        disabled={creating}
+                        label="Property Image"
+                        description="Upload an image file or provide a direct image URL for the prospect property"
+                      />
+                    </div>
+
+                    {/* Preview Section */}
+                    {(formData.title || formData.location || formData.description) && (
+                      <div className="border rounded-lg p-4 bg-muted/50">
+                        <h4 className="font-medium mb-3 text-sm text-muted-foreground">Preview</h4>
+                        <div className="space-y-2">
+                          {formData.title && <h5 className="font-semibold text-lg">{formData.title}</h5>}
+                          {formData.location && (
+                            <p className="text-sm text-muted-foreground flex items-center">
+                              <MapPin className="h-3 w-3 mr-1" />
+                              {formData.location}
+                            </p>
+                          )}
+                          {formData.description && <p className="text-sm line-clamp-3">{formData.description}</p>}
+                          {formData.estimated_worth && (
+                            <p className="text-sm font-medium text-green-600">
+                              ₦{Number.parseFloat(formData.estimated_worth).toLocaleString()}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-                <DialogFooter>
-                  <Button type="submit" disabled={creating}>
-                    {creating ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating...
-                      </>
-                    ) : (
-                      "Create Property"
-                    )}
-                  </Button>
+
+                <DialogFooter className="flex-shrink-0 pt-4 border-t">
+                  <div className="flex gap-3 w-full sm:w-auto">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsDialogOpen(false)}
+                      disabled={creating}
+                      className="flex-1 sm:flex-none"
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={creating} className="flex-1 sm:flex-none">
+                      {creating ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Create Property
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </DialogFooter>
               </form>
             </DialogContent>
@@ -363,6 +458,50 @@ export default function ProspectPropertiesPage() {
           ))}
         </div>
       )}
+      {/* Custom styles for the large modal */}
+      <style jsx global>{`
+        @media (max-width: 640px) {
+          [data-radix-dialog-content] {
+            width: 95vw !important;
+            height: 90vh !important;
+            max-width: 95vw !important;
+            max-height: 90vh !important;
+          }
+        }
+        
+        @media (min-width: 641px) and (max-width: 1024px) {
+          [data-radix-dialog-content] {
+            width: 85vw !important;
+            height: 85vh !important;
+            max-width: 85vw !important;
+            max-height: 85vh !important;
+          }
+        }
+        
+        /* Ensure the dialog overlay is properly styled */
+        [data-radix-dialog-overlay] {
+          background-color: rgba(0, 0, 0, 0.6);
+          backdrop-filter: blur(4px);
+        }
+        
+        /* Custom scrollbar for the modal content */
+        .modal-scroll::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        .modal-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        .modal-scroll::-webkit-scrollbar-thumb {
+          background: rgba(0, 0, 0, 0.2);
+          border-radius: 3px;
+        }
+        
+        .modal-scroll::-webkit-scrollbar-thumb:hover {
+          background: rgba(0, 0, 0, 0.3);
+        }
+      `}</style>
     </div>
   )
 }
