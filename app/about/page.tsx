@@ -3,26 +3,26 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Users, Target, Lightbulb, Shield, Award, Globe, ArrowRight, Heart, Zap } from "lucide-react"
+import { Users, Target, Lightbulb, Shield, Award, Globe, ArrowRight, Heart, Zap, MapPin } from "lucide-react"
 
 export default function AboutPage() {
   const teamMembers = [
     {
       name: "Mr. Prosper Owah",
       role: "CEO & Founder",
-      image: "",
+      image: "/professional-african-ceo.png",
       description: "Visionary leader with 15+ years in real estate and technology innovation.",
     },
     {
       name: "Mr. Taiwo Majekodunmi",
       role: "Product Manager",
-      image: "",
+      image: "/professional-african-man-product.png",
       description: "Tech expert specializing in AI and machine learning applications.",
     },
     {
       name: "Eniola",
       role: "Operations",
-      image: "g",
+      image: "/professional-african-woman-operations.png",
       description: "Product strategist focused on user experience and market research.",
     },
   ]
@@ -101,13 +101,28 @@ export default function AboutPage() {
               </div>
             </div>
             <div className="relative">
-              <Image
-                src="/placeholder-atncx.png"
-                alt="Techtasker Solutions Office"
-                width={600}
-                height={500}
-                className="rounded-2xl shadow-2xl"
-              />
+              {/* Office Location Map */}
+              <div className="relative rounded-2xl shadow-2xl overflow-hidden bg-white p-4">
+                <div className="mb-4 flex items-center space-x-2">
+                  <MapPin className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <h3 className="font-semibold text-slate-800">Our Office Location</h3>
+                    <p className="text-sm text-slate-600">34 Rafiu Cres, Mafoluku Oshodi, Lagos 102214, Lagos</p>
+                  </div>
+                </div>
+                <div className="relative h-80 w-full rounded-xl overflow-hidden">
+                  <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3964.2847982842447!2d3.3302!3d6.5244!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103b8b2ae68280c1%3A0x4e5f306c2b4c5d6e!2s34%20Rafiu%20Cres%2C%20Mafoluku%20Oshodi%2C%20Lagos%20102214%2C%20Lagos!5e0!3m2!1sen!2sng!4v1635789012345!5m2!1sen!2sng"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    className="rounded-xl"
+                  ></iframe>
+                </div>
+              </div>
               <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-xl shadow-lg">
                 <div className="flex items-center space-x-3">
                   <Award className="h-8 w-8 text-yellow-500" />
@@ -216,7 +231,7 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {teamMembers.map((member, index) => (
               <Card
                 key={index}

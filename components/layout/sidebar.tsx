@@ -4,19 +4,22 @@ import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
+import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/lib/auth"
-import { Home, Building, Lightbulb, Plus, User, Settings, LogOut, X, BarChart3, Search } from "lucide-react"
+import { Home, Building, Lightbulb, Plus, User, Settings, LogOut, X, BarChart3, Search, Bell } from "lucide-react"
 
 interface SidebarProps {
   onClose?: () => void
 }
 
 const navigation = [
-  { name: "Home", href: "/", icon: Home },
-  { name: "Dashboard", href: "/dashboard", icon: Home },
+  { name: "Dashboard", href: "/", icon: Home },
   { name: "Properties", href: "/properties", icon: Building },
   { name: "Prospect Properties", href: "/prospectProperties", icon: Lightbulb },
   { name: "Add Property", href: "/add-property", icon: Plus },
+  { name: "Notifications", href: "/notifications", icon: Bell, badge: 3 },
+  { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  { name: "Search", href: "/search", icon: Search },
 ]
 
 export function Sidebar({ onClose }: SidebarProps) {
@@ -24,9 +27,9 @@ export function Sidebar({ onClose }: SidebarProps) {
   const { user, isAuthenticated, logout } = useAuth()
 
   return (
-    <div className="flex h-full w-64 flex-col bg-white border-r border-gray-200 shadow-lg">
+    <div className="flex h-full w-64 flex-col bg-white border-r border-gray-200 shadow-lg md:fixed md:inset-y-0 md:left-0 md:z-40">
       {/* Header */}
-      <div className="flex h-16 items-center justify-between px-6 border-b border-gray-200">
+      <div className="flex h-16 items-center justify-between px-6 border-b border-gray-200 flex-shrink-0">
         <Link href="/" className="flex items-center">
           <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             MIPRIPITY
@@ -56,7 +59,7 @@ export function Sidebar({ onClose }: SidebarProps) {
                 href={item.href}
                 onClick={onClose} // Close mobile sidebar on navigation
                 className={`
-                  flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200
+                  flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200
                   ${
                     isActive
                       ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700"
@@ -64,8 +67,15 @@ export function Sidebar({ onClose }: SidebarProps) {
                   }
                 `}
               >
-                <item.icon className={`mr-3 h-5 w-5 ${isActive ? "text-blue-700" : "text-gray-500"}`} />
-                {item.name}
+                <div className="flex items-center">
+                  <item.icon className={`mr-3 h-5 w-5 ${isActive ? "text-blue-700" : "text-gray-500"}`} />
+                  {item.name}
+                </div>
+                {item.badge && item.badge > 0 && (
+                  <Badge className="bg-red-500 text-white text-xs px-1.5 py-0.5 min-w-[1.25rem] h-5">
+                    {item.badge}
+                  </Badge>
+                )}
               </Link>
             )
           })}
@@ -73,7 +83,7 @@ export function Sidebar({ onClose }: SidebarProps) {
       </ScrollArea>
 
       {/* User Section */}
-      <div className="border-t border-gray-200 p-4">
+      <div className="border-t border-gray-200 p-4 flex-shrink-0">
         {isAuthenticated ? (
           <div className="space-y-3">
             <div className="flex items-center space-x-3 px-3 py-2">
@@ -101,6 +111,14 @@ export function Sidebar({ onClose }: SidebarProps) {
               >
                 <User className="mr-3 h-4 w-4" />
                 Profile
+              </Link>
+              <Link
+                href="/settings"
+                onClick={onClose}
+                className="flex items-center px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <Settings className="mr-3 h-4 w-4" />
+                Settings
               </Link>
               <button
                 onClick={() => {
