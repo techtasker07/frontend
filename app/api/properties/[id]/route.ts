@@ -1,140 +1,169 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { query } from '@/lib/db';
-import { protect, AuthNextRequest } from '@/lib/authUtils';
-import { Property, PropertyImage } from '@/lib/api';
+import { type NextRequest, NextResponse } from "next/server"
 
-// @route   GET /api/properties/:id
-// @desc    Get single property by ID
-// @access  Public
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const propertyId = parseInt(params.id);
-  if (isNaN(propertyId)) {
-    return NextResponse.json({ success: false, error: 'Invalid property ID' }, { status: 400 });
-  }
+// Mock data - same as in route.ts
+const mockProperties = [
+  {
+    id: 1,
+    title: "Modern 3-Bedroom Apartment",
+    description:
+      "Beautiful modern apartment with stunning city views, located in the heart of downtown. Features include hardwood floors, stainless steel appliances, and a spacious balcony.",
+    location: "Downtown Lagos, Nigeria",
+    user_id: 1,
+    category_id: 1,
+    current_worth: 45000000,
+    year_of_construction: 2020,
+    lister_phone_number: "+2348012345678",
+    property_images: JSON.stringify([
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop",
+    ]),
+    created_at: "2024-01-15T10:30:00Z",
+    updated_at: "2024-01-15T10:30:00Z",
+    owner_name: "John Doe",
+    owner_email: "john@example.com",
+    owner_phone: "+2348012345678",
+    owner_profile_picture: "/placeholder.svg",
+    category_name: "Residential",
+    vote_count: 15,
+  },
+  {
+    id: 2,
+    title: "Commercial Office Space",
+    description:
+      "Prime commercial office space perfect for startups and established businesses. Located in a prestigious business district with excellent transport links.",
+    location: "Victoria Island, Lagos",
+    user_id: 2,
+    category_id: 2,
+    current_worth: 120000000,
+    year_of_construction: 2018,
+    lister_phone_number: "+2348087654321",
+    property_images: JSON.stringify([
+      "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop",
+    ]),
+    created_at: "2024-01-14T14:20:00Z",
+    updated_at: "2024-01-14T14:20:00Z",
+    owner_name: "Jane Smith",
+    owner_email: "jane@example.com",
+    owner_phone: "+2348087654321",
+    owner_profile_picture: "/placeholder.svg",
+    category_name: "Commercial",
+    vote_count: 8,
+  },
+  {
+    id: 3,
+    title: "Residential Land Plot",
+    description:
+      "Excellent residential land plot in a developing area. Perfect for building your dream home with easy access to schools, hospitals, and shopping centers.",
+    location: "Lekki, Lagos",
+    user_id: 3,
+    category_id: 3,
+    current_worth: 25000000,
+    year_of_construction: null,
+    lister_phone_number: "+2348098765432",
+    property_images: JSON.stringify([
+      "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop",
+    ]),
+    created_at: "2024-01-13T09:15:00Z",
+    updated_at: "2024-01-13T09:15:00Z",
+    owner_name: "Mike Johnson",
+    owner_email: "mike@example.com",
+    owner_phone: "+2348098765432",
+    owner_profile_picture: "/placeholder.svg",
+    category_name: "Land",
+    vote_count: 12,
+  },
+]
 
+const mockVoteOptions = [
+  { id: 1, name: "Excellent Value", category_id: 1 },
+  { id: 2, name: "Good Value", category_id: 1 },
+  { id: 3, name: "Fair Value", category_id: 1 },
+  { id: 4, name: "Overpriced", category_id: 1 },
+  { id: 5, name: "Great Investment", category_id: 2 },
+  { id: 6, name: "Good Investment", category_id: 2 },
+  { id: 7, name: "Risky Investment", category_id: 2 },
+  { id: 8, name: "Prime Location", category_id: 3 },
+  { id: 9, name: "Good Location", category_id: 3 },
+  { id: 10, name: "Average Location", category_id: 3 },
+]
+
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const propertyResult = await query<Property>(
-      `SELECT
-         p.id, p.title, p.description, p.location, p.user_id, p.category_id,
-         p.current_worth, p.year_of_construction, p.created_at, p.updated_at, p.lister_phone_number,
-         u.first_name || ' ' || u.last_name AS owner_name,
-         u.email AS owner_email,
-         u.phone_number AS owner_phone,
-         u.profile_picture AS owner_profile_picture, -- Added owner_profile_picture
-         c.name AS category_name
-       FROM properties p
-       JOIN users u ON p.user_id = u.id
-       JOIN categories c ON p.category_id = c.id
-       WHERE p.id = $1`,
-      [propertyId]
-    );
+    const id = Number.parseInt(params.id)
+    const property = mockProperties.find((p) => p.id === id)
 
-    if (propertyResult.rows.length === 0) {
-      return NextResponse.json({ success: false, error: 'Property not found' }, { status: 404 });
+    if (!property) {
+      return NextResponse.json({ success: false, error: "Property not found" }, { status: 404 })
     }
 
-    const property = propertyResult.rows[0];
+    // Get vote options for this property's category
+    const voteOptions = mockVoteOptions.filter((option) => option.category_id === property.category_id)
 
-    // Fetch vote options for this property's category
-    const voteOptionsResult = await query<any>(
-      'SELECT id, name FROM vote_options WHERE category_id = $1',
-      [property.category_id]
-    );
-    property.vote_options = voteOptionsResult.rows;
+    // Add vote options to property
+    const propertyWithVoteOptions = {
+      ...property,
+      vote_options: voteOptions,
+    }
 
-    // Fetch images for the property
-    const imagesResult = await query<PropertyImage>(
-      'SELECT id, property_id, image_url, is_primary, created_at FROM property_images WHERE property_id = $1 ORDER BY is_primary DESC, created_at ASC',
-      [propertyId]
-    );
-    property.images = imagesResult.rows;
-
-    return NextResponse.json({ success: true, data: property });
+    return NextResponse.json({
+      success: true,
+      data: propertyWithVoteOptions,
+    })
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
+    console.error("Error fetching property:", error)
+    return NextResponse.json({ success: false, error: "Failed to fetch property" }, { status: 500 })
   }
 }
 
-// @route   PUT /api/properties/:id
-// @desc    Update a property
-// @access  Private (owner only)
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
-  const authResponse = await protect(req as AuthNextRequest);
-  if (authResponse instanceof NextResponse) {
-    return authResponse;
-  }
-
-  const propertyId = parseInt(params.id);
-  if (isNaN(propertyId)) {
-    return NextResponse.json({ success: false, error: 'Invalid property ID' }, { status: 400 });
-  }
-
-  const { title, description, location, category_id, current_worth, year_of_construction, lister_phone_number } = await req.json();
-  const userId = (req as AuthNextRequest).user!.id;
-
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    // Check if the user is the owner of the property
-    const checkOwner = await query('SELECT user_id FROM properties WHERE id = $1', [propertyId]);
-    if (checkOwner.rows.length === 0 || checkOwner.rows[0].user_id !== userId) {
-      return NextResponse.json({ success: false, error: 'Not authorized to update this property' }, { status: 403 });
+    const id = Number.parseInt(params.id)
+    const body = await request.json()
+
+    const propertyIndex = mockProperties.findIndex((p) => p.id === id)
+
+    if (propertyIndex === -1) {
+      return NextResponse.json({ success: false, error: "Property not found" }, { status: 404 })
     }
 
-    const result = await query<Property>(
-      `UPDATE properties
-       SET title = $1, description = $2, location = $3, category_id = $4, current_worth = $5, year_of_construction = $6, lister_phone_number = $7, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $8 RETURNING *`,
-      [title, description, location, category_id, current_worth, year_of_construction, lister_phone_number, propertyId]
-    );
-
-    if (result.rows.length === 0) {
-      return NextResponse.json({ success: false, error: 'Property not found' }, { status: 404 });
+    // Update property (in real implementation, update in database)
+    mockProperties[propertyIndex] = {
+      ...mockProperties[propertyIndex],
+      ...body,
+      updated_at: new Date().toISOString(),
     }
 
-    return NextResponse.json({ success: true, data: result.rows[0] });
+    return NextResponse.json({
+      success: true,
+      data: mockProperties[propertyIndex],
+      message: "Property updated successfully",
+    })
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
+    console.error("Error updating property:", error)
+    return NextResponse.json({ success: false, error: "Failed to update property" }, { status: 500 })
   }
 }
 
-// @route   DELETE /api/properties/:id
-// @desc    Delete a property
-// @access  Private (owner only)
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  const authResponse = await protect(req as AuthNextRequest);
-  if (authResponse instanceof NextResponse) {
-    return authResponse;
-  }
-
-  const propertyId = parseInt(params.id);
-  if (isNaN(propertyId)) {
-    return NextResponse.json({ success: false, error: 'Invalid property ID' }, { status: 400 });
-  }
-
-  const userId = (req as AuthNextRequest).user!.id;
-
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    // Check if the user is the owner of the property
-    const checkOwner = await query('SELECT user_id FROM properties WHERE id = $1', [propertyId]);
-    if (checkOwner.rows.length === 0 || checkOwner.rows[0].user_id !== userId) {
-      return NextResponse.json({ success: false, error: 'Not authorized to delete this property' }, { status: 403 });
+    const id = Number.parseInt(params.id)
+    const propertyIndex = mockProperties.findIndex((p) => p.id === id)
+
+    if (propertyIndex === -1) {
+      return NextResponse.json({ success: false, error: "Property not found" }, { status: 404 })
     }
 
-    // Delete associated images first
-    await query('DELETE FROM property_images WHERE property_id = $1', [propertyId]);
-    // Delete associated votes
-    await query('DELETE FROM votes WHERE property_id = $1', [propertyId]);
+    // Remove property (in real implementation, delete from database)
+    const deletedProperty = mockProperties.splice(propertyIndex, 1)[0]
 
-    const result = await query<Property>('DELETE FROM properties WHERE id = $1 RETURNING *', [propertyId]);
-
-    if (result.rows.length === 0) {
-      return NextResponse.json({ success: false, error: 'Property not found' }, { status: 404 });
-    }
-
-    return NextResponse.json({ success: true, data: result.rows[0] });
+    return NextResponse.json({
+      success: true,
+      data: deletedProperty,
+      message: "Property deleted successfully",
+    })
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
+    console.error("Error deleting property:", error)
+    return NextResponse.json({ success: false, error: "Failed to delete property" }, { status: 500 })
   }
 }
