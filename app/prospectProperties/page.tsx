@@ -24,9 +24,10 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { api, type ProspectProperty, type Category } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
-import { MapPin, Calendar, DollarSign, Plus, Search, Filter, Loader2, Lightbulb } from "lucide-react"
+import { MapPin, Calendar, Plus, Search, Filter, Loader2, Lightbulb } from "lucide-react"
 import { toast } from "sonner"
 import { ImageUpload } from "@/components/ui/image-upload"
+import ProspectButtons from "@/components/ProspectButtons"
 
 export default function ProspectPropertiesPage() {
   const router = useRouter()
@@ -403,56 +404,68 @@ export default function ProspectPropertiesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProperties.map((property) => (
-            <Card key={property.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-              <Link href={`/prospectProperties/${property.id}`}>
-                <div className="relative h-48 rounded-t-lg overflow-hidden bg-muted flex items-center justify-center">
-                  {property.image_url ? (
-                    <Image
-                      src={property.image_url || "/placeholder.svg"}
-                      alt={property.title}
-                      fill
-                      className="object-cover"
-                      onError={(e) => (e.currentTarget.src = "/placeholder.svg")}
-                    />
-                  ) : (
-                    <p className="text-muted-foreground">No image available</p>
+            <Card key={property.id} className="hover:shadow-lg transition-shadow">
+              <div className="relative h-48 rounded-t-lg overflow-hidden bg-muted flex items-center justify-center">
+                {property.image_url ? (
+                  <Image
+                    src={property.image_url || "/placeholder.svg"}
+                    alt={property.title}
+                    fill
+                    className="object-cover"
+                    onError={(e) => (e.currentTarget.src = "/placeholder.svg")}
+                  />
+                ) : (
+                  <p className="text-muted-foreground">No image available</p>
+                )}
+              </div>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <CardTitle className="text-lg line-clamp-1">
+                    <Link href={`/prospectProperties/${property.id}`} className="hover:text-primary">
+                      {property.title}
+                    </Link>
+                  </CardTitle>
+                  <Badge variant="secondary" className="text-xs">
+                    {property.category_name}
+                  </Badge>
+                </div>
+                <CardDescription className="flex items-center">
+                  <MapPin className="h-3 w-3 mr-1" />
+                  {property.location}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground line-clamp-2">{property.description}</p>
+
+                <div className="flex justify-between items-center text-sm">
+                  {property.estimated_worth && (
+                    <div className="flex items-center">
+                      <span className="font-medium">₦{property.estimated_worth.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {property.year_of_construction && (
+                    <div className="flex items-center text-muted-foreground">
+                      <Calendar className="h-3 w-3 mr-1" />
+                      <span>{property.year_of_construction}</span>
+                    </div>
                   )}
                 </div>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg line-clamp-1">{property.title}</CardTitle>
-                    <Badge variant="secondary" className="text-xs">
-                      {property.category_name}
-                    </Badge>
-                  </div>
-                  <CardDescription className="flex items-center">
-                    <MapPin className="h-3 w-3 mr-1" />
-                    {property.location}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{property.description}</p>
-                  <div className="flex justify-between items-center text-sm">
-                    {property.estimated_worth && (
-                      <div className="flex items-center">
-                        <span className="font-medium">₦{property.estimated_worth.toLocaleString()}</span>
-                      </div>
-                    )}
-                    {property.year_of_construction && (
-                      <div className="flex items-center text-muted-foreground">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        <span>{property.year_of_construction}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="mt-4 flex items-center justify-between">
-                    <Badge variant="outline" className="text-xs">
-                      <Lightbulb className="h-3 w-3 mr-1" />
-                      AI Prospects Available
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Link>
+
+                {/* AI Prospects Buttons */}
+                <ProspectButtons propertyId={property.id} prospects={property.prospects || []} className="mt-4" />
+
+                <div className="flex items-center justify-between pt-2">
+                  <Badge variant="outline" className="text-xs">
+                    <Lightbulb className="h-3 w-3 mr-1" />
+                    AI Prospects Available
+                  </Badge>
+                  <Link href={`/prospectProperties/${property.id}`}>
+                    <Button variant="ghost" size="sm">
+                      View Details
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
             </Card>
           ))}
         </div>

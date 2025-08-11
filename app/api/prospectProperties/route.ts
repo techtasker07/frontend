@@ -5,7 +5,7 @@ import type { ProspectProperty } from "@/lib/api"
 import { generateProspectsForProperty } from "@/lib/aiProspects"
 
 // @route   GET /api/prospectProperties
-// @desc    Get all prospect properties
+// @desc    Get all prospect properties with their prospects
 // @access  Public
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -18,9 +18,22 @@ export async function GET(req: NextRequest) {
       pp.id, pp.title, pp.description, pp.location, pp.category_id,
       pp.estimated_worth, pp.year_of_construction, pp.image_url,
       pp.created_at, pp.updated_at,
-      c.name AS category_name
+      c.name AS category_name,
+      COALESCE(
+        JSON_AGG(
+          JSON_BUILD_OBJECT(
+            'id', pr.id,
+            'title', pr.title,
+            'description', pr.description,
+            'estimated_cost', pr.estimated_cost,
+            'total_cost', pr.total_cost
+          )
+        ) FILTER (WHERE pr.id IS NOT NULL), 
+        '[]'
+      ) AS prospects
     FROM prospect_properties pp
     JOIN categories c ON pp.category_id = c.id
+    LEFT JOIN property_prospects pr ON pp.id = pr.prospect_property_id
   `
 
   const queryParams: (string | number)[] = []
@@ -35,7 +48,7 @@ export async function GET(req: NextRequest) {
     queryString += ` WHERE ${conditions.join(" AND ")}`
   }
 
-  queryString += ` ORDER BY pp.created_at DESC`
+  queryString += ` GROUP BY pp.id, c.name ORDER BY pp.created_at DESC`
 
   if (limit) {
     queryString += ` LIMIT $${queryParams.length + 1}`
@@ -48,7 +61,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const result = await query<ProspectProperty>(queryString, queryParams)
+    const result = await query<ProspectProperty & { prospects: any[] }>(queryString, queryParams)
     return NextResponse.json({
       success: true,
       data: result.rows,
@@ -67,7 +80,7 @@ export async function GET(req: NextRequest) {
 }
 
 // @route   POST /api/prospectProperties
-// @desc    Add a new prospect property
+// @desc    Add a new prospect property with AI-generated prospects
 // @access  Private
 export async function POST(req: NextRequest) {
   const authResponse = await protect(req as AuthNextRequest)
@@ -91,7 +104,7 @@ export async function POST(req: NextRequest) {
   try {
     // Insert the prospect property
     const propertyResult = await query<ProspectProperty>(
-      `INSERT INTO prospect_properties (title, description, location, category_id, estimated_worth, year_of_construction, image_url)
+      `INSERT INTO prospect_properties (title, description, location, category_id, estimated_worth, year_of_construction, image_url) 
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
       [title, description, location, category_id, estimated_worth, year_of_construction, image_url],
     )
@@ -115,10 +128,33 @@ export async function POST(req: NextRequest) {
 
     await Promise.all(prospectInsertPromises)
 
+    // Fetch the complete property with prospects
+    const completePropertyResult = await query(
+      `SELECT 
+        pp.*, c.name AS category_name,
+        COALESCE(
+          JSON_AGG(
+            JSON_BUILD_OBJECT(
+              'title', pr.title,
+              'description', pr.description,
+              'estimated_cost', pr.estimated_cost,
+              'total_cost', pr.total_cost
+            )
+          ) FILTER (WHERE pr.id IS NOT NULL), 
+          '[]'
+        ) AS prospects
+      FROM prospect_properties pp
+      JOIN categories c ON pp.category_id = c.id
+      LEFT JOIN property_prospects pr ON pp.id = pr.prospect_property_id
+      WHERE pp.id = $1
+      GROUP BY pp.id, c.name`,
+      [newProperty.id],
+    )
+
     return NextResponse.json(
       {
         success: true,
-        data: newProperty,
+        data: completePropertyResult.rows[0],
       },
       { status: 201 },
     )

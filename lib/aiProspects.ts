@@ -1,183 +1,629 @@
-export interface AIProspectTemplate {
+export interface PropertyProspect {
   title: string
   description: string
-  estimatedCost: number
-  categoryId: number
+  purchaseCostFactor: number
+  developmentCostFactor: number
+  realizationTips: string[]
 }
 
-// Mock AI dataset for property prospects based on categories
-export const AI_PROSPECT_TEMPLATES: Record<string, AIProspectTemplate[]> = {
-  // Residential Properties (category_id: 1)
-  "1": [
+export interface CategoryProspects {
+  [key: string]: PropertyProspect[]
+}
+
+export const MOCK_PROSPECTS: CategoryProspects = {
+  residential: [
     {
-      title: "Modern Kitchen Renovation",
+      title: "Short Let Plan",
       description:
-        "Transform your kitchen with contemporary fixtures, energy-efficient appliances, and smart storage solutions. Includes granite countertops, custom cabinetry, and LED lighting systems.",
-      estimatedCost: 2500000,
-      categoryId: 1,
+        "Convert your residential property into a short-term rental for tourists, expatriates, or corporate guests. Works best in high-traffic cities like Lagos, Abuja, and Port Harcourt.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.15,
+      realizationTips: [
+        "Furnish with modern furniture and essential appliances",
+        "Offer 24/7 electricity via solar or generator backup",
+        "List on Airbnb, Booking.com, and local property sites",
+        "Market with professional photography and virtual tours",
+        "Comply with local short-let licensing requirements",
+      ],
     },
     {
-      title: "Smart Home Automation",
+      title: "Student Housing Investment",
       description:
-        "Upgrade to a fully automated smart home system with IoT devices, security cameras, smart locks, and energy management systems for enhanced comfort and security.",
-      estimatedCost: 1800000,
-      categoryId: 1,
+        "Repurpose your residential building into a hostel or shared apartments targeting university students in areas like Ibadan, Nsukka, or Benin City.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.25,
+      realizationTips: [
+        "Divide large spaces into smaller rentable units",
+        "Provide basic furnishings like beds, wardrobes, and desks",
+        "Install prepaid electricity meters to manage usage",
+        "Offer reliable water supply and security",
+        "Partner with nearby universities for referrals",
+      ],
     },
     {
-      title: "Luxury Bathroom Upgrade",
+      title: "Family Rental Hub",
       description:
-        "Create a spa-like bathroom experience with premium fixtures, heated floors, rainfall shower systems, and modern vanities with smart mirrors.",
-      estimatedCost: 1500000,
-      categoryId: 1,
+        "Transform your property into premium family housing with modern amenities targeting middle to upper-class families.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.2,
+      realizationTips: [
+        "Install modern kitchen appliances and fixtures",
+        "Create child-friendly spaces and safety features",
+        "Provide parking spaces and security systems",
+        "Ensure reliable power and water supply",
+        "Market to expatriate families and professionals",
+      ],
     },
     {
-      title: "Energy-Efficient Solar Installation",
+      title: "Co-living Space",
       description:
-        "Install solar panels and battery storage systems to reduce electricity costs by 80% while increasing property value and environmental sustainability.",
-      estimatedCost: 3200000,
-      categoryId: 1,
+        "Create a modern co-living space for young professionals and digital nomads with shared amenities and private rooms.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.3,
+      realizationTips: [
+        "Design flexible living spaces with privacy",
+        "Install high-speed internet and work areas",
+        "Create shared kitchens and recreational spaces",
+        "Implement smart home technology",
+        "Target tech workers and remote professionals",
+      ],
     },
     {
-      title: "Outdoor Living Space Development",
+      title: "Senior Living Facility",
       description:
-        "Design and build an outdoor entertainment area with pergola, outdoor kitchen, fire pit, and landscaped garden for year-round enjoyment.",
-      estimatedCost: 2200000,
-      categoryId: 1,
+        "Convert property into assisted living or senior-friendly housing with accessibility features and care services.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.35,
+      realizationTips: [
+        "Install accessibility ramps and grab bars",
+        "Provide medical alert systems",
+        "Create common areas for social activities",
+        "Partner with healthcare providers",
+        "Ensure 24/7 security and emergency response",
+      ],
+    },
+    {
+      title: "Luxury Apartment Complex",
+      description:
+        "Develop high-end residential units with premium amenities targeting affluent tenants in prime locations.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.4,
+      realizationTips: [
+        "Install premium finishes and appliances",
+        "Provide concierge and maintenance services",
+        "Create recreational facilities like gym and pool",
+        "Implement smart building technology",
+        "Market to high-income professionals and executives",
+      ],
+    },
+    {
+      title: "Affordable Housing Project",
+      description:
+        "Create budget-friendly housing units for low to middle-income families with government partnership opportunities.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.1,
+      realizationTips: [
+        "Use cost-effective building materials",
+        "Apply for government housing subsidies",
+        "Implement energy-efficient systems",
+        "Create community spaces and playgrounds",
+        "Partner with microfinance institutions",
+      ],
+    },
+    {
+      title: "Serviced Apartment Complex",
+      description:
+        "Develop fully serviced apartments with hotel-like amenities for business travelers and long-term guests.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.25,
+      realizationTips: [
+        "Provide housekeeping and laundry services",
+        "Install business center and meeting rooms",
+        "Offer airport shuttle and concierge services",
+        "Market to corporate clients and travel agencies",
+        "Maintain hotel-standard cleanliness and service",
+      ],
+    },
+    {
+      title: "Green Residential Development",
+      description: "Create eco-friendly residential units with sustainable features and renewable energy systems.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.3,
+      realizationTips: [
+        "Install solar panels and rainwater harvesting",
+        "Use sustainable building materials",
+        "Implement waste management systems",
+        "Create green spaces and gardens",
+        "Market to environmentally conscious buyers",
+      ],
+    },
+    {
+      title: "Mixed-Use Residential",
+      description:
+        "Combine residential units with commercial spaces like shops or offices to maximize property utilization.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.35,
+      realizationTips: [
+        "Design separate entrances for residential and commercial",
+        "Ensure proper zoning compliance",
+        "Create parking solutions for both uses",
+        "Market residential units to urban professionals",
+        "Lease commercial spaces to complementary businesses",
+      ],
     },
   ],
-
-  // Commercial Properties (category_id: 2)
-  "2": [
+  commercial: [
     {
-      title: "Co-working Space Conversion",
+      title: "Tech Hub & Co-working Space",
       description:
-        "Transform the property into a modern co-working facility with flexible workstations, meeting rooms, high-speed internet infrastructure, and collaborative spaces.",
-      estimatedCost: 8500000,
-      categoryId: 2,
+        "Transform your commercial property into a modern co-working space targeting startups, freelancers, and remote workers.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.25,
+      realizationTips: [
+        "Install high-speed fiber internet and backup power",
+        "Create flexible workspaces with modern furniture",
+        "Provide meeting rooms and event spaces",
+        "Offer virtual office services and mail handling",
+        "Partner with tech communities and startup incubators",
+      ],
     },
     {
       title: "Retail Shopping Complex",
       description:
-        "Develop a multi-tenant retail space with modern storefronts, central air conditioning, parking facilities, and digital advertising displays.",
-      estimatedCost: 15000000,
-      categoryId: 2,
+        "Develop a multi-tenant retail space with diverse shops, restaurants, and service providers in high-traffic areas.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.3,
+      realizationTips: [
+        "Design attractive storefronts and common areas",
+        "Provide ample parking and security systems",
+        "Create anchor tenant spaces for major brands",
+        "Implement modern POS and payment systems",
+        "Market to both local and international retailers",
+      ],
     },
     {
-      title: "Medical Center Development",
+      title: "Medical Center Complex",
       description:
-        "Convert to a specialized medical facility with consultation rooms, diagnostic equipment spaces, pharmacy, and patient waiting areas with modern amenities.",
-      estimatedCost: 12000000,
-      categoryId: 2,
+        "Convert property into a medical facility housing multiple healthcare providers, clinics, and diagnostic centers.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.4,
+      realizationTips: [
+        "Install medical-grade electrical and plumbing systems",
+        "Ensure compliance with healthcare regulations",
+        "Provide specialized medical equipment infrastructure",
+        "Create patient-friendly waiting and consultation areas",
+        "Partner with healthcare professionals and insurance providers",
+      ],
     },
     {
-      title: "Tech Hub and Innovation Center",
+      title: "Event & Conference Center",
       description:
-        "Create a technology incubator with high-speed fiber internet, server rooms, presentation theaters, and flexible office spaces for startups and tech companies.",
-      estimatedCost: 18000000,
-      categoryId: 2,
+        "Develop a versatile event space for weddings, corporate events, conferences, and social gatherings.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.35,
+      realizationTips: [
+        "Install professional audio-visual equipment",
+        "Create flexible spaces with movable partitions",
+        "Provide catering kitchen and service areas",
+        "Ensure adequate parking and accessibility",
+        "Market to event planners and corporate clients",
+      ],
     },
     {
-      title: "Restaurant and Food Court",
+      title: "Logistics & Warehouse Hub",
       description:
-        "Develop a culinary destination with multiple restaurant spaces, commercial kitchens, dining areas, and food delivery infrastructure.",
-      estimatedCost: 10500000,
-      categoryId: 2,
+        "Transform property into a modern logistics center with storage, distribution, and e-commerce fulfillment capabilities.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.2,
+      realizationTips: [
+        "Install loading docks and material handling equipment",
+        "Implement inventory management systems",
+        "Provide office spaces for logistics operations",
+        "Ensure proximity to major transportation routes",
+        "Partner with e-commerce and logistics companies",
+      ],
+    },
+    {
+      title: "Educational Training Center",
+      description:
+        "Create a modern training facility for vocational education, professional development, and skill acquisition programs.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.3,
+      realizationTips: [
+        "Install modern classroom technology and equipment",
+        "Create specialized workshops and laboratory spaces",
+        "Provide library and study areas",
+        "Partner with educational institutions and certification bodies",
+        "Market to government training programs and corporations",
+      ],
+    },
+    {
+      title: "Food Court & Restaurant Hub",
+      description:
+        "Develop a culinary destination with multiple restaurants, cafes, and food vendors in a shared dining environment.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.35,
+      realizationTips: [
+        "Install commercial kitchen infrastructure",
+        "Create attractive dining areas with varied seating",
+        "Provide shared utilities and waste management",
+        "Implement food safety and hygiene standards",
+        "Market to diverse culinary entrepreneurs",
+      ],
+    },
+    {
+      title: "Fitness & Wellness Center",
+      description:
+        "Transform property into a comprehensive fitness facility with gym equipment, studios, and wellness services.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.4,
+      realizationTips: [
+        "Install specialized flooring and ventilation systems",
+        "Provide changing rooms and shower facilities",
+        "Create diverse workout and studio spaces",
+        "Partner with fitness professionals and wellness practitioners",
+        "Market to health-conscious individuals and corporate wellness programs",
+      ],
+    },
+    {
+      title: "Auto Service Complex",
+      description: "Create a comprehensive automotive service center with repair shops, car wash, and parts retail.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.25,
+      realizationTips: [
+        "Install automotive lifts and specialized equipment",
+        "Provide parts storage and retail display areas",
+        "Create customer waiting areas with amenities",
+        "Ensure proper drainage and environmental compliance",
+        "Partner with automotive brands and parts suppliers",
+      ],
+    },
+    {
+      title: "Creative Arts Studio Complex",
+      description:
+        "Develop artist studios, galleries, and creative spaces for painters, sculptors, photographers, and other artists.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.3,
+      realizationTips: [
+        "Provide natural lighting and ventilation",
+        "Install specialized electrical and water systems",
+        "Create exhibition and gallery spaces",
+        "Offer storage and equipment rental services",
+        "Market to art communities and creative professionals",
+      ],
     },
   ],
-
-  // Land Properties (category_id: 3)
-  "3": [
+  industrial: [
     {
-      title: "Residential Estate Development",
+      title: "Manufacturing Plant Conversion",
       description:
-        "Develop a gated residential community with modern homes, recreational facilities, security systems, and green spaces. Includes infrastructure development and utilities.",
-      estimatedCost: 45000000,
-      categoryId: 3,
+        "Transform industrial property into a modern manufacturing facility for local production and export opportunities.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.45,
+      realizationTips: [
+        "Install heavy-duty electrical and mechanical systems",
+        "Provide specialized flooring for industrial equipment",
+        "Ensure compliance with manufacturing regulations",
+        "Create quality control and testing laboratories",
+        "Partner with manufacturers and export agencies",
+      ],
     },
     {
-      title: "Agricultural Farm Setup",
+      title: "Cold Storage & Processing Facility",
       description:
-        "Establish a modern agricultural operation with irrigation systems, greenhouse facilities, storage barns, and equipment for sustainable farming practices.",
-      estimatedCost: 8500000,
-      categoryId: 3,
+        "Develop temperature-controlled storage and food processing capabilities for agricultural and pharmaceutical products.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.5,
+      realizationTips: [
+        "Install industrial refrigeration and freezing systems",
+        "Provide specialized insulation and vapor barriers",
+        "Implement food safety and pharmaceutical standards",
+        "Create loading and processing areas",
+        "Partner with farmers, food processors, and pharmaceutical companies",
+      ],
     },
     {
-      title: "Industrial Park Development",
+      title: "Renewable Energy Production",
       description:
-        "Create an industrial complex with warehouses, manufacturing facilities, loading docks, and transportation infrastructure for logistics and manufacturing businesses.",
-      estimatedCost: 35000000,
-      categoryId: 3,
+        "Convert industrial land into solar or wind energy production facility with grid connection capabilities.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.6,
+      realizationTips: [
+        "Install solar panels or wind turbines",
+        "Provide electrical infrastructure and grid connections",
+        "Ensure compliance with energy regulations",
+        "Create maintenance and monitoring facilities",
+        "Partner with utility companies and energy buyers",
+      ],
     },
     {
-      title: "Recreational Park and Resort",
+      title: "Waste Management & Recycling Center",
       description:
-        "Develop a leisure destination with accommodation facilities, recreational activities, event spaces, and natural landscape preservation for tourism and hospitality.",
-      estimatedCost: 28000000,
-      categoryId: 3,
+        "Establish a comprehensive waste processing and recycling facility serving municipal and industrial clients.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.4,
+      realizationTips: [
+        "Install waste sorting and processing equipment",
+        "Provide environmental protection systems",
+        "Ensure compliance with environmental regulations",
+        "Create collection and distribution logistics",
+        "Partner with municipalities and waste generators",
+      ],
     },
     {
-      title: "Solar Farm Installation",
+      title: "Data Center & Server Farm",
       description:
-        "Establish a large-scale solar energy facility with photovoltaic panels, inverters, and grid connection infrastructure to generate renewable energy for commercial sale.",
-      estimatedCost: 22000000,
-      categoryId: 3,
+        "Transform industrial space into a modern data center providing cloud services and data storage solutions.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.55,
+      realizationTips: [
+        "Install redundant power and cooling systems",
+        "Provide high-speed internet connectivity",
+        "Implement security and access control systems",
+        "Create monitoring and maintenance facilities",
+        "Partner with tech companies and cloud service providers",
+      ],
+    },
+    {
+      title: "Automotive Assembly Plant",
+      description: "Create vehicle assembly and automotive parts manufacturing facility with modern production lines.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.65,
+      realizationTips: [
+        "Install assembly line equipment and robotics",
+        "Provide specialized tools and testing equipment",
+        "Ensure compliance with automotive standards",
+        "Create parts storage and logistics areas",
+        "Partner with automotive manufacturers and suppliers",
+      ],
+    },
+    {
+      title: "Textile & Garment Factory",
+      description:
+        "Establish modern textile production and garment manufacturing facility for local and export markets.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.35,
+      realizationTips: [
+        "Install industrial sewing and textile machinery",
+        "Provide fabric storage and cutting areas",
+        "Ensure compliance with labor and safety standards",
+        "Create quality control and finishing departments",
+        "Partner with fashion brands and textile suppliers",
+      ],
+    },
+    {
+      title: "Chemical Processing Plant",
+      description:
+        "Convert industrial property into chemical processing facility for pharmaceuticals, cosmetics, or industrial chemicals.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.7,
+      realizationTips: [
+        "Install specialized chemical processing equipment",
+        "Provide safety and environmental protection systems",
+        "Ensure compliance with chemical industry regulations",
+        "Create laboratory and quality control facilities",
+        "Partner with chemical companies and research institutions",
+      ],
+    },
+    {
+      title: "Logistics & Distribution Hub",
+      description:
+        "Develop large-scale logistics center with automated sorting, storage, and distribution capabilities.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.3,
+      realizationTips: [
+        "Install automated sorting and conveyor systems",
+        "Provide fleet management and maintenance facilities",
+        "Implement inventory tracking and management systems",
+        "Create cross-docking and distribution areas",
+        "Partner with e-commerce and logistics companies",
+      ],
+    },
+    {
+      title: "Mining & Quarry Operations",
+      description:
+        "Establish mining or quarrying operations for construction materials, minerals, or precious metals extraction.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.8,
+      realizationTips: [
+        "Install heavy mining and processing equipment",
+        "Provide environmental monitoring and restoration systems",
+        "Ensure compliance with mining regulations",
+        "Create transportation and logistics infrastructure",
+        "Partner with construction companies and mineral buyers",
+      ],
     },
   ],
-
-  // Material Properties (category_id: 4)
-  "4": [
+  agricultural: [
     {
-      title: "Premium Building Materials Supply",
+      title: "Smart Greenhouse Complex",
       description:
-        "Establish a high-end building materials distribution center with quality cement, steel, tiles, and finishing materials for construction projects.",
-      estimatedCost: 5500000,
-      categoryId: 4,
+        "Develop climate-controlled greenhouse facilities for year-round production of high-value crops and vegetables.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.4,
+      realizationTips: [
+        "Install automated climate control and irrigation systems",
+        "Provide hydroponic or aeroponic growing systems",
+        "Implement pest and disease monitoring technology",
+        "Create post-harvest processing and packaging facilities",
+        "Partner with restaurants, supermarkets, and export companies",
+      ],
     },
     {
-      title: "Sustainable Construction Materials",
+      title: "Organic Farm & Certification",
       description:
-        "Develop eco-friendly building materials including recycled concrete, bamboo products, and energy-efficient insulation materials for green construction.",
-      estimatedCost: 4200000,
-      categoryId: 4,
+        "Convert agricultural land into certified organic farming operation producing premium organic products.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.25,
+      realizationTips: [
+        "Implement organic farming practices and certification",
+        "Install organic-approved irrigation and pest control",
+        "Create composting and soil improvement systems",
+        "Develop direct-to-consumer marketing channels",
+        "Partner with organic food retailers and health-conscious consumers",
+      ],
     },
     {
-      title: "Smart Building Components",
+      title: "Aquaculture & Fish Farming",
       description:
-        "Create a supply chain for intelligent building materials including smart glass, automated systems, and IoT-enabled construction components.",
-      estimatedCost: 6800000,
-      categoryId: 4,
+        "Establish modern fish farming operation with ponds, tanks, and processing facilities for local and export markets.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.35,
+      realizationTips: [
+        "Install water circulation and filtration systems",
+        "Provide fish feed storage and distribution systems",
+        "Implement water quality monitoring technology",
+        "Create fish processing and cold storage facilities",
+        "Partner with restaurants, markets, and seafood distributors",
+      ],
     },
     {
-      title: "Luxury Finishing Materials",
+      title: "Livestock Ranch & Dairy",
       description:
-        "Curate premium finishing materials including imported marble, hardwood flooring, designer fixtures, and high-end architectural elements.",
-      estimatedCost: 7500000,
-      categoryId: 4,
+        "Develop modern livestock operation with cattle, goats, or poultry for meat, dairy, and egg production.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.3,
+      realizationTips: [
+        "Install modern animal housing and feeding systems",
+        "Provide veterinary care and health monitoring",
+        "Implement milking and egg collection automation",
+        "Create feed storage and processing facilities",
+        "Partner with dairy processors and meat distributors",
+      ],
     },
     {
-      title: "Construction Equipment Rental",
+      title: "Agro-Processing Center",
+      description: "Establish facility for processing raw agricultural products into value-added foods and beverages.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.45,
+      realizationTips: [
+        "Install food processing and packaging equipment",
+        "Provide cold storage and preservation systems",
+        "Ensure compliance with food safety regulations",
+        "Create quality control and testing laboratories",
+        "Partner with farmers, retailers, and export companies",
+      ],
+    },
+    {
+      title: "Seed Production & Research",
       description:
-        "Establish a construction equipment rental business with modern machinery, tools, and vehicles to serve the growing construction industry.",
-      estimatedCost: 12000000,
-      categoryId: 4,
+        "Develop specialized facility for producing high-quality seeds and conducting agricultural research.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.5,
+      realizationTips: [
+        "Install controlled environment growing facilities",
+        "Provide seed processing and storage equipment",
+        "Implement genetic testing and quality control",
+        "Create research laboratories and field testing areas",
+        "Partner with agricultural research institutions and farmers",
+      ],
+    },
+    {
+      title: "Medicinal Plant Cultivation",
+      description:
+        "Establish cultivation and processing of medicinal plants and herbs for pharmaceutical and wellness industries.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.35,
+      realizationTips: [
+        "Install specialized drying and processing equipment",
+        "Provide organic certification and quality standards",
+        "Implement extraction and purification systems",
+        "Create packaging and labeling facilities",
+        "Partner with pharmaceutical companies and wellness brands",
+      ],
+    },
+    {
+      title: "Vertical Farming Operation",
+      description:
+        "Create multi-level indoor farming system using LED lighting and hydroponic technology for maximum yield.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.6,
+      realizationTips: [
+        "Install LED growing lights and automation systems",
+        "Provide hydroponic nutrient delivery systems",
+        "Implement climate control and monitoring technology",
+        "Create harvesting and packaging automation",
+        "Partner with urban markets and premium restaurants",
+      ],
+    },
+    {
+      title: "Agritourism & Farm Experience",
+      description:
+        "Develop agricultural property into tourist destination with farm tours, accommodation, and educational programs.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.4,
+      realizationTips: [
+        "Create visitor facilities and accommodation",
+        "Develop educational and recreational programs",
+        "Install farm-to-table dining and retail spaces",
+        "Provide guided tours and hands-on experiences",
+        "Partner with tourism agencies and educational institutions",
+      ],
+    },
+    {
+      title: "Biofuel Production Facility",
+      description:
+        "Convert agricultural land for growing energy crops and producing biofuels like ethanol or biodiesel.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.55,
+      realizationTips: [
+        "Install biofuel processing and refining equipment",
+        "Provide feedstock storage and handling systems",
+        "Ensure compliance with energy and environmental regulations",
+        "Create distribution and logistics infrastructure",
+        "Partner with energy companies and government programs",
+      ],
     },
   ],
 }
 
-export function generateProspectsForProperty(categoryId: number, propertyWorth?: number): AIProspectTemplate[] {
-  const templates = AI_PROSPECT_TEMPLATES[categoryId.toString()] || []
-
-  // Select 4 random prospects from the category
-  const shuffled = [...templates].sort(() => 0.5 - Math.random())
-  const selectedProspects = shuffled.slice(0, 4)
-
-  // Adjust costs based on property worth if provided
-  if (propertyWorth) {
-    return selectedProspects.map((prospect) => ({
-      ...prospect,
-      estimatedCost: Math.round(prospect.estimatedCost * (propertyWorth / 10000000)), // Scale based on property worth
-    }))
+export function generateProspectsForProperty(
+  categoryId: number,
+  estimatedWorth?: number,
+): Array<{
+  title: string
+  description: string
+  estimatedCost: number
+}> {
+  // Map category IDs to category names (you may need to adjust these based on your actual category IDs)
+  const categoryMap: { [key: number]: string } = {
+    1: "residential",
+    2: "commercial",
+    3: "industrial",
+    4: "agricultural",
   }
 
-  return selectedProspects
+  const categoryName = categoryMap[categoryId] || "residential"
+  const categoryProspects = MOCK_PROSPECTS[categoryName] || MOCK_PROSPECTS.residential
+
+  // Randomly select 4 prospects from the category
+  const shuffled = [...categoryProspects].sort(() => 0.5 - Math.random())
+  const selectedProspects = shuffled.slice(0, 4)
+
+  return selectedProspects.map((prospect) => {
+    const baseWorth = estimatedWorth || 10000000 // Default 10M if no estimated worth
+    const purchaseCost = baseWorth * prospect.purchaseCostFactor
+    const developmentCost = baseWorth * prospect.developmentCostFactor
+    const estimatedCost = purchaseCost + developmentCost
+
+    return {
+      title: prospect.title,
+      description: prospect.description,
+      estimatedCost: Math.round(estimatedCost),
+    }
+  })
+}
+
+export function getProspectDetails(categoryId: number, prospectTitle: string): PropertyProspect | null {
+  const categoryMap: { [key: number]: string } = {
+    1: "residential",
+    2: "commercial",
+    3: "industrial",
+    4: "agricultural",
+  }
+
+  const categoryName = categoryMap[categoryId] || "residential"
+  const categoryProspects = MOCK_PROSPECTS[categoryName] || MOCK_PROSPECTS.residential
+
+  return categoryProspects.find((prospect) => prospect.title === prospectTitle) || null
 }

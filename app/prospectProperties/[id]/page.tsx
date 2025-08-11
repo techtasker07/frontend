@@ -10,8 +10,9 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
 import { api, type ProspectProperty, type PropertyProspect } from "@/lib/api"
-import { MapPin, Calendar, DollarSign, ArrowLeft, Lightbulb, Calculator, TrendingUp, Target } from "lucide-react"
+import { MapPin, Calendar, ArrowLeft, Lightbulb, TrendingUp } from "lucide-react"
 import { toast } from "sonner"
+import ProspectButtons from "@/components/ProspectButtons"
 
 export default function ProspectPropertyDetailsPage() {
   const params = useParams()
@@ -137,7 +138,6 @@ export default function ProspectPropertyDetailsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {property.estimated_worth && (
                   <div className="flex items-center space-x-2">
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">
                       <strong>₦{property.estimated_worth.toLocaleString()}</strong>
                     </span>
@@ -164,30 +164,8 @@ export default function ProspectPropertyDetailsPage() {
               </CardTitle>
               <CardDescription>Click on any prospect to view detailed analysis and cost breakdown</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {property.prospects && property.prospects.length > 0 ? (
-                property.prospects.map((prospect) => (
-                  <Button
-                    key={prospect.id}
-                    variant="outline"
-                    className="w-full h-auto p-4 text-left justify-start bg-transparent"
-                    onClick={() => handleProspectClick(prospect)}
-                  >
-                    <div className="flex flex-col items-start space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Target className="h-4 w-4 text-primary" />
-                        <span className="font-medium text-sm">{prospect.title}</span>
-                      </div>
-                      <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                        <Calculator className="h-3 w-3" />
-                        <span>₦{prospect.estimated_cost.toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </Button>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground">No AI prospects available</p>
-              )}
+            <CardContent>
+              <ProspectButtons propertyId={property.id} prospects={property.prospects || []} />
             </CardContent>
           </Card>
 

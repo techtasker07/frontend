@@ -104,11 +104,20 @@ export default function HomePage() {
         {/* Enhanced Hero Section */}
         <section className="text-center mb-20 py-24">
           <div className="relative">
-            <h3 className="text-6xl font-extrabold bg-gradient-to-r from-[oklch(0.2_0.15_265)] to-[oklch(0.75_0.18_60)] bg-clip-text">
-              MIPRIPITY
-            </h3>
-            <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-full h-3 bg-gradient-to-r from-transparent via-indigo-500 to-transparent blur-lg opacity-30"></div>
+          <h2 className="text-6xl md:text-7xl font-extrabold tracking-wide uppercase 
+                        bg-gradient-to-r from-[oklch(0.2_0.15_265)] to-[oklch(0.75_0.18_60)] 
+                        bg-clip-text text-transparent 
+                        drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+            MIPRIPITY
+          </h2>
+
+          {/* Glow line under text */}
+          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-2/3 h-[3px] 
+                          bg-gradient-to-r from-transparent via-[oklch(0.75_0.18_60)] to-transparent 
+                          blur-sm opacity-60">
           </div>
+          </div>
+          
           <p className="text-lg md:text-xl text-slate-700 mb-12 max-w-4xl mx-auto leading-relaxed font-light">
             Revolutionary property evaluation platform, powered by
             <br />
