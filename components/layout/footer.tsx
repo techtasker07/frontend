@@ -107,7 +107,7 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
           <p className="text-gray-400 text-sm text-center sm:text-left">
-            © 2024 Mipripity by Techtasker Solutions. All rights reserved.
+            © 2025 Mipripity by Techtasker Solutions. All rights reserved.
           </p>
           <div className="flex flex-wrap justify-center sm:justify-end gap-4 text-xs text-gray-400">
             <Link href="/privacy" className="hover:text-white transition-colors">
