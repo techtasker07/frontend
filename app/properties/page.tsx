@@ -235,12 +235,6 @@ export default function PropertiesPage() {
 
         {isAuthenticated && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="mt-4 md:mt-0">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Property
-              </Button>
-            </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
               <form onSubmit={handleCreateProperty}>
                 <DialogHeader>
