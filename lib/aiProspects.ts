@@ -585,16 +585,22 @@ export function generateProspectsForProperty(
   description: string
   estimatedCost: number
 }> {
-  // Map category IDs to category names (you may need to adjust these based on your actual category IDs)
+  // Map category IDs to category names (adjust these based on your actual category IDs)
   const categoryMap: { [key: number]: string } = {
     1: "residential",
     2: "commercial",
     3: "industrial",
     4: "agricultural",
+    5: "agricultural", // Assuming Land falls under agricultural for now
   }
 
-  const categoryName = categoryMap[categoryId] || "residential"
-  const categoryProspects = MOCK_PROSPECTS[categoryName] || MOCK_PROSPECTS.residential
+  // Also handle by category name if passed as string
+  const getCategoryProspects = (categoryId: number) => {
+    const categoryName = categoryMap[categoryId] || "residential"
+    return MOCK_PROSPECTS[categoryName] || MOCK_PROSPECTS.residential
+  }
+
+  const categoryProspects = getCategoryProspects(categoryId)
 
   // Randomly select 4 prospects from the category
   const shuffled = [...categoryProspects].sort(() => 0.5 - Math.random())

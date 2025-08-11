@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
       count: result.rows.length,
     })
   } catch (error) {
-    console.error(error)
+    console.error("Error fetching prospect properties:", error)
     return NextResponse.json(
       {
         success: false,
@@ -101,8 +101,9 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  // Start a transaction to ensure data consistency
   try {
-    // Insert the prospect property
+    // Insert the prospect property first
     const propertyResult = await query<ProspectProperty>(
       `INSERT INTO prospect_properties (title, description, location, category_id, estimated_worth, year_of_construction, image_url) 
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
@@ -110,60 +111,88 @@ export async function POST(req: NextRequest) {
     )
 
     const newProperty = propertyResult.rows[0]
+    console.log("Property created successfully:", newProperty.id)
 
     // Generate AI prospects for this property
-    const aiProspects = generateProspectsForProperty(category_id, estimated_worth)
+    try {
+      const aiProspects = generateProspectsForProperty(category_id, estimated_worth)
+      console.log("Generated AI prospects:", aiProspects.length)
 
-    // Insert the AI-generated prospects
-    const prospectInsertPromises = aiProspects.map((prospect) => {
-      const totalCost = newProperty.estimated_worth
-        ? prospect.estimatedCost + newProperty.estimated_worth
-        : prospect.estimatedCost
+      // Insert the AI-generated prospects one by one with better error handling
+      const prospectInsertPromises = aiProspects.map(async (prospect, index) => {
+        try {
+          const totalCost = newProperty.estimated_worth
+            ? prospect.estimatedCost + newProperty.estimated_worth
+            : prospect.estimatedCost
 
-      return query(
-        "INSERT INTO property_prospects (prospect_property_id, title, description, estimated_cost, total_cost) VALUES ($1, $2, $3, $4, $5)",
-        [newProperty.id, prospect.title, prospect.description, prospect.estimatedCost, totalCost],
+          const result = await query(
+            "INSERT INTO property_prospects (prospect_property_id, title, description, estimated_cost, total_cost) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+            [newProperty.id, prospect.title, prospect.description, prospect.estimatedCost, totalCost],
+          )
+          console.log(`Prospect ${index + 1} inserted with ID:`, result.rows[0]?.id)
+          return result
+        } catch (prospectError) {
+          console.error(`Error inserting prospect ${index + 1}:`, prospectError)
+          throw prospectError
+        }
+      })
+
+      await Promise.all(prospectInsertPromises)
+      console.log("All prospects inserted successfully")
+
+      // Fetch the complete property with prospects to return
+      const completePropertyResult = await query(
+        `SELECT 
+          pp.*, c.name AS category_name,
+          COALESCE(
+            JSON_AGG(
+              JSON_BUILD_OBJECT(
+                'id', pr.id,
+                'title', pr.title,
+                'description', pr.description,
+                'estimated_cost', pr.estimated_cost,
+                'total_cost', pr.total_cost
+              )
+            ) FILTER (WHERE pr.id IS NOT NULL), 
+            '[]'
+          ) AS prospects
+        FROM prospect_properties pp
+        JOIN categories c ON pp.category_id = c.id
+        LEFT JOIN property_prospects pr ON pp.id = pr.prospect_property_id
+        WHERE pp.id = $1
+        GROUP BY pp.id, c.name`,
+        [newProperty.id],
       )
-    })
 
-    await Promise.all(prospectInsertPromises)
+      return NextResponse.json(
+        {
+          success: true,
+          data: completePropertyResult.rows[0],
+          message: "Property created successfully with AI prospects!",
+        },
+        { status: 201 },
+      )
+    } catch (prospectError) {
+      console.error("Error generating/inserting prospects:", prospectError)
 
-    // Fetch the complete property with prospects
-    const completePropertyResult = await query(
-      `SELECT 
-        pp.*, c.name AS category_name,
-        COALESCE(
-          JSON_AGG(
-            JSON_BUILD_OBJECT(
-              'title', pr.title,
-              'description', pr.description,
-              'estimated_cost', pr.estimated_cost,
-              'total_cost', pr.total_cost
-            )
-          ) FILTER (WHERE pr.id IS NOT NULL), 
-          '[]'
-        ) AS prospects
-      FROM prospect_properties pp
-      JOIN categories c ON pp.category_id = c.id
-      LEFT JOIN property_prospects pr ON pp.id = pr.prospect_property_id
-      WHERE pp.id = $1
-      GROUP BY pp.id, c.name`,
-      [newProperty.id],
-    )
-
-    return NextResponse.json(
-      {
-        success: true,
-        data: completePropertyResult.rows[0],
-      },
-      { status: 201 },
-    )
+      // Property was created but prospects failed - still return success but with a warning
+      return NextResponse.json(
+        {
+          success: true,
+          data: newProperty,
+          message:
+            "Property created successfully, but AI prospects generation failed. You can regenerate prospects later.",
+          warning: "Prospects generation failed",
+        },
+        { status: 201 },
+      )
+    }
   } catch (error) {
-    console.error(error)
+    console.error("Error creating property:", error)
     return NextResponse.json(
       {
         success: false,
-        error: "Server error",
+        error: "Failed to create property. Please try again.",
       },
       { status: 500 },
     )

@@ -1,9 +1,11 @@
 "use client"
 
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { TrendingUp } from "lucide-react"
+import { TrendingUp, RefreshCw, Lightbulb } from "lucide-react"
+import { toast } from "sonner"
 
 interface Prospect {
   id?: number
@@ -17,14 +19,53 @@ interface ProspectButtonsProps {
   propertyId: number
   prospects: Prospect[]
   className?: string
+  onProspectsUpdated?: (prospects: Prospect[]) => void
 }
 
-export default function ProspectButtons({ propertyId, prospects, className = "" }: ProspectButtonsProps) {
+export default function ProspectButtons({
+  propertyId,
+  prospects,
+  className = "",
+  onProspectsUpdated,
+}: ProspectButtonsProps) {
   const router = useRouter()
+  const [isRegenerating, setIsRegenerating] = useState(false)
 
   const handleProspectClick = (prospectTitle: string) => {
     const encodedTitle = encodeURIComponent(prospectTitle)
     router.push(`/prospects/${propertyId}/${encodedTitle}`)
+  }
+
+  const handleRegenerateProspects = async () => {
+    setIsRegenerating(true)
+    try {
+      const response = await fetch(`/api/prospectProperties/${propertyId}/regenerate-prospects`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success("AI prospects generated successfully!")
+        if (onProspectsUpdated && data.data.prospects) {
+          onProspectsUpdated(data.data.prospects)
+        } else {
+          // Refresh the page if no callback provided
+          window.location.reload()
+        }
+      } else {
+        toast.error(data.error || "Failed to generate prospects")
+      }
+    } catch (error) {
+      console.error("Error regenerating prospects:", error)
+      toast.error("Failed to generate prospects. Please try again.")
+    } finally {
+      setIsRegenerating(false)
+    }
   }
 
   const formatCurrency = (amount: number) => {
@@ -38,17 +79,49 @@ export default function ProspectButtons({ propertyId, prospects, className = "" 
 
   if (!prospects || prospects.length === 0) {
     return (
-      <div className={`text-center py-4 ${className}`}>
-        <p className="text-sm text-muted-foreground">No prospects available</p>
+      <div className={`text-center py-6 ${className}`}>
+        <div className="mb-4">
+          <Lightbulb className="w-12 h-12 text-yellow-400 mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground mb-4">No AI prospects available</p>
+        </div>
+        <Button
+          onClick={handleRegenerateProspects}
+          disabled={isRegenerating}
+          size="sm"
+          className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+        >
+          {isRegenerating ? (
+            <>
+              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              Generating...
+            </>
+          ) : (
+            <>
+              <Lightbulb className="w-4 h-4 mr-2" />
+              Generate AI Prospects
+            </>
+          )}
+        </Button>
       </div>
     )
   }
 
   return (
     <div className={`space-y-2 ${className}`}>
-      <div className="flex items-center gap-2 mb-3">
-        <TrendingUp className="w-4 h-4 text-green-600" />
-        <span className="text-sm font-medium text-green-600">Investment Prospects</span>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-green-600" />
+          <span className="text-sm font-medium text-green-600">Investment Prospects</span>
+        </div>
+        <Button
+          onClick={handleRegenerateProspects}
+          disabled={isRegenerating}
+          variant="ghost"
+          size="sm"
+          className="h-6 px-2 text-xs"
+        >
+          {isRegenerating ? <RefreshCw className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+        </Button>
       </div>
 
       <div className="grid gap-2">
