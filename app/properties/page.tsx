@@ -57,7 +57,7 @@ export default function PropertiesPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("grid")
   const [sortBy, setSortBy] = useState<SortOption>("newest")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-
+  
   // Pagination
   const [currentPage, setCurrentPage] = useState(1)
   const [totalProperties, setTotalProperties] = useState(0)

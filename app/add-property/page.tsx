@@ -33,6 +33,7 @@ export default function AddPropertyPage() {
     current_worth: "",
     year_of_construction: "",
     lister_phone_number: "",
+    image_urls: [] as string[], // To hold uploaded image URLs
   })
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]) // State to hold selected files
   const [loading, setLoading] = useState(false)

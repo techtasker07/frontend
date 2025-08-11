@@ -1,7 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['mipripity-web-3fk2.onrender.com', 'picsum.photos', 'blob.v0.dev'],
+    domains: [
+      'picsum.photos',
+      'blob.v0.dev',
+      '6koyplnghvmjbo57.public.blob.vercel-storage.com',
+    ],
     remotePatterns: [
       {
         protocol: 'https',
@@ -12,6 +16,12 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'picsum.photos',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '6koyplnghvmjbo57.public.blob.vercel-storage.com', // Vercel Blob Storage
         port: '',
         pathname: '/**',
       },
