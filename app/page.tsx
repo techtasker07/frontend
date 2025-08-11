@@ -104,13 +104,13 @@ export default function HomePage() {
         {/* Enhanced Hero Section */}
         <section className="text-center mb-20 py-24">
           <div className="relative">
-            <h3 className="text-6xl font-bold bg-gradient-to-r from-[oklch(0.2_0.15_265)] to-[oklch(0.75_0.18_60)] bg-clip-text text-transparent">
+            <h3 className="text-6xl font-extrabold bg-gradient-to-r from-[oklch(0.2_0.15_265)] to-[oklch(0.75_0.18_60)] bg-clip-text">
               MIPRIPITY
             </h3>
             <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 w-full h-3 bg-gradient-to-r from-transparent via-indigo-500 to-transparent blur-lg opacity-30"></div>
           </div>
           <p className="text-lg md:text-xl text-slate-700 mb-12 max-w-4xl mx-auto leading-relaxed font-light">
-            Revolutionary property evaluation platform powered by
+            Revolutionary property evaluation platform, powered by
             <br />
             <span className="font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
               Techtasker Solutions
@@ -119,7 +119,7 @@ export default function HomePage() {
         </section>
 
         {/* AI-Powered Prospect Properties Section */}
-        <section className="mb-16">
+        <section className="mb-6">
           <div className="text-center mb-12">
             <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full text-sm font-medium text-purple-800 mb-4">
               <Lightbulb className="w-4 h-4 mr-2 text-yellow-500" />

@@ -32,7 +32,7 @@ export function Sidebar({ onClose }: SidebarProps) {
       <div className="flex h-16 items-center justify-between px-6 border-b border-gray-200 flex-shrink-0">
         <Link href="/" className="flex items-center">
           <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            MIPRIPITY
+            Menu
           </span>
         </Link>
         {onClose && (
