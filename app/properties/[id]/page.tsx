@@ -1,32 +1,20 @@
-"use client"
+'use client'
 
-import { useEffect, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
-import Image from "next/image"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { api, type Property, type PropertyStats } from "@/lib/api"
-import { useAuth } from "@/lib/auth"
-import {
-  MapPin,
-  Calendar,
-  DollarSign,
-  User,
-  Phone,
-  Mail,
-  Vote,
-  BarChart3,
-  ArrowLeft,
-  Loader2,
-  CheckCircle,
-  PhoneIcon as Whatsapp,
-} from "lucide-react"
-import { toast } from "sonner"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useEffect, useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import Image from 'next/image'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Separator } from '@/components/ui/separator'
+import { api, Property, VoteOption, PropertyStats } from '@/lib/api'
+import { useAuth } from '@/lib/auth'
+import { MapPin, Calendar, DollarSign, User, Phone, Mail, Vote, BarChart3, ArrowLeft, Loader2, CheckCircle, PhoneIcon as Whatsapp } from 'lucide-react'
+import { toast } from 'sonner'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar' // Import Avatar components
 
 export default function PropertyDetailsPage() {
   const params = useParams()
@@ -40,7 +28,7 @@ export default function PropertyDetailsPage() {
   const [hasVoted, setHasVoted] = useState(false)
   const [selectedVoteOption, setSelectedVoteOption] = useState<number | null>(null)
 
-  const propertyId = Number.parseInt(params.id as string)
+  const propertyId = parseInt(params.id as string)
 
   useEffect(() => {
     if (propertyId) {
@@ -58,12 +46,12 @@ export default function PropertyDetailsPage() {
       if (response.success) {
         setProperty(response.data)
       } else {
-        toast.error("Property not found")
-        router.push("/")
+        toast.error('Property not found')
+        router.push('/')
       }
     } catch (error) {
-      toast.error("Failed to fetch property details")
-      router.push("/")
+      toast.error('Failed to fetch property details')
+      router.push('/')
     } finally {
       setLoading(false)
     }
@@ -76,7 +64,7 @@ export default function PropertyDetailsPage() {
         setStats(response.data)
       }
     } catch (error) {
-      console.error("Failed to fetch property stats:", error)
+      console.error('Failed to fetch property stats:', error)
     }
   }
 
@@ -88,7 +76,7 @@ export default function PropertyDetailsPage() {
         setHasVoted(!!userVote)
       }
     } catch (error) {
-      console.error("Failed to check vote status:", error)
+      console.error('Failed to check vote status:', error)
     }
   }
 
@@ -104,24 +92,15 @@ export default function PropertyDetailsPage() {
 
       if (response.success) {
         setHasVoted(true)
-        toast.success("Your vote has been recorded successfully!")
+        toast.success('Your vote has been recorded successfully!')
         // Refresh stats
         fetchStats()
       }
     } catch (error: any) {
-      toast.error(error.message || "Failed to record vote")
+      toast.error(error.message || 'Failed to record vote')
     } finally {
       setVoting(false)
     }
-  }
-
-  // Helper function to get the primary image URL
-  const getPrimaryImageUrl = (property: Property): string => {
-    if (property.images && property.images.length > 0) {
-      const primaryImage = property.images.find((img) => img.is_primary)
-      return primaryImage?.image_url || property.images[0].image_url || "/placeholder.svg"
-    }
-    return "/placeholder.svg"
   }
 
   if (loading) {
@@ -161,7 +140,7 @@ export default function PropertyDetailsPage() {
     )
   }
 
-  const primaryImageUrl = getPrimaryImageUrl(property)
+  const primaryImage = property.images?.find((img: any) => img.is_primary)?.image_url || property.images?.[0]?.image_url || "/placeholder.svg";
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -178,35 +157,18 @@ export default function PropertyDetailsPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Property Images */}
           <div className="relative h-64 md:h-96 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-            {primaryImageUrl !== "/placeholder.svg" ? (
+            {primaryImage !== "/placeholder.svg" ? (
               <Image
-                src={primaryImageUrl || "/placeholder.svg"}
+                src={primaryImage || "/placeholder.svg"}
                 alt={property.title}
                 fill
                 className="object-cover"
-                onError={(e) => (e.currentTarget.src = "/placeholder.svg")}
+                onError={(e) => (e.currentTarget.src = "/placeholder.svg")} // Fallback if image fails to load
               />
             ) : (
               <p className="text-muted-foreground">No images available</p>
             )}
           </div>
-
-          {/* Additional Images */}
-          {property.images && property.images.length > 1 && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {property.images.slice(1, 5).map((image, index) => (
-                <div key={index} className="relative h-24 rounded-lg overflow-hidden bg-muted">
-                  <Image
-                    src={image.image_url || "/placeholder.svg"}
-                    alt={`${property.title} - Image ${index + 2}`}
-                    fill
-                    className="object-cover"
-                    onError={(e) => (e.currentTarget.src = "/placeholder.svg")}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
 
           {/* Property Details */}
           <Card>
@@ -226,11 +188,10 @@ export default function PropertyDetailsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-muted-foreground">{property.description}</p>
-
+              
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {property.current_worth && (
                   <div className="flex items-center space-x-2">
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">
                       <strong>₦{property.current_worth.toLocaleString()}</strong>
                     </span>
@@ -263,9 +224,7 @@ export default function PropertyDetailsPage() {
                 <Avatar className="h-16 w-16">
                   <AvatarImage src={property.owner_profile_picture || "/placeholder.svg"} alt={property.owner_name} />
                   <AvatarFallback className="text-lg">
-                    {property.owner_name
-                      ? `${property.owner_name.split(" ")[0][0]}${property.owner_name.split(" ")[1]?.[0] || ""}`.toUpperCase()
-                      : "LS"}
+                    {property.owner_name ? `${property.owner_name.split(' ')[0][0]}${property.owner_name.split(' ')[1]?.[0] || ''}`.toUpperCase() : 'LS'}
                   </AvatarFallback>
                 </Avatar>
                 <p className="font-medium text-lg">{property.owner_name}</p>
@@ -277,13 +236,13 @@ export default function PropertyDetailsPage() {
                     <span>{property.owner_email}</span>
                   </div>
                 )}
-                {property.lister_phone_number && (
+                {property.lister_phone_number && ( // Display lister's specific phone number
                   <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <Whatsapp className="h-4 w-4" />
+                    <Whatsapp className="h-4 w-4" /> {/* Changed to Whatsapp icon */}
                     <span>{property.lister_phone_number}</span>
                   </div>
                 )}
-                {property.owner_phone && !property.lister_phone_number && (
+                 {property.owner_phone && !property.lister_phone_number && ( // Fallback to owner_phone if lister_phone_number not provided
                   <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                     <Phone className="h-4 w-4" />
                     <span>{property.owner_phone}</span>
@@ -304,14 +263,17 @@ export default function PropertyDetailsPage() {
                 Cast Your Vote
               </CardTitle>
               <CardDescription>
-                {hasVoted ? "You have already voted on this property" : "Select an option to vote on this property"}
+                {hasVoted 
+                  ? "You have already voted on this property" 
+                  : "Select an option to vote on this property"
+                }
               </CardDescription>
             </CardHeader>
             <CardContent>
               {!isAuthenticated ? (
                 <Alert>
                   <AlertDescription>
-                    You must be logged in to vote.{" "}
+                    You must be logged in to vote.{' '}
                     <Link href="/login" className="font-medium text-primary hover:underline">
                       Sign in here
                     </Link>
@@ -339,15 +301,19 @@ export default function PropertyDetailsPage() {
                       </label>
                     </div>
                   ))}
-
-                  <Button onClick={handleVote} disabled={!selectedVoteOption || voting} className="w-full">
+                  
+                  <Button 
+                    onClick={handleVote} 
+                    disabled={!selectedVoteOption || voting}
+                    className="w-full"
+                  >
                     {voting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Submitting Vote...
                       </>
                     ) : (
-                      "Submit Vote"
+                      'Submit Vote'
                     )}
                   </Button>
                 </div>
@@ -363,7 +329,9 @@ export default function PropertyDetailsPage() {
                   <BarChart3 className="mr-2 h-5 w-5" />
                   Voting Results
                 </CardTitle>
-                <CardDescription>Total votes: {stats.total_votes}</CardDescription>
+                <CardDescription>
+                  Total votes: {stats.total_votes}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {stats.statistics.map((stat: any) => (

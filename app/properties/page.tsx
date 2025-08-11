@@ -209,15 +209,6 @@ export default function PropertiesPage() {
     }
   }
 
-  // Helper function to get the primary image URL
-  const getPrimaryImageUrl = (property: Property): string => {
-    if (property.images && property.images.length > 0) {
-      const primaryImage = property.images.find((img) => img.is_primary)
-      return primaryImage?.image_url || property.images[0].image_url || "/placeholder.svg"
-    }
-    return "/placeholder.svg"
-  }
-
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -463,7 +454,12 @@ export default function PropertiesPage() {
                   >
                     {property.images && property.images.length > 0 ? (
                       <Image
-                        src={getPrimaryImageUrl(property) || "/placeholder.svg"}
+                        src={
+                          property.images.find((img) => img.is_primary)?.image_url ||
+                          property.images[0].image_url ||
+                          "/placeholder.svg" ||
+                          "/placeholder.svg"
+                        }
                         alt={property.title}
                         fill
                         className="object-cover"
@@ -500,7 +496,6 @@ export default function PropertiesPage() {
                       <div className={`flex justify-between items-center text-sm ${viewMode === "list" ? "mb-2" : ""}`}>
                         {property.current_worth && (
                           <div className="flex items-center">
-                            <DollarSign className="h-3 w-3 mr-1" />
                             <span className="font-medium">₦{property.current_worth.toLocaleString()}</span>
                           </div>
                         )}

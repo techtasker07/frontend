@@ -1,179 +1,121 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse } from 'next/server';
+import { query } from '@/lib/db';
+import { protect, AuthNextRequest } from '@/lib/authUtils';
+import { Property, PropertyImage } from '@/lib/api';
 
-// Mock data - replace with your actual database queries
-const mockProperties = [
-  {
-    id: 1,
-    title: "Modern 3-Bedroom Apartment",
-    description:
-      "Beautiful modern apartment with stunning city views, located in the heart of downtown. Features include hardwood floors, stainless steel appliances, and a spacious balcony.",
-    location: "Downtown Lagos, Nigeria",
-    user_id: 1,
-    category_id: 1,
-    current_worth: 45000000,
-    year_of_construction: 2020,
-    lister_phone_number: "+2348012345678",
-    property_images: JSON.stringify([
-      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&h=600&fit=crop",
-    ]),
-    created_at: "2024-01-15T10:30:00Z",
-    updated_at: "2024-01-15T10:30:00Z",
-    owner_name: "John Doe",
-    owner_email: "john@example.com",
-    owner_phone: "+2348012345678",
-    owner_profile_picture: "/placeholder.svg",
-    category_name: "Residential",
-    vote_count: 15,
-  },
-  {
-    id: 2,
-    title: "Commercial Office Space",
-    description:
-      "Prime commercial office space perfect for startups and established businesses. Located in a prestigious business district with excellent transport links.",
-    location: "Victoria Island, Lagos",
-    user_id: 2,
-    category_id: 2,
-    current_worth: 120000000,
-    year_of_construction: 2018,
-    lister_phone_number: "+2348087654321",
-    property_images: JSON.stringify([
-      "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop",
-    ]),
-    created_at: "2024-01-14T14:20:00Z",
-    updated_at: "2024-01-14T14:20:00Z",
-    owner_name: "Jane Smith",
-    owner_email: "jane@example.com",
-    owner_phone: "+2348087654321",
-    owner_profile_picture: "/placeholder.svg",
-    category_name: "Commercial",
-    vote_count: 8,
-  },
-  {
-    id: 3,
-    title: "Residential Land Plot",
-    description:
-      "Excellent residential land plot in a developing area. Perfect for building your dream home with easy access to schools, hospitals, and shopping centers.",
-    location: "Lekki, Lagos",
-    user_id: 3,
-    category_id: 3,
-    current_worth: 25000000,
-    year_of_construction: null,
-    lister_phone_number: "+2348098765432",
-    property_images: JSON.stringify([
-      "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&h=600&fit=crop",
-      "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop",
-    ]),
-    created_at: "2024-01-13T09:15:00Z",
-    updated_at: "2024-01-13T09:15:00Z",
-    owner_name: "Mike Johnson",
-    owner_email: "mike@example.com",
-    owner_phone: "+2348098765432",
-    owner_profile_picture: "/placeholder.svg",
-    category_name: "Land",
-    vote_count: 12,
-  },
-]
+// Handles GET /api/properties and POST /api/properties
 
-const mockCategories = [
-  { id: 1, name: "Residential" },
-  { id: 2, name: "Commercial" },
-  { id: 3, name: "Land" },
-  { id: 4, name: "Material" },
-]
+// @route   GET /api/properties
+// @desc    Get all properties or properties by category/user
+// @access  Public
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const category = searchParams.get('category');
+  const userId = searchParams.get('user_id');
+  const limit = searchParams.get('limit');
+  const offset = searchParams.get('offset');
 
-export async function GET(request: NextRequest) {
+  let queryString = `
+    SELECT
+      p.id, p.title, p.description, p.location, p.user_id, p.category_id,
+      p.current_worth, p.year_of_construction, p.created_at, p.updated_at, p.lister_phone_number,
+      u.first_name || ' ' || u.last_name AS owner_name,
+      u.email AS owner_email,
+      u.phone_number AS owner_phone,
+      u.profile_picture AS owner_profile_picture, -- Added owner_profile_picture
+      c.name AS category_name,
+      COUNT(v.id) AS vote_count
+    FROM properties p
+    JOIN users u ON p.user_id = u.id
+    JOIN categories c ON p.category_id = c.id
+    LEFT JOIN votes v ON p.id = v.property_id
+  `;
+  const queryParams: (string | number)[] = [];
+  const conditions: string[] = [];
+
+  if (category) {
+    conditions.push('c.name = $1');
+    queryParams.push(category);
+  }
+  if (userId) {
+    conditions.push(`p.user_id = $${queryParams.length + 1}`);
+    queryParams.push(parseInt(userId));
+  }
+
+  if (conditions.length > 0) {
+    queryString += ` WHERE ${conditions.join(' AND ')}`;
+  }
+
+  queryString += ` GROUP BY p.id, u.id, c.id ORDER BY p.created_at DESC`;
+
+  if (limit) {
+    queryString += ` LIMIT $${queryParams.length + 1}`;
+    queryParams.push(parseInt(limit));
+  }
+  if (offset) {
+    queryString += ` OFFSET $${queryParams.length + 1}`;
+    queryParams.push(parseInt(offset));
+  }
+
   try {
-    const { searchParams } = new URL(request.url)
-    const category = searchParams.get("category")
-    const user_id = searchParams.get("user_id")
-    const limit = Number.parseInt(searchParams.get("limit") || "10")
-    const offset = Number.parseInt(searchParams.get("offset") || "0")
+    const result = await query<Property>(queryString, queryParams);
 
-    let filteredProperties = [...mockProperties]
+    // Fetch images for each property
+    const propertiesWithImages = await Promise.all(result.rows.map(async (property) => {
+      const imageResult = await query<PropertyImage>(
+        'SELECT id, property_id, image_url, is_primary, created_at FROM property_images WHERE property_id = $1 ORDER BY is_primary DESC, created_at ASC',
+        [property.id]
+      );
+      return { ...property, images: imageResult.rows };
+    }));
 
-    // Filter by category if specified
-    if (category && category !== "all") {
-      filteredProperties = filteredProperties.filter(
-        (property) => property.category_name.toLowerCase() === category.toLowerCase(),
-      )
-    }
-
-    // Filter by user_id if specified
-    if (user_id) {
-      filteredProperties = filteredProperties.filter((property) => property.user_id === Number.parseInt(user_id))
-    }
-
-    // Apply pagination
-    const paginatedProperties = filteredProperties.slice(offset, offset + limit)
-
-    return NextResponse.json({
-      success: true,
-      data: paginatedProperties,
-      total: filteredProperties.length,
-      count: paginatedProperties.length,
-    })
+    return NextResponse.json({ success: true, data: propertiesWithImages, count: propertiesWithImages.length });
   } catch (error) {
-    console.error("Error fetching properties:", error)
-    return NextResponse.json({ success: false, error: "Failed to fetch properties" }, { status: 500 })
+    console.error(error);
+    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
   }
 }
 
-export async function POST(request: NextRequest) {
+// @route   POST /api/properties
+// @desc    Add a new property
+// @access  Private
+export async function POST(req: NextRequest) {
+  const authResponse = await protect(req as AuthNextRequest);
+  if (authResponse instanceof NextResponse) {
+    return authResponse;
+  }
+
+  const { title, description, location, category_id, current_worth, year_of_construction, lister_phone_number, image_urls } = await req.json();
+  const userId = (req as AuthNextRequest).user!.id;
+
+  if (!title || !description || !location || !category_id) {
+    return NextResponse.json({ success: false, error: 'Please include all required fields: title, description, location, category_id' }, { status: 400 });
+  }
+
   try {
-    const body = await request.json()
-    const {
-      title,
-      description,
-      location,
-      category_id,
-      current_worth,
-      year_of_construction,
-      lister_phone_number,
-      property_images,
-    } = body
+    const propertyResult = await query<Property>(
+      `INSERT INTO properties (title, description, location, user_id, category_id, current_worth, year_of_construction, lister_phone_number)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [title, description, location, userId, category_id, current_worth, year_of_construction, lister_phone_number]
+    );
 
-    // Validate required fields
-    if (!title || !description || !location || !category_id) {
-      return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 })
+    const newProperty = propertyResult.rows[0];
+
+    // Insert images if provided
+    if (image_urls && Array.isArray(image_urls) && image_urls.length > 0) {
+      const imageInsertPromises = image_urls.map((url: string, index: number) => {
+        const isPrimary = index === 0; // First image is primary
+        return query(
+          'INSERT INTO property_images (property_id, image_url, is_primary) VALUES ($1, $2, $3)',
+          [newProperty.id, url, isPrimary]
+        );
+      });
+      await Promise.all(imageInsertPromises);
     }
 
-    // Find category name
-    const category = mockCategories.find((cat) => cat.id === category_id)
-    const categoryName = category ? category.name : "Unknown"
-
-    // Create new property (in real implementation, save to database)
-    const newProperty = {
-      id: mockProperties.length + 1,
-      title,
-      description,
-      location,
-      user_id: 1, // In real implementation, get from authenticated user
-      category_id,
-      current_worth: current_worth || null,
-      year_of_construction: year_of_construction || null,
-      lister_phone_number: lister_phone_number || null,
-      property_images: property_images || null, // Store as JSON string
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      owner_name: "Current User", // In real implementation, get from authenticated user
-      owner_email: "user@example.com",
-      owner_phone: lister_phone_number || "+2348000000000",
-      owner_profile_picture: "/placeholder.svg",
-      category_name: categoryName,
-      vote_count: 0,
-    }
-
-    // Add to mock data (in real implementation, save to database)
-    mockProperties.push(newProperty)
-
-    return NextResponse.json({
-      success: true,
-      data: newProperty,
-      message: "Property created successfully",
-    })
+    return NextResponse.json({ success: true, data: newProperty }, { status: 201 });
   } catch (error) {
-    console.error("Error creating property:", error)
-    return NextResponse.json({ success: false, error: "Failed to create property" }, { status: 500 })
+    console.error(error);
+    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
   }
 }

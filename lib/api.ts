@@ -23,6 +23,7 @@ export interface User {
 }
 
 export interface Property {
+  image_url: any
   id: number
   title: string
   description: string
@@ -32,7 +33,6 @@ export interface Property {
   current_worth?: number
   year_of_construction?: number
   lister_phone_number?: string // Added for lister's specific phone number
-  property_images?: string // Updated: Now a single column containing image URLs (JSON string or comma-separated)
   created_at: string
   updated_at: string
   owner_name?: string
@@ -41,7 +41,7 @@ export interface Property {
   owner_profile_picture?: string // Added for lister's profile picture
   category_name?: string
   vote_count?: number
-  images?: PropertyImage[] // Keep this for backward compatibility and easier frontend handling
+  images?: PropertyImage[]
   vote_options?: VoteOption[]
 }
 
@@ -152,42 +152,6 @@ class ApiClient {
     }
   }
 
-  // Helper method to parse property images from the database column
-  private parsePropertyImages(property: Property): Property {
-    if (property.property_images) {
-      try {
-        // Try to parse as JSON first (if stored as JSON array)
-        let imageUrls: string[] = []
-
-        if (property.property_images.startsWith("[")) {
-          // JSON array format
-          imageUrls = JSON.parse(property.property_images)
-        } else {
-          // Comma-separated format
-          imageUrls = property.property_images
-            .split(",")
-            .map((url) => url.trim())
-            .filter((url) => url)
-        }
-
-        // Convert to PropertyImage format for backward compatibility
-        property.images = imageUrls.map((url, index) => ({
-          id: index + 1,
-          property_id: property.id,
-          image_url: url,
-          is_primary: index === 0, // First image is primary
-          created_at: property.created_at,
-        }))
-      } catch (error) {
-        console.error("Error parsing property images:", error)
-        property.images = []
-      }
-    } else {
-      property.images = []
-    }
-    return property
-  }
-
   // Auth methods
   async register(userData: {
     first_name: string
@@ -240,25 +204,11 @@ class ApiClient {
       })
     }
     const queryString = searchParams.toString()
-    const response = await this.request<Property[]>(`/properties${queryString ? `?${queryString}` : ""}`)
-
-    // Parse images for each property
-    if (response.success && response.data) {
-      response.data = response.data.map((property) => this.parsePropertyImages(property))
-    }
-
-    return response
+    return this.request(`/properties${queryString ? `?${queryString}` : ""}`)
   }
 
   async getProperty(id: number): Promise<ApiResponse<Property>> {
-    const response = await this.request<Property>(`/properties/${id}`)
-
-    // Parse images for the property
-    if (response.success && response.data) {
-      response.data = this.parsePropertyImages(response.data)
-    }
-
-    return response
+    return this.request(`/properties/${id}`)
   }
 
   async createProperty(propertyData: {
@@ -271,32 +221,15 @@ class ApiClient {
     lister_phone_number?: string
     image_urls?: string[]
   }): Promise<ApiResponse<Property>> {
-    // Convert image_urls array to JSON string for storage
-    const dataToSend = {
-      ...propertyData,
-      property_images: propertyData.image_urls ? JSON.stringify(propertyData.image_urls) : null,
-    }
-
-    // Remove image_urls from the data since we're using property_images now
-    delete (dataToSend as any).image_urls
-
-    const response = await this.request<Property>("/properties", {
+    return this.request("/properties", {
       method: "POST",
-      body: JSON.stringify(dataToSend),
+      body: JSON.stringify(propertyData),
     })
-
-    // Parse images for the created property
-    if (response.success && response.data) {
-      response.data = this.parsePropertyImages(response.data)
-    }
-
-    return response
   }
 
   async updateProperty(id: number, propertyData: Partial<Property>): Promise<ApiResponse<Property>> {
     return this.request(`/properties/${id}`, {
       method: "PUT",
-      body: JSON.stringify(propertyData),
     })
   }
 
