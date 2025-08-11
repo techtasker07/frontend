@@ -64,7 +64,7 @@ export default function AboutPage() {
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <Badge className="mb-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white">About Mipripity</Badge>
-            <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
               Revolutionizing Property Evaluation
             </h1>
             <p className="text-xl md:text-2xl text-slate-600 max-w-4xl mx-auto leading-relaxed">
@@ -121,15 +121,6 @@ export default function AboutPage() {
                     referrerPolicy="no-referrer-when-downgrade"
                     className="rounded-xl"
                   ></iframe>
-                </div>
-              </div>
-              <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-xl shadow-lg">
-                <div className="flex items-center space-x-3">
-                  <Award className="h-8 w-8 text-yellow-500" />
-                  <div>
-                    <p className="font-bold text-slate-800">Innovation Award</p>
-                    <p className="text-sm text-slate-500">PropTech Nigeria 2024</p>
-                  </div>
                 </div>
               </div>
             </div>
