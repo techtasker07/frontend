@@ -1,44 +1,40 @@
-"use client"
+'use client'
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { api, type VoteOption } from "@/lib/api"
-import { useAuth } from "@/lib/auth"
-import { Loader2, Plus, ArrowLeft } from "lucide-react"
-import Link from "next/link"
-import { toast } from "sonner"
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { api, VoteOption } from '@/lib/api'
+import { useAuth } from '@/lib/auth'
+import { Loader2, Plus, ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
+import { toast } from 'sonner'
 
 const categories = [
-  { id: 1, name: "Residential" },
-  { id: 2, name: "Commercial" },
-  { id: 3, name: "Land" },
-  { id: 4, name: "Material" },
+  { id: 1, name: 'Residential' },
+  { id: 2, name: 'Commercial' },
+  { id: 3, name: 'Land' },
+  { id: 4, name: 'Material' },
 ]
 
 export default function AddPropertyPage() {
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    location: "",
-    category_id: "",
-    current_worth: "",
-    year_of_construction: "",
-    lister_phone_number: "",
-    image_urls: [] as string[], // To hold uploaded image URLs
+    title: '',
+    description: '',
+    location: '',
+    category_id: '',
+    current_worth: '',
+    year_of_construction: '',
+    lister_phone_number: '',
   })
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]) // State to hold selected files
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]); // State to hold selected files
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [uploadProgress, setUploadProgress] = useState<string>("")
+  const [error, setError] = useState('')
   const [voteOptions, setVoteOptions] = useState<VoteOption[]>([])
 
   const { isAuthenticated, user } = useAuth()
@@ -46,7 +42,7 @@ export default function AddPropertyPage() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push("/login")
+      router.push('/login')
       return
     }
     fetchVoteOptions()
@@ -59,46 +55,46 @@ export default function AddPropertyPage() {
         setVoteOptions(response.data)
       }
     } catch (error) {
-      console.error("Failed to fetch vote options:", error)
+      console.error('Failed to fetch vote options:', error)
     }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: value
     }))
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setSelectedFiles(Array.from(e.target.files))
+      setSelectedFiles(Array.from(e.target.files));
     }
-  }
+  };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: value
     }))
   }
 
   const validateForm = () => {
     if (!formData.title.trim()) {
-      setError("Property title is required")
+      setError('Property title is required')
       return false
     }
     if (!formData.description.trim()) {
-      setError("Property description is required")
+      setError('Property description is required')
       return false
     }
     if (!formData.location.trim()) {
-      setError("Property location is required")
+      setError('Property location is required')
       return false
     }
     if (!formData.category_id) {
-      setError("Property category is required")
+      setError('Property category is required')
       return false
     }
     return true
@@ -106,7 +102,7 @@ export default function AddPropertyPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError("")
+    setError('')
 
     if (!validateForm()) {
       return
@@ -115,54 +111,45 @@ export default function AddPropertyPage() {
     setLoading(true)
 
     try {
-      const uploadedImageUrls: string[] = []
-      setUploadProgress("Uploading images...")
-
-      for (let i = 0; i < selectedFiles.length; i++) {
-        const file = selectedFiles[i]
-        setUploadProgress(`Uploading image ${i + 1} of ${selectedFiles.length}...`)
-
+      const uploadedImageUrls: string[] = [];
+      for (const file of selectedFiles) {
         try {
-          const uploadResponse = await api.uploadFile(file)
+          const uploadResponse = await api.uploadFile(file);
           if (uploadResponse.success) {
-            uploadedImageUrls.push(uploadResponse.data.url)
+            uploadedImageUrls.push(uploadResponse.data.url);
           } else {
-            throw new Error(uploadResponse.error || "Failed to upload image")
+            throw new Error(uploadResponse.error || 'Failed to upload image');
           }
         } catch (uploadError: any) {
-          toast.error(`Failed to upload image ${file.name}: ${uploadError.message}`)
-          setError(`Failed to upload image ${file.name}: ${uploadError.message}`)
-          setLoading(false)
-          setUploadProgress("")
-          return
+          toast.error(`Failed to upload image ${file.name}: ${uploadError.message}`);
+          setError(`Failed to upload image ${file.name}: ${uploadError.message}`);
+          setLoading(false);
+          return; // Stop submission if any image fails to upload
         }
       }
-
-      setUploadProgress("Creating property...")
 
       const propertyData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
         location: formData.location.trim(),
-        category_id: Number.parseInt(formData.category_id),
-        ...(formData.current_worth && { current_worth: Number.parseFloat(formData.current_worth) }),
-        ...(formData.year_of_construction && { year_of_construction: Number.parseInt(formData.year_of_construction) }),
+        category_id: parseInt(formData.category_id),
+        ...(formData.current_worth && { current_worth: parseFloat(formData.current_worth) }),
+        ...(formData.year_of_construction && { year_of_construction: parseInt(formData.year_of_construction) }),
         ...(formData.lister_phone_number && { lister_phone_number: formData.lister_phone_number.trim() }),
         image_urls: uploadedImageUrls, // Send uploaded URLs to backend
       }
 
       const response = await api.createProperty(propertyData)
-
+      
       if (response.success) {
-        toast.success("Property added successfully!")
+        toast.success('Property added successfully!')
         router.push(`/properties/${response.data.id}`)
       }
     } catch (error: any) {
-      toast.error(error.message || "Failed to add property. Please try again.")
-      setError(error.message || "Failed to add property. Please try again.")
+      toast.error(error.message || 'Failed to add property. Please try again.')
+      setError(error.message || 'Failed to add property. Please try again.')
     } finally {
       setLoading(false)
-      setUploadProgress("")
     }
   }
 
@@ -170,8 +157,10 @@ export default function AddPropertyPage() {
     return null // Will redirect to login
   }
 
-  const selectedCategory = categories.find((cat) => cat.id.toString() === formData.category_id)
-  const categoryVoteOptions = voteOptions.filter((option) => option.category_id.toString() === formData.category_id)
+  const selectedCategory = categories.find(cat => cat.id.toString() === formData.category_id)
+  const categoryVoteOptions = voteOptions.filter(option => 
+    option.category_id.toString() === formData.category_id
+  )
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
@@ -189,7 +178,9 @@ export default function AddPropertyPage() {
             <Plus className="mr-2 h-5 w-5" />
             Add New Property
           </CardTitle>
-          <CardDescription>Share a property with the community for evaluation and voting</CardDescription>
+          <CardDescription>
+            Share a property with the community for evaluation and voting
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -243,9 +234,9 @@ export default function AddPropertyPage() {
 
             <div className="space-y-2">
               <Label htmlFor="category_id">Property Category *</Label>
-              <Select
-                value={formData.category_id}
-                onValueChange={(value) => handleSelectChange("category_id", value)}
+              <Select 
+                value={formData.category_id} 
+                onValueChange={(value) => handleSelectChange('category_id', value)}
                 disabled={loading}
               >
                 <SelectTrigger>
@@ -268,9 +259,7 @@ export default function AddPropertyPage() {
                   <strong>Voting options for {selectedCategory.name}:</strong>
                   <ul className="mt-2 list-disc list-inside">
                     {categoryVoteOptions.map((option) => (
-                      <li key={option.id} className="text-sm">
-                        {option.name}
-                      </li>
+                      <li key={option.id} className="text-sm">{option.name}</li>
                     ))}
                   </ul>
                 </AlertDescription>
@@ -320,13 +309,11 @@ export default function AddPropertyPage() {
                 placeholder="e.g., +2348012345678"
                 disabled={loading}
               />
-              <p className="text-xs text-muted-foreground">
-                This number will be displayed on the property details page.
-              </p>
+              <p className="text-xs text-muted-foreground">This number will be displayed on the property details page.</p>
             </div>
 
             <div className="space-y-2">
-              <Label>Property Images</Label>
+              <Label htmlFor="images">Property Images</Label>
               <Input
                 id="images"
                 name="images"
@@ -336,29 +323,29 @@ export default function AddPropertyPage() {
                 disabled={loading}
                 accept="image/*"
               />
-              <p className="text-xs text-muted-foreground">
-                Select one or more image files. First image will be primary.
-              </p>
+              <p className="text-xs text-muted-foreground">Select one or more image files. First image will be primary.</p>
               {selectedFiles.length > 0 && (
                 <div className="text-sm text-muted-foreground">
-                  Selected: {selectedFiles.map((file) => file.name).join(", ")}
+                  Selected: {selectedFiles.map(file => file.name).join(', ')}
                 </div>
               )}
             </div>
 
-            <Button type="submit" disabled={loading} className="flex-1">
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {uploadProgress || "Adding Property..."}
-                </>
-              ) : (
-                "Add Property"
-              )}
-            </Button>
-            <Button type="button" variant="outline" asChild>
-              <Link href="/">Cancel</Link>
-            </Button>
+            <div className="flex gap-4">
+              <Button type="submit" disabled={loading} className="flex-1">
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Adding Property...
+                  </>
+                ) : (
+                  'Add Property'
+                )}
+              </Button>
+              <Button type="button" variant="outline" asChild>
+                <Link href="/">Cancel</Link>
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
