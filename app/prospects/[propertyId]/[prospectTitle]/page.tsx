@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { api, type ProspectProperty } from "@/lib/api"
-import { getProspectDetails, type PropertyProspect } from "@/lib/aiProspects"
+import { api, type ProspectProperty, type PropertyProspect } from "@/lib/api"
 import {
   ArrowLeft,
   Lightbulb,
@@ -22,11 +21,71 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 
+// Simple tips for each prospect type
+const PROSPECT_TIPS: { [key: string]: string[] } = {
+  "Short Let Plan": [
+    "Furnish with modern furniture and essential appliances",
+    "Offer 24/7 electricity via solar or generator backup",
+    "List on Airbnb, Booking.com, and local property sites",
+    "Market with professional photography and virtual tours",
+    "Comply with local short-let licensing requirements",
+  ],
+  "Student Housing Investment": [
+    "Divide large spaces into smaller rentable units",
+    "Provide basic furnishings like beds, wardrobes, and desks",
+    "Install prepaid electricity meters to manage usage",
+    "Offer reliable water supply and security",
+    "Partner with nearby universities for referrals",
+  ],
+  "Family Rental Hub": [
+    "Install modern kitchen appliances and fixtures",
+    "Create child-friendly spaces and safety features",
+    "Provide parking spaces and security systems",
+    "Ensure reliable power and water supply",
+    "Market to expatriate families and professionals",
+  ],
+  "Co-living Space": [
+    "Design flexible living spaces with privacy",
+    "Install high-speed internet and work areas",
+    "Create shared kitchens and recreational spaces",
+    "Implement smart home technology",
+    "Target tech workers and remote professionals",
+  ],
+  "Tech Hub & Co-working Space": [
+    "Install high-speed fiber internet and backup power",
+    "Create flexible workspaces with modern furniture",
+    "Provide meeting rooms and event spaces",
+    "Offer virtual office services and mail handling",
+    "Partner with tech communities and startup incubators",
+  ],
+  "Retail Shopping Complex": [
+    "Design attractive storefronts and common areas",
+    "Provide ample parking and security systems",
+    "Create anchor tenant spaces for major brands",
+    "Implement modern POS and payment systems",
+    "Market to both local and international retailers",
+  ],
+  "Residential Estate Development": [
+    "Conduct thorough land survey and soil testing",
+    "Obtain necessary permits and approvals",
+    "Design modern infrastructure and utilities",
+    "Create recreational facilities and green spaces",
+    "Market to middle and upper-class families",
+  ],
+  "Commercial Plaza Development": [
+    "Ensure strategic location with high foot traffic",
+    "Design flexible commercial spaces",
+    "Provide adequate parking and loading areas",
+    "Install modern security and fire safety systems",
+    "Target diverse business tenants",
+  ],
+}
+
 export default function ProspectDetailPage() {
   const params = useParams()
   const router = useRouter()
   const [property, setProperty] = useState<ProspectProperty | null>(null)
-  const [prospectDetails, setProspectDetails] = useState<PropertyProspect | null>(null)
+  const [prospect, setProspect] = useState<PropertyProspect | null>(null)
   const [loading, setLoading] = useState(true)
 
   const propertyId = Number.parseInt(params.propertyId as string)
@@ -44,9 +103,14 @@ export default function ProspectDetailPage() {
       if (response.success) {
         setProperty(response.data)
 
-        // Get detailed prospect information from AI prospects
-        const details = getProspectDetails(response.data.category_id, prospectTitle)
-        setProspectDetails(details)
+        // Find the specific prospect
+        const foundProspect = response.data.prospects?.find((p) => p.title === prospectTitle)
+        if (foundProspect) {
+          setProspect(foundProspect)
+        } else {
+          toast.error("Prospect not found")
+          router.push(`/prospectProperties/${propertyId}`)
+        }
       } else {
         toast.error("Property not found")
         router.push("/prospectProperties")
@@ -90,7 +154,7 @@ export default function ProspectDetailPage() {
     )
   }
 
-  if (!property || !prospectDetails) {
+  if (!property || !prospect) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
@@ -103,11 +167,14 @@ export default function ProspectDetailPage() {
     )
   }
 
-  // Calculate costs based on property worth and prospect factors
-  const baseWorth = property.estimated_worth || 10000000
-  const purchaseCost = baseWorth * prospectDetails.purchaseCostFactor
-  const developmentCost = baseWorth * prospectDetails.developmentCostFactor
-  const totalInvestment = purchaseCost + developmentCost
+  // Get tips for this prospect
+  const tips = PROSPECT_TIPS[prospect.title] || [
+    "Conduct market research and feasibility studies",
+    "Obtain necessary permits and approvals",
+    "Develop a comprehensive business plan",
+    "Secure adequate funding and financing",
+    "Partner with experienced professionals",
+  ]
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -129,7 +196,7 @@ export default function ProspectDetailPage() {
                 <div>
                   <CardTitle className="text-2xl flex items-center">
                     <Lightbulb className="mr-3 h-6 w-6 text-yellow-500" />
-                    {prospectDetails.title}
+                    {prospect.title}
                   </CardTitle>
                   <CardDescription className="mt-2 text-base">
                     AI-Generated Investment Prospect for {property.title}
@@ -142,7 +209,7 @@ export default function ProspectDetailPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground leading-relaxed text-lg">{prospectDetails.description}</p>
+              <p className="text-muted-foreground leading-relaxed text-lg">{prospect.description}</p>
             </CardContent>
           </Card>
 
@@ -160,25 +227,21 @@ export default function ProspectDetailPage() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
                     <span className="text-sm font-medium text-blue-800">Property Value:</span>
-                    <span className="font-bold text-blue-900">{formatCurrency(baseWorth)}</span>
+                    <span className="font-bold text-blue-900">{formatCurrency(property.estimated_worth || 0)}</span>
                   </div>
                   <div className="flex justify-between items-center p-4 bg-orange-50 rounded-lg">
                     <span className="text-sm font-medium text-orange-800">Development Cost:</span>
-                    <span className="font-bold text-orange-900">{formatCurrency(developmentCost)}</span>
+                    <span className="font-bold text-orange-900">{formatCurrency(prospect.estimated_cost)}</span>
                   </div>
                 </div>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center p-4 bg-purple-50 rounded-lg">
-                    <span className="text-sm font-medium text-purple-800">Purchase Factor:</span>
-                    <span className="font-bold text-purple-900">
-                      {(prospectDetails.purchaseCostFactor * 100).toFixed(0)}%
-                    </span>
+                    <span className="text-sm font-medium text-purple-800">ROI Potential:</span>
+                    <span className="font-bold text-purple-900">High</span>
                   </div>
                   <div className="flex justify-between items-center p-4 bg-green-50 rounded-lg">
-                    <span className="text-sm font-medium text-green-800">Development Factor:</span>
-                    <span className="font-bold text-green-900">
-                      {(prospectDetails.developmentCostFactor * 100).toFixed(0)}%
-                    </span>
+                    <span className="text-sm font-medium text-green-800">Market Demand:</span>
+                    <span className="font-bold text-green-900">Strong</span>
                   </div>
                 </div>
               </div>
@@ -191,13 +254,13 @@ export default function ProspectDetailPage() {
                     <DollarSign className="h-6 w-6 text-green-600 mr-2" />
                     <span className="text-lg font-semibold text-green-800">Total Investment Required:</span>
                   </div>
-                  <span className="text-3xl font-bold text-green-900">{formatCurrency(totalInvestment)}</span>
+                  <span className="text-3xl font-bold text-green-900">{formatCurrency(prospect.total_cost)}</span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Realization Tips */}
+          {/* Implementation Tips */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
@@ -208,7 +271,7 @@ export default function ProspectDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {prospectDetails.realizationTips.map((tip, index) => (
+                {tips.map((tip, index) => (
                   <div
                     key={index}
                     className="flex items-start space-x-3 p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors"
