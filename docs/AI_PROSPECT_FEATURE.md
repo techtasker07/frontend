@@ -24,21 +24,20 @@ When user clicks "Start AI Analysis":
    - Option to select images from device
    - Category selection dropdown for property type
 
-2. **AI Analysis Modal**
-   - Displays the captured/selected image
-   - Shows AI-generated property analysis including:
-     - Property title and location
-     - Estimated worth
-     - Market insights
-     - Investment recommendations
-     - Risk factors
-     - ROI estimates
+2. **Prospect Preview Modal**
+   - Displays the captured/selected image with category badge
+   - Shows a randomly assigned prospect title as a clickable button
+   - Displays investment cost information
+   - When prospect button is clicked, shows detailed prospect information:
+     - Project description
+     - Development cost breakdown
+     - Total investment required
    - Options to "Add as Prospect Property" or "Close"
 
-3. **Add Prospect Property Modal**
-   - Pre-filled form with AI analysis data
+3. **Add Prospect Property Modal** (if user chooses to add)
+   - Pre-filled form with generated property data
    - User can edit and add additional details
-   - Saves to database as a prospect property
+   - Saves to database as a prospect property with associated prospects
 
 ## Components
 
@@ -64,14 +63,14 @@ When user clicks "Start AI Analysis":
   - File selection from device
   - Category selection
 
-### ProspectAnalysisModal
-- **Location**: `frontend/components/ai/prospect-analysis-modal.tsx`
-- **Purpose**: Displays AI-generated property analysis
+### ProspectPreviewModal
+- **Location**: `frontend/components/ai/prospect-preview-modal.tsx`
+- **Purpose**: Displays image with assigned prospect and details
 - **Features**:
-  - Comprehensive property insights
-  - Visual confidence indicators
-  - Formatted currency display
-  - Risk assessment visualization
+  - Image display with category badge
+  - Prospect title button with investment cost
+  - Detailed prospect view with description and cost breakdown
+  - Smooth transitions between preview and detail modes
 
 ### AddProspectModal
 - **Location**: `frontend/components/prospect/add-prospect-modal.tsx`
