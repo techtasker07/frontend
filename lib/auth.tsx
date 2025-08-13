@@ -19,6 +19,8 @@ interface AuthContextType {
   refreshUser: () => Promise<void>; // Added refreshUser function
   loading: boolean;
   isAuthenticated: boolean;
+  justLoggedIn: boolean; // Track if user just logged in
+  setJustLoggedIn: (value: boolean) => void;
 }
 
 // Create context with a non-nullable type using type assertion
@@ -28,6 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [justLoggedIn, setJustLoggedIn] = useState(false);
 
   // Helper function to fetch current user data
   const fetchCurrentUser = async () => {
@@ -72,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(user);
         setToken(token);
         localStorage.setItem('token', token);
+        setJustLoggedIn(true); // Mark that user just logged in
       } else {
         throw new Error(response.error || 'Login failed');
       }
@@ -94,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(user);
         setToken(token);
         localStorage.setItem('token', token);
+        setJustLoggedIn(true); // Mark that user just registered/logged in
       } else {
         throw new Error(response.error || 'Registration failed');
       }
@@ -105,6 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setUser(null);
     setToken(null);
+    setJustLoggedIn(false);
     localStorage.removeItem('token');
   };
 
@@ -124,6 +130,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshUser, // Added refreshUser to the context value
     loading,
     isAuthenticated: !!user && !!token,
+    justLoggedIn,
+    setJustLoggedIn,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

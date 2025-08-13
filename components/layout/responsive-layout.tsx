@@ -6,6 +6,7 @@ import { useState } from "react"
 import { Sidebar } from "./sidebar"
 import { MobileHeader } from "./mobile-header"
 import { Footer } from "./footer"
+import { LoginSuccessHandler } from "../ai/login-success-handler"
 
 interface ResponsiveLayoutProps {
   children: React.ReactNode
@@ -41,6 +42,9 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
         <main className="min-h-screen">{children}</main>
         <Footer />
       </div>
+
+      {/* Login Success Handler - Global AI Prospect Feature */}
+      <LoginSuccessHandler />
     </div>
   )
 }
