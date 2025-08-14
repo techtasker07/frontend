@@ -1,11 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
-
-// Database connection - replace with your actual database configuration
-const executeQuery = async (query: string, params: any[] = []) => {
-  // This is a placeholder for your actual database connection
-  console.log("Query:", query, "Params:", params)
-  return []
-}
+import { query } from "@/lib/db"
+import { protect, type AuthNextRequest } from "@/lib/authUtils"
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,8 +11,8 @@ export async function GET(request: NextRequest) {
     const offset = searchParams.get("offset") || "0"
 
     // Build query with joins to get related data
-    let query = `
-      SELECT 
+    let queryString = `
+      SELECT
         v.id,
         v.user_id,
         v.property_id,
@@ -37,27 +32,27 @@ export async function GET(request: NextRequest) {
 
     // Add filters
     if (property_id) {
-      conditions.push("v.property_id = ?")
+      conditions.push(`v.property_id = $${queryParams.length + 1}`)
       queryParams.push(Number.parseInt(property_id))
     }
 
     if (user_id) {
-      conditions.push("v.user_id = ?")
+      conditions.push(`v.user_id = $${queryParams.length + 1}`)
       queryParams.push(Number.parseInt(user_id))
     }
 
     // Add WHERE clause if there are conditions
     if (conditions.length > 0) {
-      query += ` WHERE ${conditions.join(" AND ")}`
+      queryString += ` WHERE ${conditions.join(" AND ")}`
     }
 
     // Add ORDER BY and LIMIT
-    query += ` ORDER BY v.created_at DESC LIMIT ? OFFSET ?`
+    queryString += ` ORDER BY v.created_at DESC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`
     queryParams.push(Number.parseInt(limit), Number.parseInt(offset))
 
-    const rows = await executeQuery(query, queryParams)
+    const result = await query(queryString, queryParams)
 
-    const votes = (rows as any[]).map((row) => ({
+    const votes = result.rows.map((row) => ({
       id: row.id,
       user_id: row.user_id,
       property_id: row.property_id,
@@ -69,19 +64,19 @@ export async function GET(request: NextRequest) {
     }))
 
     // Get total count
-    let countQuery = `
+    let countQueryString = `
       SELECT COUNT(*) as total
       FROM votes v
     `
 
     const countParams: any[] = []
     if (conditions.length > 0) {
-      countQuery += ` WHERE ${conditions.join(" AND ")}`
+      countQueryString += ` WHERE ${conditions.join(" AND ")}`
       countParams.push(...queryParams.slice(0, -2)) // Exclude limit and offset
     }
 
-    const countResult = await executeQuery(countQuery, countParams)
-    const total = (countResult as any[])[0]?.total || 0
+    const countResult = await query(countQueryString, countParams)
+    const total = countResult.rows[0]?.total || 0
 
     return NextResponse.json({
       success: true,
@@ -96,6 +91,12 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  // Protect the route - require authentication
+  const authResponse = await protect(request as AuthNextRequest)
+  if (authResponse instanceof NextResponse) {
+    return authResponse
+  }
+
   try {
     const body = await request.json()
     const { property_id, vote_option_id } = body
@@ -108,31 +109,31 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get user_id from authentication (you'll need to implement this)
-    const user_id = 1 // Replace with actual authenticated user ID
+    // Get user_id from authentication
+    const user_id = (request as AuthNextRequest).user!.id
 
     // Check if property exists
-    const propertyCheckQuery = "SELECT id, category_id FROM properties WHERE id = ?"
-    const propertyResult = await executeQuery(propertyCheckQuery, [Number.parseInt(property_id)])
+    const propertyCheckQuery = "SELECT id, category_id FROM properties WHERE id = $1"
+    const propertyResult = await query(propertyCheckQuery, [Number.parseInt(property_id)])
 
-    if ((propertyResult as any[]).length === 0) {
+    if (propertyResult.rows.length === 0) {
       return NextResponse.json({ success: false, error: "Property not found" }, { status: 404 })
     }
 
-    const property = (propertyResult as any[])[0]
+    const property = propertyResult.rows[0]
 
     // Check if vote option exists and belongs to the property's category
     const voteOptionCheckQuery = `
-      SELECT id, name, category_id 
-      FROM vote_options 
-      WHERE id = ? AND category_id = ?
+      SELECT id, name, category_id
+      FROM vote_options
+      WHERE id = $1 AND category_id = $2
     `
-    const voteOptionResult = await executeQuery(voteOptionCheckQuery, [
+    const voteOptionResult = await query(voteOptionCheckQuery, [
       Number.parseInt(vote_option_id),
       property.category_id,
     ])
 
-    if ((voteOptionResult as any[]).length === 0) {
+    if (voteOptionResult.rows.length === 0) {
       return NextResponse.json(
         { success: false, error: "Invalid vote option for this property category" },
         { status: 400 },
@@ -140,23 +141,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user has already voted for this property
-    const existingVoteQuery = "SELECT id FROM votes WHERE user_id = ? AND property_id = ?"
-    const existingVote = await executeQuery(existingVoteQuery, [user_id, Number.parseInt(property_id)])
+    const existingVoteQuery = "SELECT id FROM votes WHERE user_id = $1 AND property_id = $2"
+    const existingVote = await query(existingVoteQuery, [user_id, Number.parseInt(property_id)])
 
-    if ((existingVote as any[]).length > 0) {
+    if (existingVote.rows.length > 0) {
       // Update existing vote instead of creating new one
       const updateVoteQuery = `
-        UPDATE votes 
-        SET vote_option_id = ?, created_at = NOW()
-        WHERE user_id = ? AND property_id = ?
+        UPDATE votes
+        SET vote_option_id = $1, created_at = NOW()
+        WHERE user_id = $2 AND property_id = $3
       `
-      await executeQuery(updateVoteQuery, [Number.parseInt(vote_option_id), user_id, Number.parseInt(property_id)])
+      await query(updateVoteQuery, [Number.parseInt(vote_option_id), user_id, Number.parseInt(property_id)])
 
-      const voteId = (existingVote as any[])[0].id
+      const voteId = existingVote.rows[0].id
 
       // Get updated vote with related data
       const getVoteQuery = `
-        SELECT 
+        SELECT
           v.id,
           v.user_id,
           v.property_id,
@@ -169,11 +170,11 @@ export async function POST(request: NextRequest) {
         LEFT JOIN users u ON v.user_id = u.id
         LEFT JOIN properties p ON v.property_id = p.id
         LEFT JOIN vote_options vo ON v.vote_option_id = vo.id
-        WHERE v.id = ?
+        WHERE v.id = $1
       `
 
-      const voteRows = await executeQuery(getVoteQuery, [voteId])
-      const vote = (voteRows as any[])[0]
+      const voteRows = await query(getVoteQuery, [voteId])
+      const vote = voteRows.rows[0]
 
       return NextResponse.json({
         success: true,
@@ -193,20 +194,21 @@ export async function POST(request: NextRequest) {
       // Create new vote
       const insertVoteQuery = `
         INSERT INTO votes (user_id, property_id, vote_option_id, created_at)
-        VALUES (?, ?, ?, NOW())
+        VALUES ($1, $2, $3, NOW())
+        RETURNING id
       `
 
-      const result = await executeQuery(insertVoteQuery, [
+      const result = await query(insertVoteQuery, [
         user_id,
         Number.parseInt(property_id),
         Number.parseInt(vote_option_id),
       ])
 
-      const voteId = (result as any).insertId
+      const voteId = result.rows[0].id
 
       // Get created vote with related data
       const getVoteQuery = `
-        SELECT 
+        SELECT
           v.id,
           v.user_id,
           v.property_id,
@@ -219,11 +221,11 @@ export async function POST(request: NextRequest) {
         LEFT JOIN users u ON v.user_id = u.id
         LEFT JOIN properties p ON v.property_id = p.id
         LEFT JOIN vote_options vo ON v.vote_option_id = vo.id
-        WHERE v.id = ?
+        WHERE v.id = $1
       `
 
-      const voteRows = await executeQuery(getVoteQuery, [voteId])
-      const vote = (voteRows as any[])[0]
+      const voteRows = await query(getVoteQuery, [voteId])
+      const vote = voteRows.rows[0]
 
       return NextResponse.json({
         success: true,

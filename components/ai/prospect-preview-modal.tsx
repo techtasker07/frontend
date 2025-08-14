@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Camera, Lightbulb, Plus, X, TrendingUp, DollarSign, Building, Zap } from "lucide-react"
 import type { Category } from "@/lib/api"
+import { formatCompactCurrency } from "@/lib/currency"
 
 interface ProspectPreview {
   title: string
@@ -34,14 +35,7 @@ export function ProspectPreviewModal({
 }: ProspectPreviewModalProps) {
   const [showProspectDetails, setShowProspectDetails] = useState(false)
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 0,
-      notation: "compact",
-    }).format(amount)
-  }
+
 
   const handleProspectClick = () => {
     setShowProspectDetails(true)
@@ -110,7 +104,7 @@ export function ProspectPreviewModal({
                       <div className="flex-1 min-w-0">
                         <div className="font-semibold text-base text-purple-800 mb-1">{prospect.title}</div>
                         <div className="text-sm text-purple-600">
-                          Investment: {formatCurrency(prospect.totalCost)}
+                          Investment: {formatCompactCurrency(prospect.totalCost)}
                         </div>
                       </div>
                       <Badge variant="secondary" className="ml-3 bg-purple-200 text-purple-800">
@@ -189,13 +183,13 @@ export function ProspectPreviewModal({
                       <div className="p-3 bg-blue-50 rounded-lg">
                         <p className="text-sm text-muted-foreground">Development Cost</p>
                         <p className="text-lg font-semibold text-blue-600">
-                          {formatCurrency(prospect.estimatedCost)}
+                          {formatCompactCurrency(prospect.estimatedCost)}
                         </p>
                       </div>
                       <div className="p-3 bg-green-50 rounded-lg">
                         <p className="text-sm text-muted-foreground">Total Investment</p>
                         <p className="text-lg font-semibold text-green-600">
-                          {formatCurrency(prospect.totalCost)}
+                          {formatCompactCurrency(prospect.totalCost)}
                         </p>
                       </div>
                     </div>

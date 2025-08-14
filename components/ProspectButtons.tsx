@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { TrendingUp, RefreshCw, Lightbulb } from "lucide-react"
 import { toast } from "sonner"
+import { formatCompactCurrency } from "@/lib/currency"
 
 interface Prospect {
   id?: number
@@ -68,14 +69,7 @@ export default function ProspectButtons({
     }
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 0,
-      notation: "compact",
-    }).format(amount)
-  }
+
 
   if (!prospects || prospects.length === 0) {
     return (
@@ -136,7 +130,7 @@ export default function ProspectButtons({
             <div className="flex-1 min-w-0">
               <div className="font-medium text-sm truncate">{prospect.title}</div>
               <div className="text-xs text-muted-foreground mt-1">
-                Investment: {formatCurrency(prospect.total_cost)}
+                Investment: {formatCompactCurrency(prospect.total_cost)}
               </div>
             </div>
             <Badge variant="secondary" className="ml-2 text-xs">
