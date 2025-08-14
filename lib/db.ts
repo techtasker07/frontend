@@ -1,7 +1,6 @@
 // This file will handle your PostgreSQL database connection for Next.js Route Handlers.
 // It uses the 'pg' package directly, which is suitable for serverless functions.
 import { Pool, QueryResult, QueryResultRow } from 'pg';
-import { NextResponse } from 'next/server';
 
 // Use DB_EXTERNAL_URL if available, otherwise construct from individual parts
 const connectionString = process.env.DB_EXTERNAL_URL ||
@@ -17,19 +16,48 @@ if (!connectionString) {
 
 const pool = new Pool({
   connectionString: connectionString || undefined, // Use undefined if connectionString is null
-  ssl: {
+  ssl: process.env.NODE_ENV === 'production' ? {
     rejectUnauthorized: false, // Required for Render's managed PostgreSQL or other cloud DBs
-  },
+  } : false,
+  // Serverless-friendly settings
+  max: 1, // Limit connections in serverless environment
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
 });
 
 // A simple wrapper function for executing queries
 export const query = async <T extends QueryResultRow>(text: string, params?: any[]): Promise<QueryResult<T>> => {
   try {
+    // Check if we have a connection string
+    if (!connectionString) {
+      console.error('No database connection string available');
+      throw new Error('Database not configured');
+    }
+
     const res = await pool.query<T>(text, params);
     return res;
   } catch (err: any) {
-    console.error('Database query error:', err.message);
-    throw new Error('Database operation failed');
+    console.error('Database query error:', {
+      message: err.message,
+      code: err.code,
+      detail: err.detail,
+      query: text,
+      params: params,
+      connectionString: connectionString ? 'Present' : 'Missing'
+    });
+
+    // Provide more specific error messages
+    if (err.code === 'ECONNREFUSED') {
+      throw new Error('Database connection refused - check database server');
+    } else if (err.code === 'ENOTFOUND') {
+      throw new Error('Database host not found - check connection string');
+    } else if (err.code === '28P01') {
+      throw new Error('Database authentication failed - check credentials');
+    } else if (err.code === '3D000') {
+      throw new Error('Database does not exist');
+    } else {
+      throw new Error(`Database operation failed: ${err.message}`);
+    }
   }
 };
 
@@ -37,10 +65,28 @@ export const query = async <T extends QueryResultRow>(text: string, params?: any
 // This is typical for serverless environments where modules might persist.
 export const connectDB = async () => {
   try {
+    if (!connectionString) {
+      console.error('Cannot connect to database: No connection string configured');
+      return;
+    }
+
     await pool.query('SELECT 1');
-    console.log('PostgreSQL connected...');
+    console.log('PostgreSQL connected successfully');
   } catch (err: any) {
-    console.error('PostgreSQL connection error:', err.message);
+    console.error('PostgreSQL connection error:', {
+      message: err.message,
+      code: err.code,
+      detail: err.detail,
+      connectionString: connectionString ? 'Present' : 'Missing',
+      env: {
+        DB_EXTERNAL_URL: process.env.DB_EXTERNAL_URL ? 'Present' : 'Missing',
+        DB_HOST: process.env.DB_HOST ? 'Present' : 'Missing',
+        DB_USER: process.env.DB_USER ? 'Present' : 'Missing',
+        DB_PASSWORD: process.env.DB_PASSWORD ? 'Present' : 'Missing',
+        DB_NAME: process.env.DB_NAME ? 'Present' : 'Missing',
+        DB_PORT: process.env.DB_PORT ? 'Present' : 'Missing',
+      }
+    });
     // In a real application, you might want more robust error handling or retries.
   }
 };
