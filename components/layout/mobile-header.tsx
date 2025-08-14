@@ -35,20 +35,22 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
 
         {/* Right Side Actions */}
         <div className="flex items-center space-x-2">
-          {/* Notifications */}
-          <Button
-            asChild
-            variant="ghost"
-            size="sm"
-            className="relative p-2 hover:bg-gray-100"
-          >
-            <Link href="/notifications">
-              <Bell className="h-5 w-5" />
-              <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 min-w-[1.25rem] h-5">
-                3
-              </Badge>
-            </Link>
-          </Button>
+          {/* Notifications - Only show for authenticated users */}
+          {isAuthenticated && (
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="relative p-2 hover:bg-gray-100"
+            >
+              <Link href="/notifications">
+                <Bell className="h-5 w-5" />
+                <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 min-w-[1.25rem] h-5">
+                  3
+                </Badge>
+              </Link>
+            </Button>
+          )}
 
           {/* User Profile */}
           {isAuthenticated ? (

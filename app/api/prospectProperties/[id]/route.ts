@@ -5,7 +5,18 @@ import { query } from "@/lib/db"
 // @desc    Get a specific prospect property with its prospects
 // @access  Public
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const propertyId = params.id
+  const propertyId = parseInt(params.id)
+
+  // Validate propertyId
+  if (isNaN(propertyId)) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Invalid property ID",
+      },
+      { status: 400 },
+    )
+  }
 
   try {
     // Get the property with its prospects
@@ -51,12 +62,18 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       success: true,
       data: result.rows[0],
     })
-  } catch (error) {
-    console.error(error)
+  } catch (error: any) {
+    console.error("Error fetching prospect property:", {
+      propertyId,
+      message: error.message,
+      code: error.code,
+      detail: error.detail,
+      stack: error.stack
+    })
     return NextResponse.json(
       {
         success: false,
-        error: "Server error",
+        error: `Database error: ${error.message}`,
       },
       { status: 500 },
     )

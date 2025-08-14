@@ -6,25 +6,40 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/lib/auth"
-import { Home, Building, Lightbulb, Plus, User, Settings, LogOut, X, BarChart3, Search, Bell } from "lucide-react"
+import { Home, Building, Lightbulb, Plus, User, LogOut, X, BarChart3, Bell } from "lucide-react"
 
 interface SidebarProps {
   onClose?: () => void
 }
 
-const navigation = [
+interface NavigationItem {
+  name: string
+  href: string
+  icon: any
+  badge?: number
+}
+
+const publicNavigation: NavigationItem[] = [
+  { name: "Home", href: "/", icon: Home },
+  { name: "Properties", href: "/properties", icon: Building },
+  { name: "Prospect Properties", href: "/prospectProperties", icon: Lightbulb },
+]
+
+const authenticatedNavigation: NavigationItem[] = [
   { name: "Home", href: "/", icon: Home },
   { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
   { name: "Properties", href: "/properties", icon: Building },
   { name: "Prospect Properties", href: "/prospectProperties", icon: Lightbulb },
   { name: "Add Property", href: "/add-property", icon: Plus },
   { name: "Notifications", href: "/notifications", icon: Bell, badge: 3 },
-  { name: "Search", href: "/search", icon: Search },
 ]
 
 export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname()
   const { user, isAuthenticated, logout } = useAuth()
+
+  // Choose navigation based on authentication status
+  const navigation = isAuthenticated ? authenticatedNavigation : publicNavigation
 
   return (
     <div className="flex h-full w-64 flex-col bg-white border-r border-gray-200 shadow-lg md:fixed md:inset-y-0 md:left-0 md:z-40">
@@ -113,6 +128,7 @@ export function Sidebar({ onClose }: SidebarProps) {
                 Profile
               </Link>
               <button
+                type="button"
                 onClick={() => {
                   logout()
                   onClose?.()

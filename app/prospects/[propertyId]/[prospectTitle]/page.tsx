@@ -20,6 +20,7 @@ import {
   Zap,
 } from "lucide-react"
 import { toast } from "sonner"
+import { formatDisplayCurrency } from "@/lib/currency"
 
 // Simple tips for each prospect type
 const PROSPECT_TIPS: { [key: string]: string[] } = {
@@ -99,12 +100,18 @@ export default function ProspectDetailPage() {
 
   const fetchPropertyAndProspect = async () => {
     try {
-      const response = await api.getProspectProperty(propertyId)
+      console.log("Fetching prospect property with ID:", propertyId)
+      const response = await api.getProspectProperty(Number(propertyId))
+      console.log("API response:", response)
+
       if (response.success) {
         setProperty(response.data)
 
         // Find the specific prospect
         const foundProspect = response.data.prospects?.find((p) => p.title === prospectTitle)
+        console.log("Looking for prospect:", prospectTitle)
+        console.log("Available prospects:", response.data.prospects)
+
         if (foundProspect) {
           setProspect(foundProspect)
         } else {
@@ -112,24 +119,20 @@ export default function ProspectDetailPage() {
           router.push(`/prospectProperties/${propertyId}`)
         }
       } else {
-        toast.error("Property not found")
+        console.error("API error:", response.error)
+        toast.error(response.error || "Property not found")
         router.push("/prospectProperties")
       }
-    } catch (error) {
-      toast.error("Failed to fetch property details")
+    } catch (error: any) {
+      console.error("Fetch error:", error)
+      toast.error(`Failed to fetch property details: ${error.message}`)
       router.push("/prospectProperties")
     } finally {
       setLoading(false)
     }
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 0,
-    }).format(amount)
-  }
+
 
   if (loading) {
     return (
@@ -227,11 +230,11 @@ export default function ProspectDetailPage() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
                     <span className="text-sm font-medium text-blue-800">Property Value:</span>
-                    <span className="font-bold text-blue-900">{formatCurrency(property.estimated_worth || 0)}</span>
+                    <span className="font-bold text-blue-900">{formatDisplayCurrency(property.estimated_worth || 0)}</span>
                   </div>
                   <div className="flex justify-between items-center p-4 bg-orange-50 rounded-lg">
                     <span className="text-sm font-medium text-orange-800">Development Cost:</span>
-                    <span className="font-bold text-orange-900">{formatCurrency(prospect.estimated_cost)}</span>
+                    <span className="font-bold text-orange-900">{formatDisplayCurrency(prospect.estimated_cost)}</span>
                   </div>
                 </div>
                 <div className="space-y-4">
@@ -254,7 +257,7 @@ export default function ProspectDetailPage() {
                     <DollarSign className="h-6 w-6 text-green-600 mr-2" />
                     <span className="text-lg font-semibold text-green-800">Total Investment Required:</span>
                   </div>
-                  <span className="text-3xl font-bold text-green-900">{formatCurrency(prospect.total_cost)}</span>
+                  <span className="text-3xl font-bold text-green-900">{formatDisplayCurrency(prospect.total_cost)}</span>
                 </div>
               </div>
             </CardContent>

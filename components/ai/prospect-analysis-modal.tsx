@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge"
 import { Brain, TrendingUp, AlertTriangle, DollarSign, MapPin, Calendar, Plus, X } from "lucide-react"
 import type { Category } from "@/lib/api"
+import { formatDisplayCurrency } from "@/lib/currency"
 
 interface ProspectAnalysis {
   title: string
@@ -47,13 +48,7 @@ export function ProspectAnalysisModal({
     }
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 0,
-    }).format(amount)
-  }
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -98,7 +93,7 @@ export function ProspectAnalysisModal({
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <DollarSign className="h-4 w-4 text-green-600" />
-                  <span className="font-semibold">{formatCurrency(analysis.estimatedWorth)}</span>
+                  <span className="font-semibold">{formatDisplayCurrency(analysis.estimatedWorth)}</span>
                 </div>
                 <Badge className={getSentimentColor(analysis.sentiment)}>{analysis.sentiment}</Badge>
               </div>
