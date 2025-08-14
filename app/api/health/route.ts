@@ -10,14 +10,6 @@ export async function GET(req: NextRequest) {
     tables: {} as Record<string, string>,
     environment: {
       NODE_ENV: process.env.NODE_ENV,
-      // Vercel Postgres environment variables
-      POSTGRES_URL: process.env.POSTGRES_URL ? 'Present' : 'Missing',
-      POSTGRES_URL_NON_POOLING: process.env.POSTGRES_URL_NON_POOLING ? 'Present' : 'Missing',
-      POSTGRES_USER: process.env.POSTGRES_USER ? 'Present' : 'Missing',
-      POSTGRES_HOST: process.env.POSTGRES_HOST ? 'Present' : 'Missing',
-      POSTGRES_PASSWORD: process.env.POSTGRES_PASSWORD ? 'Present' : 'Missing',
-      POSTGRES_DATABASE: process.env.POSTGRES_DATABASE ? 'Present' : 'Missing',
-      // Legacy/Custom environment variables
       DB_EXTERNAL_URL: process.env.DB_EXTERNAL_URL ? 'Present' : 'Missing',
       DB_HOST: process.env.DB_HOST ? 'Present' : 'Missing',
       DB_USER: process.env.DB_USER ? 'Present' : 'Missing',
@@ -32,13 +24,23 @@ export async function GET(req: NextRequest) {
     const result = await query('SELECT 1 as test, NOW() as timestamp');
     checks.database = 'connected';
 
-    // Test table existence
-    const tables = ['users', 'categories', 'properties', 'prospect_properties', 'property_prospects'];
+    // Test table existence and count records
+    const tables = [
+      'users',
+      'categories',
+      'vote_options',
+      'properties',
+      'property_images',
+      'votes',
+      'prospect_properties',
+      'property_prospects'
+    ];
 
     for (const table of tables) {
       try {
-        await query(`SELECT 1 FROM ${table} LIMIT 1`);
-        checks.tables[table] = 'exists';
+        const countResult = await query(`SELECT COUNT(*) as count FROM ${table}`);
+        const count = countResult.rows[0]?.count || 0;
+        checks.tables[table] = `exists (${count} records)`;
       } catch (tableError: any) {
         checks.tables[table] = `error: ${tableError.message}`;
       }
@@ -46,7 +48,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Health check completed',
+      message: 'Health check completed successfully',
       data: {
         ...checks,
         timestamp: result.rows[0]?.timestamp,
