@@ -70,9 +70,29 @@ export async function GET(req: NextRequest) {
     }));
 
     return NextResponse.json({ success: true, data: propertiesWithImages, count: propertiesWithImages.length });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Properties route error:', {
+      message: error.message,
+      code: error.code,
+      detail: error.detail,
+      stack: error.stack,
+      query: queryString,
+      params: queryParams,
+      env: {
+        NODE_ENV: process.env.NODE_ENV,
+        DB_EXTERNAL_URL: process.env.DB_EXTERNAL_URL ? 'Present' : 'Missing',
+        DB_HOST: process.env.DB_HOST ? 'Present' : 'Missing',
+        DB_USER: process.env.DB_USER ? 'Present' : 'Missing',
+        DB_PASSWORD: process.env.DB_PASSWORD ? 'Present' : 'Missing',
+        DB_NAME: process.env.DB_NAME ? 'Present' : 'Missing',
+        DB_PORT: process.env.DB_PORT ? 'Present' : 'Missing',
+      }
+    });
+    return NextResponse.json({
+      success: false,
+      error: `Database error: ${error.message}`,
+      details: error.code || 'Unknown error code'
+    }, { status: 500 });
   }
 }
 
