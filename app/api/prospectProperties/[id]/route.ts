@@ -34,10 +34,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
               'description', pr.description,
               'estimated_cost', pr.estimated_cost,
               'total_cost', pr.total_cost,
-              'created_at', pr.created_at,
-              'updated_at', pr.updated_at
+              'created_at', pr.created_at
             )
-          ) FILTER (WHERE pr.id IS NOT NULL), 
+          ) FILTER (WHERE pr.id IS NOT NULL),
           '[]'
         ) AS prospects
       FROM prospect_properties pp

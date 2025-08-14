@@ -28,9 +28,24 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
 
+  // Category-based properties for the new sections
+  const [categoryProperties, setCategoryProperties] = useState<{
+    residential: ProspectProperty[]
+    commercial: ProspectProperty[]
+    land: ProspectProperty[]
+    industrial: ProspectProperty[]
+  }>({
+    residential: [],
+    commercial: [],
+    land: [],
+    industrial: []
+  })
+  const [loadingCategoryProperties, setLoadingCategoryProperties] = useState(true)
+
   useEffect(() => {
     fetchProperties()
     fetchProspectProperties()
+    fetchCategoryProperties()
   }, [selectedCategory])
 
   const fetchProperties = async () => {
@@ -70,6 +85,31 @@ export default function HomePage() {
       console.error("Error fetching prospect properties:", error)
     } finally {
       setLoadingProspectProperties(false)
+    }
+  }
+
+  const fetchCategoryProperties = async () => {
+    try {
+      setLoadingCategoryProperties(true)
+
+      // Fetch properties for each category
+      const [residentialRes, commercialRes, landRes, industrialRes] = await Promise.all([
+        api.getProspectProperties({ category: "Residential", limit: 4 }),
+        api.getProspectProperties({ category: "Commercial", limit: 4 }),
+        api.getProspectProperties({ category: "Land/Agricultural", limit: 4 }),
+        api.getProspectProperties({ category: "Industrial/Material", limit: 4 })
+      ])
+
+      setCategoryProperties({
+        residential: residentialRes.success ? residentialRes.data : [],
+        commercial: commercialRes.success ? commercialRes.data : [],
+        land: landRes.success ? landRes.data : [],
+        industrial: industrialRes.success ? industrialRes.data : []
+      })
+    } catch (error) {
+      console.error("Error fetching category properties:", error)
+    } finally {
+      setLoadingCategoryProperties(false)
     }
   }
 
@@ -127,151 +167,414 @@ export default function HomePage() {
           </p>
         </section>
 
-        {/* AI-Powered Prospect Properties Section */}
-        <section className="mb-6">
+        {/* Explore More Opportunities Section */}
+        <section className="mb-16">
           <div className="text-center mb-12">
             <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full text-sm font-medium text-purple-800 mb-4">
               <Lightbulb className="w-4 h-4 mr-2 text-yellow-500" />
               AI-Powered Intelligence
             </div>
-            <h4 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
-              Property Prospects
-            </h4>
-            <p className="text-xl text-slate-600 max-w-3xl mx-auto mb-8">
-              Discover investment opportunities with intelligent AI suggestions and comprehensive market analysis
+            <h2 className="text-4xl font-bold text-slate-800 mb-4">
+              Explore More <span className="text-transparent bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text">Opportunities</span>
+            </h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+              Discover AI-powered investment prospects across different property categories
             </p>
-            <div className="h-1 w-24 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mx-auto"></div>
           </div>
 
-          {loadingProspectProperties ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <Card key={i} className="bg-white/80 backdrop-blur-sm border-0 shadow-lg animate-pulse">
-                  <CardContent className="p-0">
-                    <div className="h-56 bg-gradient-to-br from-purple-100 to-pink-100 rounded-t-xl"></div>
-                    <div className="p-6 space-y-4">
-                      <div className="h-6 bg-slate-200 rounded-lg w-3/4"></div>
-                      <div className="h-4 bg-slate-200 rounded-lg w-1/2"></div>
-                      <div className="h-8 bg-slate-200 rounded-lg w-2/3"></div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : prospectProperties.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-                {prospectProperties.map((property, index) => (
-                  <Card
-                    key={property.id}
-                    className="group bg-white/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-3 overflow-hidden cursor-pointer"
-                    style={{
-                      animationDelay: `${index * 150}ms`,
-                    }}
-                    onClick={() => (window.location.href = `/prospectProperties/${property.id}`)}
-                  >
-                    <CardContent className="p-0">
-                      <div className="relative overflow-hidden">
-                        {property.image_url ? (
-                          <Image
-                            src={property.image_url || "/placeholder.svg"}
-                            alt={property.title}
-                            width={400}
-                            height={224}
-                            className="object-cover w-full h-56 group-hover:scale-110 transition-transform duration-700"
-                            onError={(e) => (e.currentTarget.src = "/placeholder.svg")}
-                          />
-                        ) : (
-                          <div className="h-56 bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center text-purple-400 group-hover:from-purple-200 group-hover:to-pink-200 transition-all duration-500">
-                            <Building className="h-16 w-16" />
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                        <div className="absolute top-4 right-4">
-                          <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 shadow-lg">
-                            <Lightbulb className="w-3 h-3 mr-1" />
-                            AI Prospects
-                          </Badge>
-                        </div>
-                        <div className="absolute bottom-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                          <div className="flex items-center text-white text-sm font-medium">
-                            <ArrowRight className="w-4 h-4 mr-1" />
-                            View AI Analysis
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="p-6 space-y-4">
-                        <div>
-                          <h3 className="text-xl font-bold text-slate-800 group-hover:text-purple-600 transition-colors mb-2 line-clamp-1">
-                            {property.title}
-                          </h3>
-                          <div className="flex items-center text-slate-500 mb-3">
-                            <MapPin className="h-4 w-4 mr-2 text-purple-400" />
-                            <span className="line-clamp-1">{property.location}</span>
-                          </div>
-                        </div>
-
-                        {property.estimated_worth && (
-                          <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl">
-                            <p className="text-2xl font-bold text-transparent bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text">
-                              ₦{new Intl.NumberFormat("en-NG").format(property.estimated_worth)}
-                            </p>
-                            <p className="text-sm text-slate-500 mt-1">Estimated Worth</p>
-                          </div>
-                        )}
-
-                        <div className="flex items-center justify-between pt-2">
-                          <Badge variant="outline" className="text-purple-600 border-purple-200">
-                            {property.category_name}
-                          </Badge>
-                          <div className="flex items-center text-sm text-slate-400">
-                            <Zap className="h-3 w-3 mr-1 text-yellow-500" />
-                            <span>AI Enhanced</span>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-              <div className="text-center">
-                <Button
-                  asChild
-                  size="lg"
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 px-8 py-4 text-lg"
-                >
-                  <Link href="/prospectProperties">
-                    View All Prospect Properties
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-              </div>
-            </>
-          ) : (
-            <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
-              <CardContent className="text-center py-20">
-                <div className="relative mb-8">
-                  <Lightbulb className="h-24 w-24 text-purple-300 mx-auto" />
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full animate-pulse"></div>
+          {/* Category Sections */}
+          <div className="space-y-16">
+            {/* Residential Category */}
+            <div className="group">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                    <Building className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-slate-800">Residential Properties</h3>
+                    <p className="text-slate-600">Houses, apartments, and residential buildings</p>
+                  </div>
                 </div>
-                <h3 className="text-2xl font-bold text-slate-700 mb-4">No Prospect Properties Yet</h3>
-                <p className="text-slate-500 mb-8 max-w-md mx-auto">
-                  Be the first to add a property and unlock AI-powered investment insights and suggestions!
-                </p>
-                <Button
-                  asChild
-                  size="lg"
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 shadow-xl hover:shadow-2xl transition-all duration-300"
-                >
-                  <Link href="/prospectProperties">
-                    Explore AI Prospects
-                    <Lightbulb className="ml-2 h-5 w-5" />
-                  </Link>
+                <Link href="/prospectProperties?category=Residential">
+                  <Button variant="outline" className="hover:bg-blue-50 hover:border-blue-300">
+                    View All
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+
+              {loadingCategoryProperties ? (
+                <div className="flex gap-6 overflow-x-auto pb-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <Card key={i} className="flex-shrink-0 w-80 bg-white/80 backdrop-blur-sm border-0 shadow-lg animate-pulse">
+                      <CardContent className="p-0">
+                        <div className="h-48 bg-gradient-to-br from-blue-100 to-purple-100 rounded-t-xl"></div>
+                        <div className="p-4 space-y-3">
+                          <div className="h-5 bg-slate-200 rounded w-3/4"></div>
+                          <div className="h-4 bg-slate-200 rounded w-1/2"></div>
+                          <div className="h-6 bg-slate-200 rounded w-2/3"></div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
+                  {categoryProperties.residential.map((property) => (
+                    <Card
+                      key={property.id}
+                      className="flex-shrink-0 w-80 group bg-white/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                      onClick={() => (window.location.href = `/prospectProperties/${property.id}`)}
+                    >
+                      <CardContent className="p-0">
+                        <div className="relative overflow-hidden">
+                          {property.image_url ? (
+                            <Image
+                              src={property.image_url}
+                              alt={property.title}
+                              width={320}
+                              height={192}
+                              className="object-cover w-full h-48 group-hover:scale-105 transition-transform duration-300"
+                              onError={(e) => (e.currentTarget.src = "/placeholder.svg")}
+                            />
+                          ) : (
+                            <div className="h-48 bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center text-blue-400">
+                              <Building className="h-12 w-12" />
+                            </div>
+                          )}
+                          <div className="absolute top-3 right-3">
+                            <Badge className="bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0">
+                              <Lightbulb className="w-3 h-3 mr-1" />
+                              AI
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="p-4">
+                          <h4 className="font-bold text-slate-800 mb-2 line-clamp-1">{property.title}</h4>
+                          <div className="flex items-center text-slate-500 mb-3">
+                            <MapPin className="h-3 w-3 mr-1" />
+                            <span className="text-sm line-clamp-1">{property.location}</span>
+                          </div>
+                          {property.estimated_worth && (
+                            <div className="text-lg font-bold text-blue-600">
+                              ₦{new Intl.NumberFormat("en-NG").format(property.estimated_worth)}
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {categoryProperties.residential.length === 0 && !loadingCategoryProperties && (
+                    <div className="flex-shrink-0 w-80 h-64 flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
+                      <div className="text-center">
+                        <Building className="h-8 w-8 mx-auto mb-2" />
+                        <p className="text-sm">No residential properties yet</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Commercial Category */}
+            <div className="group">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-blue-600 rounded-xl flex items-center justify-center">
+                    <Building className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-slate-800">Commercial Properties</h3>
+                    <p className="text-slate-600">Office buildings, retail spaces, and commercial properties</p>
+                  </div>
+                </div>
+                <Link href="/prospectProperties?category=Commercial">
+                  <Button variant="outline" className="hover:bg-green-50 hover:border-green-300">
+                    View All
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
+                {loadingCategoryProperties ? (
+                  [1, 2, 3, 4].map((i) => (
+                    <Card key={i} className="flex-shrink-0 w-80 bg-white/80 backdrop-blur-sm border-0 shadow-lg animate-pulse">
+                      <CardContent className="p-0">
+                        <div className="h-48 bg-gradient-to-br from-green-100 to-blue-100 rounded-t-xl"></div>
+                        <div className="p-4 space-y-3">
+                          <div className="h-5 bg-slate-200 rounded w-3/4"></div>
+                          <div className="h-4 bg-slate-200 rounded w-1/2"></div>
+                          <div className="h-6 bg-slate-200 rounded w-2/3"></div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <>
+                    {categoryProperties.commercial.map((property) => (
+                      <Card
+                        key={property.id}
+                        className="flex-shrink-0 w-80 group bg-white/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                        onClick={() => (window.location.href = `/prospectProperties/${property.id}`)}
+                      >
+                        <CardContent className="p-0">
+                          <div className="relative overflow-hidden">
+                            {property.image_url ? (
+                              <Image
+                                src={property.image_url}
+                                alt={property.title}
+                                width={320}
+                                height={192}
+                                className="object-cover w-full h-48 group-hover:scale-105 transition-transform duration-300"
+                                onError={(e) => (e.currentTarget.src = "/placeholder.svg")}
+                              />
+                            ) : (
+                              <div className="h-48 bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center text-green-400">
+                                <Building className="h-12 w-12" />
+                              </div>
+                            )}
+                            <div className="absolute top-3 right-3">
+                              <Badge className="bg-gradient-to-r from-green-500 to-blue-600 text-white border-0">
+                                <Lightbulb className="w-3 h-3 mr-1" />
+                                AI
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="p-4">
+                            <h4 className="font-bold text-slate-800 mb-2 line-clamp-1">{property.title}</h4>
+                            <div className="flex items-center text-slate-500 mb-3">
+                              <MapPin className="h-3 w-3 mr-1" />
+                              <span className="text-sm line-clamp-1">{property.location}</span>
+                            </div>
+                            {property.estimated_worth && (
+                              <div className="text-lg font-bold text-green-600">
+                                ₦{new Intl.NumberFormat("en-NG").format(property.estimated_worth)}
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    {categoryProperties.commercial.length === 0 && !loadingCategoryProperties && (
+                      <div className="flex-shrink-0 w-80 h-64 flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
+                        <div className="text-center">
+                          <Building className="h-8 w-8 mx-auto mb-2" />
+                          <p className="text-sm">No commercial properties yet</p>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Land/Agricultural Category */}
+            <div className="group">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center">
+                    <MapPin className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-slate-800">Land & Agricultural</h3>
+                    <p className="text-slate-600">Undeveloped land and agricultural properties</p>
+                  </div>
+                </div>
+                <Link href="/prospectProperties?category=Land/Agricultural">
+                  <Button variant="outline" className="hover:bg-yellow-50 hover:border-yellow-300">
+                    View All
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
+                {loadingCategoryProperties ? (
+                  [1, 2, 3, 4].map((i) => (
+                    <Card key={i} className="flex-shrink-0 w-80 bg-white/80 backdrop-blur-sm border-0 shadow-lg animate-pulse">
+                      <CardContent className="p-0">
+                        <div className="h-48 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-t-xl"></div>
+                        <div className="p-4 space-y-3">
+                          <div className="h-5 bg-slate-200 rounded w-3/4"></div>
+                          <div className="h-4 bg-slate-200 rounded w-1/2"></div>
+                          <div className="h-6 bg-slate-200 rounded w-2/3"></div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <>
+                    {categoryProperties.land.map((property) => (
+                      <Card
+                        key={property.id}
+                        className="flex-shrink-0 w-80 group bg-white/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                        onClick={() => (window.location.href = `/prospectProperties/${property.id}`)}
+                      >
+                        <CardContent className="p-0">
+                          <div className="relative overflow-hidden">
+                            {property.image_url ? (
+                              <Image
+                                src={property.image_url}
+                                alt={property.title}
+                                width={320}
+                                height={192}
+                                className="object-cover w-full h-48 group-hover:scale-105 transition-transform duration-300"
+                                onError={(e) => (e.currentTarget.src = "/placeholder.svg")}
+                              />
+                            ) : (
+                              <div className="h-48 bg-gradient-to-br from-yellow-100 to-orange-100 flex items-center justify-center text-yellow-500">
+                                <MapPin className="h-12 w-12" />
+                              </div>
+                            )}
+                            <div className="absolute top-3 right-3">
+                              <Badge className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white border-0">
+                                <Lightbulb className="w-3 h-3 mr-1" />
+                                AI
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="p-4">
+                            <h4 className="font-bold text-slate-800 mb-2 line-clamp-1">{property.title}</h4>
+                            <div className="flex items-center text-slate-500 mb-3">
+                              <MapPin className="h-3 w-3 mr-1" />
+                              <span className="text-sm line-clamp-1">{property.location}</span>
+                            </div>
+                            {property.estimated_worth && (
+                              <div className="text-lg font-bold text-yellow-600">
+                                ₦{new Intl.NumberFormat("en-NG").format(property.estimated_worth)}
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    {categoryProperties.land.length === 0 && !loadingCategoryProperties && (
+                      <div className="flex-shrink-0 w-80 h-64 flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
+                        <div className="text-center">
+                          <MapPin className="h-8 w-8 mx-auto mb-2" />
+                          <p className="text-sm">No land properties yet</p>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Industrial Category */}
+            <div className="group">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+                    <TrendingUp className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-slate-800">Industrial Properties</h3>
+                    <p className="text-slate-600">Warehouses, factories, and industrial facilities</p>
+                  </div>
+                </div>
+                <Link href="/prospectProperties?category=Industrial/Material">
+                  <Button variant="outline" className="hover:bg-purple-50 hover:border-purple-300">
+                    View All
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
+                {loadingCategoryProperties ? (
+                  [1, 2, 3, 4].map((i) => (
+                    <Card key={i} className="flex-shrink-0 w-80 bg-white/80 backdrop-blur-sm border-0 shadow-lg animate-pulse">
+                      <CardContent className="p-0">
+                        <div className="h-48 bg-gradient-to-br from-purple-100 to-pink-100 rounded-t-xl"></div>
+                        <div className="p-4 space-y-3">
+                          <div className="h-5 bg-slate-200 rounded w-3/4"></div>
+                          <div className="h-4 bg-slate-200 rounded w-1/2"></div>
+                          <div className="h-6 bg-slate-200 rounded w-2/3"></div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <>
+                    {categoryProperties.industrial.map((property) => (
+                      <Card
+                        key={property.id}
+                        className="flex-shrink-0 w-80 group bg-white/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                        onClick={() => (window.location.href = `/prospectProperties/${property.id}`)}
+                      >
+                        <CardContent className="p-0">
+                          <div className="relative overflow-hidden">
+                            {property.image_url ? (
+                              <Image
+                                src={property.image_url}
+                                alt={property.title}
+                                width={320}
+                                height={192}
+                                className="object-cover w-full h-48 group-hover:scale-105 transition-transform duration-300"
+                                onError={(e) => (e.currentTarget.src = "/placeholder.svg")}
+                              />
+                            ) : (
+                              <div className="h-48 bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center text-purple-400">
+                                <TrendingUp className="h-12 w-12" />
+                              </div>
+                            )}
+                            <div className="absolute top-3 right-3">
+                              <Badge className="bg-gradient-to-r from-purple-500 to-pink-600 text-white border-0">
+                                <Lightbulb className="w-3 h-3 mr-1" />
+                                AI
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="p-4">
+                            <h4 className="font-bold text-slate-800 mb-2 line-clamp-1">{property.title}</h4>
+                            <div className="flex items-center text-slate-500 mb-3">
+                              <MapPin className="h-3 w-3 mr-1" />
+                              <span className="text-sm line-clamp-1">{property.location}</span>
+                            </div>
+                            {property.estimated_worth && (
+                              <div className="text-lg font-bold text-purple-600">
+                                ₦{new Intl.NumberFormat("en-NG").format(property.estimated_worth)}
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    {categoryProperties.industrial.length === 0 && !loadingCategoryProperties && (
+                      <div className="flex-shrink-0 w-80 h-64 flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
+                        <div className="text-center">
+                          <TrendingUp className="h-8 w-8 mx-auto mb-2" />
+                          <p className="text-sm">No industrial properties yet</p>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Call to Action */}
+          <div className="text-center mt-16">
+            <div className="inline-flex items-center gap-4 bg-white rounded-2xl p-8 shadow-xl">
+              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                <Lightbulb className="h-6 w-6 text-white" />
+              </div>
+              <div className="text-left">
+                <h3 className="text-lg font-bold text-slate-800">Ready to Start Investing?</h3>
+                <p className="text-slate-600 text-sm">Explore all prospect properties and find your next investment opportunity</p>
+              </div>
+              <Link href="/prospectProperties">
+                <Button size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                  View All Prospects
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
-              </CardContent>
-            </Card>
-          )}
+              </Link>
+            </div>
+          </div>
         </section>
 
         {/* Enhanced Properties Section */}
@@ -651,6 +954,15 @@ export default function HomePage() {
 
         .animate-fade-in-up {
           animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
         }
       `}</style>
     </div>
