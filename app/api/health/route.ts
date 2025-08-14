@@ -7,7 +7,7 @@ import { query } from '@/lib/db';
 export async function GET(req: NextRequest) {
   const checks = {
     database: 'unknown',
-    tables: {},
+    tables: {} as Record<string, string>,
     environment: {
       NODE_ENV: process.env.NODE_ENV,
       DB_EXTERNAL_URL: process.env.DB_EXTERNAL_URL ? 'Present' : 'Missing',
