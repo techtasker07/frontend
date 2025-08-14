@@ -10,6 +10,14 @@ export async function GET(req: NextRequest) {
     tables: {} as Record<string, string>,
     environment: {
       NODE_ENV: process.env.NODE_ENV,
+      // Vercel Postgres environment variables
+      POSTGRES_URL: process.env.POSTGRES_URL ? 'Present' : 'Missing',
+      POSTGRES_URL_NON_POOLING: process.env.POSTGRES_URL_NON_POOLING ? 'Present' : 'Missing',
+      POSTGRES_USER: process.env.POSTGRES_USER ? 'Present' : 'Missing',
+      POSTGRES_HOST: process.env.POSTGRES_HOST ? 'Present' : 'Missing',
+      POSTGRES_PASSWORD: process.env.POSTGRES_PASSWORD ? 'Present' : 'Missing',
+      POSTGRES_DATABASE: process.env.POSTGRES_DATABASE ? 'Present' : 'Missing',
+      // Legacy/Custom environment variables
       DB_EXTERNAL_URL: process.env.DB_EXTERNAL_URL ? 'Present' : 'Missing',
       DB_HOST: process.env.DB_HOST ? 'Present' : 'Missing',
       DB_USER: process.env.DB_USER ? 'Present' : 'Missing',
