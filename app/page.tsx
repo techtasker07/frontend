@@ -189,7 +189,11 @@ export default function HomePage() {
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                    <Building className="h-6 w-6 text-white" />
+                    <img 
+                      src="/residential.png" 
+                      alt="Residential icon" 
+                      className="h-8 w-8 object-contain" 
+                    />
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold text-slate-800">Residential Properties</h3>
@@ -282,7 +286,11 @@ export default function HomePage() {
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-blue-600 rounded-xl flex items-center justify-center">
-                    <Building className="h-6 w-6 text-white" />
+                    <img 
+                      src="/commercial.png" 
+                      alt="Residential icon" 
+                      className="h-8 w-8 object-contain" 
+                    />
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold text-slate-800">Commercial Properties</h3>
@@ -375,7 +383,11 @@ export default function HomePage() {
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center">
-                    <MapPin className="h-6 w-6 text-white" />
+                    <img 
+                      src="/land.png" 
+                      alt="Residential icon" 
+                      className="h-8 w-8 object-contain" 
+                    />
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold text-slate-800">Land & Agricultural</h3>
@@ -468,7 +480,11 @@ export default function HomePage() {
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
-                    <TrendingUp className="h-6 w-6 text-white" />
+                    <img 
+                      src="/material.png" 
+                      alt="Residential icon" 
+                      className="h-8 w-8 object-contain" 
+                    />
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold text-slate-800">Industrial Properties</h3>
@@ -758,137 +774,6 @@ export default function HomePage() {
               </CardContent>
             </Card>
           )}
-        </section>
-
-        {/* Explore More Opportunities Section */}
-        <section className="py-20 bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-slate-800 mb-4">
-                Explore More <span className="text-transparent bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text">Opportunities</span>
-              </h2>
-              <p className="text-xl text-slate-600 max-w-3xl mx-auto">
-                Discover AI-powered investment prospects across different property categories
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {/* Residential Category */}
-              <div className="group relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
-                <div className="relative bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                    <img 
-                      src="/residential.png" 
-                      alt="Residential icon" 
-                      className="h-8 w-8 object-contain" 
-                    />
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-800 mb-3">Residential</h3>
-                  <p className="text-slate-600 mb-6 text-sm leading-relaxed">
-                    Houses, apartments, and residential buildings with high rental potential
-                  </p>
-                  <Link href="/prospectProperties?category=Residential">
-                    <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-                      Explore Residential
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-
-              {/* Commercial Category */}
-              <div className="group relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-blue-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
-                <div className="relative bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-                  <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-blue-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                    <img 
-                      src="/commercial.png" 
-                      alt="Residential icon" 
-                      className="h-8 w-8 object-contain" 
-                    />
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-800 mb-3">Commercial</h3>
-                  <p className="text-slate-600 mb-6 text-sm leading-relaxed">
-                    Office buildings, retail spaces, and commercial properties for business growth
-                  </p>
-                  <Link href="/prospectProperties?category=Commercial">
-                    <Button className="w-full bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-                      Explore Commercial
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-
-              {/* Land/Agricultural Category */}
-              <div className="group relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
-                <div className="relative bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-                  <div className="w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                    <img 
-                      src="/land.png" 
-                      alt="Residential icon" 
-                      className="h-8 w-8 object-contain" 
-                    />
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-800 mb-3">Land & Agricultural</h3>
-                  <p className="text-slate-600 mb-6 text-sm leading-relaxed">
-                    Undeveloped land and agricultural properties with development potential
-                  </p>
-                  <Link href="/prospectProperties?category=Land/Agricultural">
-                    <Button className="w-full bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-                      Explore Land
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-
-              {/* Industrial Category */}
-              <div className="group relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-300"></div>
-                <div className="relative bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
-                  <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
-                    <img 
-                      src="/material.png" 
-                      alt="Residential icon" 
-                      className="h-8 w-8 object-contain" 
-                    />
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-800 mb-3">Industrial</h3>
-                  <p className="text-slate-600 mb-6 text-sm leading-relaxed">
-                    Warehouses, factories, and industrial facilities for business operations
-                  </p>
-                  <Link href="/prospectProperties?category=Industrial/Material">
-                    <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-                      Explore Industrial
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            {/* Call to Action */}
-            <div className="text-center mt-16">
-              <div className="inline-flex items-center gap-4 bg-white rounded-2xl p-8 shadow-xl">
-                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                  <Lightbulb className="h-6 w-6 text-white" />
-                </div>
-                <div className="text-left">
-                  <h3 className="text-lg font-bold text-slate-800">Ready to Start Investing?</h3>
-                  <p className="text-slate-600 text-sm">Explore all prospect properties and find your next investment opportunity</p>
-                </div>
-                <Link href="/prospectProperties">
-                  <Button size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-                    View All Prospects
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
         </section>
       </div>
 
