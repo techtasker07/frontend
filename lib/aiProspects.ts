@@ -151,6 +151,286 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Lease commercial spaces to complementary businesses",
       ],
     },
+    {
+      title: "Modular Housing Development",
+      description:
+        "Develop prefabricated, modular homes that can be quickly assembled and sold or rented at competitive prices, ideal for emerging suburban areas.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.12,
+      realizationTips: [
+        "Partner with modular home manufacturers for bulk supply",
+        "Use container conversions for low-cost rapid builds",
+        "Target young families and first-time homeowners",
+        "Seek government or NGO grants for housing innovation",
+        "Market on the speed and flexibility of delivery"
+      ]
+    },
+    {
+      title: "Urban Renewal Apartment Conversion",
+      description:
+        "Convert old, underutilised buildings in city centres into modern residential flats as part of urban regeneration drives.",
+      purchaseCostFactor: 0.8,
+      developmentCostFactor: 0.28,
+      realizationTips: [
+        "Target defunct commercial or colonial-era properties",
+        "Partner with state urban renewal agencies",
+        "Focus on mixed-income tenant strategies",
+        "Incorporate modern utilities without losing heritage charm",
+        "Market to upwardly mobile professionals"
+      ]
+    },
+    {
+      title: "Build-to-Rent Micro Apartments",
+      description:
+        "Develop compact, affordable rental units designed for singles and young professionals in high-demand urban areas.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.18,
+      realizationTips: [
+        "Focus on 1-bedroom and studio layouts",
+        "Provide high-speed internet and shared facilities",
+        "Use modular kitchens and convertible furniture",
+        "Advertise as a cost-effective city-living solution",
+        "Partner with proptech platforms for digital leasing"
+      ]
+    },
+    {
+      title: "Diaspora-Targeted Off-Plan Developments",
+      description:
+        "Create gated estates marketed to Nigerians abroad looking for secure property investments.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.25,
+      realizationTips: [
+        "Offer flexible payment plans in USD, GBP, or EUR",
+        "Ensure top-tier title documentation and legal clarity",
+        "Provide progress tracking via live-streamed site updates",
+        "Include luxury security and facility management",
+        "Leverage diaspora property expos"
+      ]
+    },
+    {
+      title: "Agricultural-Residential Hybrid Estates",
+      description:
+        "Combine residential housing with small farm plots or community gardens, targeting agri-entrepreneurs and food sustainability advocates.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.2,
+      realizationTips: [
+        "Allocate a portion of the estate for vegetable gardens",
+        "Provide shared farming tools and storage facilities",
+        "Partner with agricultural cooperatives",
+        "Market to retirees and food enthusiasts",
+        "Integrate renewable energy for irrigation systems"
+      ]
+    },
+    {
+      title: "Remote Work-Friendly Suburban Villas",
+      description:
+        "Develop suburban or peri-urban housing optimised for remote workers seeking space, quiet, and better living costs.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.22,
+      realizationTips: [
+        "Include dedicated home office spaces",
+        "Provide estate-wide fibre-optic internet",
+        "Create co-working hubs within the estate",
+        "Market to tech workers, freelancers, and SMEs",
+        "Emphasise health, safety, and reduced city stress"
+      ]
+    },
+    {
+      title: "Rent-to-Own Affordable Flats",
+      description:
+        "Create housing projects that allow tenants to transition into ownership through structured rent-to-own payment models.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.15,
+      realizationTips: [
+        "Partner with mortgage providers and microfinance banks",
+        "Build durable, low-maintenance units",
+        "Target civil servants and salaried workers",
+        "Provide flexible 5–15-year payment plans",
+        "Leverage government housing incentive schemes"
+      ]
+    },
+    {
+      title: "Climate-Resilient Coastal Homes",
+      description:
+        "Develop flood-resistant residential properties in coastal or flood-prone cities using elevated designs and drainage innovations.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.3,
+      realizationTips: [
+        "Use stilts, reinforced concrete, and elevated utilities",
+        "Incorporate water harvesting and flood diversion systems",
+        "Target NGOs, expatriates, and climate-conscious buyers",
+        "Obtain disaster-resilience certification",
+        "Market as future-proof coastal living"
+      ]
+    },
+    {
+      title: "Regeneration of Military/Police Barracks into Civil Housing",
+      description:
+        "Redevelop decommissioned or underused security force barracks into gated civilian residential communities.",
+      purchaseCostFactor: 0.9,
+      developmentCostFactor: 0.27,
+      realizationTips: [
+        "Negotiate acquisition with government agencies",
+        "Retain existing road networks and utilities where possible",
+        "Upgrade security infrastructure for civilian comfort",
+        "Market to middle-income earners",
+        "Integrate commercial strips for self-sufficiency"
+      ]
+    },
+    {
+      title: "Smart Compact Estates for Middle-Class Families",
+      description:
+        "Build tech-enabled mid-size estates with automation for energy, security, and utilities aimed at middle-class urbanites.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.26,
+      realizationTips: [
+        "Install solar and battery systems for 24/7 power",
+        "Use smart locks, CCTV, and IoT-based metering",
+        "Create app-based estate management",
+        "Provide shared playgrounds and green zones",
+        "Market as affordable smart living"
+      ]
+    },
+    {
+      title: "Mixed-Generation Co-Housing",
+      description:
+        "Design residential communities where multiple generations live together in shared but segmented spaces, fostering support networks and reducing living costs.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.28,
+      realizationTips: [
+        "Provide private units with shared kitchens and lounges",
+        "Include childcare and eldercare facilities",
+        "Promote social activities that bridge generations",
+        "Offer flexible rental or ownership structures",
+        "Market to families seeking community living"
+      ]
+    },
+    {
+      title: "Wellness-Oriented Residential Communities",
+      description:
+        "Develop housing centred around health and wellness with access to nature, fitness facilities, and holistic healthcare services.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.3,
+      realizationTips: [
+        "Include on-site gyms, yoga studios, and walking trails",
+        "Integrate air and water purification systems",
+        "Partner with wellness brands and clinics",
+        "Design open, green landscapes",
+        "Market to health-conscious professionals and retirees"
+      ]
+    },
+    {
+      title: "Live-Work Hybrid Lofts",
+      description:
+        "Create adaptable apartments that double as professional workspaces for freelancers, entrepreneurs, and small business owners.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.26,
+      realizationTips: [
+        "Provide soundproofed work zones within units",
+        "Include communal meeting rooms and co-working hubs",
+        "Offer high-speed internet and smart office tech",
+        "Comply with mixed-use zoning laws",
+        "Market to startups, remote workers, and creatives"
+      ]
+    },
+    {
+      title: "Floating or Water-Edge Homes",
+      description:
+        "Develop floating or water-adjacent residential units for waterfront cities, integrating climate adaptation strategies.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.35,
+      realizationTips: [
+        "Use buoyant platforms and flood-resilient materials",
+        "Incorporate renewable energy like tidal or solar",
+        "Partner with marine architects",
+        "Market as eco-luxury or climate-resilient housing",
+        "Target tourism-driven waterfront economies"
+      ]
+    },
+    {
+      title: "Circular Economy Housing",
+      description:
+        "Build residential developments using reclaimed materials and waste-to-resource strategies to reduce costs and carbon footprint.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.2,
+      realizationTips: [
+        "Source materials from deconstructed buildings",
+        "Incorporate recycling and composting systems",
+        "Partner with sustainability-focused NGOs",
+        "Offer workshops on eco-living for residents",
+        "Market to environmentally conscious buyers"
+      ]
+    },
+    {
+      title: "High-Density Vertical Villages",
+      description:
+        "Construct tall, mixed-use residential towers that function like self-contained villages with shops, schools, and healthcare facilities.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.4,
+      realizationTips: [
+        "Incorporate vertical farming and rooftop gardens",
+        "Ensure multiple communal areas for socialising",
+        "Provide daycare, clinics, and small retail within the tower",
+        "Use smart building technology for efficiency",
+        "Market to urban professionals and young families"
+      ]
+    },
+    {
+      title: "Energy-Positive Housing",
+      description:
+        "Develop homes that produce more energy than they consume through advanced renewable systems and storage solutions.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.35,
+      realizationTips: [
+        "Install oversized solar arrays with battery storage",
+        "Incorporate passive heating and cooling designs",
+        "Sell excess energy back to the grid",
+        "Use smart monitoring to optimise consumption",
+        "Market as a cost-saving and eco-forward investment"
+      ]
+    },
+    {
+      title: "Cooperative Housing Models",
+      description:
+        "Establish residential cooperatives where residents jointly own and manage the property, reducing costs and fostering collaboration.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.18,
+      realizationTips: [
+        "Offer shared decision-making structures",
+        "Create communal gardens, kitchens, and workshops",
+        "Ensure transparent maintenance cost-sharing",
+        "Partner with cooperative housing associations",
+        "Market to budget-conscious communities"
+      ]
+    },
+    {
+      title: "Resort-Style Retirement Villages",
+      description:
+        "Build upscale retirement communities offering hospitality-level amenities and medical support for aging populations.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.38,
+      realizationTips: [
+        "Include pools, spas, and gourmet dining options",
+        "Provide on-site healthcare and emergency response",
+        "Offer hobby and recreational facilities",
+        "Market internationally to retirees seeking affordable luxury",
+        "Design with full accessibility in mind"
+      ]
+    },
+    {
+      title: "Digital Nomad Eco-Communities",
+      description:
+        "Create sustainable, globally connected residential hubs designed for location-independent professionals.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.32,
+      realizationTips: [
+        "Offer ultra-high-speed internet and co-working spaces",
+        "Integrate renewable energy and eco-architecture",
+        "Create community events for networking",
+        "Partner with international travel visa programmes",
+        "Market to digital nomads and remote-first companies"
+      ]
+    },
   ],
   commercial: [
     {
@@ -291,6 +571,286 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Offer storage and equipment rental services",
         "Market to art communities and creative professionals",
       ],
+    },
+    {
+      title: "Agro-Processing & Packaging Center",
+      description:
+        "Develop a commercial facility for processing, packaging, and distributing agricultural products to local and export markets.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.25,
+      realizationTips: [
+        "Install food-grade processing equipment",
+        "Ensure compliance with NAFDAC and export standards",
+        "Provide cold storage and warehousing",
+        "Partner with farming cooperatives",
+        "Market to supermarkets and export buyers"
+      ]
+    },
+    {
+      title: "Transport Terminal & Commercial Hub",
+      description:
+        "Create a modern transport interchange with shops, ticketing offices, and passenger amenities in high-traffic zones.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.3,
+      realizationTips: [
+        "Include waiting lounges and restrooms",
+        "Provide secure parking for buses and taxis",
+        "Integrate retail and food vendors",
+        "Comply with transport regulatory requirements",
+        "Partner with major transport companies"
+      ]
+    },
+    {
+      title: "Solar Energy Showroom & Service Center",
+      description:
+        "Establish a retail and service hub for solar panels, batteries, and renewable energy solutions.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.22,
+      realizationTips: [
+        "Include demo installations for customers",
+        "Offer repair and maintenance services",
+        "Partner with international solar brands",
+        "Market to residential estates and SMEs",
+        "Provide financing options for buyers"
+      ]
+    },
+    {
+      title: "Cold Chain Storage & Distribution Facility",
+      description:
+        "Develop a cold storage hub for perishable goods, supporting agriculture, fisheries, and pharmaceuticals.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.28,
+      realizationTips: [
+        "Install industrial refrigeration and backup power",
+        "Ensure strict temperature monitoring",
+        "Offer last-mile refrigerated delivery",
+        "Target supermarkets, hospitals, and exporters",
+        "Partner with logistics firms"
+      ]
+    },
+    {
+      title: "Tech-Enabled Market Plaza",
+      description:
+        "Modernise traditional markets with digital payment systems, clean infrastructure, and organised stalls.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.2,
+      realizationTips: [
+        "Implement cashless payment solutions",
+        "Ensure waste management and sanitation",
+        "Provide security and CCTV monitoring",
+        "Create designated loading/unloading zones",
+        "Market to traders and cooperatives"
+      ]
+    },
+    {
+      title: "Film & Media Production Studio",
+      description:
+        "Build a facility for Nollywood and digital content creators with studios, editing suites, and equipment rental.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.35,
+      realizationTips: [
+        "Install soundproof studios and green screens",
+        "Offer high-end camera and lighting rentals",
+        "Provide co-working spaces for creatives",
+        "Partner with streaming platforms",
+        "Market to filmmakers, advertisers, and influencers"
+      ]
+    },
+    {
+      title: "Export Trade Showroom",
+      description:
+        "Create a permanent display centre for Nigerian export goods, connecting producers with international buyers.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.3,
+      realizationTips: [
+        "Curate high-quality, export-ready products",
+        "Host trade fairs and networking events",
+        "Partner with export councils",
+        "Provide translation and documentation support",
+        "Target foreign embassies and buyers"
+      ]
+    },
+    {
+      title: "ICT Training & Certification Center",
+      description:
+        "Establish a tech skills hub for coding, cybersecurity, and digital marketing training.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.25,
+      realizationTips: [
+        "Provide computer labs with high-speed internet",
+        "Partner with global certification bodies",
+        "Offer flexible payment and scholarship programs",
+        "Market to students and working professionals",
+        "Host tech community events"
+      ]
+    },
+    {
+      title: "Business Incubator & Accelerator",
+      description:
+        "Develop a space for nurturing startups with mentorship, funding access, and shared resources.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.3,
+      realizationTips: [
+        "Include private offices, shared desks, and meeting rooms",
+        "Partner with angel investors and VCs",
+        "Offer business advisory services",
+        "Host pitch competitions and demo days",
+        "Market to early-stage entrepreneurs"
+      ]
+    },
+    {
+      title: "Urban Farming & Agri-Mall",
+      description:
+        "Combine rooftop and vertical farming with a retail marketplace for fresh produce.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.27,
+      realizationTips: [
+        "Install hydroponic or aquaponic systems",
+        "Offer farm-to-table retail and dining options",
+        "Partner with food delivery platforms",
+        "Market to health-conscious urban consumers",
+        "Provide training on urban agriculture"
+      ]
+    },
+    {
+      title: "Green Energy Business Park",
+      description:
+        "Develop a commercial complex powered entirely by renewable energy, targeting eco-conscious companies.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.35,
+      realizationTips: [
+        "Install large-scale solar arrays and battery storage",
+        "Provide EV charging stations",
+        "Offer green certification to tenants",
+        "Market to sustainability-focused firms",
+        "Integrate energy-efficient building materials"
+      ]
+    },
+    {
+      title: "Experiential Retail Destination",
+      description:
+        "Create a shopping complex that blends retail with entertainment, art, and interactive experiences.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.4,
+      realizationTips: [
+        "Include VR zones, pop-up stores, and art exhibits",
+        "Partner with global brands for flagship spaces",
+        "Host seasonal themed events",
+        "Market as a tourist and local attraction",
+        "Incorporate social media-friendly design elements"
+      ]
+    },
+    {
+      title: "Bio-Tech Research & Innovation Center",
+      description:
+        "Develop a hub for biotechnology research and startups with laboratories, offices, and testing facilities.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.5,
+      realizationTips: [
+        "Provide state-of-the-art lab infrastructure",
+        "Ensure compliance with biosafety standards",
+        "Partner with universities and pharma companies",
+        "Offer shared equipment rental",
+        "Market to biotech startups and R&D teams"
+      ]
+    },
+    {
+      title: "Data Center & Cloud Services Hub",
+      description:
+        "Construct a high-security, energy-efficient data center to host cloud computing and AI services.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.6,
+      realizationTips: [
+        "Ensure redundant power and cooling systems",
+        "Implement advanced cybersecurity protocols",
+        "Partner with telecom and cloud providers",
+        "Market to fintech, AI, and enterprise clients",
+        "Comply with international data regulations"
+      ]
+    },
+    {
+      title: "Medical Tourism Facility",
+      description:
+        "Build a high-standard healthcare complex attracting international patients for specialised treatments.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.45,
+      realizationTips: [
+        "Include luxury patient accommodation",
+        "Partner with global medical experts",
+        "Offer multilingual staff and concierge services",
+        "Market in regions seeking affordable healthcare",
+        "Comply with international medical accreditation"
+      ]
+    },
+    {
+      title: "Circular Economy Business Hub",
+      description:
+        "Create a space for businesses focused on recycling, upcycling, and sustainable production.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.3,
+      realizationTips: [
+        "Provide shared machinery and workshops",
+        "Host eco-innovation challenges",
+        "Partner with waste management agencies",
+        "Offer sustainability consultancy",
+        "Market to green startups and social enterprises"
+      ]
+    },
+    {
+      title: "Hybrid Hospitality & Workspace",
+      description:
+        "Develop a property offering both short-stay accommodations and co-working facilities for business travellers.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.32,
+      realizationTips: [
+        "Include flexible work zones and meeting rooms",
+        "Offer high-speed internet and concierge services",
+        "Partner with travel agencies and corporate clients",
+        "Market to remote workers and business travellers",
+        "Integrate app-based booking and service requests"
+      ]
+    },
+    {
+      title: "Esports & Gaming Arena",
+      description:
+        "Build a competitive gaming venue with streaming facilities, training rooms, and spectator seating.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.38,
+      realizationTips: [
+        "Install high-performance gaming hardware",
+        "Provide live-streaming and broadcasting equipment",
+        "Host tournaments and gaming events",
+        "Partner with esports teams and sponsors",
+        "Market to youth and gaming communities"
+      ]
+    },
+    {
+      title: "Luxury Brand Flagship Complex",
+      description:
+        "Develop a high-end retail space exclusively for luxury and designer brands.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.5,
+      realizationTips: [
+        "Design architecturally iconic storefronts",
+        "Offer VIP lounges and concierge services",
+        "Partner with luxury brand distributors",
+        "Market in high-income and tourist districts",
+        "Host exclusive brand events"
+      ]
+    },
+    {
+      title: "Urban Mobility Hub",
+      description:
+        "Create a centralised hub integrating public transport, bike-sharing, EV rentals, and last-mile delivery services.",
+      purchaseCostFactor: 1.0,
+      developmentCostFactor: 0.28,
+      realizationTips: [
+        "Provide digital ticketing and navigation tools",
+        "Include parking for micro-mobility vehicles",
+        "Partner with transport tech companies",
+        "Ensure safety and accessibility features",
+        "Market to urban commuters and logistics operators"
+      ]
     },
   ],
   industrial: [

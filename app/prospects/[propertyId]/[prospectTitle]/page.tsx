@@ -251,7 +251,6 @@ export default function ProspectDetailPage() {
               <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-xl border border-green-200">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <DollarSign className="h-6 w-6 text-green-600 mr-2" />
                     <span className="text-lg font-semibold text-green-800">Total Investment Required:</span>
                   </div>
                   <span className="text-3xl font-bold text-green-900">{formatCurrency(prospect.total_cost)}</span>
