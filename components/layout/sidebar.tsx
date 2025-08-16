@@ -21,8 +21,8 @@ interface NavigationItem {
 
 const publicNavigation: NavigationItem[] = [
   { name: "Home", href: "/", icon: Home },
-  { name: "Properties", href: "/properties", icon: Building },
-  { name: "Prospect Properties", href: "/prospectProperties", icon: Lightbulb },
+  { name: "Sign Up", href: "/register", icon: User },
+  { name: "Login", href: "/login", icon: LogOut },
 ]
 
 const authenticatedNavigation: NavigationItem[] = [

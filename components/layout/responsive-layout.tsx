@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
+import { usePathname } from "next/navigation"
 import { Sidebar } from "./sidebar"
 import { MobileHeader } from "./mobile-header"
 import { Footer } from "./footer"
@@ -14,6 +15,13 @@ interface ResponsiveLayoutProps {
 
 export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const pathname = usePathname()
+  const isHomePage = pathname === "/"
+
+  // If it's the homepage, just return the children without the layout
+  if (isHomePage) {
+    return <>{children}</>
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
