@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
 import { Sidebar } from "./sidebar"
 import { MobileHeader } from "./mobile-header"
@@ -15,6 +15,7 @@ interface ResponsiveLayoutProps {
 
 export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarVisible, setSidebarVisible] = useState(false)
   const pathname = usePathname()
   const isHomePage = pathname === "/"
 
@@ -23,6 +24,20 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
     return <>{children}</>
   }
 
+  // Mouse hover effect for sidebar
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (e.clientX <= 50) {
+        setSidebarVisible(true)
+      } else if (e.clientX > 300) {
+        setSidebarVisible(false)
+      }
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    return () => document.removeEventListener('mousemove', handleMouseMove)
+  }, [])
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile Header */}
@@ -30,8 +45,10 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
         <MobileHeader onMenuClick={() => setSidebarOpen(true)} />
       </div>
 
-      {/* Desktop Sidebar - Fixed */}
-      <div className="hidden md:block">
+      {/* Desktop Hover Sidebar */}
+      <div className={`hidden md:block fixed top-0 left-0 h-full z-50 transform transition-transform duration-300 ${
+        sidebarVisible ? 'translate-x-0' : '-translate-x-full'
+      }`}>
         <Sidebar />
       </div>
 
@@ -45,9 +62,9 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="md:ml-64">
-        <main className="min-h-screen">{children}</main>
+      {/* Main Content - No left margin since sidebar is now overlay */}
+      <div className="w-full">
+        <main className="min-h-screen pt-16 md:pt-0">{children}</main>
         <Footer />
       </div>
 

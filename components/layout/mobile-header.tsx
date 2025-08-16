@@ -1,5 +1,6 @@
 "use client"
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/lib/auth"
@@ -27,10 +28,18 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
         </Button>
 
         {/* Logo */}
-        <Link href="/" className="flex items-center">
-          <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            MIPRIPITY
-          </span>
+        <Link href="/" className="flex items-center space-x-2">
+          <Image
+            src="/images/mipripity.png"
+            alt="MIPRIPITY Logo"
+            width={32}
+            height={32}
+            className="rounded-lg"
+          />
+          <div className="flex flex-col">
+            <span className="text-sm font-bold text-gray-900">MIPRIPITY</span>
+            <span className="text-xs text-gray-500">Property Platform</span>
+          </div>
         </Link>
 
         {/* Right Side Actions */}
