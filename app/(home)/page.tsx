@@ -186,18 +186,18 @@ export default function HomePage() {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm">
-                    <Link href="/register">
+                  <Link href="/register">
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm">
                       <UserPlus className="h-4 w-4 mr-2" />
                       Sign Up
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline" className="w-full border-blue-600 text-blue-600 hover:bg-blue-50 text-sm">
-                    <Link href="/login">
+                    </Button>
+                  </Link>
+                  <Link href="/login">
+                    <Button variant="outline" className="w-full border-blue-600 text-blue-600 hover:bg-blue-50 text-sm">
                       <LogIn className="h-4 w-4 mr-2" />
                       Login
-                    </Link>
-                  </Button>
+                    </Button>
+                  </Link>
                 </div>
               )}
             </div>
@@ -259,10 +259,32 @@ export default function HomePage() {
               <p className="text-xs text-white/80 hidden sm:block">Property Investment Platform</p>
             </div>
 
-            {/* Login Button */}
-            <Button asChild variant="outline" className="bg-white/10 border-white/30 text-white hover:bg-white/20 text-sm px-3 py-1.5">
-              <Link href="/login">Login</Link>
-            </Button>
+            {/* Dynamic Login/Logout Button */}
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-2">
+                <div className="hidden sm:flex items-center space-x-2 text-white/80 text-xs">
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                    <span className="text-xs font-medium text-white">
+                      {user?.first_name?.[0]}{user?.last_name?.[0]}
+                    </span>
+                  </div>
+                  <span className="hidden md:block">{user?.first_name}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => logout()}
+                  className="bg-white/10 border border-white/30 text-white hover:bg-white/20 text-sm px-3 py-1.5 rounded-md transition-colors"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <Link href="/login">
+                <Button variant="outline" className="bg-white/10 border-white/30 text-white hover:bg-white/20 text-sm px-3 py-1.5">
+                  Login
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </header>
@@ -369,16 +391,16 @@ export default function HomePage() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center px-4">
-            <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-6 md:px-8 py-2.5 md:py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm md:text-base">
-              <Link href="/login">
+            <Link href="/login">
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-6 md:px-8 py-2.5 md:py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm md:text-base">
                 Get Started Today
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="border-blue-600 text-blue-600 hover:bg-blue-50 px-6 md:px-8 py-2.5 md:py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm md:text-base">
-              <Link href="/register">
+              </Button>
+            </Link>
+            <Link href="/register">
+              <Button variant="outline" size="lg" className="border-blue-600 text-blue-600 hover:bg-blue-50 px-6 md:px-8 py-2.5 md:py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-sm md:text-base">
                 Join Community Polls
-              </Link>
-            </Button>
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

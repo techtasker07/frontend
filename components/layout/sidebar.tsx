@@ -3,9 +3,6 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/lib/auth"
 import { Home, Building, Lightbulb, Plus, User, LogOut, UserPlus, LogIn, BarChart3 } from "lucide-react"
 
@@ -121,18 +118,18 @@ export function Sidebar({ onClose }: SidebarProps) {
               </div>
             ) : (
               <div className="space-y-2">
-                <Button asChild className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm">
-                  <Link href="/register" onClick={onClose}>
+                <Link href="/register" onClick={onClose}>
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm">
                     <UserPlus className="h-4 w-4 mr-2" />
                     Sign Up
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="w-full border-blue-600 text-blue-600 hover:bg-blue-50 text-sm">
-                  <Link href="/login" onClick={onClose}>
+                  </Button>
+                </Link>
+                <Link href="/login" onClick={onClose}>
+                  <Button variant="outline" className="w-full border-blue-600 text-blue-600 hover:bg-blue-50 text-sm">
                     <LogIn className="h-4 w-4 mr-2" />
                     Login
-                  </Link>
-                </Button>
+                  </Button>
+                </Link>
               </div>
             )}
           </div>
