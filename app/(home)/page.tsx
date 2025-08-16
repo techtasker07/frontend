@@ -40,6 +40,9 @@ export default function HomePage() {
   const { isAuthenticated, user, logout } = useAuth()
 
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return
+
     const handleMouseMove = (e: MouseEvent) => {
       if (e.clientX <= 50) {
         setSidebarVisible(true)
@@ -54,6 +57,9 @@ export default function HomePage() {
 
   // Mobile prompt logic
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return
+
     const isMobile = window.innerWidth < 768
     const hasSeenPrompt = localStorage.getItem('mipripity-sidebar-prompt-seen')
 
@@ -68,7 +74,9 @@ export default function HomePage() {
 
   const dismissMobilePrompt = () => {
     setShowMobilePrompt(false)
-    localStorage.setItem('mipripity-sidebar-prompt-seen', 'true')
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mipripity-sidebar-prompt-seen', 'true')
+    }
   }
 
   const handleProtectedNavigation = (href: string) => {

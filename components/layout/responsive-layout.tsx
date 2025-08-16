@@ -26,6 +26,9 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
 
   // Mouse hover effect for sidebar
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return
+
     const handleMouseMove = (e: MouseEvent) => {
       if (e.clientX <= 50) {
         setSidebarVisible(true)
