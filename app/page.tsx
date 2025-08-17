@@ -6,7 +6,9 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/lib/auth"
-import { Search, Building, TrendingUp, ArrowRight, BarChart3, Shield, Users, Target, Award, Home, LogIn, UserPlus, User } from "lucide-react"
+import { Search, Building, Target, Users, Award, LogIn } from "lucide-react"
+import "@/login"
+import "@/register"
 
 // Typewriter Text Component
 function TypewriterText({ text, delay = 0 }: { text: string; delay?: number }) {
@@ -35,49 +37,7 @@ function TypewriterText({ text, delay = 0 }: { text: string; delay?: number }) {
 
 export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState("")
-  const [sidebarVisible, setSidebarVisible] = useState(false)
-  const [showMobilePrompt, setShowMobilePrompt] = useState(false)
   const { isAuthenticated, user, logout } = useAuth()
-
-  useEffect(() => {
-    // Only run on client side
-    if (typeof window === 'undefined') return
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (e.clientX <= 50) {
-        setSidebarVisible(true)
-      } else if (e.clientX > 300) {
-        setSidebarVisible(false)
-      }
-    }
-
-    document.addEventListener('mousemove', handleMouseMove)
-    return () => document.removeEventListener('mousemove', handleMouseMove)
-  }, [])
-
-  // Mobile prompt logic
-  useEffect(() => {
-    // Only run on client side
-    if (typeof window === 'undefined') return
-
-    const isMobile = window.innerWidth < 768
-    const hasSeenPrompt = localStorage.getItem('mipripity-sidebar-prompt-seen')
-
-    if (isMobile && !hasSeenPrompt) {
-      const timer = setTimeout(() => {
-        setShowMobilePrompt(true)
-      }, 2000) // Show after 2 seconds
-
-      return () => clearTimeout(timer)
-    }
-  }, [])
-
-  const dismissMobilePrompt = () => {
-    setShowMobilePrompt(false)
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('mipripity-sidebar-prompt-seen', 'true')
-    }
-  }
 
   const handleProtectedNavigation = (href: string) => {
     if (!isAuthenticated) {
@@ -90,165 +50,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Sidebar */}
-      <div className={`fixed top-0 left-0 h-full w-56 md:w-64 bg-white shadow-2xl z-50 transform transition-transform duration-300 ${
-        sidebarVisible ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <div className="p-4 md:p-6">
-          <div className="flex items-center space-x-2 md:space-x-3 mb-6 md:mb-8">
-            <Image
-              src="/images/mipripity.png"
-              alt="MIPRIPITY Logo"
-              width={32}
-              height={32}
-              className="rounded-lg md:w-[40px] md:h-[40px]"
-            />
-            <h2 className="text-lg md:text-xl font-bold text-gray-900">MIPRIPITY</h2>
-          </div>
-
-          <div className="flex flex-col h-full">
-            {/* Top Navigation */}
-            <nav className="space-y-3 md:space-y-4 flex-1">
-              <Link href="/" className="flex items-center space-x-2 md:space-x-3 text-gray-700 hover:text-blue-600 transition-colors text-sm md:text-base">
-                <Home className="h-4 w-4 md:h-5 md:w-5" />
-                <span>Home</span>
-              </Link>
-
-              {isAuthenticated ? (
-                <>
-                  <Link href="/dashboard" className="flex items-center space-x-2 md:space-x-3 text-gray-700 hover:text-blue-600 transition-colors text-sm md:text-base">
-                    <BarChart3 className="h-4 w-4 md:h-5 md:w-5" />
-                    <span>Dashboard</span>
-                  </Link>
-                  <Link href="/properties" className="flex items-center space-x-2 md:space-x-3 text-gray-700 hover:text-blue-600 transition-colors text-sm md:text-base">
-                    <Building className="h-4 w-4 md:h-5 md:w-5" />
-                    <span>Properties</span>
-                  </Link>
-                  <Link href="/prospectProperties" className="flex items-center space-x-2 md:space-x-3 text-gray-700 hover:text-blue-600 transition-colors text-sm md:text-base">
-                    <Target className="h-4 w-4 md:h-5 md:w-5" />
-                    <span>Smart Prospects</span>
-                  </Link>
-                  <Link href="/polls" className="flex items-center space-x-2 md:space-x-3 text-gray-700 hover:text-blue-600 transition-colors text-sm md:text-base">
-                    <Users className="h-4 w-4 md:h-5 md:w-5" />
-                    <span>Community Polls</span>
-                  </Link>
-                  <Link href="/add-property" className="flex items-center space-x-2 md:space-x-3 text-gray-700 hover:text-blue-600 transition-colors text-sm md:text-base">
-                    <Building className="h-4 w-4 md:h-5 md:w-5" />
-                    <span>Add Property</span>
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link href="/about" className="flex items-center space-x-2 md:space-x-3 text-gray-700 hover:text-blue-600 transition-colors text-sm md:text-base">
-                    <Users className="h-4 w-4 md:h-5 md:w-5" />
-                    <span>About Us</span>
-                  </Link>
-                  <Link href="/contact" className="flex items-center space-x-2 md:space-x-3 text-gray-700 hover:text-blue-600 transition-colors text-sm md:text-base">
-                    <Users className="h-4 w-4 md:h-5 md:w-5" />
-                    <span>Contact Us</span>
-                  </Link>
-                </>
-              )}
-            </nav>
-
-            {/* Bottom Section */}
-            <div className="mt-auto pt-4 border-t border-gray-200">
-              {isAuthenticated ? (
-                <div className="space-y-3">
-                  {/* User Info */}
-                  <div className="flex items-center space-x-2 md:space-x-3 p-2 bg-gray-50 rounded-lg">
-                    <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-                      <span className="text-xs md:text-sm font-medium text-white">
-                        {user?.first_name?.[0]}{user?.last_name?.[0]}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs md:text-sm font-medium text-gray-900 truncate">
-                        {user?.first_name} {user?.last_name}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-                    </div>
-                  </div>
-
-                  {/* Profile & Sign Out */}
-                  <Link href="/profile" className="flex items-center space-x-2 md:space-x-3 text-gray-700 hover:text-blue-600 transition-colors text-sm md:text-base">
-                    <User className="h-4 w-4 md:h-5 md:w-5" />
-                    <span>Profile</span>
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => logout()}
-                    className="flex items-center space-x-2 md:space-x-3 text-gray-700 hover:text-red-600 transition-colors text-sm md:text-base w-full"
-                  >
-                    <LogIn className="h-4 w-4 md:h-5 md:w-5 rotate-180" />
-                    <span>Sign Out</span>
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <Link href="/register">
-                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm">
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      Sign Up
-                    </Button>
-                  </Link>
-                  <Link href="/login">
-                    <Button variant="outline" className="w-full border-blue-600 text-blue-600 hover:bg-blue-50 text-sm">
-                      <LogIn className="h-4 w-4 mr-2" />
-                      Login
-                    </Button>
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Sidebar Prompt */}
-      {showMobilePrompt && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 md:hidden">
-          <div className="bg-white rounded-xl p-6 max-w-sm mx-auto shadow-2xl">
-            <div className="text-center">
-              <div className="mb-4">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <div className="flex space-x-1">
-                    <div className="w-1 h-6 bg-blue-600 rounded animate-pulse"></div>
-                    <div className="w-1 h-6 bg-blue-600 rounded animate-pulse" style={{animationDelay: '0.2s'}}></div>
-                    <div className="w-1 h-6 bg-blue-600 rounded animate-pulse" style={{animationDelay: '0.4s'}}></div>
-                  </div>
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">Discover the Sidebar!</h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  Tap the left edge of your screen to reveal the navigation menu. Tap outside to hide it.
-                </p>
-                <div className="flex items-center justify-center space-x-2 text-blue-600 mb-4">
-                  <span className="text-2xl">👈</span>
-                  <span className="text-sm font-medium">Swipe from left edge</span>
-                </div>
-              </div>
-              <div className="flex space-x-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={dismissMobilePrompt}
-                  className="flex-1"
-                >
-                  Skip
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={dismissMobilePrompt}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700"
-                >
-                  Got it!
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Header */}
       <header className="absolute top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-2 md:py-3">
@@ -476,90 +277,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8 md:py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-            {/* Company Info */}
-            <div className="space-y-3 md:space-y-4 text-center sm:text-left">
-              <div className="flex items-center justify-center sm:justify-start space-x-3">
-                <Image
-                  src="/images/mipripity.png"
-                  alt="MIPRIPITY Logo"
-                  width={32}
-                  height={32}
-                  className="rounded-lg md:w-[40px] md:h-[40px]"
-                />
-                <h3 className="text-lg md:text-xl font-bold">MIPRIPITY</h3>
-              </div>
-              <p className="text-gray-300 text-xs md:text-sm">
-                Community-driven property evaluation and investment platform
-              </p>
-            </div>
-
-            {/* Quick Links */}
-            <div className="space-y-3 md:space-y-4 text-center sm:text-left">
-              <h4 className="text-base md:text-lg font-semibold">Quick Links</h4>
-              <ul className="space-y-1.5 md:space-y-2 text-xs md:text-sm">
-                <li>
-                  <Link href="/" className="text-gray-300 hover:text-white transition-colors">
-                    Home
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/about" className="text-gray-300 hover:text-white transition-colors">
-                    About Us
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/contact" className="text-gray-300 hover:text-white transition-colors">
-                    Contact
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/help" className="text-gray-300 hover:text-white transition-colors">
-                    Help Center
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Legal */}
-            <div className="space-y-3 md:space-y-4 text-center sm:text-left">
-              <h4 className="text-base md:text-lg font-semibold">Legal</h4>
-              <ul className="space-y-1.5 md:space-y-2 text-xs md:text-sm">
-                <li>
-                  <Link href="/privacy" className="text-gray-300 hover:text-white transition-colors">
-                    Privacy Policy
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/terms" className="text-gray-300 hover:text-white transition-colors">
-                    Terms of Service
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Contact Info */}
-            <div className="space-y-3 md:space-y-4 text-center sm:text-left">
-              <h4 className="text-base md:text-lg font-semibold">Contact</h4>
-              <div className="text-xs md:text-sm text-gray-300 space-y-1.5 md:space-y-2">
-                <p>Email: mipripity@gmail.com</p>
-                <p>Phone: +234 8022414124</p>
-                <p>Location: 34, Rafiu Crescent, Mafoluku, Oshodi Lagos</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-800 mt-6 md:mt-8 pt-6 md:pt-8 text-center">
-            <p className="text-gray-400 text-xs md:text-sm">
-              © 2025 MIPRIPITY by Techtasker Solutions. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }

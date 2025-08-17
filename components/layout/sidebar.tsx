@@ -5,6 +5,17 @@ import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth"
 import { Home, Building, Lightbulb, Plus, User, LogOut, UserPlus, LogIn, BarChart3 } from "lucide-react"
+import "@/about"
+import "@/contact"
+import "@/dashboard"
+import "/"
+import "@/properties"
+import "@/prospectProperties"
+import "@/polls"
+import "@/profile"
+import "@/add-property"
+import "@/register"
+import "@/login"
 
 interface SidebarProps {
   onClose?: () => void
