@@ -40,20 +40,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(response.data.user);
       } else {
         // Token is invalid, remove it
-        localStorage.removeItem('token');
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('token');
+        }
         setToken(null);
         setUser(null);
       }
     } catch (error) {
       console.error('Failed to fetch user data:', error);
       // Token is invalid, remove it
-      localStorage.removeItem('token');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+      }
       setToken(null);
       setUser(null);
     }
   };
 
   useEffect(() => {
+    // Only run on client side to avoid hydration mismatch
+    if (typeof window === 'undefined') {
+      setLoading(false);
+      return;
+    }
+
     // Check for stored token on mount
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
@@ -74,7 +84,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { user, token } = response.data;
         setUser(user);
         setToken(token);
-        localStorage.setItem('token', token);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('token', token);
+        }
         setJustLoggedIn(true); // Mark that user just logged in
       } else {
         throw new Error(response.error || 'Login failed');
@@ -97,7 +109,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { user, token } = response.data;
         setUser(user);
         setToken(token);
-        localStorage.setItem('token', token);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('token', token);
+        }
         setJustLoggedIn(true); // Mark that user just registered/logged in
       } else {
         throw new Error(response.error || 'Registration failed');
@@ -111,7 +125,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setToken(null);
     setJustLoggedIn(false);
-    localStorage.removeItem('token');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+    }
   };
 
   // New refreshUser function to refetch user data
