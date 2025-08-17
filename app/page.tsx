@@ -7,8 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/lib/auth"
 import { Search, Building, Target, Users, Award, LogIn } from "lucide-react"
-import "@/login"
-import "@/register"
 
 // Typewriter Text Component
 function TypewriterText({ text, delay = 0 }: { text: string; delay?: number }) {
