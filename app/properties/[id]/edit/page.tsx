@@ -272,7 +272,7 @@ return (
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="current_worth">Current Worth (USD)</Label>
+              <Label htmlFor="current_worth">Current Worth (NGN)</Label>
               <Input
                 id="current_worth"
                 name="current_worth"

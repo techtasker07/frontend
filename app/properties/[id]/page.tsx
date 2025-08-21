@@ -1,20 +1,32 @@
-'use client'
+"use client"
 
-import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import Image from 'next/image'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Separator } from '@/components/ui/separator'
-import { api, Property, VoteOption, PropertyStats } from '@/lib/api'
-import { useAuth } from '@/lib/auth'
-import { MapPin, Calendar, DollarSign, User, Phone, Mail, Vote, BarChart3, ArrowLeft, Loader2, CheckCircle, PhoneIcon as Whatsapp } from 'lucide-react'
-import { toast } from 'sonner'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar' // Import Avatar components
+import { useEffect, useState } from "react"
+import { useParams, useRouter } from "next/navigation"
+import Image from "next/image"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Separator } from "@/components/ui/separator"
+import { api, type Property, type PropertyStats } from "@/lib/api"
+import { useAuth } from "@/lib/auth"
+import {
+  MapPin,
+  Calendar,
+  User,
+  Phone,
+  Mail,
+  Vote,
+  BarChart3,
+  ArrowLeft,
+  Loader2,
+  CheckCircle,
+  PhoneIcon as Whatsapp,
+} from "lucide-react"
+import { toast } from "sonner"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export default function PropertyDetailsPage() {
   const params = useParams()
@@ -28,7 +40,7 @@ export default function PropertyDetailsPage() {
   const [hasVoted, setHasVoted] = useState(false)
   const [selectedVoteOption, setSelectedVoteOption] = useState<number | null>(null)
 
-  const propertyId = parseInt(params.id as string)
+  const propertyId = Number.parseInt(params.id as string)
 
   useEffect(() => {
     if (propertyId) {
@@ -46,12 +58,12 @@ export default function PropertyDetailsPage() {
       if (response.success) {
         setProperty(response.data)
       } else {
-        toast.error('Property not found')
-        router.push('/')
+        toast.error("Property not found")
+        router.push("/")
       }
     } catch (error) {
-      toast.error('Failed to fetch property details')
-      router.push('/')
+      toast.error("Failed to fetch property details")
+      router.push("/")
     } finally {
       setLoading(false)
     }
@@ -64,7 +76,7 @@ export default function PropertyDetailsPage() {
         setStats(response.data)
       }
     } catch (error) {
-      console.error('Failed to fetch property stats:', error)
+      console.error("Failed to fetch property stats:", error)
     }
   }
 
@@ -76,7 +88,7 @@ export default function PropertyDetailsPage() {
         setHasVoted(!!userVote)
       }
     } catch (error) {
-      console.error('Failed to check vote status:', error)
+      console.error("Failed to check vote status:", error)
     }
   }
 
@@ -92,12 +104,12 @@ export default function PropertyDetailsPage() {
 
       if (response.success) {
         setHasVoted(true)
-        toast.success('Your vote has been recorded successfully!')
+        toast.success("Your vote has been recorded successfully!")
         // Refresh stats
         fetchStats()
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to record vote')
+      toast.error(error.message || "Failed to record vote")
     } finally {
       setVoting(false)
     }
@@ -140,7 +152,10 @@ export default function PropertyDetailsPage() {
     )
   }
 
-  const primaryImage = property.images?.find((img: any) => img.is_primary)?.image_url || property.images?.[0]?.image_url || "/placeholder.svg";
+  const primaryImage =
+    property.images?.find((img: any) => img.is_primary)?.image_url ||
+    property.images?.[0]?.image_url ||
+    "/placeholder.svg"
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -163,7 +178,7 @@ export default function PropertyDetailsPage() {
                 alt={property.title}
                 fill
                 className="object-cover"
-                onError={(e) => (e.currentTarget.src = "/placeholder.svg")} // Fallback if image fails to load
+                onError={(e) => (e.currentTarget.src = "/placeholder.svg")}
               />
             ) : (
               <p className="text-muted-foreground">No images available</p>
@@ -188,12 +203,18 @@ export default function PropertyDetailsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-muted-foreground">{property.description}</p>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {property.current_worth && (
                   <div className="flex items-center space-x-2">
                     <span className="text-sm">
-                      <strong>₦{property.current_worth.toLocaleString()}</strong>
+                      <strong>
+                        ₦
+                        {Number(property.current_worth).toLocaleString("en-NG", {
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0,
+                        })}
+                      </strong>
                     </span>
                   </div>
                 )}
@@ -203,9 +224,9 @@ export default function PropertyDetailsPage() {
                     <span className="text-sm">Built in {property.year_of_construction}</span>
                   </div>
                 )}
-                <div className="flex items-center space-x-2">
-                  <Vote className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{stats?.total_votes || 0} votes</span>
+                <div className="flex items-center">
+                  <Vote className="h-3 w-3 mr-1" />
+                  <span>{property.vote_count || 0} votes</span>
                 </div>
               </div>
             </CardContent>
@@ -224,7 +245,9 @@ export default function PropertyDetailsPage() {
                 <Avatar className="h-16 w-16">
                   <AvatarImage src={property.owner_profile_picture || "/placeholder.svg"} alt={property.owner_name} />
                   <AvatarFallback className="text-lg">
-                    {property.owner_name ? `${property.owner_name.split(' ')[0][0]}${property.owner_name.split(' ')[1]?.[0] || ''}`.toUpperCase() : 'LS'}
+                    {property.owner_name
+                      ? `${property.owner_name.split(" ")[0][0]}${property.owner_name.split(" ")[1]?.[0] || ""}`.toUpperCase()
+                      : "LS"}
                   </AvatarFallback>
                 </Avatar>
                 <p className="font-medium text-lg">{property.owner_name}</p>
@@ -236,13 +259,13 @@ export default function PropertyDetailsPage() {
                     <span>{property.owner_email}</span>
                   </div>
                 )}
-                {property.lister_phone_number && ( // Display lister's specific phone number
+                {property.lister_phone_number && (
                   <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                    <Whatsapp className="h-4 w-4" /> {/* Changed to Whatsapp icon */}
+                    <Whatsapp className="h-4 w-4" />
                     <span>{property.lister_phone_number}</span>
                   </div>
                 )}
-                 {property.owner_phone && !property.lister_phone_number && ( // Fallback to owner_phone if lister_phone_number not provided
+                {property.owner_phone && !property.lister_phone_number && (
                   <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                     <Phone className="h-4 w-4" />
                     <span>{property.owner_phone}</span>
@@ -263,17 +286,14 @@ export default function PropertyDetailsPage() {
                 Cast Your Vote
               </CardTitle>
               <CardDescription>
-                {hasVoted 
-                  ? "You have already voted on this property" 
-                  : "Select an option to vote on this property"
-                }
+                {hasVoted ? "You have already voted on this property" : "Select an option to vote on this property"}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {!isAuthenticated ? (
                 <Alert>
                   <AlertDescription>
-                    You must be logged in to vote.{' '}
+                    You must be logged in to vote.{" "}
                     <Link href="/login" className="font-medium text-primary hover:underline">
                       Sign in here
                     </Link>
@@ -301,19 +321,15 @@ export default function PropertyDetailsPage() {
                       </label>
                     </div>
                   ))}
-                  
-                  <Button 
-                    onClick={handleVote} 
-                    disabled={!selectedVoteOption || voting}
-                    className="w-full"
-                  >
+
+                  <Button onClick={handleVote} disabled={!selectedVoteOption || voting} className="w-full">
                     {voting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Submitting Vote...
                       </>
                     ) : (
-                      'Submit Vote'
+                      "Submit Vote"
                     )}
                   </Button>
                 </div>
@@ -321,30 +337,94 @@ export default function PropertyDetailsPage() {
             </CardContent>
           </Card>
 
-          {/* Voting Statistics */}
+          {/* Current Voting Results - Always visible */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <BarChart3 className="mr-2 h-5 w-5" />
+                Current Voting Results
+              </CardTitle>
+              <CardDescription>
+                {stats?.total_votes ? `Total votes: ${stats.total_votes}` : "No votes yet"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {stats && stats.statistics.length > 0 ? (
+                <div className="space-y-4">
+                  {stats.statistics.map((stat: any) => (
+                    <div key={stat.vote_option_id} className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-3 h-3 rounded-full bg-primary"></div>
+                          <span className="font-medium text-sm">{stat.option_name}</span>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-semibold">{stat.vote_count} votes</div>
+                          <div className="text-xs text-muted-foreground">{stat.percentage}%</div>
+                        </div>
+                      </div>
+                      <Progress value={stat.percentage} className="h-2" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Vote className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No votes cast yet</p>
+                  <p className="text-sm text-muted-foreground mt-1">Be the first to vote on this property!</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Detailed Voting Statistics - Only show if there are votes */}
           {stats && stats.statistics.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <BarChart3 className="mr-2 h-5 w-5" />
-                  Voting Results
-                </CardTitle>
-                <CardDescription>
-                  Total votes: {stats.total_votes}
-                </CardDescription>
+                <CardTitle className="text-lg">Vote Breakdown</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {stats.statistics.map((stat: any) => (
-                  <div key={stat.vote_option_id} className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="font-medium">{stat.option_name}</span>
-                      <span className="text-muted-foreground">
-                        {stat.vote_count} votes ({stat.percentage}%)
-                      </span>
+              <CardContent>
+                <div className="space-y-3">
+                  {stats.statistics.map((stat: any, index: number) => (
+                    <div
+                      key={stat.vote_option_id}
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div
+                          className={`w-4 h-4 rounded-full ${
+                            index === 0
+                              ? "bg-green-500"
+                              : index === 1
+                                ? "bg-blue-500"
+                                : index === 2
+                                  ? "bg-yellow-500"
+                                  : index === 3
+                                    ? "bg-red-500"
+                                    : "bg-purple-500"
+                          }`}
+                        ></div>
+                        <div>
+                          <p className="font-medium">{stat.option_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {stat.vote_count} {stat.vote_count === 1 ? "person" : "people"} voted
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-bold">{stat.percentage}%</div>
+                      </div>
                     </div>
-                    <Progress value={stat.percentage} className="h-2" />
-                  </div>
-                ))}
+                  ))}
+                </div>
+
+                <Separator className="my-4" />
+
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Total community votes: <span className="font-semibold">{stats.total_votes}</span>
+                  </p>
+                </div>
               </CardContent>
             </Card>
           )}

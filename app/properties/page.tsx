@@ -489,10 +489,18 @@ export default function PropertiesPage() {
 
                       <div className={`flex justify-between items-center text-sm ${viewMode === "list" ? "mb-2" : ""}`}>
                         {property.current_worth && (
-                          <div className="flex items-center">
-                            <span className="font-medium">₦{property.current_worth.toLocaleString()}</span>
-                          </div>
-                        )}
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm">
+                                <strong>
+                                  ₦
+                                  {Number(property.current_worth).toLocaleString("en-NG", {
+                                    minimumFractionDigits: 0,
+                                    maximumFractionDigits: 0,
+                                  })}
+                                </strong>
+                              </span>
+                            </div>
+                          )}
                         {property.year_of_construction && (
                           <div className="flex items-center text-muted-foreground">
                             <Calendar className="h-3 w-3 mr-1" />
