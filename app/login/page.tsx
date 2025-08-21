@@ -59,9 +59,6 @@ export default function LoginPage() {
         <Card>
           <CardHeader>
             <CardTitle>Welcome back</CardTitle>
-            <CardDescription>
-              Enter your credentials to access your account
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">

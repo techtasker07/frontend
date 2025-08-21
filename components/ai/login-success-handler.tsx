@@ -77,10 +77,10 @@ export function LoginSuccessHandler({ onLoginSuccess }: LoginSuccessHandlerProps
                   <div className="absolute inset-0 rounded-full border-4 border-purple-300 animate-ping opacity-30"></div>
                 </div>
                 <h3 className="text-xl font-bold mb-3 bg-gradient-to-r from-purple-700 to-pink-700 bg-clip-text text-transparent">
-                  AI-Powered Property Analysis
+                  Estimated Property Analysis
                 </h3>
                 <p className="text-slate-600 leading-relaxed">
-                  Take a photo or select an image of any property to get instant AI-powered investment insights and prospect analysis!
+                  Take a photo or select an image of any property to get instant Estimated investment insights and prospect analysis!
                 </p>
               </div>
 

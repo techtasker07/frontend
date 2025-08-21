@@ -20,8 +20,9 @@ import { toast } from "sonner"
 const categories = [
   { id: 1, name: "Residential" },
   { id: 2, name: "Commercial" },
-  { id: 3, name: "Land" },
-  { id: 4, name: "Material" },
+  { id: 3, name: "Industrial" },
+  { id: 4, name: "Material Assets" },
+  { id: 5, name: "Landed Property" },
 ]
 
 export default function AddPropertyPage() {
