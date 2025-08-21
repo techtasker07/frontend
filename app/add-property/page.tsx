@@ -35,7 +35,7 @@ export default function AddPropertyPage() {
     year_of_construction: "",
     lister_phone_number: "",
   })
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]) // State to hold selected files
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [uploadProgress, setUploadProgress] = useState<string>("")
