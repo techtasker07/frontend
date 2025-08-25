@@ -156,7 +156,9 @@ export default function HomePage() {
           {/* Budget Search Bar */}
           <div className="max-w-sm sm:max-w-md md:max-w-xl mx-auto px-4 sm:px-0">
             <div className="relative">
-              <DollarSign className="absolute left-3 md:left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+              <span className="absolute left-3 md:left-4 top-1/2 transform -translate-y-1/2 text-slate-600 font-semibold">
+                ₦
+              </span>
               <Input
                 type="number"
                 inputMode="numeric"
@@ -166,7 +168,7 @@ export default function HomePage() {
                 onKeyDown={handleBudgetSearch}
                 onFocus={handleBudgetFocus}
                 onBlur={handleBudgetBlur}
-                className="pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 text-sm md:text-base bg-white/95 backdrop-blur-sm border-0 rounded-lg shadow-xl focus:ring-2 focus:ring-blue-500 focus:outline-none w-full"
+                className="pl-8 md:pl-10 pr-3 md:pr-4 py-2.5 md:py-3 text-sm md:text-base bg-white/95 backdrop-blur-sm border-0 rounded-lg shadow-xl focus:ring-2 focus:ring-blue-500 focus:outline-none w-full text-black"
                 disabled={loading}
               />
               {loading && (

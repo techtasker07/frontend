@@ -27,8 +27,7 @@ const authenticatedNavigation: NavigationItem[] = [
   { name: "Home", href: "/", icon: Home },
   { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
   { name: "Properties", href: "/properties", icon: Building },
-  { name: "Smart Prospects", href: "/prospectProperties", icon: Lightbulb },
-  { name: "Community Polls", href: "/polls", icon: User },
+  { name: "My Smart Prospects", href: "/prospectProperties", icon: Lightbulb },
   { name: "Add Property", href: "/add-property", icon: Plus },
 ]
 

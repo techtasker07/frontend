@@ -182,7 +182,7 @@ export default function ProspectPropertiesPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Prospect Properties</h1>
+          <h1 className="text-3xl font-bold mb-2"> My Prospect Properties</h1>
           <p className="text-muted-foreground">
             Discover properties with AI-powered investment and development suggestions
           </p>
