@@ -5,24 +5,19 @@ import type React from "react"
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
 import { Camera, Upload, X } from "lucide-react"
 import { toast } from "sonner"
-import type { Category } from "@/lib/api"
 
 interface ImageCaptureModalProps {
   isOpen: boolean
   onClose: () => void
-  categories: Category[]
-  onImageCaptured: (imageFile: File, categoryId: number) => void
+  onImageCaptured: (imageFile: File) => void
   fromLogin?: boolean
 }
 
-export function ImageCaptureModal({ isOpen, onClose, categories, onImageCaptured, fromLogin = false }: ImageCaptureModalProps) {
+export function ImageCaptureModal({ isOpen, onClose, onImageCaptured, fromLogin = false }: ImageCaptureModalProps) {
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
-  const [selectedCategory, setSelectedCategory] = useState<string>("")
   const [isCapturing, setIsCapturing] = useState(false)
   const [stream, setStream] = useState<MediaStream | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -93,19 +88,18 @@ export function ImageCaptureModal({ isOpen, onClose, categories, onImageCaptured
   }
 
   const handleSubmit = () => {
-    if (!imageFile || !selectedCategory) {
-      toast.error("Please capture/select an image and choose a category.")
+    if (!imageFile) {
+      toast.error("Please capture/select an image.")
       return
     }
 
-    onImageCaptured(imageFile, Number.parseInt(selectedCategory))
+    onImageCaptured(imageFile)
   }
 
   const handleClose = () => {
     stopCamera()
     setCapturedImage(null)
     setImageFile(null)
-    setSelectedCategory("")
     onClose()
   }
 
@@ -199,20 +193,13 @@ export function ImageCaptureModal({ isOpen, onClose, categories, onImageCaptured
                 </Button>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="category">Property Category</Label>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select property category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border border-blue-200">
+                <p className="text-sm text-blue-800 mb-2">
+                  <strong>✨ Smart Analysis</strong>
+                </p>
+                <p className="text-xs text-blue-700">
+                  Our AI will analyze your property image and generate 5 diverse investment prospects across different categories automatically.
+                </p>
               </div>
 
               <div className="flex gap-2">

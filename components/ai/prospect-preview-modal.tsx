@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Camera, Lightbulb, Plus, X, TrendingUp, DollarSign, Building, Zap } from "lucide-react"
 import type { Category } from "@/lib/api"
 import { formatCompactCurrency } from "@/lib/currency"
@@ -16,13 +17,26 @@ interface ProspectPreview {
   totalCost: number
 }
 
+interface ProspectData {
+  id: number
+  categoryId: number
+  categoryName: string
+  propertyTitle: string
+  location: string
+  estimatedWorth: number
+  yearBuilt?: number
+  prospect: ProspectPreview
+}
+
 interface ProspectPreviewModalProps {
   isOpen: boolean
   onClose: () => void
   onAddProperty: () => void
   imageUrl: string
-  category: Category
-  prospect: ProspectPreview
+  allProspects: ProspectData[]
+  selectedProspect: ProspectData
+  onSelectProspect: (prospect: ProspectData) => void
+  categories: Category[]
 }
 
 export function ProspectPreviewModal({
@@ -30,19 +44,52 @@ export function ProspectPreviewModal({
   onClose,
   onAddProperty,
   imageUrl,
-  category,
-  prospect,
+  allProspects,
+  selectedProspect,
+  onSelectProspect,
+  categories,
 }: ProspectPreviewModalProps) {
   const [showProspectDetails, setShowProspectDetails] = useState(false)
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null)
 
+  // Group prospects by category
+  const prospectsByCategory = useMemo(() => {
+    const grouped = allProspects.reduce((acc, prospect) => {
+      if (!acc[prospect.categoryId]) {
+        acc[prospect.categoryId] = []
+      }
+      acc[prospect.categoryId].push(prospect)
+      return acc
+    }, {} as Record<number, ProspectData[]>)
+    return grouped
+  }, [allProspects])
 
+  // Available categories (only those with prospects)
+  const availableCategories = useMemo(() => {
+    return categories.filter(cat => prospectsByCategory[cat.id]?.length > 0)
+  }, [categories, prospectsByCategory])
 
-  const handleProspectClick = () => {
+  // Current tab category (defaults to selected prospect's category)
+  const currentCategoryId = selectedCategoryId || selectedProspect?.categoryId || availableCategories[0]?.id
+  const currentProspects = prospectsByCategory[currentCategoryId] || []
+
+  const handleProspectClick = (prospect: ProspectData) => {
+    onSelectProspect(prospect)
     setShowProspectDetails(true)
   }
 
   const handleBackToPreview = () => {
     setShowProspectDetails(false)
+  }
+
+  const handleCategoryChange = (categoryId: string) => {
+    const numericId = parseInt(categoryId)
+    setSelectedCategoryId(numericId)
+    // Auto-select first prospect in the new category
+    const categoryProspects = prospectsByCategory[numericId]
+    if (categoryProspects && categoryProspects.length > 0) {
+      onSelectProspect(categoryProspects[0])
+    }
   }
 
   return (
@@ -76,41 +123,78 @@ export function ProspectPreviewModal({
                     className="w-full h-48 object-cover rounded-lg shadow-lg"
                   />
                   <Badge className="absolute top-3 left-3 bg-white/90 text-gray-800 shadow-md">
-                    {category.name}
+                    {selectedProspect?.categoryName || "Property"}
                   </Badge>
                   <div className="absolute top-3 right-3">
                     <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 shadow-lg">
                       <Lightbulb className="w-3 h-3 mr-1" />
-                      AI Generated
+                      AI Generated ({allProspects.length} Options)
                     </Badge>
                   </div>
                 </div>
 
-                {/* Prospect Button */}
+                {/* Category Tabs with Prospects */}
                 <Card className="border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50">
                   <CardHeader className="pb-3">
                     <div className="flex items-center gap-2 mb-2">
                       <TrendingUp className="w-4 h-4 text-green-600" />
-                      <span className="text-sm font-medium text-green-600">Investment Prospect</span>
+                      <span className="text-sm font-medium text-green-600">Investment Prospects by Category</span>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <Button
-                      onClick={handleProspectClick}
-                      variant="outline"
-                      size="lg"
-                      className="w-full justify-between h-auto p-4 text-left border-purple-300 hover:bg-purple-100 hover:border-purple-400 transition-all duration-200"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-base text-purple-800 mb-1">{prospect.title}</div>
-                        <div className="text-sm text-purple-600">
-                          Investment: {formatCompactCurrency(prospect.totalCost)}
-                        </div>
-                      </div>
-                      <Badge variant="secondary" className="ml-3 bg-purple-200 text-purple-800">
-                        View Details
-                      </Badge>
-                    </Button>
+                    <Tabs value={currentCategoryId?.toString()} onValueChange={handleCategoryChange}>
+                      <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 mb-4">
+                        {availableCategories.map((category) => (
+                          <TabsTrigger key={category.id} value={category.id.toString()} className="text-xs">
+                            {category.name}
+                            <Badge className="ml-1 text-xs" variant="secondary">
+                              {prospectsByCategory[category.id]?.length || 0}
+                            </Badge>
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                      
+                      {availableCategories.map((category) => (
+                        <TabsContent key={category.id} value={category.id.toString()} className="space-y-3">
+                          {prospectsByCategory[category.id]?.map((prospect) => (
+                            <Button
+                              key={prospect.id}
+                              onClick={() => handleProspectClick(prospect)}
+                              variant={selectedProspect?.id === prospect.id ? "default" : "outline"}
+                              size="lg"
+                              className={`w-full justify-between h-auto p-4 text-left transition-all duration-200 ${
+                                selectedProspect?.id === prospect.id
+                                  ? "bg-purple-600 text-white border-purple-600"
+                                  : "border-purple-300 hover:bg-purple-100 hover:border-purple-400"
+                              }`}
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className={`font-semibold text-base mb-1 ${
+                                  selectedProspect?.id === prospect.id ? "text-white" : "text-purple-800"
+                                }`}>
+                                  {prospect.prospect.title}
+                                </div>
+                                <div className={`text-sm ${
+                                  selectedProspect?.id === prospect.id ? "text-purple-100" : "text-purple-600"
+                                }`}>
+                                  Investment: {formatCompactCurrency(prospect.prospect.totalCost)}
+                                </div>
+                              </div>
+                              <Badge 
+                                variant={selectedProspect?.id === prospect.id ? "outline" : "secondary"} 
+                                className={`ml-3 ${
+                                  selectedProspect?.id === prospect.id
+                                    ? "border-white text-white"
+                                    : "bg-purple-200 text-purple-800"
+                                }`}
+                              >
+                                {selectedProspect?.id === prospect.id ? "Selected" : "View Details"}
+                              </Badge>
+                            </Button>
+                          )) || []}
+                        </TabsContent>
+                      ))}
+                    </Tabs>
                   </CardContent>
                 </Card>
 
@@ -118,10 +202,11 @@ export function ProspectPreviewModal({
                 <div className="flex gap-3 pt-4">
                   <Button 
                     onClick={onAddProperty} 
+                    disabled={!selectedProspect}
                     className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 py-3 text-base font-semibold"
                   >
                     <Plus className="mr-2 h-5 w-5" />
-                    Add as Prospect Property
+                    Add Selected Prospect
                   </Button>
                   <Button 
                     variant="outline" 
@@ -140,7 +225,7 @@ export function ProspectPreviewModal({
               <DialogHeader>
                 <DialogTitle className="flex items-center text-xl font-bold">
                   <Lightbulb className="mr-3 h-6 w-6 text-yellow-500" />
-                  {prospect.title}
+                  {selectedProspect.prospect.title}
                 </DialogTitle>
               </DialogHeader>
 
@@ -153,7 +238,7 @@ export function ProspectPreviewModal({
                     className="w-full h-32 object-cover rounded-lg shadow-lg"
                   />
                   <Badge className="absolute top-2 left-2 bg-white/90 text-gray-800 text-xs">
-                    {category.name}
+                    {selectedProspect.categoryName}
                   </Badge>
                 </div>
 
@@ -166,7 +251,7 @@ export function ProspectPreviewModal({
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground leading-relaxed">{prospect.description}</p>
+                    <p className="text-muted-foreground leading-relaxed">{selectedProspect.prospect.description}</p>
                   </CardContent>
                 </Card>
 
@@ -183,13 +268,13 @@ export function ProspectPreviewModal({
                       <div className="p-3 bg-blue-50 rounded-lg">
                         <p className="text-sm text-muted-foreground">Development Cost</p>
                         <p className="text-lg font-semibold text-blue-600">
-                          {formatCompactCurrency(prospect.estimatedCost)}
+                          {formatCompactCurrency(selectedProspect.prospect.estimatedCost)}
                         </p>
                       </div>
                       <div className="p-3 bg-green-50 rounded-lg">
                         <p className="text-sm text-muted-foreground">Total Investment</p>
                         <p className="text-lg font-semibold text-green-600">
-                          {formatCompactCurrency(prospect.totalCost)}
+                          {formatCompactCurrency(selectedProspect.prospect.totalCost)}
                         </p>
                       </div>
                     </div>

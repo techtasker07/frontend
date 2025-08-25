@@ -1193,3 +1193,53 @@ export function getProspectDetails(categoryId: number, prospectTitle: string): P
 
   return categoryProspects.find((prospect) => prospect.title === prospectTitle) || null
 }
+
+export function generateCrossCategoryProspects(
+  estimatedWorth?: number,
+): Array<{
+  title: string
+  description: string
+  estimatedCost: number
+  category: string
+  categoryId: number
+}> {
+  const categoryMap: { [key: string]: number } = {
+    residential: 1,
+    commercial: 2,
+    industrial: 3,
+    agricultural: 4,
+  }
+
+  // Collect all prospects from all categories
+  const allProspects: Array<PropertyProspect & { category: string; categoryId: number }> = []
+  
+  Object.entries(MOCK_PROSPECTS).forEach(([categoryName, prospects]) => {
+    prospects.forEach(prospect => {
+      allProspects.push({
+        ...prospect,
+        category: categoryName,
+        categoryId: categoryMap[categoryName] || 1
+      })
+    })
+  })
+
+  // Randomly select 5 different prospects from all categories
+  const shuffled = [...allProspects].sort(() => 0.5 - Math.random())
+  const selectedProspects = shuffled.slice(0, 5)
+
+  const baseWorth = estimatedWorth || 10000000 // Default 10M if no estimated worth
+
+  return selectedProspects.map((prospect) => {
+    const purchaseCost = baseWorth * prospect.purchaseCostFactor
+    const developmentCost = baseWorth * prospect.developmentCostFactor
+    const estimatedCost = purchaseCost + developmentCost
+
+    return {
+      title: prospect.title,
+      description: prospect.description,
+      estimatedCost: Math.round(estimatedCost),
+      category: prospect.category,
+      categoryId: prospect.categoryId,
+    }
+  })
+}

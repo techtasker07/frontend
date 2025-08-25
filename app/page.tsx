@@ -6,7 +6,9 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/lib/auth"
-import { Search, Building, Target, Users, Award, LogIn } from "lucide-react"
+import { api, Property } from "@/lib/api"
+import { BudgetSearchModal } from "@/components/budget/budget-search-modal"
+import { Search, Building, Target, Users, Award, LogIn, DollarSign, Info } from "lucide-react"
 
 // Typewriter Text Component
 function TypewriterText({ text, delay = 0 }: { text: string; delay?: number }) {
@@ -34,7 +36,11 @@ function TypewriterText({ text, delay = 0 }: { text: string; delay?: number }) {
 }
 
 export default function HomePage() {
-  const [searchTerm, setSearchTerm] = useState("")
+  const [budget, setBudget] = useState("")
+  const [showBudgetTip, setShowBudgetTip] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [budgetProperties, setBudgetProperties] = useState<Property[]>([])
+  const [loading, setLoading] = useState(false)
   const { isAuthenticated, user, logout } = useAuth()
 
   const handleProtectedNavigation = (href: string) => {
@@ -44,6 +50,45 @@ export default function HomePage() {
       return
     }
     window.location.href = href
+  }
+
+  const handleBudgetSearch = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      
+      if (!isAuthenticated) {
+        alert('Please login or register to search properties by budget')
+        window.location.href = '/login'
+        return
+      }
+
+      if (!budget || parseFloat(budget) <= 0) {
+        alert('Please enter a valid budget amount')
+        return
+      }
+
+      setLoading(true)
+      try {
+        const response = await api.getPropertiesByBudget(parseFloat(budget))
+        if (response.success) {
+          setBudgetProperties(response.data)
+          setIsModalOpen(true)
+        }
+      } catch (error) {
+        console.error('Failed to fetch properties by budget:', error)
+        alert('Failed to search properties. Please try again.')
+      } finally {
+        setLoading(false)
+      }
+    }
+  }
+
+  const handleBudgetFocus = () => {
+    setShowBudgetTip(true)
+  }
+
+  const handleBudgetBlur = () => {
+    setTimeout(() => setShowBudgetTip(false), 200)
   }
 
   return (
@@ -108,17 +153,45 @@ export default function HomePage() {
             Discover investment opportunities with community-driven property evaluation and smart insights
           </p>
 
-          {/* Search Bar */}
+          {/* Budget Search Bar */}
           <div className="max-w-sm sm:max-w-md md:max-w-xl mx-auto px-4 sm:px-0">
             <div className="relative">
-              <Search className="absolute left-3 md:left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+              <DollarSign className="absolute left-3 md:left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
               <Input
-                placeholder="Search properties..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                type="number"
+                inputMode="numeric"
+                placeholder="Input your Budget"
+                value={budget}
+                onChange={(e) => setBudget(e.target.value)}
+                onKeyDown={handleBudgetSearch}
+                onFocus={handleBudgetFocus}
+                onBlur={handleBudgetBlur}
                 className="pl-10 md:pl-12 pr-3 md:pr-4 py-2.5 md:py-3 text-sm md:text-base bg-white/95 backdrop-blur-sm border-0 rounded-lg shadow-xl focus:ring-2 focus:ring-blue-500 focus:outline-none w-full"
+                disabled={loading}
               />
+              {loading && (
+                <div className="absolute right-3 md:right-4 top-1/2 transform -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                </div>
+              )}
             </div>
+            
+            {/* Budget Tip Notification */}
+            {showBudgetTip && (
+              <div className="absolute top-full left-0 right-0 mt-2 mx-4 sm:mx-0 z-10">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 shadow-lg">
+                  <div className="flex items-start space-x-2">
+                    <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-blue-800">
+                      <p className="font-medium">Get suggestions based on your budget</p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        Enter your budget and press Enter to find properties within your range
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -275,6 +348,15 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Budget Search Modal */}
+      <BudgetSearchModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        properties={budgetProperties}
+        budget={parseFloat(budget) || 0}
+        loading={loading}
+      />
     </div>
   )
 }

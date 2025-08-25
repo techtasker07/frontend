@@ -1,10 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { query } from "@/lib/db"
+import { protect, type AuthNextRequest } from "@/lib/authUtils"
 
 // @route   GET /api/prospectProperties/[id]
 // @desc    Get a specific prospect property with its prospects
-// @access  Public
+// @access  Private
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  const authResponse = await protect(req as AuthNextRequest)
+  if (authResponse instanceof NextResponse) {
+    return authResponse
+  }
   const propertyId = parseInt(params.id)
 
   // Validate propertyId

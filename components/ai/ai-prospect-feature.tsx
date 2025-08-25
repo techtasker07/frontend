@@ -13,8 +13,8 @@ interface AIProspectFeatureProps {
   triggerOnLogin?: boolean
 }
 
-// Generate random prospect for category
-const generateRandomProspect = (category: Category) => {
+// Generate 5 random prospects from different categories
+const generateMultipleCategoryProspects = (categories: Category[]) => {
   const locations = [
     "Victoria Island, Lagos",
     "Ikoyi, Lagos",
@@ -129,38 +129,69 @@ const generateRandomProspect = (category: Category) => {
     ],
   }
 
-  const prospects = categoryProspects[category.id] || categoryProspects[1]
-  const randomProspect = prospects[Math.floor(Math.random() * prospects.length)]
-  const titles = propertyTypes[category.id as keyof typeof propertyTypes] || propertyTypes[1]
-  const randomTitle = titles[Math.floor(Math.random() * titles.length)]
-  const randomLocation = locations[Math.floor(Math.random() * locations.length)]
-  const basePrice = Math.floor(Math.random() * 50000000) + 10000000 // 10M to 60M Naira
-  const yearBuilt = Math.floor(Math.random() * 20) + 2005 // 2005-2024
-
-  const estimatedCost = Math.round(basePrice * randomProspect.costFactor)
-  const totalCost = Math.round(basePrice + estimatedCost)
-
-  return {
-    propertyTitle: randomTitle,
-    location: randomLocation,
-    estimatedWorth: basePrice,
-    yearBuilt: Math.random() > 0.3 ? yearBuilt : undefined,
-    prospect: {
-      title: randomProspect.title,
-      description: randomProspect.description,
-      estimatedCost,
-      totalCost,
-    }
+  // Generate 5 different prospects from different categories
+  const allProspects: any[] = []
+  const usedCombinations = new Set<string>()
+  
+  // Create a pool of all possible category-prospect combinations
+  const availableCombinations: Array<{ categoryId: number, categoryName: string, prospect: any }> = []
+  
+  categories.forEach(category => {
+    const prospects = categoryProspects[category.id] || categoryProspects[1]
+    prospects.forEach(prospect => {
+      availableCombinations.push({
+        categoryId: category.id,
+        categoryName: category.name,
+        prospect
+      })
+    })
+  })
+  
+  // Shuffle the available combinations
+  for (let i = availableCombinations.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[availableCombinations[i], availableCombinations[j]] = [availableCombinations[j], availableCombinations[i]]
   }
+  
+  // Generate 5 unique prospects
+  for (let i = 0; i < Math.min(5, availableCombinations.length); i++) {
+    const combination = availableCombinations[i]
+    const titles = propertyTypes[combination.categoryId as keyof typeof propertyTypes] || propertyTypes[1]
+    const randomTitle = titles[Math.floor(Math.random() * titles.length)]
+    const randomLocation = locations[Math.floor(Math.random() * locations.length)]
+    const basePrice = Math.floor(Math.random() * 50000000) + 10000000 // 10M to 60M Naira
+    const yearBuilt = Math.floor(Math.random() * 20) + 2005 // 2005-2024
+    
+    const estimatedCost = Math.round(basePrice * combination.prospect.costFactor)
+    const totalCost = Math.round(basePrice + estimatedCost)
+    
+    allProspects.push({
+      id: i + 1,
+      categoryId: combination.categoryId,
+      categoryName: combination.categoryName,
+      propertyTitle: randomTitle,
+      location: randomLocation,
+      estimatedWorth: basePrice,
+      yearBuilt: Math.random() > 0.3 ? yearBuilt : undefined,
+      prospect: {
+        title: combination.prospect.title,
+        description: combination.prospect.description,
+        estimatedCost,
+        totalCost,
+      }
+    })
+  }
+  
+  return allProspects
 }
 
 export function AIProspectFeature({ isOpen, onClose, triggerOnLogin = false }: AIProspectFeatureProps) {
   const [currentStep, setCurrentStep] = useState<"capture" | "preview" | "form">("capture")
   const [categories, setCategories] = useState<Category[]>([])
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
+  const [selectedProspect, setSelectedProspect] = useState<any>(null)
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
-  const [prospectData, setProspectData] = useState<any>(null)
+  const [allProspects, setAllProspects] = useState<any[]>([])
 
   useEffect(() => {
     if (isOpen) {
@@ -180,20 +211,21 @@ export function AIProspectFeature({ isOpen, onClose, triggerOnLogin = false }: A
     }
   }
 
-  const handleImageCaptured = async (file: File, categoryId: number) => {
-    const category = categories.find((c) => c.id === categoryId)
-    if (!category) return
-
+  const handleImageCaptured = async (file: File) => {
     // Create object URL for the image
     const imageUrl = URL.createObjectURL(file)
 
     setImageFile(file)
     setCapturedImage(imageUrl)
-    setSelectedCategory(category)
-
-    // Generate random prospect
-    const generatedData = generateRandomProspect(category)
-    setProspectData(generatedData)
+    
+    // Generate 5 different prospects from multiple categories
+    const generatedProspects = generateMultipleCategoryProspects(categories)
+    setAllProspects(generatedProspects)
+    
+    // Set the first prospect as default selection
+    if (generatedProspects.length > 0) {
+      setSelectedProspect(generatedProspects[0])
+    }
 
     setCurrentStep("preview")
   }
@@ -203,7 +235,7 @@ export function AIProspectFeature({ isOpen, onClose, triggerOnLogin = false }: A
   }
 
   const handleFormSubmit = async (formData: any) => {
-    if (!selectedCategory || !imageFile || !prospectData) return
+    if (!selectedProspect || !imageFile) return
 
     try {
       // Upload image first (in a real app, you'd upload to a cloud service)
@@ -214,7 +246,7 @@ export function AIProspectFeature({ isOpen, onClose, triggerOnLogin = false }: A
         title: formData.title,
         description: formData.description,
         location: formData.location,
-        category_id: selectedCategory.id,
+        category_id: selectedProspect.categoryId,
         estimated_worth: formData.estimatedWorth ? Number.parseFloat(formData.estimatedWorth) : undefined,
         year_of_construction: formData.yearOfConstruction ? Number.parseInt(formData.yearOfConstruction) : undefined,
         image_url: imageUrl,
@@ -233,10 +265,10 @@ export function AIProspectFeature({ isOpen, onClose, triggerOnLogin = false }: A
 
   const handleClose = () => {
     setCurrentStep("capture")
-    setSelectedCategory(null)
+    setSelectedProspect(null)
     setCapturedImage(null)
     setImageFile(null)
-    setProspectData(null)
+    setAllProspects([])
     onClose()
   }
 
@@ -245,33 +277,33 @@ export function AIProspectFeature({ isOpen, onClose, triggerOnLogin = false }: A
       <ImageCaptureModal
         isOpen={isOpen && currentStep === "capture"}
         onClose={handleClose}
-        categories={categories}
         onImageCaptured={handleImageCaptured}
         fromLogin={triggerOnLogin}
       />
 
-      {selectedCategory && prospectData && capturedImage && (
+      {selectedProspect && capturedImage && (
         <ProspectPreviewModal
           isOpen={currentStep === "preview"}
           onClose={handleClose}
           onAddProperty={handleAddProperty}
           imageUrl={capturedImage}
-          category={selectedCategory}
-          prospect={prospectData.prospect}
+          allProspects={allProspects}
+          selectedProspect={selectedProspect}
+          onSelectProspect={setSelectedProspect}
+          categories={categories}
         />
       )}
 
-      {selectedCategory && prospectData && (
+      {selectedProspect && (
         <AddProspectModal
           isOpen={currentStep === "form"}
           onClose={handleClose}
           onSubmit={handleFormSubmit}
-          category={selectedCategory}
           initialData={{
-            title: prospectData.propertyTitle,
-            location: prospectData.location,
-            estimatedWorth: prospectData.estimatedWorth,
-            yearBuilt: prospectData.yearBuilt,
+            title: selectedProspect.propertyTitle,
+            location: selectedProspect.location,
+            estimatedWorth: selectedProspect.estimatedWorth,
+            yearBuilt: selectedProspect.yearBuilt,
           }}
         />
       )}

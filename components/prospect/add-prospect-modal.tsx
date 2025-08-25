@@ -10,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Save, X } from "lucide-react"
-import type { Category } from "@/lib/api"
 import { toast } from "sonner"
 
 interface ProspectFormData {
@@ -25,7 +24,6 @@ interface AddProspectModalProps {
   isOpen: boolean
   onClose: () => void
   onSubmit: (data: ProspectFormData) => Promise<void>
-  category: Category
   initialData: {
     title: string
     location: string
@@ -34,7 +32,7 @@ interface AddProspectModalProps {
   }
 }
 
-export function AddProspectModal({ isOpen, onClose, onSubmit, category, initialData }: AddProspectModalProps) {
+export function AddProspectModal({ isOpen, onClose, onSubmit, initialData }: AddProspectModalProps) {
   const [formData, setFormData] = useState<ProspectFormData>({
     title: initialData.title,
     description: "",
@@ -197,10 +195,7 @@ export function AddProspectModal({ isOpen, onClose, onSubmit, category, initialD
 
           <div className="bg-muted p-4 rounded-lg">
             <p className="text-sm text-muted-foreground">
-              <strong>Category:</strong> {category.name}
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              The captured image will be automatically associated with this property.
+              The captured image will be automatically processed to generate prospects across multiple categories.
             </p>
           </div>
 

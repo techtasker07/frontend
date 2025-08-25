@@ -207,6 +207,12 @@ class ApiClient {
     return this.request(`/properties${queryString ? `?${queryString}` : ""}`)
   }
 
+  async getPropertiesByBudget(budget: number): Promise<ApiResponse<Property[]>> {
+    const searchParams = new URLSearchParams()
+    searchParams.append('max_budget', budget.toString())
+    return this.request(`/properties?${searchParams.toString()}`)
+  }
+
   async getProperty(id: number): Promise<ApiResponse<Property>> {
     return this.request(`/properties/${id}`)
   }
