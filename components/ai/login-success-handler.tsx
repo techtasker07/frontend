@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { AIProspectFeature } from "./ai-prospect-feature"
+import { SmartProspectFeature } from "./ai-prospect-feature"
 import { useAuth } from "@/lib/auth"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -13,7 +13,7 @@ interface LoginSuccessHandlerProps {
 
 export function LoginSuccessHandler({ onLoginSuccess }: LoginSuccessHandlerProps) {
   const [showWelcomeModal, setShowWelcomeModal] = useState(false)
-  const [showAIProspectFeature, setShowAIProspectFeature] = useState(false)
+  const [showSmartProspectFeature, setShowSmartProspectFeature] = useState(false)
   const { user, isAuthenticated, justLoggedIn, setJustLoggedIn } = useAuth()
 
   useEffect(() => {
@@ -25,17 +25,17 @@ export function LoginSuccessHandler({ onLoginSuccess }: LoginSuccessHandlerProps
     }
   }, [isAuthenticated, user, justLoggedIn, setJustLoggedIn, onLoginSuccess])
 
-  const handleStartAIProspect = () => {
+  const handleStartSmartProspect = () => {
     setShowWelcomeModal(false)
-    setShowAIProspectFeature(true)
+    setShowSmartProspectFeature(true)
   }
 
   const handleSkip = () => {
     setShowWelcomeModal(false)
   }
 
-  const handleAIProspectClose = () => {
-    setShowAIProspectFeature(false)
+  const handleSmartProspectClose = () => {
+    setShowSmartProspectFeature(false)
   }
 
   if (!isAuthenticated || !user) {
@@ -77,10 +77,10 @@ export function LoginSuccessHandler({ onLoginSuccess }: LoginSuccessHandlerProps
                   <div className="absolute inset-0 rounded-full border-4 border-purple-300 animate-ping opacity-30"></div>
                 </div>
                 <h3 className="text-xl font-bold mb-3 bg-gradient-to-r from-purple-700 to-pink-700 bg-clip-text text-transparent">
-                  Estimated Property Analysis
+                  Smart Property Analysis
                 </h3>
                 <p className="text-slate-600 leading-relaxed">
-                  Take a photo or select an image of any property to get instant Estimated investment insights and prospect analysis!
+                  Take a photo or select an image of any property to get instant smart investment insights and prospect analysis!
                 </p>
               </div>
 
@@ -111,11 +111,11 @@ export function LoginSuccessHandler({ onLoginSuccess }: LoginSuccessHandlerProps
 
               <div className="flex gap-3">
                 <Button
-                  onClick={handleStartAIProspect}
+                  onClick={handleStartSmartProspect}
                   className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 py-3 text-base font-semibold"
                 >
                   <Camera className="mr-2 h-5 w-5" />
-                  Start AI Analysis
+                  Start Smart Analysis
                 </Button>
                 <Button
                   variant="outline"
@@ -131,10 +131,10 @@ export function LoginSuccessHandler({ onLoginSuccess }: LoginSuccessHandlerProps
         </DialogContent>
       </Dialog>
 
-      {/* AI Prospect Feature */}
-      <AIProspectFeature
-        isOpen={showAIProspectFeature}
-        onClose={handleAIProspectClose}
+      {/* Smart Prospect Feature */}
+      <SmartProspectFeature
+        isOpen={showSmartProspectFeature}
+        onClose={handleSmartProspectClose}
         triggerOnLogin={true}
       />
 

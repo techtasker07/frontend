@@ -202,7 +202,10 @@ return (
                     {property.current_worth && (
                       <div className="flex items-center text-sm">
                         <span>
-                          ₦{property.current_worth.toLocaleString("en-NG")}
+                          ₦{property.current_worth.toLocaleString("en-US", {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                          })}
                         </span>
                       </div>
                     )}

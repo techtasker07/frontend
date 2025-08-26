@@ -1,14 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { AIProspectFeature } from "./ai-prospect-feature"
+import { SmartProspectFeature } from "./ai-prospect-feature"
 
-interface AIProspectWrapperProps {
+interface SmartProspectWrapperProps {
   isOpen?: boolean
   onClose?: () => void
 }
 
-export function AIProspectWrapper({ isOpen = false, onClose }: AIProspectWrapperProps) {
+export function SmartProspectWrapper({ isOpen = false, onClose }: SmartProspectWrapperProps) {
   const [internalOpen, setInternalOpen] = useState(false)
 
   const handleClose = () => {
@@ -21,5 +21,5 @@ export function AIProspectWrapper({ isOpen = false, onClose }: AIProspectWrapper
 
   const isFeatureOpen = isOpen || internalOpen
 
-  return <AIProspectFeature isOpen={isFeatureOpen} onClose={handleClose} />
+  return <SmartProspectFeature isOpen={isFeatureOpen} onClose={handleClose} />
 }

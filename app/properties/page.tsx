@@ -437,63 +437,61 @@ export default function PropertiesPage() {
               <Card
                 key={property.id}
                 className={`hover:shadow-lg transition-shadow cursor-pointer ${
-                  viewMode === "list" ? "flex flex-row" : ""
+                  viewMode === "list" ? "" : ""
                 }`}
               >
-                <Link href={`/properties/${property.id}`} className={viewMode === "list" ? "flex flex-1" : ""}>
-                  <div
-                    className={`relative overflow-hidden bg-muted flex items-center justify-center ${
-                      viewMode === "list" ? "w-48 h-32" : "h-48"
-                    } ${viewMode === "grid" ? "rounded-t-lg" : "rounded-l-lg"}`}
-                  >
-                    {property.images && property.images.length > 0 ? (
-                      <Image
-                        src={
-                          property.images.find((img) => img.is_primary)?.image_url ||
-                          property.images[0].image_url ||
-                          "/placeholder.svg" ||
-                          "/placeholder.svg"
-                        }
-                        alt={property.title}
-                        fill
-                        className="object-cover"
-                        onError={(e) => (e.currentTarget.src = "/placeholder.svg")}
-                      />
-                    ) : (
-                      <Building className="h-12 w-12 text-muted-foreground" />
-                    )}
-                  </div>
-
-                  <div className={viewMode === "list" ? "flex-1" : ""}>
-                    <CardHeader className={viewMode === "list" ? "pb-2" : ""}>
-                      <div className="flex justify-between items-start">
-                        <CardTitle className={`line-clamp-1 ${viewMode === "list" ? "text-lg" : ""}`}>
-                          {property.title}
-                        </CardTitle>
-                        <Badge variant="secondary" className="text-xs ml-2">
-                          {property.category_name}
-                        </Badge>
+                <Link href={`/properties/${property.id}`} className="block">
+                  {viewMode === "grid" ? (
+                    // Grid View - Title above image
+                    <>
+                      {/* Title and Header */}
+                      <CardHeader className="pb-3">
+                        <div className="flex justify-between items-start">
+                          <CardTitle className="line-clamp-2">
+                            {property.title}
+                          </CardTitle>
+                          <Badge variant="secondary" className="text-xs ml-2 shrink-0">
+                            {property.category_name}
+                          </Badge>
+                        </div>
+                        <CardDescription className="flex items-center">
+                          <MapPin className="h-3 w-3 mr-1" />
+                          {property.location}
+                        </CardDescription>
+                      </CardHeader>
+                      
+                      {/* Property Image */}
+                      <div className="relative overflow-hidden bg-muted flex items-center justify-center h-48">
+                        {property.images && property.images.length > 0 ? (
+                          <Image
+                            src={
+                              property.images.find((img) => img.is_primary)?.image_url ||
+                              property.images[0].image_url ||
+                              "/placeholder.svg"
+                            }
+                            alt={property.title}
+                            fill
+                            className="object-cover"
+                            onError={(e) => (e.currentTarget.src = "/placeholder.svg")}
+                          />
+                        ) : (
+                          <Building className="h-12 w-12 text-muted-foreground" />
+                        )}
                       </div>
-                      <CardDescription className="flex items-center">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        {property.location}
-                      </CardDescription>
-                    </CardHeader>
 
-                    <CardContent className={viewMode === "list" ? "pt-0" : ""}>
-                      <p
-                        className={`text-sm text-muted-foreground mb-4 ${viewMode === "list" ? "line-clamp-2" : "line-clamp-3"}`}
-                      >
-                        {property.description}
-                      </p>
+                      {/* Content */}
+                      <CardContent className="pt-4">
+                        <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+                          {property.description}
+                        </p>
 
-                      <div className={`flex justify-between items-center text-sm ${viewMode === "list" ? "mb-2" : ""}`}>
-                        {property.current_worth && (
+                        <div className="flex justify-between items-center text-sm mb-4">
+                          {property.current_worth && (
                             <div className="flex items-center space-x-2">
                               <span className="text-sm">
                                 <strong>
                                   ₦
-                                  {Number(property.current_worth).toLocaleString("en-NG", {
+                                  {Number(property.current_worth).toLocaleString("en-US", {
                                     minimumFractionDigits: 0,
                                     maximumFractionDigits: 0,
                                   })}
@@ -501,29 +499,112 @@ export default function PropertiesPage() {
                               </span>
                             </div>
                           )}
-                        {property.year_of_construction && (
-                          <div className="flex items-center text-muted-foreground">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            <span>{property.year_of_construction}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between mt-4">
-                        <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                          <div className="flex items-center">
-                            <Vote className="h-3 w-3 mr-1" />
-                            <span>{property.vote_count || 0} votes</span>
-                          </div>
-                          <div className="flex items-center">
-                            <User className="h-3 w-3 mr-1" />
-                            <span>{property.owner_name || "Anonymous"}</span>
-                          </div>
+                          {property.year_of_construction && (
+                            <div className="flex items-center text-muted-foreground">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              <span>{property.year_of_construction}</span>
+                            </div>
+                          )}
                         </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                            <div className="flex items-center">
+                              <Vote className="h-3 w-3 mr-1" />
+                              <span>{property.vote_count || 0} votes</span>
+                            </div>
+                            <div className="flex items-center">
+                              <User className="h-3 w-3 mr-1" />
+                              <span>{property.owner_name || "Anonymous"}</span>
+                            </div>
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      </CardContent>
+                    </>
+                  ) : (
+                    // List View - Better mobile layout
+                    <div className="flex flex-col sm:flex-row">
+                      {/* Title and Header - Full width on mobile, left side on desktop */}
+                      <div className="sm:flex-1 sm:min-w-0">
+                        <CardHeader className="pb-3">
+                          <div className="flex justify-between items-start">
+                            <CardTitle className="text-lg line-clamp-2 sm:line-clamp-1">
+                              {property.title}
+                            </CardTitle>
+                            <Badge variant="secondary" className="text-xs ml-2 shrink-0">
+                              {property.category_name}
+                            </Badge>
+                          </div>
+                          <CardDescription className="flex items-center">
+                            <MapPin className="h-3 w-3 mr-1" />
+                            {property.location}
+                          </CardDescription>
+                        </CardHeader>
+                        
+                        {/* Content - Only visible on mobile OR when there's space */}
+                        <CardContent className="pt-0 sm:pt-0">
+                          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                            {property.description}
+                          </p>
+
+                          <div className="flex flex-wrap gap-4 items-center text-sm mb-4">
+                            {property.current_worth && (
+                              <div className="flex items-center">
+                                <span className="font-semibold">
+                                  ₦{Number(property.current_worth).toLocaleString("en-US", {
+                                    minimumFractionDigits: 0,
+                                    maximumFractionDigits: 0,
+                                  })}
+                                </span>
+                              </div>
+                            )}
+                            {property.year_of_construction && (
+                              <div className="flex items-center text-muted-foreground">
+                                <Calendar className="h-3 w-3 mr-1" />
+                                <span>{property.year_of_construction}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                              <div className="flex items-center">
+                                <Vote className="h-3 w-3 mr-1" />
+                                <span>{property.vote_count || 0} votes</span>
+                              </div>
+                              <div className="flex items-center">
+                                <User className="h-3 w-3 mr-1" />
+                                <span>{property.owner_name || "Anonymous"}</span>
+                              </div>
+                            </div>
+                            <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        </CardContent>
                       </div>
-                    </CardContent>
-                  </div>
+                      
+                      {/* Property Image - Full width on mobile, right side on desktop */}
+                      <div className="sm:w-48 sm:flex-shrink-0">
+                        <div className="relative overflow-hidden bg-muted flex items-center justify-center h-32 sm:h-full sm:min-h-[180px] sm:rounded-r-lg">
+                          {property.images && property.images.length > 0 ? (
+                            <Image
+                              src={
+                                property.images.find((img) => img.is_primary)?.image_url ||
+                                property.images[0].image_url ||
+                                "/placeholder.svg"
+                              }
+                              alt={property.title}
+                              fill
+                              className="object-cover"
+                              onError={(e) => (e.currentTarget.src = "/placeholder.svg")}
+                            />
+                          ) : (
+                            <Building className="h-12 w-12 text-muted-foreground" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </Link>
               </Card>
             ))}

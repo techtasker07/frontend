@@ -7,7 +7,7 @@ import { AddProspectModal } from "../prospect/add-prospect-modal"
 import { api, type Category } from "@/lib/api"
 import { toast } from "sonner"
 
-interface AIProspectFeatureProps {
+interface SmartProspectFeatureProps {
   isOpen: boolean
   onClose: () => void
   triggerOnLogin?: boolean
@@ -185,7 +185,7 @@ const generateMultipleCategoryProspects = (categories: Category[]) => {
   return allProspects
 }
 
-export function AIProspectFeature({ isOpen, onClose, triggerOnLogin = false }: AIProspectFeatureProps) {
+export function SmartProspectFeature({ isOpen, onClose, triggerOnLogin = false }: SmartProspectFeatureProps) {
   const [currentStep, setCurrentStep] = useState<"capture" | "preview" | "form">("capture")
   const [categories, setCategories] = useState<Category[]>([])
   const [selectedProspect, setSelectedProspect] = useState<any>(null)

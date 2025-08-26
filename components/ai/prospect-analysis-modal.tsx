@@ -56,7 +56,7 @@ export function ProspectAnalysisModal({
         <DialogHeader>
           <DialogTitle className="flex items-center">
             <Brain className="mr-2 h-5 w-5 text-purple-600" />
-            AI Prospect Analysis
+            Smart Prospect Analysis
           </DialogTitle>
         </DialogHeader>
 
@@ -99,7 +99,7 @@ export function ProspectAnalysisModal({
               </div>
 
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-muted-foreground">AI Confidence:</span>
+                <span className="text-sm text-muted-foreground">Smart Confidence:</span>
                 <div className="flex-1 bg-gray-200 rounded-full h-2">
                   <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${analysis.confidence}%` }} />
                 </div>

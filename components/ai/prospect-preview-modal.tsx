@@ -109,7 +109,7 @@ export function ProspectPreviewModal({
                 <DialogTitle className="flex items-center text-xl font-bold">
                   <Camera className="mr-3 h-6 w-6 text-purple-600" />
                   <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                    AI Prospect Generated!
+                    Smart Prospect Generated!
                   </span>
                 </DialogTitle>
               </DialogHeader>
@@ -128,7 +128,7 @@ export function ProspectPreviewModal({
                   <div className="absolute top-3 right-3">
                     <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 shadow-lg">
                       <Lightbulb className="w-3 h-3 mr-1" />
-                      AI Generated ({allProspects.length} Options)
+                      Smart Generated ({allProspects.length} Options)
                     </Badge>
                   </div>
                 </div>
