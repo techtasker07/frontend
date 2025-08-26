@@ -465,7 +465,7 @@ export default function PropertiesPage() {
                               property.images[0].image_url ||
                               "/placeholder.svg"
                             }
-                            alt={property.location}
+                            alt={property.location || "Property location"}   // ✅ use location as alt
                             fill
                             className="object-cover"
                             onError={(e) => (e.currentTarget.src = "/placeholder.svg")}
@@ -474,6 +474,11 @@ export default function PropertiesPage() {
                           <Building className="h-12 w-12 text-muted-foreground" />
                         )}
                       </div>
+
+                      <CardDescription className="flex items-center">
+                        <MapPin className="h-3 w-3 mr-1" />
+                        {property.location}
+                      </CardDescription>
 
                       {/* Content */}
                       <CardContent className="pt-4">
