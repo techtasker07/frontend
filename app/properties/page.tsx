@@ -447,9 +447,6 @@ export default function PropertiesPage() {
                       {/* Title and Header */}
                       <CardHeader className="pb-3">
                         <div className="flex justify-between items-start">
-                          <CardTitle className="line-clamp-2">
-                            {property.title}
-                          </CardTitle>
                           <Badge variant="secondary" className="text-xs ml-2 shrink-0">
                             {property.category_name}
                           </Badge>
