@@ -451,10 +451,9 @@ export default function PropertiesPage() {
                             {property.category_name}
                           </Badge>
                         </div>
-                        <CardDescription className="flex items-center">
-                          <MapPin className="h-3 w-3 mr-1" />
-                          {property.location}
-                        </CardDescription>
+                          <CardTitle className="line-clamp-2">
+                            {property.title}
+                          </CardTitle>
                       </CardHeader>
                       
                       {/* Property Image */}
@@ -466,7 +465,7 @@ export default function PropertiesPage() {
                               property.images[0].image_url ||
                               "/placeholder.svg"
                             }
-                            alt={property.title}
+                            alt={property.location}
                             fill
                             className="object-cover"
                             onError={(e) => (e.currentTarget.src = "/placeholder.svg")}
