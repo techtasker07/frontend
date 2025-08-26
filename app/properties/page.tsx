@@ -482,10 +482,6 @@ export default function PropertiesPage() {
 
                       {/* Content */}
                       <CardContent className="pt-4">
-                        <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                          {property.description}
-                        </p>
-
                         <div className="flex justify-between items-center text-sm mb-4">
                           {property.current_worth && (
                             <div className="flex items-center space-x-2">
