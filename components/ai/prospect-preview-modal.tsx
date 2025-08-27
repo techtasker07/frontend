@@ -93,7 +93,7 @@ export function ProspectPreviewModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[100vw] sm:w-[95vw] max-w-[100vw] sm:max-w-2xl h-[100vh] sm:h-[95vh] max-h-[100vh] sm:max-h-[95vh] overflow-hidden border-0 bg-gradient-to-br from-white via-purple-50 to-pink-50 p-3 sm:p-6 m-0 sm:m-auto rounded-none sm:rounded-lg">
+      <DialogContent className="w-full max-w-[calc(100vw-1rem)] sm:max-w-2xl h-[calc(100vh-1rem)] sm:h-[90vh] max-h-[calc(100vh-1rem)] sm:max-h-[90vh] overflow-hidden border-0 bg-gradient-to-br from-white via-purple-50 to-pink-50 p-3 sm:p-6 rounded-lg mx-2 sm:mx-auto">
         {/* Animated background elements */}
         <div className="absolute inset-0 overflow-hidden rounded-lg">
           <div className="absolute top-0 -left-4 w-24 h-24 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
@@ -344,10 +344,27 @@ export function ProspectPreviewModal({
           )}
         </div>
 
-        {/* Custom CSS for animations */}
+        {/* Custom CSS for animations and mobile fixes */}
         <style jsx global>{`
           .animation-delay-2000 {
             animation-delay: 2s;
+          }
+          
+          /* Mobile-specific modal fixes */
+          @media (max-width: 640px) {
+            [data-radix-dialog-overlay] {
+              padding: 0.5rem !important;
+            }
+            
+            [data-radix-dialog-content] {
+              width: calc(100vw - 1rem) !important;
+              max-width: calc(100vw - 1rem) !important;
+              height: calc(100vh - 1rem) !important;
+              max-height: calc(100vh - 1rem) !important;
+              margin: 0.5rem !important;
+              border-radius: 0.75rem !important;
+              box-sizing: border-box;
+            }
           }
         `}</style>
       </DialogContent>
