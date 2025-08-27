@@ -11,6 +11,7 @@ interface ProspectPreview {
   description: string
   estimatedCost: number
   totalCost: number
+  imageUrl?: string
 }
 
 interface ProspectData {
@@ -79,6 +80,21 @@ export function ProspectDetailsPage({
               {prospect.categoryName}
             </Badge>
           </div>
+
+          {/* Prospect Preview Image */}
+          {prospect.prospect.imageUrl && (
+            <div className="relative">
+              <img
+                src={prospect.prospect.imageUrl}
+                alt={prospect.prospect.title}
+                className="w-full h-32 sm:h-40 object-cover rounded-lg shadow-lg"
+              />
+              <Badge className="absolute top-3 left-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 shadow-lg">
+                <Lightbulb className="w-3 h-3 mr-1" />
+                Prospect Preview
+              </Badge>
+            </div>
+          )}
 
           {/* Description */}
           <Card className="border-2 border-purple-200">

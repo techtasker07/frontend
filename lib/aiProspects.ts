@@ -4,6 +4,7 @@ export interface PropertyProspect {
   purchaseCostFactor: number
   developmentCostFactor: number
   realizationTips: string[]
+  imageUrl: string
 }
 
 export interface CategoryProspects {
@@ -25,6 +26,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Market with professional photography and virtual tours",
         "Comply with local short-let licensing requirements",
       ],
+      imageUrl: "https://api.deepai.org/job-view-file/ad2691ee-50c2-4ceb-93da-affb25c03bd2/outputs/output.jpg",
     },
     {
       title: "Student Housing Investment",
@@ -39,6 +41,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Offer reliable water supply and security",
         "Partner with nearby universities for referrals",
       ],
+      imageUrl: "https://api.deepai.org/job-view-file/7ecf1ec6-0c4e-4697-b82d-8f2479e95f9e/outputs/output.jpg",
     },
     {
       title: "Family Rental Hub",
@@ -53,6 +56,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Ensure reliable power and water supply",
         "Market to expatriate families and professionals",
       ],
+      imageUrl: "https://api.deepai.org/job-view-file/f6805aa0-f27e-418a-ad86-89c2e0f3c472/outputs/output.jpg",
     },
     {
       title: "Co-living Space",
@@ -67,6 +71,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Implement smart home technology",
         "Target tech workers and remote professionals",
       ],
+      imageUrl: "https://api.deepai.org/job-view-file/32f9d599-6c2b-4f3d-a783-7ff34b45c31f/outputs/output.jpg",
     },
     {
       title: "Senior Living Facility",
@@ -81,6 +86,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Partner with healthcare providers",
         "Ensure 24/7 security and emergency response",
       ],
+      imageUrl: "https://api.deepai.org/job-view-file/60160bde-812b-4e53-8087-ba1bfcc2a2ad/outputs/output.jpg",
     },
     {
       title: "Luxury Apartment Complex",
@@ -95,6 +101,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Implement smart building technology",
         "Market to high-income professionals and executives",
       ],
+      imageUrl: "https://api.deepai.org/job-view-file/ac10f607-71f0-4ee2-b088-ff11a43ecf8e/outputs/output.jpg",
     },
     {
       title: "Affordable Housing Project",
@@ -109,6 +116,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create community spaces and playgrounds",
         "Partner with microfinance institutions",
       ],
+      imageUrl: "https://api.deepai.org/job-view-file/8a90714d-7770-456c-98de-1e903a820f94/outputs/output.jpg",
     },
     {
       title: "Serviced Apartment Complex",
@@ -123,6 +131,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Market to corporate clients and travel agencies",
         "Maintain hotel-standard cleanliness and service",
       ],
+      imageUrl: "https://api.deepai.org/job-view-file/990a0c7d-86ad-444a-b147-2c8d91963128/outputs/output.jpg",
     },
     {
       title: "Green Residential Development",
@@ -136,6 +145,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create green spaces and gardens",
         "Market to environmentally conscious buyers",
       ],
+      imageUrl: "https://api.deepai.org/job-view-file/d295a664-601d-4e1a-b0c9-77df41043d59/outputs/output.jpg",
     },
     {
       title: "Mixed-Use Residential",
@@ -150,6 +160,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Market residential units to urban professionals",
         "Lease commercial spaces to complementary businesses",
       ],
+      imageUrl: "https://api.deepai.org/job-view-file/7c061691-e328-4511-b9f1-1a7e8513df13/outputs/output.jpg",
     },
     {
       title: "Modular Housing Development",
@@ -163,7 +174,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Target young families and first-time homeowners",
         "Seek government or NGO grants for housing innovation",
         "Market on the speed and flexibility of delivery"
-      ]
+      ],
+      imageUrl: "https://api.deepai.org/job-view-file/1e1be23c-ed37-4c56-9871-ccb0c819b402/outputs/output.jpg",
     },
     {
       title: "Urban Renewal Apartment Conversion",
@@ -177,7 +189,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Focus on mixed-income tenant strategies",
         "Incorporate modern utilities without losing heritage charm",
         "Market to upwardly mobile professionals"
-      ]
+      ],
+      imageUrl: "https://api.deepai.org/job-view-file/3e970439-aafb-4f5b-8f3d-0669e378b9b0/outputs/output.jpg",
     },
     {
       title: "Build-to-Rent Micro Apartments",
@@ -191,7 +204,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Use modular kitchens and convertible furniture",
         "Advertise as a cost-effective city-living solution",
         "Partner with proptech platforms for digital leasing"
-      ]
+      ],
+      imageUrl: "https://api.deepai.org/job-view-file/82598904-7914-4958-9290-e4134886f044/outputs/output.jpg",
     },
     {
       title: "Diaspora-Targeted Off-Plan Developments",
@@ -205,7 +219,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Provide progress tracking via live-streamed site updates",
         "Include luxury security and facility management",
         "Leverage diaspora property expos"
-      ]
+      ],
+      imageUrl: "https://api.deepai.org/job-view-file/5a340f1b-6c85-4820-82fa-77a3ca2b90d7/outputs/output.jpg",
     },
     {
       title: "Agricultural-Residential Hybrid Estates",
@@ -219,7 +234,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Partner with agricultural cooperatives",
         "Market to retirees and food enthusiasts",
         "Integrate renewable energy for irrigation systems"
-      ]
+      ],
+      imageUrl: "https://api.deepai.org/job-view-file/ed0836f2-0b8c-4709-a212-531123181ece/outputs/output.jpg",
     },
     {
       title: "Remote Work-Friendly Suburban Villas",
@@ -233,7 +249,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create co-working hubs within the estate",
         "Market to tech workers, freelancers, and SMEs",
         "Emphasise health, safety, and reduced city stress"
-      ]
+      ],
+      imageUrl: "https://api.deepai.org/job-view-file/7c4291fa-83b4-4c4d-bd43-bcab6c0986b8/outputs/output.jpg",
     },
     {
       title: "Rent-to-Own Affordable Flats",
@@ -247,7 +264,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Target civil servants and salaried workers",
         "Provide flexible 5–15-year payment plans",
         "Leverage government housing incentive schemes"
-      ]
+      ],
+      imageUrl: "https://api.deepai.org/job-view-file/1e9a07c1-1572-4994-bf34-da0c38703ced/outputs/output.jpg",
     },
     {
       title: "Climate-Resilient Coastal Homes",
@@ -261,7 +279,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Target NGOs, expatriates, and climate-conscious buyers",
         "Obtain disaster-resilience certification",
         "Market as future-proof coastal living"
-      ]
+      ],
+      imageUrl: "https://api.deepai.org/job-view-file/65253c98-8b1c-40cf-8c4a-14acebd1ef88/outputs/output.jpg",
     },
     {
       title: "Regeneration of Military/Police Barracks into Civil Housing",
@@ -275,7 +294,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Upgrade security infrastructure for civilian comfort",
         "Market to middle-income earners",
         "Integrate commercial strips for self-sufficiency"
-      ]
+      ],
+      imageUrl: "https://api.deepai.org/job-view-file/42664e94-20d0-4c18-86c2-59c171d726d3/outputs/output.jpg",
     },
     {
       title: "Smart Compact Estates for Middle-Class Families",
@@ -289,7 +309,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create app-based estate management",
         "Provide shared playgrounds and green zones",
         "Market as affordable smart living"
-      ]
+      ],
+      imageUrl: "https://api.deepai.org/job-view-file/f9ad38e3-9deb-4dd2-a2b1-4b0b10641a47/outputs/output.jpg",
     },
     {
       title: "Mixed-Generation Co-Housing",
@@ -303,7 +324,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Promote social activities that bridge generations",
         "Offer flexible rental or ownership structures",
         "Market to families seeking community living"
-      ]
+      ],
+      imageUrl: "https://api.deepai.org/job-view-file/3c788d87-c2f2-4c0f-a6fe-8b329f848456/outputs/output.jpg",
     },
     {
       title: "Wellness-Oriented Residential Communities",
@@ -317,7 +339,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Partner with wellness brands and clinics",
         "Design open, green landscapes",
         "Market to health-conscious professionals and retirees"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Live-Work Hybrid Lofts",
@@ -331,7 +354,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Offer high-speed internet and smart office tech",
         "Comply with mixed-use zoning laws",
         "Market to startups, remote workers, and creatives"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Floating or Water-Edge Homes",
@@ -345,7 +369,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Partner with marine architects",
         "Market as eco-luxury or climate-resilient housing",
         "Target tourism-driven waterfront economies"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1520637836862-4d197d17c11a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Circular Economy Housing",
@@ -359,7 +384,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Partner with sustainability-focused NGOs",
         "Offer workshops on eco-living for residents",
         "Market to environmentally conscious buyers"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1567225557594-88d73e55f2cb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "High-Density Vertical Villages",
@@ -373,7 +399,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Provide daycare, clinics, and small retail within the tower",
         "Use smart building technology for efficiency",
         "Market to urban professionals and young families"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Energy-Positive Housing",
@@ -387,7 +414,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Sell excess energy back to the grid",
         "Use smart monitoring to optimise consumption",
         "Market as a cost-saving and eco-forward investment"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1509391366360-2e959784a276?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Cooperative Housing Models",
@@ -401,7 +429,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Ensure transparent maintenance cost-sharing",
         "Partner with cooperative housing associations",
         "Market to budget-conscious communities"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1560448204-61dc36dc98c8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Resort-Style Retirement Villages",
@@ -415,7 +444,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Offer hobby and recreational facilities",
         "Market internationally to retirees seeking affordable luxury",
         "Design with full accessibility in mind"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Digital Nomad Eco-Communities",
@@ -429,7 +459,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create community events for networking",
         "Partner with international travel visa programmes",
         "Market to digital nomads and remote-first companies"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1497436072909-f5e4be1d9126?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
   ],
   commercial: [
@@ -446,6 +477,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Offer virtual office services and mail handling",
         "Partner with tech communities and startup incubators",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Retail Shopping Complex",
@@ -460,6 +492,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Implement modern POS and payment systems",
         "Market to both local and international retailers",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Medical Center Complex",
@@ -474,6 +507,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create patient-friendly waiting and consultation areas",
         "Partner with healthcare professionals and insurance providers",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Event & Conference Center",
@@ -488,6 +522,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Ensure adequate parking and accessibility",
         "Market to event planners and corporate clients",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1505236858219-8359eb29e329?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Logistics & Warehouse Hub",
@@ -502,6 +537,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Ensure proximity to major transportation routes",
         "Partner with e-commerce and logistics companies",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1553413077-190dd305871c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Educational Training Center",
@@ -516,6 +552,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Partner with educational institutions and certification bodies",
         "Market to government training programs and corporations",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1523580846011-d3982bcd500e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Food Court & Restaurant Hub",
@@ -530,6 +567,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Implement food safety and hygiene standards",
         "Market to diverse culinary entrepreneurs",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1529417305485-480225b5bb97?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Fitness & Wellness Center",
@@ -544,6 +582,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Partner with fitness professionals and wellness practitioners",
         "Market to health-conscious individuals and corporate wellness programs",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Auto Service Complex",
@@ -557,6 +596,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Ensure proper drainage and environmental compliance",
         "Partner with automotive brands and parts suppliers",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Creative Arts Studio Complex",
@@ -571,6 +611,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Offer storage and equipment rental services",
         "Market to art communities and creative professionals",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Agro-Processing & Packaging Center",
@@ -584,7 +625,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Provide cold storage and warehousing",
         "Partner with farming cooperatives",
         "Market to supermarkets and export buyers"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Transport Terminal & Commercial Hub",
@@ -598,7 +640,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Integrate retail and food vendors",
         "Comply with transport regulatory requirements",
         "Partner with major transport companies"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1570125909517-53cb21c89ff2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Solar Energy Showroom & Service Center",
@@ -612,7 +655,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Partner with international solar brands",
         "Market to residential estates and SMEs",
         "Provide financing options for buyers"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1509391366360-2e959784a276?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Cold Chain Storage & Distribution Facility",
@@ -626,7 +670,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Offer last-mile refrigerated delivery",
         "Target supermarkets, hospitals, and exporters",
         "Partner with logistics firms"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Tech-Enabled Market Plaza",
@@ -640,7 +685,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Provide security and CCTV monitoring",
         "Create designated loading/unloading zones",
         "Market to traders and cooperatives"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1555529669-2269763671c0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Film & Media Production Studio",
@@ -654,7 +700,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Provide co-working spaces for creatives",
         "Partner with streaming platforms",
         "Market to filmmakers, advertisers, and influencers"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Export Trade Showroom",
@@ -668,7 +715,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Partner with export councils",
         "Provide translation and documentation support",
         "Target foreign embassies and buyers"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "ICT Training & Certification Center",
@@ -682,7 +730,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Offer flexible payment and scholarship programs",
         "Market to students and working professionals",
         "Host tech community events"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Business Incubator & Accelerator",
@@ -696,7 +745,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Offer business advisory services",
         "Host pitch competitions and demo days",
         "Market to early-stage entrepreneurs"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1531973576160-7125cd663d86?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Urban Farming & Agri-Mall",
@@ -710,7 +760,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Partner with food delivery platforms",
         "Market to health-conscious urban consumers",
         "Provide training on urban agriculture"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Green Energy Business Park",
@@ -724,7 +775,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Offer green certification to tenants",
         "Market to sustainability-focused firms",
         "Integrate energy-efficient building materials"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Experiential Retail Destination",
@@ -738,7 +790,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Host seasonal themed events",
         "Market as a tourist and local attraction",
         "Incorporate social media-friendly design elements"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1537944434965-cf4679d1a598?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Bio-Tech Research & Innovation Center",
@@ -752,7 +805,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Partner with universities and pharma companies",
         "Offer shared equipment rental",
         "Market to biotech startups and R&D teams"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Data Center & Cloud Services Hub",
@@ -766,7 +820,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Partner with telecom and cloud providers",
         "Market to fintech, AI, and enterprise clients",
         "Comply with international data regulations"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Medical Tourism Facility",
@@ -780,7 +835,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Offer multilingual staff and concierge services",
         "Market in regions seeking affordable healthcare",
         "Comply with international medical accreditation"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1512678080530-7760d81faba6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Circular Economy Business Hub",
@@ -794,7 +850,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Partner with waste management agencies",
         "Offer sustainability consultancy",
         "Market to green startups and social enterprises"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Hybrid Hospitality & Workspace",
@@ -808,7 +865,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Partner with travel agencies and corporate clients",
         "Market to remote workers and business travellers",
         "Integrate app-based booking and service requests"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Esports & Gaming Arena",
@@ -822,7 +880,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Host tournaments and gaming events",
         "Partner with esports teams and sponsors",
         "Market to youth and gaming communities"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Luxury Brand Flagship Complex",
@@ -836,7 +895,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Partner with luxury brand distributors",
         "Market in high-income and tourist districts",
         "Host exclusive brand events"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Urban Mobility Hub",
@@ -850,7 +910,8 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Partner with transport tech companies",
         "Ensure safety and accessibility features",
         "Market to urban commuters and logistics operators"
-      ]
+      ],
+      imageUrl: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
   ],
   industrial: [
@@ -867,6 +928,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create quality control and testing laboratories",
         "Partner with manufacturers and export agencies",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Cold Storage & Processing Facility",
@@ -881,6 +943,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create loading and processing areas",
         "Partner with farmers, food processors, and pharmaceutical companies",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Renewable Energy Production",
@@ -895,6 +958,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create maintenance and monitoring facilities",
         "Partner with utility companies and energy buyers",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1466611653911-95081537e5b7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Waste Management & Recycling Center",
@@ -909,6 +973,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create collection and distribution logistics",
         "Partner with municipalities and waste generators",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Data Center & Server Farm",
@@ -923,6 +988,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create monitoring and maintenance facilities",
         "Partner with tech companies and cloud service providers",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Automotive Assembly Plant",
@@ -936,6 +1002,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create parts storage and logistics areas",
         "Partner with automotive manufacturers and suppliers",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Textile & Garment Factory",
@@ -950,6 +1017,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create quality control and finishing departments",
         "Partner with fashion brands and textile suppliers",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Chemical Processing Plant",
@@ -964,6 +1032,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create laboratory and quality control facilities",
         "Partner with chemical companies and research institutions",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1559757172-35739e6cefd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Logistics & Distribution Hub",
@@ -978,6 +1047,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create cross-docking and distribution areas",
         "Partner with e-commerce and logistics companies",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1553413077-190dd305871c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Mining & Quarry Operations",
@@ -992,6 +1062,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create transportation and logistics infrastructure",
         "Partner with construction companies and mineral buyers",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
   ],
   agricultural: [
@@ -1008,6 +1079,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create post-harvest processing and packaging facilities",
         "Partner with restaurants, supermarkets, and export companies",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Organic Farm & Certification",
@@ -1022,6 +1094,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Develop direct-to-consumer marketing channels",
         "Partner with organic food retailers and health-conscious consumers",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Aquaculture & Fish Farming",
@@ -1036,6 +1109,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create fish processing and cold storage facilities",
         "Partner with restaurants, markets, and seafood distributors",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Livestock Ranch & Dairy",
@@ -1050,6 +1124,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create feed storage and processing facilities",
         "Partner with dairy processors and meat distributors",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Agro-Processing Center",
@@ -1063,6 +1138,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create quality control and testing laboratories",
         "Partner with farmers, retailers, and export companies",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Seed Production & Research",
@@ -1077,6 +1153,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create research laboratories and field testing areas",
         "Partner with agricultural research institutions and farmers",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Medicinal Plant Cultivation",
@@ -1091,6 +1168,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create packaging and labeling facilities",
         "Partner with pharmaceutical companies and wellness brands",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1518021500542-5bb0c0b93ee7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Vertical Farming Operation",
@@ -1105,6 +1183,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create harvesting and packaging automation",
         "Partner with urban markets and premium restaurants",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Agritourism & Farm Experience",
@@ -1119,6 +1198,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Provide guided tours and hands-on experiences",
         "Partner with tourism agencies and educational institutions",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
     {
       title: "Biofuel Production Facility",
@@ -1133,6 +1213,7 @@ export const MOCK_PROSPECTS: CategoryProspects = {
         "Create distribution and logistics infrastructure",
         "Partner with energy companies and government programs",
       ],
+      imageUrl: "https://images.unsplash.com/photo-1564883957739-4b3bb2cc0b3f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     },
   ],
 }
@@ -1202,6 +1283,7 @@ export function generateCrossCategoryProspects(
   estimatedCost: number
   category: string
   categoryId: number
+  imageUrl: string
 }> {
   const categoryMap: { [key: string]: number } = {
     residential: 1,
@@ -1240,6 +1322,7 @@ export function generateCrossCategoryProspects(
       estimatedCost: Math.round(estimatedCost),
       category: prospect.category,
       categoryId: prospect.categoryId,
+      imageUrl: prospect.imageUrl, // Include the image URL
     }
   })
 }

@@ -14,6 +14,7 @@ interface ProspectPreview {
   description: string
   estimatedCost: number
   totalCost: number
+  imageUrl?: string
 }
 
 interface ProspectData {
@@ -161,34 +162,47 @@ export function ProspectPreviewPage({
                         onClick={() => handleProspectClick(prospect)}
                         variant={selectedProspect?.id === prospect.id ? "default" : "outline"}
                         size="lg"
-                        className={`w-full justify-between h-auto p-4 text-left transition-all duration-200 ${
+                        className={`w-full h-auto p-0 text-left transition-all duration-200 ${
                           selectedProspect?.id === prospect.id
                             ? "bg-purple-600 text-white border-purple-600"
                             : "border-purple-300 hover:bg-purple-100 hover:border-purple-400"
-                        }`}
+                        } overflow-hidden`}
                       >
-                        <div className="flex-1 min-w-0">
-                          <div className={`font-semibold text-base mb-1 ${
-                            selectedProspect?.id === prospect.id ? "text-white" : "text-purple-800"
-                          }`}>
-                            {prospect.prospect.title}
+                        <div className="flex w-full">
+                          {/* Prospect Image */}
+                          <div className="w-20 h-20 flex-shrink-0">
+                            <img
+                              src={prospect.prospect.imageUrl || '/placeholder.svg'}
+                              alt={prospect.prospect.title}
+                              className="w-full h-full object-cover rounded-l-lg"
+                            />
                           </div>
-                          <div className={`text-sm ${
-                            selectedProspect?.id === prospect.id ? "text-purple-100" : "text-purple-600"
-                          }`}>
-                            Investment: {formatCompactCurrency(prospect.prospect.totalCost)}
+                          {/* Content */}
+                          <div className="flex-1 flex justify-between items-center p-4 min-w-0">
+                            <div className="flex-1 min-w-0 mr-3">
+                              <div className={`font-semibold text-base mb-1 ${
+                                selectedProspect?.id === prospect.id ? "text-white" : "text-purple-800"
+                              }`}>
+                                {prospect.prospect.title}
+                              </div>
+                              <div className={`text-sm ${
+                                selectedProspect?.id === prospect.id ? "text-purple-100" : "text-purple-600"
+                              }`}>
+                                Investment: {formatCompactCurrency(prospect.prospect.totalCost)}
+                              </div>
+                            </div>
+                            <Badge 
+                              variant={selectedProspect?.id === prospect.id ? "outline" : "secondary"} 
+                              className={`flex-shrink-0 ${
+                                selectedProspect?.id === prospect.id
+                                  ? "border-white text-white"
+                                  : "bg-purple-200 text-purple-800"
+                              }`}
+                            >
+                              View Details
+                            </Badge>
                           </div>
                         </div>
-                        <Badge 
-                          variant={selectedProspect?.id === prospect.id ? "outline" : "secondary"} 
-                          className={`ml-3 ${
-                            selectedProspect?.id === prospect.id
-                              ? "border-white text-white"
-                              : "bg-purple-200 text-purple-800"
-                          }`}
-                        >
-                          View Details
-                        </Badge>
                       </Button>
                     )) || []}
                   </TabsContent>

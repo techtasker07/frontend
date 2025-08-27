@@ -12,7 +12,9 @@ interface SmartProspectFeatureProps {
   triggerOnLogin?: boolean
 }
 
-// Generate 5 random prospects from different categories
+import { MOCK_PROSPECTS, type PropertyProspect } from "@/lib/aiProspects"
+
+// Generate 5 random prospects from different categories using the updated aiProspects library
 const generateMultipleCategoryProspects = (categories: Category[]) => {
   const locations = [
     "Victoria Island, Lagos",
@@ -32,161 +34,23 @@ const generateMultipleCategoryProspects = (categories: Category[]) => {
     4: ["Warehouse Facility", "Industrial Complex", "Manufacturing Plant"],
   }
 
-  // Prospect data similar to the existing prospect system
-  const categoryProspects: { [key: number]: Array<{ title: string; description: string; costFactor: number }> } = {
-    1: [
-      // Residential
-      {
-        title: "Short Let Plan",
-        description: "Convert your residential property into a short-term rental for tourists, expatriates, or corporate guests. Works best in high-traffic cities like Lagos, Abuja, and Port Harcourt.",
-        costFactor: 0.15,
-      },
-      {
-        title: "Student Housing Investment",
-        description: "Repurpose your residential building into a hostel or shared apartments targeting university students in areas like Ibadan, Nsukka, or Benin City.",
-        costFactor: 0.25,
-      },
-      {
-        title: "Co-living Space Development",
-        description: "Transform property into modern co-living spaces with shared amenities, targeting young professionals and digital nomads.",
-        costFactor: 0.2,
-      },
-      {
-        title: "Senior Living Community",
-        description: "Develop assisted living or retirement community facilities with healthcare support and recreational amenities.",
-        costFactor: 0.35,
-      },
-      {
-        title: "Luxury Apartment Complex",
-        description: "Develop high-end apartments with premium amenities such as gyms, pools, and concierge services, targeting affluent professionals.",
-        costFactor: 0.45,
-      },
-      {
-        title: "Affordable Housing Scheme",
-        description: "Build low-cost housing units supported by government or NGO partnerships to address housing shortages in urban centers.",
-        costFactor: 0.2,
-      },
-      {
-        title: "Serviced Apartments",
-        description: "Offer fully furnished and serviced apartments with flexible rental terms, appealing to business travelers and expatriates.",
-        costFactor: 0.3,
-      },
-      {
-        title: "Vacation Villas",
-        description: "Convert property into vacation villas for family getaways, near resorts, beaches, or mountain destinations.",
-        costFactor: 0.5,
-      },
-      {
-        title: "Eco-Friendly Housing",
-        description: "Develop sustainable residential units using solar panels, rainwater harvesting, and eco-materials to target eco-conscious buyers.",
-        costFactor: 0.35,
-      },
-    ],
-    2: [
-      // Commercial
-      {
-        title: "Tech Hub & Co-working Space",
-        description: "Transform your commercial property into a modern co-working space targeting startups, freelancers, and remote workers.",
-        costFactor: 0.25,
-      },
-      {
-        title: "Retail Shopping Complex",
-        description: "Develop a multi-tenant retail space with diverse shops, restaurants, and service providers in high-traffic areas.",
-        costFactor: 0.3,
-      },
-      {
-        title: "Medical Center Complex",
-        description: "Convert property into a medical facility housing multiple healthcare providers, clinics, and diagnostic centers.",
-        costFactor: 0.4,
-      },
-      {
-        title: "Event & Conference Center",
-        description: "Develop a versatile event space for weddings, corporate events, conferences, and social gatherings.",
-        costFactor: 0.35,
-      },
-      {
-        title: "Boutique Hotel Development",
-        description: "Convert property into a stylish boutique hotel with personalized services, targeting tourists and business travelers.",
-        costFactor: 0.45,
-      },
-      {
-        title: "Fitness & Wellness Center",
-        description: "Transform property into a modern gym and wellness facility with spa, yoga, and therapy services.",
-        costFactor: 0.25,
-      },
-      {
-        title: "Cultural & Art Center",
-        description: "Develop a creative hub for art exhibitions, theaters, and cultural events, serving as a community attraction.",
-        costFactor: 0.35,
-      },
-      {
-        title: "Food Court & Culinary Market",
-        description: "Convert into a vibrant food court or gourmet market featuring local and international cuisines.",
-        costFactor: 0.3,
-      },
-      {
-        title: "Educational Training Institute",
-        description: "Develop classrooms and labs for a technical or professional training center catering to skill development programs.",
-        costFactor: 0.4,
-      },
-    ],
-    3: [
-      // Land/Agricultural
-      {
-        title: "Residential Estate Development",
-        description: "Develop the land into a modern residential estate with multiple housing units, infrastructure, and amenities.",
-        costFactor: 0.6,
-      },
-      {
-        title: "Commercial Plaza Development",
-        description: "Transform the land into a commercial plaza with shops, offices, and service centers.",
-        costFactor: 0.7,
-      },
-      {
-        title: "Smart Greenhouse Complex",
-        description: "Develop climate-controlled greenhouse facilities for year-round production of high-value crops and vegetables.",
-        costFactor: 0.4,
-      },
-      {
-        title: "Mixed-Use Development",
-        description: "Create a mixed-use development combining residential, commercial, and recreational spaces.",
-        costFactor: 0.8,
-      },
-    ],
-    4: [
-      // Industrial/Material
-      {
-        title: "Logistics & Warehousing Hub",
-        description: "Convert into a modern logistics center with automated storage and distribution capabilities.",
-        costFactor: 0.3,
-      },
-      {
-        title: "Manufacturing Facility",
-        description: "Develop specialized manufacturing plant for local production and export opportunities.",
-        costFactor: 0.5,
-      },
-      {
-        title: "Data Center Complex",
-        description: "Transform into a secure data center facility serving cloud computing and digital infrastructure needs.",
-        costFactor: 0.6,
-      },
-      {
-        title: "Industrial Park Development",
-        description: "Create a multi-tenant industrial park with shared utilities and services for various businesses.",
-        costFactor: 0.4,
-      },
-    ],
+  // Map category IDs to prospect categories in the aiProspects library
+  const categoryMap: { [key: number]: keyof typeof MOCK_PROSPECTS } = {
+    1: "residential",
+    2: "commercial",
+    3: "agricultural", // Land category maps to agricultural
+    4: "industrial",
   }
 
-  // Generate 5 different prospects from different categories
+  // Generate 5 different prospects from different categories using the aiProspects library
   const allProspects: any[] = []
-  const usedCombinations = new Set<string>()
   
-  // Create a pool of all possible category-prospect combinations
-  const availableCombinations: Array<{ categoryId: number, categoryName: string, prospect: any }> = []
+  // Create a pool of all possible category-prospect combinations from the aiProspects library
+  const availableCombinations: Array<{ categoryId: number, categoryName: string, prospect: PropertyProspect }> = []
   
   categories.forEach(category => {
-    const prospects = categoryProspects[category.id] || categoryProspects[1]
+    const categoryKey = categoryMap[category.id] || "residential"
+    const prospects = MOCK_PROSPECTS[categoryKey] || MOCK_PROSPECTS.residential
     prospects.forEach(prospect => {
       availableCombinations.push({
         categoryId: category.id,
@@ -211,7 +75,9 @@ const generateMultipleCategoryProspects = (categories: Category[]) => {
     const basePrice = Math.floor(Math.random() * 50000000) + 10000000 // 10M to 60M Naira
     const yearBuilt = Math.floor(Math.random() * 20) + 2005 // 2005-2024
     
-    const estimatedCost = Math.round(basePrice * combination.prospect.costFactor)
+    const purchaseCost = basePrice * combination.prospect.purchaseCostFactor
+    const developmentCost = basePrice * combination.prospect.developmentCostFactor
+    const estimatedCost = Math.round(purchaseCost + developmentCost)
     const totalCost = Math.round(basePrice + estimatedCost)
     
     allProspects.push({
@@ -227,6 +93,7 @@ const generateMultipleCategoryProspects = (categories: Category[]) => {
         description: combination.prospect.description,
         estimatedCost,
         totalCost,
+        imageUrl: combination.prospect.imageUrl, // Include the image URL from aiProspects
       }
     })
   }

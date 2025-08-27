@@ -77,7 +77,7 @@ export default function AboutPage() {
             <div className="space-y-6">
               <h2 className="text-3xl font-bold text-slate-800">Our Story</h2>
               <p className="text-lg text-slate-600 leading-relaxed">
-                Founded in 2024 by <strong>Techtasker Solutions</strong>, Mipripity emerged from a simple observation:
+                Founded in 2025 by <strong>Techtasker Solutions</strong>, Mipripity emerged from a simple observation:
                 property evaluation was too complex, too expensive, and too exclusive. We believed everyone deserved
                 access to reliable property insights.
               </p>
@@ -140,7 +140,7 @@ export default function AboutPage() {
               <CardContent>
                 <p className="text-lg text-slate-700 leading-relaxed">
                   To democratize property evaluation by creating a transparent, community-driven platform that empowers
-                  everyone to make informed real estate decisions through collective wisdom and AI-powered insights.
+                  everyone to make informed real estate decisions through collective wisdom and smart insights.
                 </p>
               </CardContent>
             </Card>

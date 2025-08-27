@@ -15,6 +15,7 @@ function assignProspectsToProperty(categoryId: number, estimatedWorth?: number) 
     total_cost: Math.round((estimatedWorth || 10000000) + prospect.estimatedCost),
     category: prospect.category,
     category_id: prospect.categoryId,
+    image_url: prospect.imageUrl, // Include the image URL
   }))
 }
 
@@ -61,8 +62,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       const prospect = prospects[i]
       try {
         const result = await query(
-          "INSERT INTO property_prospects (prospect_property_id, title, description, estimated_cost, total_cost) VALUES ($1, $2, $3, $4, $5) RETURNING id",
-          [propertyId, prospect.title, prospect.description, prospect.estimated_cost, prospect.total_cost],
+          "INSERT INTO property_prospects (prospect_property_id, title, description, estimated_cost, total_cost, image_url) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+          [propertyId, prospect.title, prospect.description, prospect.estimated_cost, prospect.total_cost, prospect.image_url],
         )
         console.log(`New prospect ${i + 1} inserted with ID:`, result.rows[0]?.id)
       } catch (prospectError) {
@@ -81,7 +82,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
               'title', pr.title,
               'description', pr.description,
               'estimated_cost', pr.estimated_cost,
-              'total_cost', pr.total_cost
+              'total_cost', pr.total_cost,
+              'image_url', pr.image_url
             )
           ) FILTER (WHERE pr.id IS NOT NULL), 
           '[]'
