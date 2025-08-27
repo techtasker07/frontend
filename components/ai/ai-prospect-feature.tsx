@@ -1,10 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { ImageCaptureModal } from "../camera/image-capture-modal"
-import { ProspectPreviewPage } from "./prospect-preview-page"
-import { ProspectDetailsPage } from "./prospect-details-page"
-import { AddProspectModal } from "../prospect/add-prospect-modal"
 import { api, type Category } from "@/lib/api"
 import { toast } from "sonner"
 
@@ -58,6 +56,31 @@ const generateMultipleCategoryProspects = (categories: Category[]) => {
         description: "Develop assisted living or retirement community facilities with healthcare support and recreational amenities.",
         costFactor: 0.35,
       },
+      {
+        title: "Luxury Apartment Complex",
+        description: "Develop high-end apartments with premium amenities such as gyms, pools, and concierge services, targeting affluent professionals.",
+        costFactor: 0.45,
+      },
+      {
+        title: "Affordable Housing Scheme",
+        description: "Build low-cost housing units supported by government or NGO partnerships to address housing shortages in urban centers.",
+        costFactor: 0.2,
+      },
+      {
+        title: "Serviced Apartments",
+        description: "Offer fully furnished and serviced apartments with flexible rental terms, appealing to business travelers and expatriates.",
+        costFactor: 0.3,
+      },
+      {
+        title: "Vacation Villas",
+        description: "Convert property into vacation villas for family getaways, near resorts, beaches, or mountain destinations.",
+        costFactor: 0.5,
+      },
+      {
+        title: "Eco-Friendly Housing",
+        description: "Develop sustainable residential units using solar panels, rainwater harvesting, and eco-materials to target eco-conscious buyers.",
+        costFactor: 0.35,
+      },
     ],
     2: [
       // Commercial
@@ -80,6 +103,31 @@ const generateMultipleCategoryProspects = (categories: Category[]) => {
         title: "Event & Conference Center",
         description: "Develop a versatile event space for weddings, corporate events, conferences, and social gatherings.",
         costFactor: 0.35,
+      },
+      {
+        title: "Boutique Hotel Development",
+        description: "Convert property into a stylish boutique hotel with personalized services, targeting tourists and business travelers.",
+        costFactor: 0.45,
+      },
+      {
+        title: "Fitness & Wellness Center",
+        description: "Transform property into a modern gym and wellness facility with spa, yoga, and therapy services.",
+        costFactor: 0.25,
+      },
+      {
+        title: "Cultural & Art Center",
+        description: "Develop a creative hub for art exhibitions, theaters, and cultural events, serving as a community attraction.",
+        costFactor: 0.35,
+      },
+      {
+        title: "Food Court & Culinary Market",
+        description: "Convert into a vibrant food court or gourmet market featuring local and international cuisines.",
+        costFactor: 0.3,
+      },
+      {
+        title: "Educational Training Institute",
+        description: "Develop classrooms and labs for a technical or professional training center catering to skill development programs.",
+        costFactor: 0.4,
       },
     ],
     3: [
@@ -187,12 +235,8 @@ const generateMultipleCategoryProspects = (categories: Category[]) => {
 }
 
 export function SmartProspectFeature({ isOpen, onClose, triggerOnLogin = false }: SmartProspectFeatureProps) {
-  const [currentStep, setCurrentStep] = useState<"capture" | "preview" | "details" | "form">("capture")
+  const router = useRouter()
   const [categories, setCategories] = useState<Category[]>([])
-  const [selectedProspect, setSelectedProspect] = useState<any>(null)
-  const [capturedImage, setCapturedImage] = useState<string | null>(null)
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [allProspects, setAllProspects] = useState<any[]>([])
 
   useEffect(() => {
     if (isOpen) {
@@ -213,129 +257,42 @@ export function SmartProspectFeature({ isOpen, onClose, triggerOnLogin = false }
   }
 
   const handleImageCaptured = async (file: File) => {
-    // Create object URL for the image
-    const imageUrl = URL.createObjectURL(file)
-
-    setImageFile(file)
-    setCapturedImage(imageUrl)
-    
-    // Generate 5 different prospects from multiple categories
-    const generatedProspects = generateMultipleCategoryProspects(categories)
-    setAllProspects(generatedProspects)
-    
-    // Don't auto-select any prospect - let user choose
-    setSelectedProspect(null)
-
-    setCurrentStep("preview")
-  }
-
-  const handleViewDetails = (prospect: any) => {
-    setSelectedProspect(prospect)
-    setCurrentStep("details")
-  }
-
-  const handleBackToPreview = () => {
-    setCurrentStep("preview")
-  }
-
-  const handleAddProperty = () => {
-    setCurrentStep("form")
-  }
-
-  const handleBackToCapture = () => {
-    setCurrentStep("capture")
-    setSelectedProspect(null)
-    setCapturedImage(null)
-    setImageFile(null)
-    setAllProspects([])
-  }
-
-  const handleFormSubmit = async (formData: any) => {
-    if (!selectedProspect || !imageFile) return
-
     try {
-      // Upload image first (in a real app, you'd upload to a cloud service)
-      // For now, we'll use a placeholder URL
-      const imageUrl = `https://picsum.photos/800/600?random=${Date.now()}`
-
-      const propertyData = {
-        title: formData.title,
-        description: formData.description,
-        location: formData.location,
-        category_id: selectedProspect.categoryId,
-        estimated_worth: formData.estimatedWorth ? Number.parseFloat(formData.estimatedWorth) : undefined,
-        year_of_construction: formData.yearOfConstruction ? Number.parseInt(formData.yearOfConstruction) : undefined,
-        image_url: imageUrl,
-      }
-
-      const response = await api.createProspectProperty(propertyData)
-
-      if (response.success) {
-        toast.success("Prospect property added successfully!")
-        handleClose()
-      }
-    } catch (error: any) {
-      throw error
+      // Create object URL for the image
+      const imageUrl = URL.createObjectURL(file)
+      
+      // Generate 5 different prospects from multiple categories
+      const generatedProspects = generateMultipleCategoryProspects(categories)
+      
+      // Store data in sessionStorage for navigation
+      sessionStorage.setItem("ai-prospects", JSON.stringify(generatedProspects))
+      sessionStorage.setItem("ai-prospect-image", imageUrl)
+      
+      // Close the modal and navigate to preview page
+      onClose()
+      
+      // Navigate to prospect preview page
+      router.push("/ai/prospect-preview")
+    } catch (error) {
+      console.error("Failed to process image:", error)
+      toast.error("Failed to analyze the image")
     }
   }
 
   const handleClose = () => {
-    setCurrentStep("capture")
-    setSelectedProspect(null)
-    setCapturedImage(null)
-    setImageFile(null)
-    setAllProspects([])
+    // Clear any stored data
+    sessionStorage.removeItem("ai-prospects")
+    sessionStorage.removeItem("ai-prospect-image")
+    sessionStorage.removeItem("selected-prospect")
     onClose()
   }
 
-  // If we're not in capture step, render the page directly without wrapping modal
-  if (currentStep === "preview" && capturedImage) {
-    return (
-      <ProspectPreviewPage
-        onBack={handleBackToCapture}
-        onSelectProspect={setSelectedProspect}
-        onViewDetails={handleViewDetails}
-        imageUrl={capturedImage}
-        allProspects={allProspects}
-        selectedProspect={selectedProspect}
-        categories={categories}
-      />
-    )
-  }
-
-  if (currentStep === "details" && selectedProspect && capturedImage) {
-    return (
-      <ProspectDetailsPage
-        prospect={selectedProspect}
-        imageUrl={capturedImage}
-        onBack={handleBackToPreview}
-        onAddProperty={handleAddProperty}
-      />
-    )
-  }
-
   return (
-    <>
-      <ImageCaptureModal
-        isOpen={isOpen && currentStep === "capture"}
-        onClose={handleClose}
-        onImageCaptured={handleImageCaptured}
-        fromLogin={triggerOnLogin}
-      />
-
-      {selectedProspect && (
-        <AddProspectModal
-          isOpen={currentStep === "form"}
-          onClose={handleClose}
-          onSubmit={handleFormSubmit}
-          initialData={{
-            title: selectedProspect.propertyTitle,
-            location: selectedProspect.location,
-            estimatedWorth: selectedProspect.estimatedWorth,
-            yearBuilt: selectedProspect.yearBuilt,
-          }}
-        />
-      )}
-    </>
+    <ImageCaptureModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      onImageCaptured={handleImageCaptured}
+      fromLogin={triggerOnLogin}
+    />
   )
 }
