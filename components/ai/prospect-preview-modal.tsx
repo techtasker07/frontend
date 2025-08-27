@@ -34,7 +34,7 @@ interface ProspectPreviewModalProps {
   onAddProperty: () => void
   imageUrl: string
   allProspects: ProspectData[]
-  selectedProspect: ProspectData
+  selectedProspect: ProspectData | null
   onSelectProspect: (prospect: ProspectData) => void
   categories: Category[]
 }
@@ -85,36 +85,43 @@ export function ProspectPreviewModal({
   const handleCategoryChange = (categoryId: string) => {
     const numericId = parseInt(categoryId)
     setSelectedCategoryId(numericId)
-    // Auto-select first prospect in the new category
-    const categoryProspects = prospectsByCategory[numericId]
-    if (categoryProspects && categoryProspects.length > 0) {
-      onSelectProspect(categoryProspects[0])
-    }
+    // Don't auto-select any prospect when changing categories
+    // Let user explicitly choose
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-0 bg-gradient-to-br from-white via-purple-50 to-pink-50">
+      <DialogContent className="w-[95vw] max-w-2xl h-[95vh] max-h-[95vh] overflow-hidden border-0 bg-gradient-to-br from-white via-purple-50 to-pink-50 p-4 sm:p-6">
         {/* Animated background elements */}
         <div className="absolute inset-0 overflow-hidden rounded-lg">
           <div className="absolute top-0 -left-4 w-24 h-24 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
           <div className="absolute bottom-0 -right-4 w-32 h-32 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
         </div>
 
-        <div className="relative z-10">
+        <div className="relative z-10 flex flex-col h-full">
           {!showProspectDetails ? (
             // Preview Mode
             <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center text-xl font-bold">
-                  <Camera className="mr-3 h-6 w-6 text-purple-600" />
-                  <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                    Smart Prospect Generated!
-                  </span>
+              <DialogHeader className="flex-shrink-0">
+                <DialogTitle className="flex items-center justify-between text-lg sm:text-xl font-bold">
+                  <div className="flex items-center">
+                    <Camera className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
+                    <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                      Smart Prospect Generated!
+                    </span>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={onClose}
+                    className="h-8 w-8 p-0 hover:bg-red-100"
+                  >
+                    <X className="h-4 w-4 text-gray-600" />
+                  </Button>
                 </DialogTitle>
               </DialogHeader>
 
-              <div className="space-y-6 mt-6">
+              <div className="flex-1 overflow-y-auto space-y-4 mt-4 pr-2">
                 {/* Property Image */}
                 <div className="relative">
                   <img
@@ -143,11 +150,15 @@ export function ProspectPreviewModal({
                   </CardHeader>
                   <CardContent className="pt-0">
                     <Tabs value={currentCategoryId?.toString()} onValueChange={handleCategoryChange}>
-                      <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 mb-4">
+                      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 mb-6 h-auto p-1">
                         {availableCategories.map((category) => (
-                          <TabsTrigger key={category.id} value={category.id.toString()} className="text-xs">
-                            {category.name}
-                            <Badge className="ml-1 text-xs" variant="secondary">
+                          <TabsTrigger 
+                            key={category.id} 
+                            value={category.id.toString()} 
+                            className="text-xs py-2 px-3 flex flex-col items-center gap-1 h-auto min-h-[3rem] data-[state=active]:bg-purple-100"
+                          >
+                            <span className="font-medium truncate max-w-full">{category.name}</span>
+                            <Badge className="text-xs scale-90" variant="secondary">
                               {prospectsByCategory[category.id]?.length || 0}
                             </Badge>
                           </TabsTrigger>
@@ -222,14 +233,24 @@ export function ProspectPreviewModal({
           ) : (
             // Prospect Details Mode
             <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center text-xl font-bold">
-                  <Lightbulb className="mr-3 h-6 w-6 text-yellow-500" />
-                  {selectedProspect.prospect.title}
+              <DialogHeader className="flex-shrink-0">
+                <DialogTitle className="flex items-center justify-between text-lg sm:text-xl font-bold">
+                  <div className="flex items-center">
+                    <Lightbulb className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6 text-yellow-500" />
+                    <span className="truncate">{selectedProspect?.prospect.title}</span>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={onClose}
+                    className="h-8 w-8 p-0 hover:bg-red-100 flex-shrink-0"
+                  >
+                    <X className="h-4 w-4 text-gray-600" />
+                  </Button>
                 </DialogTitle>
               </DialogHeader>
 
-              <div className="space-y-6 mt-6">
+              <div className="flex-1 overflow-y-auto space-y-4 mt-4 pr-2">
                 {/* Property Image */}
                 <div className="relative">
                   <img
@@ -238,7 +259,7 @@ export function ProspectPreviewModal({
                     className="w-full h-32 object-cover rounded-lg shadow-lg"
                   />
                   <Badge className="absolute top-2 left-2 bg-white/90 text-gray-800 text-xs">
-                    {selectedProspect.categoryName}
+                    {selectedProspect?.categoryName}
                   </Badge>
                 </div>
 
@@ -251,7 +272,7 @@ export function ProspectPreviewModal({
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-muted-foreground leading-relaxed">{selectedProspect.prospect.description}</p>
+                    <p className="text-muted-foreground leading-relaxed">{selectedProspect?.prospect.description}</p>
                   </CardContent>
                 </Card>
 
@@ -268,13 +289,13 @@ export function ProspectPreviewModal({
                       <div className="p-3 bg-blue-50 rounded-lg">
                         <p className="text-sm text-muted-foreground">Development Cost</p>
                         <p className="text-lg font-semibold text-blue-600">
-                          {formatCompactCurrency(selectedProspect.prospect.estimatedCost)}
+                          {selectedProspect ? formatCompactCurrency(selectedProspect.prospect.estimatedCost) : 'N/A'}
                         </p>
                       </div>
                       <div className="p-3 bg-green-50 rounded-lg">
                         <p className="text-sm text-muted-foreground">Total Investment</p>
                         <p className="text-lg font-semibold text-green-600">
-                          {formatCompactCurrency(selectedProspect.prospect.totalCost)}
+                          {selectedProspect ? formatCompactCurrency(selectedProspect.prospect.totalCost) : 'N/A'}
                         </p>
                       </div>
                     </div>

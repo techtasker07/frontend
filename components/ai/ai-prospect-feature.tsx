@@ -222,10 +222,8 @@ export function SmartProspectFeature({ isOpen, onClose, triggerOnLogin = false }
     const generatedProspects = generateMultipleCategoryProspects(categories)
     setAllProspects(generatedProspects)
     
-    // Set the first prospect as default selection
-    if (generatedProspects.length > 0) {
-      setSelectedProspect(generatedProspects[0])
-    }
+    // Don't auto-select any prospect - let user choose
+    setSelectedProspect(null)
 
     setCurrentStep("preview")
   }
@@ -281,7 +279,7 @@ export function SmartProspectFeature({ isOpen, onClose, triggerOnLogin = false }
         fromLogin={triggerOnLogin}
       />
 
-      {selectedProspect && capturedImage && (
+      {capturedImage && (
         <ProspectPreviewModal
           isOpen={currentStep === "preview"}
           onClose={handleClose}

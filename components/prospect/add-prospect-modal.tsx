@@ -101,20 +101,31 @@ export function AddProspectModal({ isOpen, onClose, onSubmit, initialData }: Add
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center">
-            <Save className="mr-2 h-5 w-5" />
-            Add Prospect Property
+      <DialogContent className="w-[95vw] max-w-2xl h-[95vh] max-h-[95vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Save className="mr-2 h-5 w-5" />
+              Add Prospect Property
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onClose}
+              className="h-8 w-8 p-0 hover:bg-red-100"
+            >
+              <X className="h-4 w-4 text-gray-600" />
+            </Button>
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+        <div className="flex-1 overflow-y-auto px-1">
+          <form onSubmit={handleSubmit} className="space-y-6 pb-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
           <div className="space-y-2">
             <Label htmlFor="title">Property Title *</Label>
@@ -218,7 +229,8 @@ export function AddProspectModal({ isOpen, onClose, onSubmit, initialData }: Add
               Cancel
             </Button>
           </div>
-        </form>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   )
