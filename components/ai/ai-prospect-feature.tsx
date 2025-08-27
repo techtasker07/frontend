@@ -232,6 +232,14 @@ export function SmartProspectFeature({ isOpen, onClose, triggerOnLogin = false }
     setCurrentStep("form")
   }
 
+  const handleBackToCapture = () => {
+    setCurrentStep("capture")
+    setSelectedProspect(null)
+    setCapturedImage(null)
+    setImageFile(null)
+    setAllProspects([])
+  }
+
   const handleFormSubmit = async (formData: any) => {
     if (!selectedProspect || !imageFile) return
 
@@ -283,6 +291,7 @@ export function SmartProspectFeature({ isOpen, onClose, triggerOnLogin = false }
         <ProspectPreviewModal
           isOpen={currentStep === "preview"}
           onClose={handleClose}
+          onBack={handleBackToCapture}
           onAddProperty={handleAddProperty}
           imageUrl={capturedImage}
           allProspects={allProspects}

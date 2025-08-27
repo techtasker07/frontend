@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Camera, Lightbulb, Plus, X, TrendingUp, DollarSign, Building, Zap } from "lucide-react"
+import { Camera, Lightbulb, Plus, X, TrendingUp, DollarSign, Building, Zap, ArrowLeft } from "lucide-react"
 import type { Category } from "@/lib/api"
 import { formatCompactCurrency } from "@/lib/currency"
 
@@ -31,6 +31,7 @@ interface ProspectData {
 interface ProspectPreviewModalProps {
   isOpen: boolean
   onClose: () => void
+  onBack?: () => void
   onAddProperty: () => void
   imageUrl: string
   allProspects: ProspectData[]
@@ -42,6 +43,7 @@ interface ProspectPreviewModalProps {
 export function ProspectPreviewModal({
   isOpen,
   onClose,
+  onBack,
   onAddProperty,
   imageUrl,
   allProspects,
@@ -91,7 +93,7 @@ export function ProspectPreviewModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-2xl h-[95vh] max-h-[95vh] overflow-hidden border-0 bg-gradient-to-br from-white via-purple-50 to-pink-50 p-4 sm:p-6">
+      <DialogContent className="w-[100vw] sm:w-[95vw] max-w-[100vw] sm:max-w-2xl h-[100vh] sm:h-[95vh] max-h-[100vh] sm:max-h-[95vh] overflow-hidden border-0 bg-gradient-to-br from-white via-purple-50 to-pink-50 p-3 sm:p-6 m-0 sm:m-auto rounded-none sm:rounded-lg">
         {/* Animated background elements */}
         <div className="absolute inset-0 overflow-hidden rounded-lg">
           <div className="absolute top-0 -left-4 w-24 h-24 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
@@ -105,6 +107,16 @@ export function ProspectPreviewModal({
               <DialogHeader className="flex-shrink-0">
                 <DialogTitle className="flex items-center justify-between text-lg sm:text-xl font-bold">
                   <div className="flex items-center">
+                    {onBack && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={onBack}
+                        className="h-8 w-8 p-0 hover:bg-blue-100 mr-2"
+                      >
+                        <ArrowLeft className="h-4 w-4 text-blue-600" />
+                      </Button>
+                    )}
                     <Camera className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
                     <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                       Smart Prospect Generated!
