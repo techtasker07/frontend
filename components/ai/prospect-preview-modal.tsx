@@ -93,7 +93,7 @@ export function ProspectPreviewModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-[calc(100vw-1rem)] sm:max-w-2xl h-[calc(100vh-1rem)] sm:h-[90vh] max-h-[calc(100vh-1rem)] sm:max-h-[90vh] overflow-hidden border-0 bg-gradient-to-br from-white via-purple-50 to-pink-50 p-3 sm:p-6 rounded-lg mx-2 sm:mx-auto">
+      <DialogContent className="w-full max-w-[calc(100vw-1rem)] sm:max-w-2xl h-[calc(100vh-2rem)] sm:h-[90vh] max-h-[calc(100vh-2rem)] sm:max-h-[90vh] overflow-hidden border-0 bg-gradient-to-br from-white via-purple-50 to-pink-50 p-3 sm:p-6 rounded-lg mx-2 sm:mx-auto">
         {/* Animated background elements */}
         <div className="absolute inset-0 overflow-hidden rounded-lg">
           <div className="absolute top-0 -left-4 w-24 h-24 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
@@ -133,7 +133,7 @@ export function ProspectPreviewModal({
                 </DialogTitle>
               </DialogHeader>
 
-              <div className="flex-1 overflow-y-auto space-y-4 mt-4 pr-2">
+              <div className="flex-1 overflow-y-auto space-y-4 mt-4 pr-2 pb-4">
                 {/* Property Image */}
                 <div className="relative">
                   <img
@@ -262,7 +262,7 @@ export function ProspectPreviewModal({
                 </DialogTitle>
               </DialogHeader>
 
-              <div className="flex-1 overflow-y-auto space-y-4 mt-4 pr-2">
+              <div className="flex-1 overflow-y-auto space-y-4 mt-4 pr-2 pb-4">
                 {/* Property Image */}
                 <div className="relative">
                   <img
@@ -359,11 +359,17 @@ export function ProspectPreviewModal({
             [data-radix-dialog-content] {
               width: calc(100vw - 1rem) !important;
               max-width: calc(100vw - 1rem) !important;
-              height: calc(100vh - 1rem) !important;
-              max-height: calc(100vh - 1rem) !important;
+              height: calc(100vh - 2rem) !important;
+              max-height: calc(100vh - 2rem) !important;
               margin: 0.5rem !important;
               border-radius: 0.75rem !important;
               box-sizing: border-box;
+              overflow: hidden !important;
+            }
+            
+            /* Ensure scroll container works properly */
+            [data-radix-dialog-content] .overflow-y-auto {
+              -webkit-overflow-scrolling: touch;
             }
           }
         `}</style>
