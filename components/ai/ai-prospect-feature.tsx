@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { ImageCaptureModal } from "../camera/image-capture-modal"
-import { ProspectPreviewModal } from "./prospect-preview-modal"
+import { ProspectPreviewPage } from "./prospect-preview-page"
+import { ProspectDetailsPage } from "./prospect-details-page"
 import { AddProspectModal } from "../prospect/add-prospect-modal"
 import { api, type Category } from "@/lib/api"
 import { toast } from "sonner"
@@ -186,7 +187,7 @@ const generateMultipleCategoryProspects = (categories: Category[]) => {
 }
 
 export function SmartProspectFeature({ isOpen, onClose, triggerOnLogin = false }: SmartProspectFeatureProps) {
-  const [currentStep, setCurrentStep] = useState<"capture" | "preview" | "form">("capture")
+  const [currentStep, setCurrentStep] = useState<"capture" | "preview" | "details" | "form">("capture")
   const [categories, setCategories] = useState<Category[]>([])
   const [selectedProspect, setSelectedProspect] = useState<any>(null)
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
@@ -225,6 +226,15 @@ export function SmartProspectFeature({ isOpen, onClose, triggerOnLogin = false }
     // Don't auto-select any prospect - let user choose
     setSelectedProspect(null)
 
+    setCurrentStep("preview")
+  }
+
+  const handleViewDetails = (prospect: any) => {
+    setSelectedProspect(prospect)
+    setCurrentStep("details")
+  }
+
+  const handleBackToPreview = () => {
     setCurrentStep("preview")
   }
 
@@ -278,6 +288,32 @@ export function SmartProspectFeature({ isOpen, onClose, triggerOnLogin = false }
     onClose()
   }
 
+  // If we're not in capture step, render the page directly without wrapping modal
+  if (currentStep === "preview" && capturedImage) {
+    return (
+      <ProspectPreviewPage
+        onBack={handleBackToCapture}
+        onSelectProspect={setSelectedProspect}
+        onViewDetails={handleViewDetails}
+        imageUrl={capturedImage}
+        allProspects={allProspects}
+        selectedProspect={selectedProspect}
+        categories={categories}
+      />
+    )
+  }
+
+  if (currentStep === "details" && selectedProspect && capturedImage) {
+    return (
+      <ProspectDetailsPage
+        prospect={selectedProspect}
+        imageUrl={capturedImage}
+        onBack={handleBackToPreview}
+        onAddProperty={handleAddProperty}
+      />
+    )
+  }
+
   return (
     <>
       <ImageCaptureModal
@@ -286,20 +322,6 @@ export function SmartProspectFeature({ isOpen, onClose, triggerOnLogin = false }
         onImageCaptured={handleImageCaptured}
         fromLogin={triggerOnLogin}
       />
-
-      {capturedImage && (
-        <ProspectPreviewModal
-          isOpen={currentStep === "preview"}
-          onClose={handleClose}
-          onBack={handleBackToCapture}
-          onAddProperty={handleAddProperty}
-          imageUrl={capturedImage}
-          allProspects={allProspects}
-          selectedProspect={selectedProspect}
-          onSelectProspect={setSelectedProspect}
-          categories={categories}
-        />
-      )}
 
       {selectedProspect && (
         <AddProspectModal
