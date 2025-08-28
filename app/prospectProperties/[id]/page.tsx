@@ -21,7 +21,7 @@ export default function ProspectPropertyDetailsPage() {
   const [selectedProspect, setSelectedProspect] = useState<PropertyProspect | null>(null)
   const [loading, setLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const propertyId = Number.parseInt(params.id as string)
+  const propertyId = params.id as string
 
   useEffect(() => {
     if (propertyId) {

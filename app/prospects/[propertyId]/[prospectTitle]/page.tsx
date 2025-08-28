@@ -89,7 +89,7 @@ export default function ProspectDetailPage() {
   const [prospect, setProspect] = useState<PropertyProspect | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const propertyId = Number.parseInt(params.propertyId as string)
+  const propertyId = params.propertyId as string
   const prospectTitle = decodeURIComponent(params.prospectTitle as string)
 
   useEffect(() => {
@@ -101,7 +101,7 @@ export default function ProspectDetailPage() {
   const fetchPropertyAndProspect = async () => {
     try {
       console.log("Fetching prospect property with ID:", propertyId)
-      const response = await api.getProspectProperty(Number(propertyId))
+      const response = await api.getProspectProperty(propertyId)
       console.log("API response:", response)
 
       if (response.success) {

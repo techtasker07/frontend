@@ -20,7 +20,7 @@ interface ProspectPreview {
 
 interface ProspectData {
   id: number
-  categoryId: number
+  categoryId: string | number // Support both string (new UUID) and number (old integer) for backwards compatibility
   categoryName: string
   propertyTitle: string
   location: string
@@ -53,7 +53,7 @@ export function ProspectPreviewModal({
   categories,
 }: ProspectPreviewModalProps) {
   const [showProspectDetails, setShowProspectDetails] = useState(false)
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null)
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | number | null>(null)
 
   // Group prospects by category
   const prospectsByCategory = useMemo(() => {
@@ -63,7 +63,7 @@ export function ProspectPreviewModal({
       }
       acc[prospect.categoryId].push(prospect)
       return acc
-    }, {} as Record<number, ProspectData[]>)
+    }, {} as Record<string | number, ProspectData[]>)
     return grouped
   }, [allProspects])
 
@@ -86,8 +86,10 @@ export function ProspectPreviewModal({
   }
 
   const handleCategoryChange = (categoryId: string) => {
+    // Try to parse as number for backwards compatibility, otherwise use as string
     const numericId = parseInt(categoryId)
-    setSelectedCategoryId(numericId)
+    const finalId = isNaN(numericId) ? categoryId : numericId
+    setSelectedCategoryId(finalId)
     // Don't auto-select any prospect when changing categories
     // Let user explicitly choose
   }

@@ -38,9 +38,9 @@ export default function PropertyDetailsPage() {
   const [loading, setLoading] = useState(true)
   const [voting, setVoting] = useState(false)
   const [hasVoted, setHasVoted] = useState(false)
-  const [selectedVoteOption, setSelectedVoteOption] = useState<number | null>(null)
+  const [selectedVoteOption, setSelectedVoteOption] = useState<string | null>(null)
 
-  const propertyId = Number.parseInt(params.id as string)
+  const propertyId = params.id as string
 
   useEffect(() => {
     if (propertyId) {

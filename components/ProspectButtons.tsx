@@ -9,7 +9,7 @@ import { toast } from "sonner"
 import { formatCompactCurrency } from "@/lib/currency"
 
 interface Prospect {
-  id?: number
+  id?: string
   title: string
   description: string
   estimated_cost: number
@@ -17,7 +17,7 @@ interface Prospect {
 }
 
 interface ProspectButtonsProps {
-  propertyId: number
+  propertyId: string
   prospects: Prospect[]
   className?: string
   onProspectsUpdated?: (prospects: Prospect[]) => void
@@ -38,35 +38,8 @@ export default function ProspectButtons({
   }
 
   const handleRegenerateProspects = async () => {
-    setIsRegenerating(true)
-    try {
-      const response = await fetch(`/api/prospectProperties/${propertyId}/regenerate-prospects`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      })
-
-      const data = await response.json()
-
-      if (data.success) {
-        toast.success("AI prospects generated successfully!")
-        if (onProspectsUpdated && data.data.prospects) {
-          onProspectsUpdated(data.data.prospects)
-        } else {
-          // Refresh the page if no callback provided
-          window.location.reload()
-        }
-      } else {
-        toast.error(data.error || "Failed to generate prospects")
-      }
-    } catch (error) {
-      console.error("Error regenerating prospects:", error)
-      toast.error("Failed to generate prospects. Please try again.")
-    } finally {
-      setIsRegenerating(false)
-    }
+    // TODO: Implement AI prospect generation with Supabase
+    toast.info("AI prospect regeneration will be implemented in future updates")
   }
 
 

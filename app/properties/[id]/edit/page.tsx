@@ -15,12 +15,10 @@ import { Loader2, ArrowLeft, Edit } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 
-const categories = [
-{ id: 1, name: 'Residential' },
-{ id: 2, name: 'Commercial' },
-{ id: 3, name: 'Land' },
-{ id: 4, name: 'Material' },
-]
+interface Category {
+  id: string
+  name: string
+}
 
 export default function EditPropertyPage() {
 const params = useParams()
@@ -28,6 +26,7 @@ const router = useRouter()
 const { user, isAuthenticated } = useAuth()
 
 const [property, setProperty] = useState<Property | null>(null)
+const [categories, setCategories] = useState<Category[]>([])
 const [formData, setFormData] = useState({
   title: '',
   description: '',
@@ -40,7 +39,7 @@ const [loading, setLoading] = useState(true)
 const [saving, setSaving] = useState(false)
 const [error, setError] = useState('')
 
-const propertyId = parseInt(params.id as string)
+const propertyId = params.id as string
 
 useEffect(() => {
   if (!isAuthenticated) {
@@ -52,9 +51,14 @@ useEffect(() => {
 
 const fetchProperty = async () => {
   try {
-    const response = await api.getProperty(propertyId)
-    if (response.success) {
-      const propertyData = response.data
+    // Fetch both property and categories in parallel
+    const [propertyResponse, categoriesResponse] = await Promise.all([
+      api.getProperty(propertyId),
+      api.getCategories()
+    ])
+
+    if (propertyResponse.success) {
+      const propertyData = propertyResponse.data
       
       // Check if user owns this property
       if (propertyData.user_id !== user?.id) {
@@ -68,13 +72,20 @@ const fetchProperty = async () => {
         title: propertyData.title,
         description: propertyData.description,
         location: propertyData.location,
-        category_id: propertyData.category_id.toString(),
+        category_id: propertyData.category_id,
         current_worth: propertyData.current_worth?.toString() || '',
         year_of_construction: propertyData.year_of_construction?.toString() || '',
       })
     } else {
       toast.error('Property not found')
       router.push('/dashboard')
+      return
+    }
+
+    if (categoriesResponse.success) {
+      setCategories(categoriesResponse.data)
+    } else {
+      toast.error('Failed to load categories')
     }
   } catch (error) {
     toast.error('Failed to fetch property details')
@@ -134,7 +145,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       title: formData.title.trim(),
       description: formData.description.trim(),
       location: formData.location.trim(),
-      category_id: parseInt(formData.category_id),
+      category_id: formData.category_id, // Keep as UUID string for Supabase
       ...(formData.current_worth && { current_worth: parseFloat(formData.current_worth) }),
       ...(formData.year_of_construction && { year_of_construction: parseInt(formData.year_of_construction) }),
     }
@@ -262,7 +273,7 @@ return (
               </SelectTrigger>
               <SelectContent>
                 {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id.toString()}>
+                  <SelectItem key={category.id} value={category.id}>
                     {category.name}
                   </SelectItem>
                 ))}

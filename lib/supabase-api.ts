@@ -874,7 +874,7 @@ class SupabaseApiClient {
 
       if (recentError) throw recentError;
 
-      const recent_activity = recentProperties?.map(prop => ({
+      const recent_activity = recentProperties?.map((prop: any) => ({
         type: 'property_created',
         title: prop.title,
         user_name: `${prop.profiles?.first_name} ${prop.profiles?.last_name}`,

@@ -11,19 +11,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { api, type VoteOption } from "@/lib/api"
+import { api, type VoteOption, type Category } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 import { Loader2, Plus, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
-
-const categories = [
-  { id: 1, name: "Residential" },
-  { id: 2, name: "Commercial" },
-  { id: 3, name: "Industrial" },
-  { id: 4, name: "Material Assets" },
-  { id: 5, name: "Landed Property" },
-]
 
 export default function AddPropertyPage() {
   const [formData, setFormData] = useState({
@@ -40,6 +32,7 @@ export default function AddPropertyPage() {
   const [error, setError] = useState("")
   const [uploadProgress, setUploadProgress] = useState<string>("")
   const [voteOptions, setVoteOptions] = useState<VoteOption[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
 
   const { isAuthenticated, user } = useAuth()
   const router = useRouter()
@@ -50,7 +43,19 @@ export default function AddPropertyPage() {
       return
     }
     fetchVoteOptions()
+    fetchCategories()
   }, [isAuthenticated])
+
+  const fetchCategories = async () => {
+    try {
+      const response = await api.getCategories()
+      if (response.success) {
+        setCategories(response.data)
+      }
+    } catch (error) {
+      console.error("Failed to fetch categories:", error)
+    }
+  }
 
   const fetchVoteOptions = async () => {
     try {
@@ -144,7 +149,7 @@ export default function AddPropertyPage() {
         title: formData.title.trim(),
         description: formData.description.trim(),
         location: formData.location.trim(),
-        category_id: Number.parseInt(formData.category_id),
+        category_id: formData.category_id, // Keep as UUID string for Supabase
         ...(formData.current_worth && { current_worth: Number.parseFloat(formData.current_worth) }),
         ...(formData.year_of_construction && { year_of_construction: Number.parseInt(formData.year_of_construction) }),
         ...(formData.lister_phone_number && { lister_phone_number: formData.lister_phone_number.trim() }),
@@ -170,8 +175,8 @@ export default function AddPropertyPage() {
     return null // Will redirect to login
   }
 
-  const selectedCategory = categories.find((cat) => cat.id.toString() === formData.category_id)
-  const categoryVoteOptions = voteOptions.filter((option) => option.category_id.toString() === formData.category_id)
+  const selectedCategory = categories.find((cat) => cat.id === formData.category_id)
+  const categoryVoteOptions = voteOptions.filter((option) => option.category_id === formData.category_id)
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
@@ -253,7 +258,7 @@ export default function AddPropertyPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id.toString()}>
+                    <SelectItem key={category.id} value={category.id}>
                       {category.name}
                     </SelectItem>
                   ))}

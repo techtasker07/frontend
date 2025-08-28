@@ -29,7 +29,7 @@ const [userProperties, setUserProperties] = useState<Property[]>([])
 const [userVotes, setUserVotes] = useState<Vote[]>([])
 const [stats, setStats] = useState<any>(null)
 const [loading, setLoading] = useState(true)
-const [deletingProperty, setDeletingProperty] = useState<number | null>(null)
+const [deletingProperty, setDeletingProperty] = useState<string | null>(null)
 
 const { user, isAuthenticated } = useAuth()
 const router = useRouter()
@@ -71,7 +71,7 @@ const fetchDashboardData = async () => {
   }
 }
 
-const handleDeleteProperty = async (propertyId: number) => {
+const handleDeleteProperty = async (propertyId: string) => {
   try {
     setDeletingProperty(propertyId)
     const response = await api.deleteProperty(propertyId)

@@ -16,7 +16,7 @@ interface ProspectPreview {
 
 interface ProspectData {
   id: number
-  categoryId: number
+  categoryId: string | number // Support both string (new UUID) and number (old integer) for backwards compatibility
   categoryName: string
   propertyTitle: string
   location: string
