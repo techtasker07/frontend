@@ -33,6 +33,24 @@ const nextConfig = {
       },
     ],
   },
+  // Disable font optimization that causes lightningcss issues
+  optimizeFonts: false,
+  // Add webpack configuration to handle native dependencies
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+        crypto: false,
+      }
+    }
+    return config
+  },
+  // Disable experimental features that might conflict
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
+  },
 }
 
 module.exports = nextConfig

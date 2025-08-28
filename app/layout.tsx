@@ -1,12 +1,12 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { Inter } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/lib/auth"
 import { ResponsiveLayout } from "@/components/layout/responsive-layout"
 import { Toaster } from "sonner"
 
-const inter = Inter({ subsets: ["latin"] })
+// Alternative font loading to avoid lightningcss issues
+const fontClass = "font-sans"
 
 export const metadata: Metadata = {
   title: "Mipripity - Property Polling Platform",
@@ -40,7 +40,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} antialiased`}>
+      <body className={`${fontClass} antialiased`}>
         <AuthProvider>
           <ResponsiveLayout>{children}</ResponsiveLayout>
         </AuthProvider>
