@@ -50,8 +50,6 @@ export default function LoginPage() {
       <div className="md:hidden sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-gray-200">
         <div className="flex items-center px-4 py-3">
           <Link href="/" className="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
-            <ArrowLeft className="h-5 w-5 mr-2" />
-            <Home className="h-4 w-4 mr-1" />
             <span className="text-sm font-medium">Home</span>
           </Link>
         </div>
