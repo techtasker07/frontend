@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Camera, Lightbulb, Plus, ArrowLeft, TrendingUp } from "lucide-react"
+import { Camera, Lightbulb, Plus, ArrowLeft, TrendingUp, X, Home } from "lucide-react"
 import type { Category } from "@/lib/api"
 import { formatCompactCurrency } from "@/lib/currency"
 
@@ -94,20 +94,30 @@ export function ProspectPreviewPage({
         {/* Header */}
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-purple-200">
           <div className="flex items-center justify-between p-4">
-            <div className="flex items-center">
+            <div className="flex items-center flex-1 min-w-0">
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={onBack}
-                className="h-9 w-9 p-0 hover:bg-blue-100 mr-3"
+                className="h-9 w-9 p-0 hover:bg-blue-100 mr-3 flex-shrink-0"
+                title="Go to Dashboard"
               >
                 <ArrowLeft className="h-5 w-5 text-blue-600" />
               </Button>
-              <Camera className="mr-3 h-6 w-6 text-purple-600" />
-              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              <Camera className="mr-3 h-6 w-6 text-purple-600 flex-shrink-0" />
+              <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent truncate">
                 Smart Prospect Generated!
               </h1>
             </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onBack}
+              className="h-9 w-9 p-0 hover:bg-red-100 flex-shrink-0"
+              title="Close and go to Dashboard"
+            >
+              <X className="h-5 w-5 text-red-600" />
+            </Button>
           </div>
         </div>
 
@@ -217,6 +227,14 @@ export function ProspectPreviewPage({
         {/* Fixed bottom action area */}
         <div className="sticky bottom-0 z-20 bg-white/95 backdrop-blur-sm border-t border-purple-200 p-4">
           <div className="flex gap-3">
+            <Button 
+              onClick={onBack}
+              variant="outline"
+              className="border-gray-300 text-gray-600 hover:bg-gray-50 py-3"
+            >
+              <Home className="mr-2 h-4 w-4" />
+              Dashboard
+            </Button>
             <Button 
               onClick={() => selectedProspect && onViewDetails(selectedProspect)} 
               disabled={!selectedProspect}

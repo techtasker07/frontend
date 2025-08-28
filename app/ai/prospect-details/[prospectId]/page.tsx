@@ -73,6 +73,14 @@ export default function AIProspectDetailsPageRoute() {
     router.push("/ai/prospect-preview")
   }
 
+  const handleClose = () => {
+    // Clear all session data and go back to dashboard
+    sessionStorage.removeItem("ai-prospects")
+    sessionStorage.removeItem("ai-prospect-image")
+    sessionStorage.removeItem("selected-prospect")
+    router.push("/dashboard")
+  }
+
   const handleAddProperty = () => {
     setShowAddModal(true)
   }
@@ -158,6 +166,7 @@ export default function AIProspectDetailsPageRoute() {
         prospect={prospect}
         imageUrl={imageUrl}
         onBack={handleBack}
+        onClose={handleClose}
         onAddProperty={handleAddProperty}
       />
 

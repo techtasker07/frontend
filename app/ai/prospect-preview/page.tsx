@@ -79,6 +79,7 @@ function AIProspectPreviewPageContent() {
     // Clear session data and go back to dashboard
     sessionStorage.removeItem("ai-prospects")
     sessionStorage.removeItem("ai-prospect-image")
+    sessionStorage.removeItem("selected-prospect")
     router.push("/dashboard")
   }
 

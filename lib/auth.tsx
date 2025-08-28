@@ -176,7 +176,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (userProfile) {
             setUser(userProfile);
           }
-          setJustLoggedIn(true);
+          // Don't set justLoggedIn to true during registration
+          // This prevents the prospect modal from opening immediately after registration
+          // setJustLoggedIn(true);
         }
         // If no session, it means email confirmation is required
         // This is still a successful registration, just needs email confirmation

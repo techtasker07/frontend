@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Lightbulb, Building, DollarSign, Plus } from "lucide-react"
+import { ArrowLeft, Lightbulb, Building, DollarSign, Plus, X, Home } from "lucide-react"
 import { formatCompactCurrency } from "@/lib/currency"
 
 interface ProspectPreview {
@@ -29,6 +29,7 @@ interface ProspectDetailsPageProps {
   prospect: ProspectData
   imageUrl: string
   onBack: () => void
+  onClose: () => void
   onAddProperty: () => void
 }
 
@@ -36,6 +37,7 @@ export function ProspectDetailsPage({
   prospect,
   imageUrl,
   onBack,
+  onClose,
   onAddProperty,
 }: ProspectDetailsPageProps) {
   return (
@@ -64,6 +66,14 @@ export function ProspectDetailsPage({
                 {prospect.prospect.title}
               </h1>
             </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onClose}
+              className="h-9 w-9 p-0 hover:bg-red-100 flex-shrink-0"
+            >
+              <X className="h-5 w-5 text-red-600" />
+            </Button>
           </div>
         </div>
 
@@ -197,6 +207,14 @@ export function ProspectDetailsPage({
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
+            </Button>
+            <Button 
+              onClick={onClose}
+              variant="outline"
+              className="border-gray-300 text-gray-600 hover:bg-gray-50 py-3"
+            >
+              <Home className="mr-2 h-4 w-4" />
+              Dashboard
             </Button>
             <Button 
               onClick={onAddProperty} 
