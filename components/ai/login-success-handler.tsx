@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { SmartProspectFeature } from "./ai-prospect-feature"
 import { useAuth } from "@/lib/auth"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
@@ -12,6 +13,7 @@ interface LoginSuccessHandlerProps {
 }
 
 export function LoginSuccessHandler({ onLoginSuccess }: LoginSuccessHandlerProps) {
+  const router = useRouter()
   const [showWelcomeModal, setShowWelcomeModal] = useState(false)
   const [showSmartProspectFeature, setShowSmartProspectFeature] = useState(false)
   const { user, isAuthenticated, justLoggedIn, setJustLoggedIn } = useAuth()
@@ -28,7 +30,7 @@ export function LoginSuccessHandler({ onLoginSuccess }: LoginSuccessHandlerProps
   const handleStartSmartProspect = () => {
     setShowWelcomeModal(false)
     // Navigate to the image capture page instead of showing modal
-    window.location.href = "/ai/capture-image?fromLogin=true"
+    router.push("/ai/capture-image?fromLogin=true")
   }
 
   const handleSkip = () => {

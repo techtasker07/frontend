@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ImageCapturePage } from "@/components/ai/image-capture-page"
 import { api, type Category } from "@/lib/api"
@@ -95,7 +95,7 @@ const generateMultipleCategoryProspects = (categories: Category[]) => {
   return allProspects
 }
 
-export default function AICaptureImagePage() {
+function AICaptureImagePageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const fromLogin = searchParams.get('fromLogin') === 'true'
@@ -162,5 +162,17 @@ export default function AICaptureImagePage() {
       onImageCaptured={handleImageCaptured}
       fromLogin={fromLogin}
     />
+  )
+}
+
+export default function AICaptureImagePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+      </div>
+    }>
+      <AICaptureImagePageContent />
+    </Suspense>
   )
 }

@@ -140,13 +140,13 @@ export function AddProspectPage({ onClose, onBack, onSubmit, initialData }: AddP
         {/* Content */}
         <div className="flex-1 p-4 pb-6">
           <div className="max-w-2xl mx-auto">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+            {error && (
+              <Alert variant="destructive" className="mb-6">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
+            <form id="prospect-form" onSubmit={handleSubmit} className="space-y-6">
               <Card className="border-2 border-purple-200">
                 <CardHeader>
                   <CardTitle className="text-lg">Property Details</CardTitle>
@@ -262,7 +262,8 @@ export function AddProspectPage({ onClose, onBack, onSubmit, initialData }: AddP
               Dashboard
             </Button>
             <Button 
-              onClick={handleSubmit}
+              type="submit"
+              form="prospect-form"
               disabled={loading}
               className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 py-3 text-base font-semibold"
             >

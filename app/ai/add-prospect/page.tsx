@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { AddProspectPage } from "@/components/ai/add-prospect-page"
 import { api } from "@/lib/api"
@@ -33,7 +33,7 @@ interface ProspectFormData {
   yearOfConstruction: string
 }
 
-export default function AIAddProspectPage() {
+function AIAddProspectPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const prospectId = searchParams.get('prospectId')
@@ -175,5 +175,17 @@ export default function AIAddProspectPage() {
         yearBuilt: prospect.yearBuilt,
       }}
     />
+  )
+}
+
+export default function AIAddProspectPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+      </div>
+    }>
+      <AIAddProspectPageContent />
+    </Suspense>
   )
 }
