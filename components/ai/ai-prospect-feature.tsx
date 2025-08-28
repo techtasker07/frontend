@@ -27,29 +27,29 @@ const generateMultipleCategoryProspects = (categories: Category[]) => {
     "Asokoro, Abuja",
   ]
 
-  const propertyTypes = {
-    1: ["Modern Apartment Complex", "Luxury Residential Building", "Executive Flat"],
-    2: ["Commercial Plaza", "Office Complex", "Shopping Mall"],
-    3: ["Undeveloped Land Plot", "Prime Development Site", "Investment Land"],
-    4: ["Warehouse Facility", "Industrial Complex", "Manufacturing Plant"],
+  const propertyTypes: { [key: string]: string[] } = {
+    "Residential": ["Modern Apartment Complex", "Luxury Residential Building", "Executive Flat"],
+    "Commercial": ["Commercial Plaza", "Office Complex", "Shopping Mall"],
+    "Land": ["Undeveloped Land Plot", "Prime Development Site", "Investment Land"],
+    "Industrial": ["Warehouse Facility", "Industrial Complex", "Manufacturing Plant"],
   }
 
-  // Map category IDs to prospect categories in the aiProspects library
-  const categoryMap: { [key: number]: keyof typeof MOCK_PROSPECTS } = {
-    1: "residential",
-    2: "commercial",
-    3: "agricultural", // Land category maps to agricultural
-    4: "industrial",
+  // Map category names to prospect categories in the aiProspects library
+  const categoryMap: { [key: string]: keyof typeof MOCK_PROSPECTS } = {
+    "Residential": "residential",
+    "Commercial": "commercial",
+    "Land": "agricultural", // Land category maps to agricultural
+    "Industrial": "industrial",
   }
 
   // Generate 5 different prospects from different categories using the aiProspects library
   const allProspects: any[] = []
   
   // Create a pool of all possible category-prospect combinations from the aiProspects library
-  const availableCombinations: Array<{ categoryId: number, categoryName: string, prospect: PropertyProspect }> = []
+  const availableCombinations: Array<{ categoryId: string, categoryName: string, prospect: PropertyProspect }> = []
   
   categories.forEach(category => {
-    const categoryKey = categoryMap[category.id] || "residential"
+    const categoryKey = categoryMap[category.name] || "residential"
     const prospects = MOCK_PROSPECTS[categoryKey] || MOCK_PROSPECTS.residential
     prospects.forEach(prospect => {
       availableCombinations.push({
@@ -69,7 +69,7 @@ const generateMultipleCategoryProspects = (categories: Category[]) => {
   // Generate 5 unique prospects
   for (let i = 0; i < Math.min(5, availableCombinations.length); i++) {
     const combination = availableCombinations[i]
-    const titles = propertyTypes[combination.categoryId as keyof typeof propertyTypes] || propertyTypes[1]
+    const titles = propertyTypes[combination.categoryName] || propertyTypes["Residential"]
     const randomTitle = titles[Math.floor(Math.random() * titles.length)]
     const randomLocation = locations[Math.floor(Math.random() * locations.length)]
     const basePrice = Math.floor(Math.random() * 50000000) + 10000000 // 10M to 60M Naira

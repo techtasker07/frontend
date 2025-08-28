@@ -152,7 +152,7 @@ export default function PropertiesPage() {
     try {
       const propertyData = {
         ...formData,
-        category_id: Number.parseInt(formData.category_id),
+        category_id: formData.category_id, // Keep as string for Supabase UUID
         current_worth: formData.current_worth ? Number.parseFloat(formData.current_worth) : undefined,
         year_of_construction: formData.year_of_construction
           ? Number.parseInt(formData.year_of_construction)
@@ -281,7 +281,7 @@ export default function PropertiesPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.id.toString()}>
+                          <SelectItem key={category.id} value={category.id}>
                             {category.name}
                           </SelectItem>
                         ))}

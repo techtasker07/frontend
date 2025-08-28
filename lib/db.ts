@@ -1,96 +1,48 @@
-// This file will handle your PostgreSQL database connection for Next.js Route Handlers.
-// It uses the 'pg' package directly, which is suitable for serverless functions.
-import { Pool, QueryResult, QueryResultRow } from 'pg';
+// Supabase database client for server-side operations
+import { createClient } from '@supabase/supabase-js';
 
-// Use DB_EXTERNAL_URL if available, otherwise construct from individual parts
-const connectionString = process.env.DB_EXTERNAL_URL ||
-  (process.env.DB_USER && process.env.DB_PASSWORD && process.env.DB_HOST && process.env.DB_PORT && process.env.DB_NAME
-    ? `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}.frankfurt-postgres.render.com:${process.env.DB_PORT}/${process.env.DB_NAME}`
-    : null);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-if (!connectionString) {
-  console.error('Database connection string is not configured. Please set DB_EXTERNAL_URL or individual DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME environment variables.');
-  // In a production environment, you might want to throw an error or exit.
-  // For development, we'll allow it to proceed but log the issue.
+if (!supabaseUrl) {
+  throw new Error('NEXT_PUBLIC_SUPABASE_URL is not configured');
 }
 
-const pool = new Pool({
-  connectionString: connectionString || undefined, // Use undefined if connectionString is null
-  ssl: process.env.NODE_ENV === 'production' ? {
-    rejectUnauthorized: false, // Required for Render's managed PostgreSQL or other cloud DBs
-  } : false,
-  // Serverless-friendly settings
-  max: 1, // Limit connections in serverless environment
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000,
-});
+if (!supabaseServiceRoleKey) {
+  console.warn('SUPABASE_SERVICE_ROLE_KEY is not configured. Using anon key for server operations.');
+}
 
-// A simple wrapper function for executing queries
-export const query = async <T extends QueryResultRow>(text: string, params?: any[]): Promise<QueryResult<T>> => {
-  try {
-    // Check if we have a connection string
-    if (!connectionString) {
-      console.error('No database connection string available');
-      throw new Error('Database not configured');
-    }
-
-    const res = await pool.query<T>(text, params);
-    return res;
-  } catch (err: any) {
-    console.error('Database query error:', {
-      message: err.message,
-      code: err.code,
-      detail: err.detail,
-      query: text,
-      params: params,
-      connectionString: connectionString ? 'Present' : 'Missing'
-    });
-
-    // Provide more specific error messages
-    if (err.code === 'ECONNREFUSED') {
-      throw new Error('Database connection refused - check database server');
-    } else if (err.code === 'ENOTFOUND') {
-      throw new Error('Database host not found - check connection string');
-    } else if (err.code === '28P01') {
-      throw new Error('Database authentication failed - check credentials');
-    } else if (err.code === '3D000') {
-      throw new Error('Database does not exist');
-    } else {
-      throw new Error(`Database operation failed: ${err.message}`);
+// Create Supabase client for server-side operations
+export const supabaseServer = createClient(
+  supabaseUrl,
+  supabaseServiceRoleKey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
     }
   }
+);
+
+// Legacy query function for backward compatibility (will be removed after migration)
+export const query = async <T = any>(text: string, params?: any[]): Promise<{ rows: T[] }> => {
+  console.warn('Legacy query function is deprecated. Please use Supabase client directly.');
+  throw new Error('Direct SQL queries are not supported with Supabase. Please use the Supabase client methods.');
 };
 
-// Call connectDB once when the module is loaded (e.g., when the first route handler is warmed up)
-// This is typical for serverless environments where modules might persist.
+// Connection test function
 export const connectDB = async () => {
   try {
-    if (!connectionString) {
-      console.error('Cannot connect to database: No connection string configured');
-      return;
+    const { data, error } = await supabaseServer.from('profiles').select('count').limit(1);
+    if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" which is fine
+      throw error;
     }
-
-    await pool.query('SELECT 1');
-    console.log('PostgreSQL connected successfully');
+    console.log('Supabase connected successfully');
   } catch (err: any) {
-    console.error('PostgreSQL connection error:', {
-      message: err.message,
-      code: err.code,
-      detail: err.detail,
-      connectionString: connectionString ? 'Present' : 'Missing',
-      env: {
-        DB_EXTERNAL_URL: process.env.DB_EXTERNAL_URL ? 'Present' : 'Missing',
-        DB_HOST: process.env.DB_HOST ? 'Present' : 'Missing',
-        DB_USER: process.env.DB_USER ? 'Present' : 'Missing',
-        DB_PASSWORD: process.env.DB_PASSWORD ? 'Present' : 'Missing',
-        DB_NAME: process.env.DB_NAME ? 'Present' : 'Missing',
-        DB_PORT: process.env.DB_PORT ? 'Present' : 'Missing',
-      }
-    });
-    // In a real application, you might want more robust error handling or retries.
+    console.error('Supabase connection error:', err.message);
+    throw new Error(`Database connection failed: ${err.message}`);
   }
 };
 
-// Call connectDB once when the module is loaded (e.g., when the first route handler is warmed up)
-// This is typical for serverless environments where modules might persist.
-connectDB();
+// Test connection on import
+connectDB().catch(console.error);

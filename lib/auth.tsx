@@ -2,7 +2,19 @@
 
 // Authentication utilities and context
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { api, User } from './api';
+import { supabase } from './supabase';
+import type { User as SupabaseUser, AuthError } from '@supabase/supabase-js';
+
+export interface User {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone_number?: string;
+  profile_picture?: string;
+  created_at: string;
+  updated_at: string;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -32,66 +44,90 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [justLoggedIn, setJustLoggedIn] = useState(false);
 
-  // Helper function to fetch current user data
-  const fetchCurrentUser = async () => {
+  // Helper function to fetch current user profile from profiles table
+  const fetchUserProfile = async (userId: string): Promise<User | null> => {
     try {
-      const response = await api.getCurrentUser();
-      if (response.success) {
-        setUser(response.data.user);
-      } else {
-        // Token is invalid, remove it
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('token');
-        }
-        setToken(null);
-        setUser(null);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
       }
+
+      return data;
     } catch (error) {
-      console.error('Failed to fetch user data:', error);
-      // Token is invalid, remove it
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-      }
-      setToken(null);
-      setUser(null);
+      console.error('Failed to fetch user profile:', error);
+      return null;
     }
   };
 
   useEffect(() => {
-    // Only run on client side to avoid hydration mismatch
-    if (typeof window === 'undefined') {
-      setLoading(false);
-      return;
-    }
-
-    // Check for stored token on mount
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      setToken(storedToken);
-      // Verify token and get user data
-      fetchCurrentUser().finally(() => {
+    // Get initial session
+    const getInitialSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Error getting session:', error);
         setLoading(false);
-      });
-    } else {
+        return;
+      }
+
+      if (session) {
+        setToken(session.access_token);
+        const userProfile = await fetchUserProfile(session.user.id);
+        if (userProfile) {
+          setUser(userProfile);
+        }
+      }
       setLoading(false);
-    }
+    };
+
+    getInitialSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session) {
+          setToken(session.access_token);
+          const userProfile = await fetchUserProfile(session.user.id);
+          if (userProfile) {
+            setUser(userProfile);
+          }
+        } else {
+          setUser(null);
+          setToken(null);
+          setJustLoggedIn(false);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await api.login({ email, password });
-      if (response.success) {
-        const { user, token } = response.data;
-        setUser(user);
-        setToken(token);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('token', token);
-        }
-        setJustLoggedIn(true); // Mark that user just logged in
-      } else {
-        throw new Error(response.error || 'Login failed');
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        throw new Error(error.message);
       }
-    } catch (error) {
+
+      if (data.session) {
+        setToken(data.session.access_token);
+        const userProfile = await fetchUserProfile(data.session.user.id);
+        if (userProfile) {
+          setUser(userProfile);
+        }
+        setJustLoggedIn(true);
+      }
+    } catch (error: any) {
       throw error;
     }
   };
@@ -104,36 +140,69 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     phone_number?: string;
   }) => {
     try {
-      const response = await api.register(userData);
-      if (response.success) {
-        const { user, token } = response.data;
-        setUser(user);
-        setToken(token);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('token', token);
-        }
-        setJustLoggedIn(true); // Mark that user just registered/logged in
-      } else {
-        throw new Error(response.error || 'Registration failed');
+      // Register user with Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+      });
+
+      if (error) {
+        throw new Error(error.message);
       }
-    } catch (error) {
+
+      if (data.user) {
+        // Create profile in profiles table
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            email: userData.email,
+            first_name: userData.first_name,
+            last_name: userData.last_name,
+            phone_number: userData.phone_number,
+          });
+
+        if (profileError) {
+          throw new Error('Failed to create user profile: ' + profileError.message);
+        }
+
+        // If session is available, set user data
+        if (data.session) {
+          setToken(data.session.access_token);
+          const userProfile = await fetchUserProfile(data.session.user.id);
+          if (userProfile) {
+            setUser(userProfile);
+          }
+          setJustLoggedIn(true);
+        }
+      }
+    } catch (error: any) {
       throw error;
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    setJustLoggedIn(false);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setToken(null);
+      setJustLoggedIn(false);
+    } catch (error) {
+      console.error('Error signing out:', error);
+      // Still clear local state even if signOut fails
+      setUser(null);
+      setToken(null);
+      setJustLoggedIn(false);
     }
   };
 
   // New refreshUser function to refetch user data
   const refreshUser = async () => {
-    if (token) {
-      await fetchCurrentUser();
+    if (user?.id) {
+      const userProfile = await fetchUserProfile(user.id);
+      if (userProfile) {
+        setUser(userProfile);
+      }
     }
   };
 
