@@ -163,10 +163,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
 
         if (profileError) {
-          throw new Error('Failed to create user profile: ' + profileError.message);
+          // Only throw error if it's not a duplicate key error (user already exists)
+          if (!profileError.message.includes('duplicate key') && !profileError.message.includes('already exists')) {
+            throw new Error('Failed to create user profile: ' + profileError.message);
+          }
         }
 
-        // If session is available, set user data
+        // If session is available, set user data (user is immediately logged in)
         if (data.session) {
           setToken(data.session.access_token);
           const userProfile = await fetchUserProfile(data.session.user.id);
@@ -175,6 +178,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
           setJustLoggedIn(true);
         }
+        // If no session, it means email confirmation is required
+        // This is still a successful registration, just needs email confirmation
       }
     } catch (error: any) {
       throw error;

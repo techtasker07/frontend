@@ -19,6 +19,7 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
   const [showMobilePrompt, setShowMobilePrompt] = useState(false)
   const pathname = usePathname()
   const isHomePage = pathname === "/"
+  const isAuthPage = pathname === "/login" || pathname === "/register"
 
   // Mouse hover effect for sidebar
   useEffect(() => {
@@ -63,8 +64,8 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Mobile Header - Only show on non-homepage */}
-      {!isHomePage && (
+      {/* Mobile Header - Only show on non-homepage and non-auth pages */}
+      {!isHomePage && !isAuthPage && (
         <div className="md:hidden">
           <MobileHeader onMenuClick={() => setSidebarOpen(true)} />
         </div>
@@ -132,7 +133,7 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
 
       {/* Main Content */}
       <div className="w-full">
-        <main className={`min-h-screen ${!isHomePage ? 'pt-16 md:pt-0' : ''}`}>
+        <main className={`min-h-screen ${!isHomePage && !isAuthPage ? 'pt-16 md:pt-0' : ''}`}>
           {children}
         </main>
         <Footer />

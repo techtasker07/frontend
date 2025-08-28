@@ -31,16 +31,21 @@ const [stats, setStats] = useState<any>(null)
 const [loading, setLoading] = useState(true)
 const [deletingProperty, setDeletingProperty] = useState<string | null>(null)
 
-const { user, isAuthenticated } = useAuth()
+const { user, isAuthenticated, loading: authLoading } = useAuth()
 const router = useRouter()
 
 useEffect(() => {
-  if (!isAuthenticated) {
+  // Only redirect if we're not loading and definitely not authenticated
+  if (!authLoading && !isAuthenticated) {
     router.push('/login')
     return
   }
-  fetchDashboardData()
-}, [isAuthenticated])
+  
+  // Only fetch data if we're authenticated and not loading
+  if (!authLoading && isAuthenticated) {
+    fetchDashboardData()
+  }
+}, [isAuthenticated, authLoading])
 
 const fetchDashboardData = async () => {
   try {

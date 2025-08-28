@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useAuth } from '@/lib/auth'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Loader2, ArrowLeft, Home } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
 
@@ -31,7 +31,11 @@ export default function LoginPage() {
     try {
       await login(email, password)
       toast.success('Welcome back! You have been logged in successfully.')
-      router.push('/dashboard')
+      
+      // Add a small delay to ensure authentication state is properly set
+      setTimeout(() => {
+        router.push('/dashboard')
+      }, 100)
     } catch (error: any) {
       setError(error.message || 'Login failed. Please try again.')
       toast.error(error.message || 'Login failed. Please try again.')
@@ -41,8 +45,20 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen bg-gray-50">
+      {/* Simple Mobile Navigation */}
+      <div className="md:hidden sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-gray-200">
+        <div className="flex items-center px-4 py-3">
+          <Link href="/" className="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            <Home className="h-4 w-4 mr-1" />
+            <span className="text-sm font-medium">Home</span>
+          </Link>
+        </div>
+      </div>
+      
+      <div className="flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <Image src="/images/mipripity.png" alt="Mipripity Logo" width={48} height={48} className="mx-auto" />
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
@@ -132,6 +148,7 @@ export default function LoginPage() {
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   )
