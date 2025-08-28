@@ -1284,6 +1284,7 @@ export function generateCrossCategoryProspects(
   category: string
   categoryId: number
   imageUrl: string
+  realizationTips: string[]
 }> {
   const categoryMap: { [key: string]: number } = {
     residential: 1,
@@ -1322,7 +1323,8 @@ export function generateCrossCategoryProspects(
       estimatedCost: Math.round(estimatedCost),
       category: prospect.category,
       categoryId: prospect.categoryId,
-      imageUrl: prospect.imageUrl, // Include the image URL
+      imageUrl: prospect.imageUrl,
+      realizationTips: prospect.realizationTips,
     }
   })
 }

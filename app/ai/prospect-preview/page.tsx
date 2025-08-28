@@ -12,6 +12,7 @@ interface ProspectPreview {
   estimatedCost: number
   totalCost: number
   imageUrl?: string
+  realizationTips?: string[]
 }
 
 interface ProspectData {

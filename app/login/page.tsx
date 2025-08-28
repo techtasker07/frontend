@@ -34,7 +34,7 @@ export default function LoginPage() {
       
       // Add a small delay to ensure authentication state is properly set
       setTimeout(() => {
-        router.push('/dashboard')
+        router.push('/welcome')
       }, 100)
     } catch (error: any) {
       setError(error.message || 'Login failed. Please try again.')

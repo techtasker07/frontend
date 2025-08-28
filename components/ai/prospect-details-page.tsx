@@ -12,6 +12,7 @@ interface ProspectPreview {
   estimatedCost: number
   totalCost: number
   imageUrl?: string
+  realizationTips?: string[]
 }
 
 interface ProspectData {
@@ -170,6 +171,30 @@ export function ProspectDetailsPage({
               )}
             </CardContent>
           </Card>
+
+          {/* Realization Tips */}
+          {prospect.prospect.realizationTips && prospect.prospect.realizationTips.length > 0 && (
+            <Card className="border-2 border-yellow-200">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center">
+                  <Lightbulb className="mr-2 h-5 w-5 text-yellow-600" />
+                  Implementation Tips
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {prospect.prospect.realizationTips.map((tip, index) => (
+                    <div key={index} className="flex items-start space-x-3 p-3 bg-yellow-50 rounded-lg">
+                      <div className="w-6 h-6 bg-yellow-500 text-white rounded-full flex items-center justify-center text-xs font-bold mt-0.5 flex-shrink-0">
+                        {index + 1}
+                      </div>
+                      <p className="text-sm text-yellow-800 leading-relaxed">{tip}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Property Details */}
           <Card className="border-2 border-gray-200">

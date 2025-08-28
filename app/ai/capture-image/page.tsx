@@ -6,9 +6,9 @@ import { ImageCapturePage } from "@/components/ai/image-capture-page"
 import { api, type Category } from "@/lib/api"
 import { toast } from "sonner"
 
-import { MOCK_PROSPECTS, type PropertyProspect } from "@/lib/aiProspects"
+import { generateCrossCategoryProspects } from "@/lib/aiProspects"
 
-// Generate 5 random prospects from different categories using the updated aiProspects library
+// Generate 5 random prospects from different categories using the aiProspects library
 const generateMultipleCategoryProspects = (categories: Category[]) => {
   const locations = [
     "Victoria Island, Lagos",
@@ -28,69 +28,50 @@ const generateMultipleCategoryProspects = (categories: Category[]) => {
     "Industrial": ["Warehouse Facility", "Industrial Complex", "Manufacturing Plant"],
   }
 
-  // Map category names to prospect categories in the aiProspects library
-  const categoryMap: { [key: string]: keyof typeof MOCK_PROSPECTS } = {
-    "Residential": "residential",
-    "Commercial": "commercial",
-    "Land": "agricultural", // Land category maps to agricultural
-    "Industrial": "industrial",
-  }
-
-  // Generate 5 different prospects from different categories using the aiProspects library
-  const allProspects: any[] = []
+  // Generate base property worth for calculations
+  const basePrice = Math.floor(Math.random() * 50000000) + 10000000 // 10M to 60M Naira
   
-  // Create a pool of all possible category-prospect combinations from the aiProspects library
-  const availableCombinations: Array<{ categoryId: string, categoryName: string, prospect: PropertyProspect }> = []
+  // Use the library function to get 5 cross-category prospects
+  const crossCategoryProspects = generateCrossCategoryProspects(basePrice)
   
-  categories.forEach(category => {
-    const categoryKey = categoryMap[category.name] || "residential"
-    const prospects = MOCK_PROSPECTS[categoryKey] || MOCK_PROSPECTS.residential
-    prospects.forEach(prospect => {
-      availableCombinations.push({
-        categoryId: category.id,
-        categoryName: category.name,
-        prospect
-      })
+  // Map the prospects to our expected format with additional property details
+  const allProspects = crossCategoryProspects.map((prospect, index) => {
+    // Find matching category from our categories list
+    const matchingCategory = categories.find(cat => {
+      const categoryNameMap: { [key: string]: string } = {
+        "residential": "Residential",
+        "commercial": "Commercial",
+        "industrial": "Industrial", 
+        "agricultural": "Land", // Map agricultural back to Land
+      }
+      return categoryNameMap[prospect.category.toLowerCase()] === cat.name
     })
-  })
-  
-  // Shuffle the available combinations
-  for (let i = availableCombinations.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[availableCombinations[i], availableCombinations[j]] = [availableCombinations[j], availableCombinations[i]]
-  }
-  
-  // Generate 5 unique prospects
-  for (let i = 0; i < Math.min(5, availableCombinations.length); i++) {
-    const combination = availableCombinations[i]
-    const titles = propertyTypes[combination.categoryName] || propertyTypes["Residential"]
+    
+    const categoryId = matchingCategory?.id || categories[0]?.id || "1"
+    const categoryName = matchingCategory?.name || "Residential"
+    const titles = propertyTypes[categoryName] || propertyTypes["Residential"]
     const randomTitle = titles[Math.floor(Math.random() * titles.length)]
     const randomLocation = locations[Math.floor(Math.random() * locations.length)]
-    const basePrice = Math.floor(Math.random() * 50000000) + 10000000 // 10M to 60M Naira
     const yearBuilt = Math.floor(Math.random() * 20) + 2005 // 2005-2024
     
-    const purchaseCost = basePrice * combination.prospect.purchaseCostFactor
-    const developmentCost = basePrice * combination.prospect.developmentCostFactor
-    const estimatedCost = Math.round(purchaseCost + developmentCost)
-    const totalCost = Math.round(basePrice + estimatedCost)
-    
-    allProspects.push({
-      id: i + 1,
-      categoryId: combination.categoryId,
-      categoryName: combination.categoryName,
+    return {
+      id: index + 1,
+      categoryId,
+      categoryName,
       propertyTitle: randomTitle,
       location: randomLocation,
       estimatedWorth: basePrice,
       yearBuilt: Math.random() > 0.3 ? yearBuilt : undefined,
       prospect: {
-        title: combination.prospect.title,
-        description: combination.prospect.description,
-        estimatedCost,
-        totalCost,
-        imageUrl: combination.prospect.imageUrl, // Include the image URL from aiProspects
+        title: prospect.title,
+        description: prospect.description,
+        estimatedCost: prospect.estimatedCost,
+        totalCost: prospect.estimatedCost + basePrice, // Total = estimated cost + property worth
+        imageUrl: prospect.imageUrl,
+        realizationTips: prospect.realizationTips || [], // Include realization tips from library
       }
-    })
-  }
+    }
+  })
   
   return allProspects
 }
