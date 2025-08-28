@@ -27,7 +27,8 @@ export function LoginSuccessHandler({ onLoginSuccess }: LoginSuccessHandlerProps
 
   const handleStartSmartProspect = () => {
     setShowWelcomeModal(false)
-    setShowSmartProspectFeature(true)
+    // Navigate to the image capture page instead of showing modal
+    window.location.href = "/ai/capture-image?fromLogin=true"
   }
 
   const handleSkip = () => {

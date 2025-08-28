@@ -83,6 +83,11 @@ function AIProspectPreviewPageContent() {
     router.push("/dashboard")
   }
 
+  const handleRetakeImage = () => {
+    // Keep session data but go back to image capture
+    router.push("/ai/capture-image?fromLogin=false")
+  }
+
   const handleSelectProspect = (prospect: ProspectData) => {
     setSelectedProspect(prospect)
     // Update URL to reflect selection
@@ -108,6 +113,7 @@ function AIProspectPreviewPageContent() {
   return (
     <ProspectPreviewPage
       onBack={handleBack}
+      onRetakeImage={handleRetakeImage}
       onSelectProspect={handleSelectProspect}
       onViewDetails={handleViewDetails}
       imageUrl={imageUrl}

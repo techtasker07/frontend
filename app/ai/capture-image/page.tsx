@@ -1,16 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { ImageCaptureModal } from "../camera/image-capture-modal"
+import { useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { ImageCapturePage } from "@/components/ai/image-capture-page"
 import { api, type Category } from "@/lib/api"
 import { toast } from "sonner"
-
-interface SmartProspectFeatureProps {
-  isOpen: boolean
-  onClose: () => void
-  triggerOnLogin?: boolean
-}
 
 import { MOCK_PROSPECTS, type PropertyProspect } from "@/lib/aiProspects"
 
@@ -101,15 +95,16 @@ const generateMultipleCategoryProspects = (categories: Category[]) => {
   return allProspects
 }
 
-export function SmartProspectFeature({ isOpen, onClose, triggerOnLogin = false }: SmartProspectFeatureProps) {
+export default function AICaptureImagePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const fromLogin = searchParams.get('fromLogin') === 'true'
   const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (isOpen) {
-      fetchCategories()
-    }
-  }, [isOpen])
+    fetchCategories()
+  }, [])
 
   const fetchCategories = async () => {
     try {
@@ -120,6 +115,8 @@ export function SmartProspectFeature({ isOpen, onClose, triggerOnLogin = false }
     } catch (error) {
       console.error("Failed to fetch categories:", error)
       toast.error("Failed to load categories")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -135,9 +132,6 @@ export function SmartProspectFeature({ isOpen, onClose, triggerOnLogin = false }
       sessionStorage.setItem("ai-prospects", JSON.stringify(generatedProspects))
       sessionStorage.setItem("ai-prospect-image", imageUrl)
       
-      // Close the modal and navigate to preview page
-      onClose()
-      
       // Navigate to prospect preview page
       router.push("/ai/prospect-preview")
     } catch (error) {
@@ -151,23 +145,22 @@ export function SmartProspectFeature({ isOpen, onClose, triggerOnLogin = false }
     sessionStorage.removeItem("ai-prospects")
     sessionStorage.removeItem("ai-prospect-image")
     sessionStorage.removeItem("selected-prospect")
-    onClose()
+    router.push("/dashboard")
   }
 
-  // If triggered, directly navigate to the page instead of showing modal
-  useEffect(() => {
-    if (isOpen && triggerOnLogin) {
-      onClose()
-      router.push("/ai/capture-image?fromLogin=true")
-    }
-  }, [isOpen, triggerOnLogin, router, onClose])
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+      </div>
+    )
+  }
 
   return (
-    <ImageCaptureModal
-      isOpen={isOpen && !triggerOnLogin}
+    <ImageCapturePage
       onClose={handleClose}
       onImageCaptured={handleImageCaptured}
-      fromLogin={triggerOnLogin}
+      fromLogin={fromLogin}
     />
   )
 }

@@ -30,6 +30,7 @@ interface ProspectData {
 
 interface ProspectPreviewPageProps {
   onBack: () => void
+  onRetakeImage: () => void
   onSelectProspect: (prospect: ProspectData) => void
   onViewDetails: (prospect: ProspectData) => void
   imageUrl: string
@@ -40,6 +41,7 @@ interface ProspectPreviewPageProps {
 
 export function ProspectPreviewPage({
   onBack,
+  onRetakeImage,
   onSelectProspect,
   onViewDetails,
   imageUrl,
@@ -98,9 +100,9 @@ export function ProspectPreviewPage({
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={onBack}
+                onClick={onRetakeImage}
                 className="h-9 w-9 p-0 hover:bg-blue-100 mr-3 flex-shrink-0"
-                title="Go to Dashboard"
+                title="Retake Image"
               >
                 <ArrowLeft className="h-5 w-5 text-blue-600" />
               </Button>

@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Lightbulb, Building, DollarSign, Plus, X, Home } from "lucide-react"
+import { ArrowLeft, Lightbulb, Building, DollarSign, Plus, X, Home, Camera } from "lucide-react"
 import { formatCompactCurrency } from "@/lib/currency"
 
 interface ProspectPreview {
@@ -31,6 +31,7 @@ interface ProspectDetailsPageProps {
   onBack: () => void
   onClose: () => void
   onAddProperty: () => void
+  onRetakeImage: () => void
 }
 
 export function ProspectDetailsPage({
@@ -39,6 +40,7 @@ export function ProspectDetailsPage({
   onBack,
   onClose,
   onAddProperty,
+  onRetakeImage,
 }: ProspectDetailsPageProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-purple-50 to-pink-50 relative overflow-x-hidden">
@@ -207,6 +209,14 @@ export function ProspectDetailsPage({
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
+            </Button>
+            <Button 
+              onClick={onRetakeImage}
+              variant="outline"
+              className="border-blue-200 text-blue-600 hover:bg-blue-50 py-3"
+            >
+              <Camera className="mr-2 h-4 w-4" />
+              Retake
             </Button>
             <Button 
               onClick={onClose}

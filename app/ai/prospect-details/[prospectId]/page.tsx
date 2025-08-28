@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { ProspectDetailsPage } from "@/components/ai/prospect-details-page"
-import { AddProspectModal } from "@/components/prospect/add-prospect-modal"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
 
@@ -33,7 +32,6 @@ export default function AIProspectDetailsPageRoute() {
   
   const [prospect, setProspect] = useState<ProspectData | null>(null)
   const [imageUrl, setImageUrl] = useState<string>("")
-  const [showAddModal, setShowAddModal] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -82,58 +80,17 @@ export default function AIProspectDetailsPageRoute() {
   }
 
   const handleAddProperty = () => {
-    setShowAddModal(true)
-  }
-
-  const handleFormSubmit = async (formData: any) => {
-    if (!prospect) return
-
-    try {
-      // Map old integer category IDs to new Supabase UUID category IDs
-      const categoryIdMapping: { [key: number]: string } = {
-        1: '550e8400-e29b-41d4-a716-446655440001', // Residential
-        2: '550e8400-e29b-41d4-a716-446655440002', // Commercial  
-        3: '550e8400-e29b-41d4-a716-446655440003', // Land
-        4: '550e8400-e29b-41d4-a716-446655440004', // Industrial
-        5: '550e8400-e29b-41d4-a716-446655440005', // Materials
-        6: '550e8400-e29b-41d4-a716-446655440006', // Mixed-Use
-      }
-
-      // Determine the correct category_id - handle both string (UUID) and number (old integer)
-      let categoryId: string
-      if (typeof prospect.categoryId === 'string') {
-        // Already a UUID string from Supabase
-        categoryId = prospect.categoryId
-      } else {
-        // Old integer ID, map to UUID
-        categoryId = categoryIdMapping[prospect.categoryId] || categoryIdMapping[1] // Default to Residential
-      }
-
-      // Create property data for Supabase with correct UUID category_id
-      const propertyData = {
-        title: formData.title,
-        description: formData.description,
-        location: formData.location,
-        category_id: categoryId,
-        estimated_worth: formData.estimatedWorth ? parseFloat(formData.estimatedWorth) : undefined,
-        year_of_construction: formData.yearOfConstruction ? parseInt(formData.yearOfConstruction) : undefined,
-        image_url: `https://picsum.photos/800/600?random=${Date.now()}`, // Placeholder for now
-      }
-
-      const response = await api.createProspectProperty(propertyData)
-
-      if (response.success) {
-        toast.success("Prospect property added successfully!")
-        // Clear session storage and navigate to prospect properties
-        sessionStorage.removeItem("ai-prospects")
-        sessionStorage.removeItem("ai-prospect-image")
-        sessionStorage.removeItem("selected-prospect")
-        router.push("/prospectProperties")
-      }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to create property")
+    if (prospect) {
+      // Navigate to the full-page add prospect form
+      router.push(`/ai/add-prospect?prospectId=${prospect.id}`)
     }
   }
+
+  const handleRetakeImage = () => {
+    // Keep session data but go back to image capture
+    router.push("/ai/capture-image?fromLogin=false")
+  }
+
 
   if (loading) {
     return (
@@ -168,19 +125,9 @@ export default function AIProspectDetailsPageRoute() {
         onBack={handleBack}
         onClose={handleClose}
         onAddProperty={handleAddProperty}
+        onRetakeImage={handleRetakeImage}
       />
 
-      <AddProspectModal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onSubmit={handleFormSubmit}
-        initialData={{
-          title: prospect.propertyTitle,
-          location: prospect.location,
-          estimatedWorth: prospect.estimatedWorth,
-          yearBuilt: prospect.yearBuilt,
-        }}
-      />
     </>
   )
 }
