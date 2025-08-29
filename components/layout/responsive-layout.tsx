@@ -20,6 +20,7 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
   const pathname = usePathname()
   const isHomePage = pathname === "/"
   const isAuthPage = pathname === "/login" || pathname === "/register"
+  const isAIProspectPage = pathname.startsWith("/ai/")
 
   // Mouse hover effect for sidebar
   useEffect(() => {
@@ -64,8 +65,8 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Mobile Header - Only show on non-homepage and non-auth pages */}
-      {!isHomePage && !isAuthPage && (
+      {/* Mobile Header - Only show on non-homepage, non-auth, and non-AI prospect pages */}
+      {!isHomePage && !isAuthPage && !isAIProspectPage && (
         <div className="md:hidden">
           <MobileHeader onMenuClick={() => setSidebarOpen(true)} />
         </div>
@@ -133,7 +134,7 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
 
       {/* Main Content */}
       <div className="w-full">
-        <main className={`min-h-screen ${!isHomePage && !isAuthPage ? 'pt-16 md:pt-0' : ''}`}>
+        <main className={`min-h-screen ${!isHomePage && !isAuthPage && !isAIProspectPage ? 'pt-16 md:pt-0' : ''}`}>
           {children}
         </main>
         <Footer />
