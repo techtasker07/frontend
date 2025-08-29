@@ -43,16 +43,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Simple Mobile Navigation */}
-      <div className="md:hidden sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-gray-200">
-        <div className="flex items-center px-4 py-3">
-          <Link href="/" className="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
-            <span className="text-sm font-medium">Home</span>
-          </Link>
-        </div>
-      </div>
-      
+    <div className="min-h-screen bg-gray-50">      
       <div className="flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         <div className="max-w-md w-full space-y-8">
         <div className="text-center">

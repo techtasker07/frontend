@@ -60,7 +60,7 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
             <div className="space-y-6">
               {/* Welcome Message */}
               <div className="relative">
-                <h3 className="text-xl sm:text-2xl font-bold mb-4 text-slate-400">
+                <h3 className="text-xl sm:text-2xl font-bold mb-4 text-slate-600">
                   Ready to discover new property investment opportunities?
                 </h3>
               </div>
@@ -68,7 +68,7 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
               {/* Camera Icon with Animation */}
               <div className="relative mx-auto w-24 h-24 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mb-8 shadow-xl">
                 <Camera className="h-16 w-16 text-purple-600" />
-                <div className="absolute -top-2 -right-2 w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-bounce">
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-bounce">
                   <Sparkles className="h-3 w-3 text-white" />
                 </div>
                 {/* Pulse ring */}
@@ -81,7 +81,7 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
                 <h3 className="text-xl font-bold bg-gradient-to-r from-purple-700 to-pink-700 bg-clip-text text-transparent">
                   Smart Property Analysis
                 </h3>
-                <p className="text-slate-400 leading-relaxed text-md">
+                <p className="text-slate-600 leading-relaxed text-md">
                   Take a photo or select an image of any property to get instant smart investment insights and prospect analysis!
                 </p>
               </div>
@@ -116,7 +116,7 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
         </div>
 
         {/* bottom action area */}
-        <div className="sticky bottom-0 z-20 bg-white/95 backdrop-blur-sm border-t border-purple-200 p-4">
+        <div className="sticky bottom-0 z-20 bg-white/95 backdrop-blur-sm border-t border-purple-200 p-2 mt-4">
           <div className="flex gap-4 max-w-2xl mx-auto">
             <Button
               onClick={onSkip}
