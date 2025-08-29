@@ -101,13 +101,13 @@ export function SmartProspectPreviewPage({
               alt="Property preview"
               className="w-full h-48 sm:h-64 object-cover rounded-lg shadow-lg"
             />
-            <div className="absolute top-3 left-3">
+            <div className="absolute bottom-3 left-3">
               <Badge className="bg-green-500 text-white border-0 shadow-lg flex items-center">
                 <CheckCircle className="w-3 h-3 mr-1" />
                 {identifiedCategory.name.toUpperCase()}
               </Badge>
             </div>
-            <div className="absolute top-3 right-3">
+            <div className="absolute bottom-3 right-3">
               <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 shadow-lg">
                 <Lightbulb className="w-3 h-3 mr-1" />
                 {prospects.length} Smart Prospects
@@ -163,7 +163,7 @@ export function SmartProspectPreviewPage({
                           Investment: {formatCompactCurrency(prospect.totalCost)}
                         </div>
                       </div>
-                      <Badge className="bg-purple-200 text-purple-800 flex-shrink-0">
+                      <Badge className="bg-purple-200 pb-1 text-purple-800 flex-shrink-0">
                         View Details
                       </Badge>
                     </div>
