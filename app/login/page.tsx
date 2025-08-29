@@ -32,10 +32,8 @@ export default function LoginPage() {
       await login(email, password)
       toast.success('Welcome back! You have been logged in successfully.')
       
-      // Add a small delay to ensure authentication state is properly set
-      setTimeout(() => {
-        router.push('/dashboard')
-      }, 100)
+      // The LoginSuccessHandler will automatically handle navigation to AI prospect flow
+      // No need to manually redirect to dashboard here
     } catch (error: any) {
       setError(error.message || 'Login failed. Please try again.')
       toast.error(error.message || 'Login failed. Please try again.')

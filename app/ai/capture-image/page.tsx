@@ -129,6 +129,16 @@ function AICaptureImagePageContent() {
     router.push("/dashboard")
   }
 
+  const handleBack = () => {
+    // Go back to welcome page if coming from login
+    if (fromLogin) {
+      router.push("/ai/welcome-back")
+    } else {
+      // Otherwise go to dashboard
+      router.push("/dashboard")
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -140,6 +150,7 @@ function AICaptureImagePageContent() {
   return (
     <ImageCapturePage
       onClose={handleClose}
+      onBack={handleBack}
       onImageCaptured={handleImageCaptured}
       fromLogin={fromLogin}
     />

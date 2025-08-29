@@ -4,28 +4,24 @@ import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth"
 
-interface LoginSuccessHandlerProps {
-  onLoginSuccess?: () => void
-}
-
-export function LoginSuccessHandler({ onLoginSuccess }: LoginSuccessHandlerProps) {
+export function LoginSuccessHandler() {
+  const { justLoggedIn, setJustLoggedIn, isAuthenticated, user } = useAuth()
   const router = useRouter()
-  const { user, isAuthenticated, justLoggedIn, setJustLoggedIn } = useAuth()
 
   useEffect(() => {
-    // Check if user just logged in
-    if (isAuthenticated && user && justLoggedIn) {
-      setJustLoggedIn(false) // Reset the flag
-      onLoginSuccess?.()
-      // Navigate directly to the welcome back page
-      router.push("/ai/welcome-back")
+    // Only trigger if user just logged in and is authenticated
+    if (justLoggedIn && isAuthenticated && user) {
+      // Clear the justLoggedIn flag to prevent retriggering
+      setJustLoggedIn(false)
+      
+      // Small delay to ensure the state is properly set
+      setTimeout(() => {
+        // Navigate to the AI prospect welcome page
+        router.push("/ai/welcome-back")
+      }, 100)
     }
-  }, [isAuthenticated, user, justLoggedIn, setJustLoggedIn, onLoginSuccess, router])
+  }, [justLoggedIn, isAuthenticated, user, router, setJustLoggedIn])
 
-  if (!isAuthenticated || !user) {
-    return null
-  }
-
-  // No UI needed - just handles navigation
+  // This component doesn't render anything visible
   return null
 }

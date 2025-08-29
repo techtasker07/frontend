@@ -31,6 +31,7 @@ interface ProspectData {
 
 interface ProspectPreviewPageProps {
   onBack: () => void
+  onClose: () => void
   onRetakeImage: () => void
   onSelectProspect: (prospect: ProspectData) => void
   onViewDetails: (prospect: ProspectData) => void
@@ -42,6 +43,7 @@ interface ProspectPreviewPageProps {
 
 export function ProspectPreviewPage({
   onBack,
+  onClose,
   onRetakeImage,
   onSelectProspect,
   onViewDetails,
@@ -115,7 +117,7 @@ export function ProspectPreviewPage({
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={onBack}
+              onClick={onClose}
               className="h-9 w-9 p-0 hover:bg-red-100 flex-shrink-0"
               title="Close and go to Dashboard"
             >
@@ -231,7 +233,15 @@ export function ProspectPreviewPage({
         <div className="sticky bottom-0 z-20 bg-white/95 backdrop-blur-sm border-t border-purple-200 p-4">
           <div className="flex gap-3">
             <Button 
-              onClick={onBack}
+              onClick={onRetakeImage}
+              variant="outline"
+              className="border-purple-200 text-purple-600 hover:bg-purple-50 py-3"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Retake Image
+            </Button>
+            <Button 
+              onClick={onClose}
               variant="outline"
               className="border-gray-300 text-gray-600 hover:bg-gray-50 py-3"
             >

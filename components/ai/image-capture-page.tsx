@@ -9,11 +9,12 @@ import { toast } from "sonner"
 
 interface ImageCapturePageProps {
   onClose: () => void
+  onBack?: () => void
   onImageCaptured: (imageFile: File) => void
   fromLogin?: boolean
 }
 
-export function ImageCapturePage({ onClose, onImageCaptured, fromLogin = false }: ImageCapturePageProps) {
+export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin = false }: ImageCapturePageProps) {
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [isCapturing, setIsCapturing] = useState(false)
@@ -127,6 +128,17 @@ export function ImageCapturePage({ onClose, onImageCaptured, fromLogin = false }
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-purple-200">
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center flex-1 min-w-0">
+              {fromLogin && onBack && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={onBack}
+                  className="h-9 w-9 p-0 hover:bg-blue-100 mr-3 flex-shrink-0"
+                  title="Go back to Welcome"
+                >
+                  <ArrowLeft className="h-5 w-5 text-blue-600" />
+                </Button>
+              )}
               <Camera className="mr-3 h-6 w-6 text-purple-600 flex-shrink-0" />
               <h1 className={`text-lg sm:text-xl font-bold truncate ${fromLogin ? 'bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent' : 'text-gray-800'}`}>
                 Capture Property Image
@@ -280,6 +292,16 @@ export function ImageCapturePage({ onClose, onImageCaptured, fromLogin = false }
         {/* Fixed bottom action area */}
         <div className="sticky bottom-0 z-20 bg-white/95 backdrop-blur-sm border-t border-purple-200 p-4">
           <div className="flex gap-3 max-w-2xl mx-auto">
+            {fromLogin && onBack && (
+              <Button 
+                onClick={onBack}
+                variant="outline"
+                className="border-purple-200 text-purple-600 hover:bg-purple-50 py-3"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+            )}
             <Button 
               onClick={handleClose}
               variant="outline"

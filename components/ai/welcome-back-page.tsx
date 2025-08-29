@@ -7,9 +7,10 @@ interface WelcomeBackPageProps {
   userName: string
   onStartAnalysis: () => void
   onSkip: () => void
+  onClose: () => void
 }
 
-export function WelcomeBackPage({ userName, onStartAnalysis, onSkip }: WelcomeBackPageProps) {
+export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: WelcomeBackPageProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-purple-50 to-pink-50 relative overflow-x-hidden">
       {/* Animated background elements */}
@@ -31,9 +32,9 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip }: WelcomeBa
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={onSkip}
+              onClick={onClose}
               className="h-9 w-9 p-0 hover:bg-red-100 flex-shrink-0"
-              title="Skip to Dashboard"
+              title="Close and go to Dashboard"
             >
               <X className="h-5 w-5 text-red-600" />
             </Button>

@@ -77,7 +77,12 @@ function AIProspectPreviewPageContent() {
   }
 
   const handleBack = () => {
-    // Clear session data and go back to dashboard
+    // Go back to image capture page (keeping data for retake)
+    router.push("/ai/capture-image?fromLogin=false")
+  }
+
+  const handleClose = () => {
+    // Clear all session data and go back to dashboard
     sessionStorage.removeItem("ai-prospects")
     sessionStorage.removeItem("ai-prospect-image")
     sessionStorage.removeItem("selected-prospect")
@@ -114,6 +119,7 @@ function AIProspectPreviewPageContent() {
   return (
     <ProspectPreviewPage
       onBack={handleBack}
+      onClose={handleClose}
       onRetakeImage={handleRetakeImage}
       onSelectProspect={handleSelectProspect}
       onViewDetails={handleViewDetails}

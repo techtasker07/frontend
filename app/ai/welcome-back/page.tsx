@@ -22,11 +22,16 @@ export default function AIWelcomeBackPage() {
     router.push("/dashboard")
   }
 
+  const handleClose = () => {
+    router.push("/dashboard")
+  }
+
   return (
     <WelcomeBackPage
       userName={user.first_name || "User"}
       onStartAnalysis={handleStartAnalysis}
       onSkip={handleSkip}
+      onClose={handleClose}
     />
   )
 }
