@@ -67,7 +67,7 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
 
               {/* Camera Icon with Animation */}
               <div className="relative mx-auto w-24 h-24 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mb-8 shadow-xl">
-                <Camera className="h-16 w-16 text-purple-600" />
+                <Camera className="h-10 w-10 text-purple-600" />
                 <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-bounce">
                   <Sparkles className="h-3 w-3 text-white" />
                 </div>
@@ -116,7 +116,7 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
         </div>
 
         {/* bottom action area */}
-        <div className="mt-6 bg-white/95 backdrop-blur-sm border-t border-purple-200 p-4 rounded-2xl shadow-md">
+        <div className="mt-2 bg-white/95 backdrop-blur-sm border-t border-purple-200 p-2 rounded-2xl shadow-md">
           <div className="flex gap-4 max-w-2xl mx-auto">
             <Button
               onClick={onSkip}
