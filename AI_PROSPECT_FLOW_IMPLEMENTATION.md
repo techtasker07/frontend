@@ -107,7 +107,8 @@ This document describes the implementation of the AI Prospect flow that automati
 - Respects authentication state throughout
 
 ### Data Flow
-- AI prospects generated using `generateCrossCategoryProspects()` from `lib/aiProspects.ts`
+- AI prospects generated using `generateSmartProspects()` and `performSmartAnalysis()` from `lib/smartProspectGenerator.ts`
+- Smart image analysis performed using `identifyImageCategory()` for intelligent categorization
 - Data stored in sessionStorage for navigation between pages
 - Proper cleanup on flow exit
 

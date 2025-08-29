@@ -20,8 +20,8 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
       </div>
 
       <div className="relative z-10 flex flex-col min-h-screen">
-        {/* Header */}
-        <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-purple-200">
+        {/* Header - Hidden on mobile */}
+        <div className="hidden md:block sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-purple-200">
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center flex-1 min-w-0">
               <Sparkles className="mr-3 h-6 w-6 text-purple-600 flex-shrink-0 animate-pulse" />
@@ -39,6 +39,19 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
               <X className="h-5 w-5 text-red-600" />
             </Button>
           </div>
+        </div>
+
+        {/* Mobile Close Button - Top right corner */}
+        <div className="md:hidden fixed top-4 right-4 z-30">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onClose}
+            className="h-10 w-10 p-0 bg-white/90 hover:bg-red-100 rounded-full shadow-lg"
+            title="Close and go to Dashboard"
+          >
+            <X className="h-5 w-5 text-red-600" />
+          </Button>
         </div>
 
         {/* Content */}

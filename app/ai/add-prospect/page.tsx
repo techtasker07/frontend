@@ -5,24 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { AddProspectPage } from "@/components/ai/add-prospect-page"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
+import type { SmartProspect, IdentifiedCategory } from "@/lib/smartProspectGenerator"
 
-interface ProspectPreview {
+interface PropertyDetails {
   title: string
-  description: string
-  estimatedCost: number
-  totalCost: number
-  imageUrl?: string
-}
-
-interface ProspectData {
-  id: number
-  categoryId: string | number
-  categoryName: string
-  propertyTitle: string
   location: string
   estimatedWorth: number
   yearBuilt?: number
-  prospect: ProspectPreview
 }
 
 interface ProspectFormData {
@@ -38,23 +27,31 @@ function AIAddProspectPageContent() {
   const searchParams = useSearchParams()
   const prospectId = searchParams.get('prospectId')
   
-  const [prospect, setProspect] = useState<ProspectData | null>(null)
+  const [prospect, setProspect] = useState<SmartProspect | null>(null)
+  const [propertyDetails, setPropertyDetails] = useState<PropertyDetails | null>(null)
+  const [identifiedCategory, setIdentifiedCategory] = useState<IdentifiedCategory | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     // Get data from sessionStorage
     const storedProspect = sessionStorage.getItem("selected-prospect")
+    const storedPropertyDetails = sessionStorage.getItem("property-details")
+    const storedCategory = sessionStorage.getItem("identified-category")
     const storedProspects = sessionStorage.getItem("ai-prospects")
 
-    if (storedProspect) {
+    if (storedProspect && storedPropertyDetails && storedCategory) {
       const prospectData = JSON.parse(storedProspect)
       setProspect(prospectData)
-    } else if (storedProspects && prospectId) {
+      setPropertyDetails(JSON.parse(storedPropertyDetails))
+      setIdentifiedCategory(JSON.parse(storedCategory))
+    } else if (storedProspects && storedPropertyDetails && storedCategory && prospectId) {
       // Fallback: find prospect from all prospects
       const allProspects = JSON.parse(storedProspects)
-      const foundProspect = allProspects.find((p: ProspectData) => p.id.toString() === prospectId)
+      const foundProspect = allProspects.find((p: SmartProspect) => p.id === parseInt(prospectId))
       if (foundProspect) {
         setProspect(foundProspect)
+        setPropertyDetails(JSON.parse(storedPropertyDetails))
+        setIdentifiedCategory(JSON.parse(storedCategory))
         sessionStorage.setItem("selected-prospect", JSON.stringify(foundProspect))
       } else {
         toast.error("Prospect not found. Please start the analysis again.")
@@ -84,35 +81,29 @@ function AIAddProspectPageContent() {
     // Clear all session data and go back to dashboard
     sessionStorage.removeItem("ai-prospects")
     sessionStorage.removeItem("ai-prospect-image")
+    sessionStorage.removeItem("property-details")
+    sessionStorage.removeItem("identified-category")
     sessionStorage.removeItem("selected-prospect")
     router.push("/dashboard")
   }
 
   const handleFormSubmit = async (formData: ProspectFormData) => {
-    if (!prospect) return
+    if (!prospect || !identifiedCategory) return
 
     try {
-      // Map old integer category IDs to new Supabase UUID category IDs
-      const categoryIdMapping: { [key: number]: string } = {
-        1: '550e8400-e29b-41d4-a716-446655440001', // Residential
-        2: '550e8400-e29b-41d4-a716-446655440002', // Commercial  
-        3: '550e8400-e29b-41d4-a716-446655440003', // Land
-        4: '550e8400-e29b-41d4-a716-446655440004', // Industrial
-        5: '550e8400-e29b-41d4-a716-446655440005', // Materials
-        6: '550e8400-e29b-41d4-a716-446655440006', // Mixed-Use
+      // Map smart prospect categories to Supabase UUID category IDs
+      const categoryIdMapping: { [key: string]: string } = {
+        'building': '550e8400-e29b-41d4-a716-446655440001', // Residential
+        'room': '550e8400-e29b-41d4-a716-446655440001', // Residential
+        'office space': '550e8400-e29b-41d4-a716-446655440002', // Commercial
+        'land': '550e8400-e29b-41d4-a716-446655440003', // Land
+        'material': '550e8400-e29b-41d4-a716-446655440004', // Industrial
       }
 
-      // Determine the correct category_id - handle both string (UUID) and number (old integer)
-      let categoryId: string
-      if (typeof prospect.categoryId === 'string') {
-        // Already a UUID string from Supabase
-        categoryId = prospect.categoryId
-      } else {
-        // Old integer ID, map to UUID
-        categoryId = categoryIdMapping[prospect.categoryId] || categoryIdMapping[1] // Default to Residential
-      }
+      // Use identified category to determine the correct category_id
+      const categoryId = categoryIdMapping[identifiedCategory.name] || categoryIdMapping['building']
 
-      // Create property data for Supabase with correct UUID category_id
+      // Create property data for Supabase
       const propertyData = {
         title: formData.title,
         description: formData.description,
@@ -126,10 +117,12 @@ function AIAddProspectPageContent() {
       const response = await api.createProspectProperty(propertyData)
 
       if (response.success) {
-        toast.success("Prospect property added successfully!")
+        toast.success("Smart prospect property added successfully!")
         // Clear session storage and navigate to prospect properties
         sessionStorage.removeItem("ai-prospects")
         sessionStorage.removeItem("ai-prospect-image")
+        sessionStorage.removeItem("property-details")
+        sessionStorage.removeItem("identified-category")
         sessionStorage.removeItem("selected-prospect")
         router.push("/prospectProperties")
       }
@@ -146,12 +139,13 @@ function AIAddProspectPageContent() {
     )
   }
 
-  if (!prospect) {
+  // Return early if data is not ready
+  if (!prospect || !propertyDetails || !identifiedCategory) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Prospect not found</h2>
-          <p className="text-muted-foreground mb-4">Please start the analysis again.</p>
+          <h2 className="text-xl font-semibold mb-2">Loading prospect data...</h2>
+          <p className="text-muted-foreground mb-4">Please wait while we load your data.</p>
           <button
             onClick={() => router.push("/dashboard")}
             className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
@@ -169,10 +163,10 @@ function AIAddProspectPageContent() {
       onBack={handleBack}
       onSubmit={handleFormSubmit}
       initialData={{
-        title: prospect.propertyTitle,
-        location: prospect.location,
-        estimatedWorth: prospect.estimatedWorth,
-        yearBuilt: prospect.yearBuilt,
+        title: propertyDetails.title,
+        location: propertyDetails.location,
+        estimatedWorth: propertyDetails.estimatedWorth,
+        yearBuilt: propertyDetails.yearBuilt,
       }}
     />
   )

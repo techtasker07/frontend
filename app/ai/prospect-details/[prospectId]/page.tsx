@@ -2,56 +2,52 @@
 
 import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
-import { ProspectDetailsPage } from "@/components/ai/prospect-details-page"
-import { api } from "@/lib/api"
+import { SmartProspectDetailsPage } from "@/components/ai/smart-prospect-details-page"
+import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
+import type { SmartProspect, IdentifiedCategory } from "@/lib/smartProspectGenerator"
 
-interface ProspectPreview {
+interface PropertyDetails {
   title: string
-  description: string
-  estimatedCost: number
-  totalCost: number
-  imageUrl?: string
-  realizationTips?: string[]
-}
-
-interface ProspectData {
-  id: number
-  categoryId: string | number // Support both string (new UUID) and number (old integer) for backwards compatibility
-  categoryName: string
-  propertyTitle: string
   location: string
   estimatedWorth: number
   yearBuilt?: number
-  prospect: ProspectPreview
 }
 
 export default function AIProspectDetailsPageRoute() {
   const router = useRouter()
   const params = useParams()
-  const prospectId = parseInt(params.prospectId as string)
+  const prospectId = params.prospectId as string
   
-  const [prospect, setProspect] = useState<ProspectData | null>(null)
+  const [prospect, setProspect] = useState<SmartProspect | null>(null)
   const [imageUrl, setImageUrl] = useState<string>("")
+  const [identifiedCategory, setIdentifiedCategory] = useState<IdentifiedCategory | null>(null)
+  const [propertyDetails, setPropertyDetails] = useState<PropertyDetails | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     // Get data from sessionStorage
     const storedProspect = sessionStorage.getItem("selected-prospect")
     const storedImageUrl = sessionStorage.getItem("ai-prospect-image")
+    const storedPropertyDetails = sessionStorage.getItem("property-details")
+    const storedCategory = sessionStorage.getItem("identified-category")
     const storedProspects = sessionStorage.getItem("ai-prospects")
 
-    if (storedProspect && storedImageUrl) {
+    if (storedProspect && storedImageUrl && storedPropertyDetails && storedCategory) {
       const prospectData = JSON.parse(storedProspect)
       setProspect(prospectData)
       setImageUrl(storedImageUrl)
-    } else if (storedProspects && storedImageUrl) {
+      setPropertyDetails(JSON.parse(storedPropertyDetails))
+      setIdentifiedCategory(JSON.parse(storedCategory))
+    } else if (storedProspects && storedImageUrl && storedPropertyDetails && storedCategory) {
       // Fallback: find prospect from all prospects
       const allProspects = JSON.parse(storedProspects)
-      const foundProspect = allProspects.find((p: ProspectData) => p.id === prospectId)
+      const foundProspect = allProspects.find((p: SmartProspect) => p.id === parseInt(prospectId))
       if (foundProspect) {
         setProspect(foundProspect)
         setImageUrl(storedImageUrl)
+        setPropertyDetails(JSON.parse(storedPropertyDetails))
+        setIdentifiedCategory(JSON.parse(storedCategory))
         sessionStorage.setItem("selected-prospect", JSON.stringify(foundProspect))
       } else {
         toast.error("Prospect not found. Please start the analysis again.")
@@ -76,6 +72,8 @@ export default function AIProspectDetailsPageRoute() {
     // Clear all session data and go back to dashboard
     sessionStorage.removeItem("ai-prospects")
     sessionStorage.removeItem("ai-prospect-image")
+    sessionStorage.removeItem("property-details")
+    sessionStorage.removeItem("identified-category")
     sessionStorage.removeItem("selected-prospect")
     router.push("/dashboard")
   }
@@ -88,7 +86,12 @@ export default function AIProspectDetailsPageRoute() {
   }
 
   const handleRetakeImage = () => {
-    // Keep session data but go back to image capture
+    // Clear session data and go back to image capture
+    sessionStorage.removeItem("ai-prospects")
+    sessionStorage.removeItem("ai-prospect-image")
+    sessionStorage.removeItem("property-details")
+    sessionStorage.removeItem("identified-category")
+    sessionStorage.removeItem("selected-prospect")
     router.push("/ai/capture-image?fromLogin=false")
   }
 
@@ -101,34 +104,28 @@ export default function AIProspectDetailsPageRoute() {
     )
   }
 
-  if (!prospect) {
+  // Return early if data is not ready
+  if (!prospect || !imageUrl || !identifiedCategory || !propertyDetails) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Prospect not found</h2>
-          <p className="text-muted-foreground mb-4">Please start the analysis again.</p>
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-          >
-            Go to Dashboard
-          </button>
+          <p className="text-muted-foreground mb-4">Loading prospect details...</p>
+          <Button onClick={() => router.push("/dashboard")}>Go to Dashboard</Button>
         </div>
       </div>
     )
   }
 
   return (
-    <>
-      <ProspectDetailsPage
-        prospect={prospect}
-        imageUrl={imageUrl}
-        onBack={handleBack}
-        onClose={handleClose}
-        onAddProperty={handleAddProperty}
-        onRetakeImage={handleRetakeImage}
-      />
-
-    </>
+    <SmartProspectDetailsPage
+      prospect={prospect}
+      imageUrl={imageUrl}
+      identifiedCategory={identifiedCategory}
+      propertyDetails={propertyDetails}
+      onBack={handleBack}
+      onClose={handleClose}
+      onAddProperty={handleAddProperty}
+      onRetakeImage={handleRetakeImage}
+    />
   )
 }

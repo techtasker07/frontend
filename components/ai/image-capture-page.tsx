@@ -4,13 +4,15 @@ import type React from "react"
 
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { Camera, Upload, X, ArrowLeft, Home } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Camera, Upload, X, ArrowLeft, Home, CheckCircle } from "lucide-react"
 import { toast } from "sonner"
+import { identifyImageCategory, type IdentifiedCategory } from "@/lib/smartProspectGenerator"
 
 interface ImageCapturePageProps {
   onClose: () => void
   onBack?: () => void
-  onImageCaptured: (imageFile: File) => void
+  onImageCaptured: (imageFile: File, identifiedCategory?: IdentifiedCategory) => void
   fromLogin?: boolean
 }
 
@@ -19,6 +21,8 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [isCapturing, setIsCapturing] = useState(false)
   const [stream, setStream] = useState<MediaStream | null>(null)
+  const [identifiedCategory, setIdentifiedCategory] = useState<IdentifiedCategory | null>(null)
+  const [isIdentifying, setIsIdentifying] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -59,13 +63,16 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
       if (context) {
         context.drawImage(video, 0, 0)
         canvas.toBlob(
-          (blob) => {
+          async (blob) => {
             if (blob) {
               const file = new File([blob], `prospect-${Date.now()}.jpg`, { type: "image/jpeg" })
               const imageUrl = URL.createObjectURL(blob)
               setCapturedImage(imageUrl)
               setImageFile(file)
               stopCamera()
+              
+              // Identify image category
+              await identifyImage(file)
             }
           },
           "image/jpeg",
@@ -75,14 +82,35 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
     }
   }
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file && file.type.startsWith("image/")) {
       const imageUrl = URL.createObjectURL(file)
       setCapturedImage(imageUrl)
       setImageFile(file)
+      
+      // Identify image category
+      await identifyImage(file)
     } else {
       toast.error("Please select a valid image file.")
+    }
+  }
+
+  const identifyImage = async (file: File) => {
+    setIsIdentifying(true)
+    try {
+      const category = await identifyImageCategory(file)
+      setIdentifiedCategory(category)
+      
+      // Show success notification
+      toast.success(`✨ Image identified as ${category.name.toUpperCase()} (${Math.round(category.confidence * 100)}% confidence)`, {
+        duration: 3000
+      })
+    } catch (error) {
+      console.error('Failed to identify image:', error)
+      toast.error('Failed to identify image category')
+    } finally {
+      setIsIdentifying(false)
     }
   }
 
@@ -92,7 +120,7 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
       return
     }
 
-    onImageCaptured(imageFile)
+    onImageCaptured(imageFile, identifiedCategory || undefined)
   }
 
   const handleRetakeImage = () => {
@@ -124,8 +152,8 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
       </div>
 
       <div className="relative z-10 flex flex-col min-h-screen">
-        {/* Header */}
-        <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-purple-200">
+        {/* Header - Hidden on mobile */}
+        <div className="hidden md:block sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-purple-200">
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center flex-1 min-w-0">
               {fromLogin && onBack && (
@@ -154,6 +182,31 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
               <X className="h-5 w-5 text-red-600" />
             </Button>
           </div>
+        </div>
+
+        {/* Mobile Navigation - Top corners */}
+        <div className="md:hidden fixed top-4 left-4 right-4 z-30 flex justify-between">
+          {fromLogin && onBack && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onBack}
+              className="h-10 w-10 p-0 bg-white/90 hover:bg-blue-100 rounded-full shadow-lg"
+              title="Go back to Welcome"
+            >
+              <ArrowLeft className="h-5 w-5 text-blue-600" />
+            </Button>
+          )}
+          <div className="flex-1"></div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleClose}
+            className="h-10 w-10 p-0 bg-white/90 hover:bg-red-100 rounded-full shadow-lg"
+            title="Close and go to Dashboard"
+          >
+            <X className="h-5 w-5 text-red-600" />
+          </Button>
         </div>
 
         {/* Content */}
@@ -259,7 +312,30 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                   alt="Captured property"
                   className="w-full rounded-lg max-h-96 object-cover"
                 />
+                {identifiedCategory && (
+                  <div className="absolute top-3 left-3">
+                    <Badge className="bg-green-500 text-white border-0 shadow-lg flex items-center">
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      {identifiedCategory.name.toUpperCase()} ({Math.round(identifiedCategory.confidence * 100)}%)
+                    </Badge>
+                  </div>
+                )}
               </div>
+
+              {/* Category identification notification */}
+              {identifiedCategory && (
+                <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border border-green-200 flex items-center">
+                  <CheckCircle className="h-5 w-5 text-green-600 mr-3 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm text-green-800 font-medium">
+                      ✅ Image identified as {identifiedCategory.name.toUpperCase()}
+                    </p>
+                    <p className="text-xs text-green-700">
+                      Confidence: {Math.round(identifiedCategory.confidence * 100)}% • Ready for smart prospect generation!
+                    </p>
+                  </div>
+                </div>
+              )}
 
               <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border border-blue-200">
                 <p className="text-sm text-blue-800 mb-2">

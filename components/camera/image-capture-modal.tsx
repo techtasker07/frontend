@@ -5,8 +5,10 @@ import type React from "react"
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Camera, Upload, X } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Camera, Upload, X, CheckCircle } from "lucide-react"
 import { toast } from "sonner"
+import { identifyImageCategory, type IdentifiedCategory } from "@/lib/smartProspectGenerator"
 
 interface ImageCaptureModalProps {
   isOpen: boolean

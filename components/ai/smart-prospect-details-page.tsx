@@ -3,46 +3,38 @@
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Lightbulb, Building, DollarSign, Plus, X, Home, Camera } from "lucide-react"
+import { ArrowLeft, Lightbulb, Building, DollarSign, Plus, X, Home, Camera, MapPin, Calendar } from "lucide-react"
 import { formatCompactCurrency } from "@/lib/currency"
+import type { SmartProspect, IdentifiedCategory } from "@/lib/smartProspectGenerator"
 
-interface ProspectPreview {
+interface PropertyDetails {
   title: string
-  description: string
-  estimatedCost: number
-  totalCost: number
-  imageUrl?: string
-  realizationTips?: string[]
-}
-
-interface ProspectData {
-  id: number
-  categoryId: string | number // Support both string (new UUID) and number (old integer) for backwards compatibility
-  categoryName: string
-  propertyTitle: string
   location: string
   estimatedWorth: number
   yearBuilt?: number
-  prospect: ProspectPreview
 }
 
-interface ProspectDetailsPageProps {
-  prospect: ProspectData
+interface SmartProspectDetailsPageProps {
+  prospect: SmartProspect
   imageUrl: string
+  identifiedCategory: IdentifiedCategory
+  propertyDetails: PropertyDetails
   onBack: () => void
   onClose: () => void
   onAddProperty: () => void
   onRetakeImage: () => void
 }
 
-export function ProspectDetailsPage({
+export function SmartProspectDetailsPage({
   prospect,
   imageUrl,
+  identifiedCategory,
+  propertyDetails,
   onBack,
   onClose,
   onAddProperty,
   onRetakeImage,
-}: ProspectDetailsPageProps) {
+}: SmartProspectDetailsPageProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-purple-50 to-pink-50 relative overflow-x-hidden">
       {/* Animated background elements */}
@@ -66,7 +58,7 @@ export function ProspectDetailsPage({
               </Button>
               <Lightbulb className="mr-3 h-6 w-6 text-yellow-500 flex-shrink-0" />
               <h1 className="text-lg sm:text-xl font-bold text-gray-800 truncate">
-                {prospect.prospect.title}
+                {prospect.title}
               </h1>
             </div>
             <Button 
@@ -99,37 +91,57 @@ export function ProspectDetailsPage({
               alt="Property preview"
               className="w-full h-40 sm:h-48 object-cover rounded-lg shadow-lg"
             />
-            <Badge className="absolute top-3 left-3 bg-white/90 text-gray-800 text-xs sm:text-sm shadow-md">
-              {prospect.categoryName}
-            </Badge>
+            <div className="absolute top-3 left-3 flex gap-2 flex-wrap">
+              <Badge className="bg-white/90 text-gray-800 text-xs sm:text-sm shadow-md">
+                {identifiedCategory.name.toUpperCase()}
+              </Badge>
+              <Badge className="bg-blue-500/90 text-white text-xs shadow-md">
+                {Math.round(identifiedCategory.confidence * 100)}% confident
+              </Badge>
+            </div>
           </div>
 
           {/* Prospect Preview Image */}
-          {prospect.prospect.imageUrl && (
+          {prospect.imageUrl && (
             <div className="relative">
               <img
-                src={prospect.prospect.imageUrl}
-                alt={prospect.prospect.title}
+                src={prospect.imageUrl}
+                alt={prospect.title}
                 className="w-full h-32 sm:h-40 object-cover rounded-lg shadow-lg"
               />
               <Badge className="absolute top-3 left-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 shadow-lg">
                 <Lightbulb className="w-3 h-3 mr-1" />
-                Prospect Preview
+                Smart Prospect
               </Badge>
             </div>
           )}
+
+          {/* Prospect Title and Category */}
+          <Card className="border-2 border-purple-200">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center">
+                  <Lightbulb className="mr-2 h-5 w-5 text-yellow-500" />
+                  {prospect.title}
+                </CardTitle>
+                <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
+                  {prospect.category}
+                </Badge>
+              </div>
+            </CardHeader>
+          </Card>
 
           {/* Description */}
           <Card className="border-2 border-purple-200">
             <CardHeader>
               <CardTitle className="text-lg flex items-center">
                 <Building className="mr-2 h-5 w-5" />
-                Project Description
+                Investment Overview
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground leading-relaxed text-sm sm:text-base">
-                {prospect.prospect.description}
+                {prospect.description}
               </p>
             </CardContent>
           </Card>
@@ -138,7 +150,6 @@ export function ProspectDetailsPage({
           <Card className="border-2 border-green-200">
             <CardHeader>
               <CardTitle className="text-lg flex items-center">
-                <DollarSign className="mr-2 h-5 w-5 text-green-600" />
                 Investment Analysis
               </CardTitle>
             </CardHeader>
@@ -147,53 +158,41 @@ export function ProspectDetailsPage({
                 <div className="p-4 bg-blue-50 rounded-lg">
                   <p className="text-sm text-muted-foreground mb-1">Development Cost</p>
                   <p className="text-xl sm:text-2xl font-semibold text-blue-600">
-                    {formatCompactCurrency(prospect.prospect.estimatedCost)}
+                    {formatCompactCurrency(prospect.estimatedCost)}
                   </p>
                 </div>
                 <div className="p-4 bg-green-50 rounded-lg">
                   <p className="text-sm text-muted-foreground mb-1">Total Investment</p>
                   <p className="text-xl sm:text-2xl font-semibold text-green-600">
-                    {formatCompactCurrency(prospect.prospect.totalCost)}
+                    {formatCompactCurrency(prospect.totalCost)}
                   </p>
                 </div>
               </div>
 
-              {/* Additional property info if available */}
-              {(prospect.estimatedWorth || prospect.yearBuilt) && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
-                  {prospect.estimatedWorth && (
-                    <div className="p-4 bg-purple-50 rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-1">Estimated Property Worth</p>
-                      <p className="text-lg font-semibold text-purple-600">
-                        {formatCompactCurrency(prospect.estimatedWorth)}
-                      </p>
-                    </div>
-                  )}
-                  {prospect.yearBuilt && (
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-1">Estimated Year Built</p>
-                      <p className="text-lg font-semibold text-gray-600">
-                        {prospect.yearBuilt}
-                      </p>
-                    </div>
-                  )}
+              {/* Additional property info */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+                <div className="p-4 bg-purple-50 rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-1">Property Worth</p>
+                  <p className="text-lg font-semibold text-purple-600">
+                    {formatCompactCurrency(propertyDetails.estimatedWorth)}
+                  </p>
                 </div>
-              )}
+              </div>
             </CardContent>
           </Card>
 
-          {/* Realization Tips */}
-          {prospect.prospect.realizationTips && prospect.prospect.realizationTips.length > 0 && (
+          {/* Implementation Tips */}
+          {prospect.realizationTips && prospect.realizationTips.length > 0 && (
             <Card className="border-2 border-yellow-200">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center">
                   <Lightbulb className="mr-2 h-5 w-5 text-yellow-600" />
-                  Implementation Tips
+                  Smart Implementation Tips
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {prospect.prospect.realizationTips.map((tip, index) => (
+                  {prospect.realizationTips.map((tip, index) => (
                     <div key={index} className="flex items-start space-x-3 p-3 bg-yellow-50 rounded-lg">
                       <div className="w-6 h-6 bg-yellow-500 text-white rounded-full flex items-center justify-center text-xs font-bold mt-0.5 flex-shrink-0">
                         {index + 1}
@@ -212,10 +211,22 @@ export function ProspectDetailsPage({
               <CardTitle className="text-lg">Property Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-sm font-medium text-gray-600 flex items-center">
+                  <Building className="w-4 h-4 mr-1" />
+                  Property Title:
+                </span>
+                <span className="text-sm font-semibold text-gray-800 text-right flex-1 ml-2">
+                  {propertyDetails.title}
+                </span>
+              </div>
               <div className="flex justify-between items-center py-2">
-                <span className="text-sm font-medium text-gray-600">Category:</span>
+                <span className="text-sm font-medium text-gray-600 flex items-center">
+                  <Lightbulb className="w-4 h-4 mr-1" />
+                  AI Category:
+                </span>
                 <Badge className="bg-purple-100 text-purple-800">
-                  {prospect.categoryName}
+                  {identifiedCategory.name.toUpperCase()}
                 </Badge>
               </div>
             </CardContent>

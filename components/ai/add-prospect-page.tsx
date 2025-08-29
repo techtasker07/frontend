@@ -107,8 +107,8 @@ export function AddProspectPage({ onClose, onBack, onSubmit, initialData }: AddP
       </div>
 
       <div className="relative z-10 flex flex-col min-h-screen">
-        {/* Header */}
-        <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-purple-200">
+        {/* Header - hidden on mobile */}
+        <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-purple-200 hidden md:block">
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center flex-1 min-w-0">
               <Button 
@@ -136,6 +136,17 @@ export function AddProspectPage({ onClose, onBack, onSubmit, initialData }: AddP
             </Button>
           </div>
         </div>
+
+        {/* Fixed close button for mobile */}
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={onClose}
+          className="fixed top-4 right-4 z-30 h-9 w-9 p-0 hover:bg-red-100 bg-white/90 backdrop-blur-sm shadow-lg rounded-full border border-gray-200 md:hidden"
+          title="Close and go to Dashboard"
+        >
+          <X className="h-5 w-5 text-red-600" />
+        </Button>
 
         {/* Content */}
         <div className="flex-1 p-4 pb-6">

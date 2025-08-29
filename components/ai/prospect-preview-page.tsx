@@ -141,7 +141,7 @@ export function ProspectPreviewPage({
             <div className="absolute top-3 right-3">
               <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 shadow-lg">
                 <Lightbulb className="w-3 h-3 mr-1" />
-                Smart Generated ({allProspects.length} Options)
+                Smart Generation ({allProspects.length} Options)
               </Badge>
             </div>
           </div>
