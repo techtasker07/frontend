@@ -163,7 +163,7 @@ export function SmartProspectPreviewPage({
                           Investment: {formatCompactCurrency(prospect.totalCost)}
                         </div>
                       </div>
-                      <Badge className="bg-purple-200 pb-1 text-purple-800 flex-shrink-0">
+                      <Badge className="bg-purple-200 mb-1 text-purple-800 flex-shrink-0">
                         View Details
                       </Badge>
                     </div>

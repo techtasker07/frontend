@@ -245,22 +245,6 @@ export function SmartProspectDetailsPage({
               Back
             </Button>
             <Button 
-              onClick={onRetakeImage}
-              variant="outline"
-              className="border-blue-200 text-blue-600 hover:bg-blue-50 py-3"
-            >
-              <Camera className="mr-2 h-4 w-4" />
-              Retake
-            </Button>
-            <Button 
-              onClick={onClose}
-              variant="outline"
-              className="border-gray-300 text-gray-600 hover:bg-gray-50 py-3"
-            >
-              <Home className="mr-2 h-4 w-4" />
-              Dashboard
-            </Button>
-            <Button 
               onClick={onAddProperty} 
               className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 py-3 text-base font-semibold"
             >
