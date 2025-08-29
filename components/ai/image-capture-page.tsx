@@ -210,7 +210,7 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
         </div>
 
         {/* Content */}
-        <div className="flex-1 p-4 pb-6 space-y-6 max-w-2xl mx-auto w-full">
+        <div className="flex-1 p-4 pt-16 pb-6 space-y-6 max-w-2xl mx-auto w-full">
           {!capturedImage && !isCapturing && (
             <div className="space-y-6">
               <div className="text-center">

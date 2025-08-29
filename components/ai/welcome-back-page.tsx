@@ -87,7 +87,7 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
               </div>
 
               {/* Features List */}
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-2 rounded-2xl border border-purple-200 shadow-lg">
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-2xl border border-purple-200 shadow-lg">
                 <h4 className="font-semibold text-purple-800 mb-4 flex items-center justify-center">
                   <Sparkles className="mr-2 h-5 w-5" />
                   What you'll get:
@@ -115,8 +115,8 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
           </div>
         </div>
 
-        {/* bottom action area */}
-        <div className="mt-2 bg-white/95 backdrop-blur-sm border-t border-purple-200 p-2 rounded-2xl shadow-md">
+        {/* Fixed bottom action area */}
+        <div className="sticky bottom-0 z-20 bg-white/95 backdrop-blur-sm border-t border-purple-200 p-4">
           <div className="flex gap-4 max-w-2xl mx-auto">
             <Button
               onClick={onSkip}
