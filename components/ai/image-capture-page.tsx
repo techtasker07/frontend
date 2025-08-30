@@ -6,9 +6,17 @@ import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Camera, Upload, X, ArrowLeft, Home, CheckCircle, AlertCircle, User } from "lucide-react"
+import { Camera, Upload, X, ArrowLeft, Home, CheckCircle, AlertCircle, User, RefreshCw, ThumbsUp, ThumbsDown } from "lucide-react"
 import { toast } from "sonner"
 import { identifyImageCategory, type IdentifiedCategory } from "@/lib/smartProspectGenerator"
+
+// Confidence thresholds for identification results
+const CONFIDENCE_THRESHOLDS = {
+  HIGH: 0.85, // 85% and above is high confidence
+  MEDIUM: 0.60, // 60% to 85% is medium confidence
+  LOW: 0.40,    // Below 60% is low confidence
+  RETRY_ATTEMPTS: 2 // Maximum number of automatic retry attempts
+}
 
 interface ImageCapturePageProps {
   onClose: () => void
@@ -26,6 +34,11 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
   const [isIdentifying, setIsIdentifying] = useState(false)
   const [verificationProgress, setVerificationProgress] = useState(0)
   const [isHumanImage, setIsHumanImage] = useState(false)
+  const [identificationError, setIdentificationError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
+  const [confidenceLevel, setConfidenceLevel] = useState<'high' | 'medium' | 'low' | null>(null)
+  const [showFeedback, setShowFeedback] = useState(false)
+  const [feedbackGiven, setFeedbackGiven] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -99,7 +112,17 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
     }
   }
 
-  const identifyImage = async (file: File) => {
+  // Enhanced image identification with retry logic
+  const identifyImage = async (file: File, isRetry: boolean = false) => {
+    if (!isRetry) {
+      // Reset states for a fresh identification
+      setIdentificationError(null)
+      setRetryCount(0)
+      setConfidenceLevel(null)
+      setShowFeedback(false)
+      setFeedbackGiven(false)
+    }
+    
     setIsIdentifying(true)
     setVerificationProgress(0)
     
@@ -118,6 +141,15 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
       const category = await identifyImageCategory(file)
       setIdentifiedCategory(category)
       
+      // Determine confidence level
+      if (category.confidence >= CONFIDENCE_THRESHOLDS.HIGH) {
+        setConfidenceLevel('high')
+      } else if (category.confidence >= CONFIDENCE_THRESHOLDS.MEDIUM) {
+        setConfidenceLevel('medium')
+      } else {
+        setConfidenceLevel('low')
+      }
+      
       // Check if this is a human image
       if (category.name === 'human') {
         setIsHumanImage(true)
@@ -126,26 +158,98 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
         })
       } else {
         setIsHumanImage(false)
-        // Show success notification for property images
-        toast.success(`✨ Image identified as ${category.name.toUpperCase()} (${Math.round(category.confidence * 100)}% confidence)`, {
-          duration: 3000
-        })
+        // Show appropriate notification based on confidence
+        if (category.confidence >= CONFIDENCE_THRESHOLDS.HIGH) {
+          toast.success(`✨ Image identified as ${category.name.toUpperCase()} (${Math.round(category.confidence * 100)}% confidence)`, {
+            duration: 3000
+          })
+        } else if (category.confidence >= CONFIDENCE_THRESHOLDS.MEDIUM) {
+          toast.info(`🔍 Image appears to be ${category.name.toUpperCase()} (${Math.round(category.confidence * 100)}% confidence)`, {
+            duration: 4000
+          })
+          // Show feedback option for medium confidence
+          setTimeout(() => setShowFeedback(true), 1000)
+        } else {
+          toast.warning(`⚠️ Low confidence identification: ${category.name.toUpperCase()} (${Math.round(category.confidence * 100)}%)`, {
+            duration: 4000
+          })
+          // Show feedback option for low confidence
+          setTimeout(() => setShowFeedback(true), 1000)
+        }
       }
     } catch (error) {
       console.error('Failed to identify image:', error)
-      toast.error('Failed to identify image category')
+      
+      // Enhanced error handling
+      let errorMessage = 'Failed to identify image category'
+      
+      if (error instanceof Error) {
+        if (error.message.includes('network')) {
+          errorMessage = 'Network error. Please check your connection and try again.'
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'Request timed out. Please try again.'
+        }
+      }
+      
+      setIdentificationError(errorMessage)
+      
+      // Auto-retry for certain error types, up to the maximum retry count
+      if (retryCount < CONFIDENCE_THRESHOLDS.RETRY_ATTEMPTS && !isRetry) {
+        toast.info("Retrying image identification...", { duration: 2000 })
+        setRetryCount(prev => prev + 1)
+        
+        // Wait a moment before retrying
+        setTimeout(() => {
+          identifyImage(file, true)
+        }, 2000)
+        return
+      } else {
+        toast.error(errorMessage)
+      }
     } finally {
       clearInterval(progressInterval)
       setVerificationProgress(100)
       
-      // After a short delay, hide the progress bar if identification was successful
+      // After a short delay, hide the progress bar if identification was successful and confidence is high
       setTimeout(() => {
-        if (!isHumanImage) {
+        if (!isHumanImage && !identificationError && confidenceLevel === 'high') {
           setVerificationProgress(0)
         }
       }, 1000)
       
       setIsIdentifying(false)
+    }
+  }
+  
+  // Handle user feedback on identification
+  const handleFeedback = (isCorrect: boolean) => {
+    if (isCorrect) {
+      toast.success("Thanks for confirming! This helps us improve.", { duration: 3000 })
+    } else {
+      toast.info("Thanks for your feedback. We'll work on improving our identification.", { duration: 3000 })
+    }
+    
+    // In a real implementation, you would send this feedback to a server
+    // For now, we'll just log it and update the UI
+    console.log("User feedback on identification:", {
+      category: identifiedCategory?.name,
+      confidence: identifiedCategory?.confidence,
+      userFeedback: isCorrect ? "correct" : "incorrect"
+    })
+    
+    setFeedbackGiven(true)
+    
+    // Hide feedback UI after a moment
+    setTimeout(() => {
+      setShowFeedback(false)
+    }, 3000)
+  }
+  
+  // Manually retry identification
+  const handleRetryIdentification = () => {
+    if (imageFile) {
+      toast.info("Retrying image identification...")
+      identifyImage(imageFile, true)
     }
   }
 
@@ -355,6 +459,26 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
               <Progress value={verificationProgress} className="h-2 bg-purple-100" />
             </div>
           )}
+          
+          {/* Error state with retry option */}
+          {identificationError && !isIdentifying && (
+            <div className="bg-red-50 p-4 rounded-lg border border-red-200 mb-6">
+              <div className="flex items-start">
+                <AlertCircle className="h-5 w-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm text-red-800 font-medium mb-2">{identificationError}</p>
+                  <Button 
+                    onClick={handleRetryIdentification}
+                    size="sm"
+                    className="bg-red-100 hover:bg-red-200 text-red-800 border-0"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Retry Identification
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {capturedImage && (
             <div className="space-y-6">
@@ -367,12 +491,18 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                 {identifiedCategory && !isIdentifying && (
                   <div className="absolute top-3 left-3">
                     <Badge 
-                      className={`${isHumanImage ? 'bg-red-500' : 'bg-green-500'} text-white border-0 shadow-lg flex items-center`}
+                      className={`
+                        ${isHumanImage ? 'bg-red-500' : 
+                          confidenceLevel === 'high' ? 'bg-green-500' : 
+                          confidenceLevel === 'medium' ? 'bg-yellow-500' : 'bg-orange-500'} 
+                        text-white border-0 shadow-lg flex items-center`}
                     >
                       {isHumanImage ? (
                         <User className="w-3 h-3 mr-1" />
-                      ) : (
+                      ) : confidenceLevel === 'high' ? (
                         <CheckCircle className="w-3 h-3 mr-1" />
+                      ) : (
+                        <AlertCircle className="w-3 h-3 mr-1" />
                       )}
                       {identifiedCategory.name.toUpperCase()} ({Math.round(identifiedCategory.confidence * 100)}%)
                     </Badge>
@@ -395,17 +525,79 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                 </div>
               )}
 
-              {/* Property category identification notification */}
-              {identifiedCategory && !isHumanImage && !isIdentifying && (
-                <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border border-green-200 flex items-center">
-                  <CheckCircle className="h-5 w-5 text-green-600 mr-3 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm text-green-800 font-medium">
-                      ✅ Image identified as {identifiedCategory.name.toUpperCase()}
+              {/* Property category identification with confidence levels */}
+              {identifiedCategory && !isHumanImage && !isIdentifying && !identificationError && (
+                <div className={`bg-gradient-to-r 
+                  ${confidenceLevel === 'high' ? 'from-green-50 to-blue-50 border-green-200' : 
+                   confidenceLevel === 'medium' ? 'from-yellow-50 to-green-50 border-yellow-200' : 
+                   'from-orange-50 to-yellow-50 border-orange-200'}
+                  p-4 rounded-lg border flex items-start`}
+                >
+                  {confidenceLevel === 'high' ? (
+                    <CheckCircle className="h-5 w-5 text-green-600 mr-3 flex-shrink-0 mt-0.5" />
+                  ) : confidenceLevel === 'medium' ? (
+                    <AlertCircle className="h-5 w-5 text-yellow-600 mr-3 flex-shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="h-5 w-5 text-orange-600 mr-3 flex-shrink-0 mt-0.5" />
+                  )}
+                  
+                  <div className="flex-1">
+                    <p className={`text-sm font-medium
+                      ${confidenceLevel === 'high' ? 'text-green-800' : 
+                       confidenceLevel === 'medium' ? 'text-yellow-800' : 
+                       'text-orange-800'}`}
+                    >
+                      {confidenceLevel === 'high' ? '✅' : '⚠️'} Image identified as {identifiedCategory.name.toUpperCase()}
                     </p>
-                    <p className="text-xs text-green-700">
-                      Confidence: {Math.round(identifiedCategory.confidence * 100)}% • Ready for smart prospect generation!
+                    <p className={`text-xs
+                      ${confidenceLevel === 'high' ? 'text-green-700' : 
+                       confidenceLevel === 'medium' ? 'text-yellow-700' : 
+                       'text-orange-700'}`}
+                    >
+                      Confidence: {Math.round(identifiedCategory.confidence * 100)}% • 
+                      {confidenceLevel === 'high' 
+                        ? 'Ready for smart prospect generation!' 
+                        : confidenceLevel === 'medium'
+                        ? 'Proceed with caution or try a clearer image.'
+                        : 'Consider retaking the photo for better results.'}
                     </p>
+                    
+                    {/* Feedback system for medium/low confidence identifications */}
+                    {showFeedback && !feedbackGiven && (confidenceLevel === 'medium' || confidenceLevel === 'low') && (
+                      <div className="mt-2 flex items-center">
+                        <span className="text-xs mr-2">Is this identification correct?</span>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="h-8 px-2 mr-2 border-green-300 bg-green-50 hover:bg-green-100 text-green-700"
+                          onClick={() => handleFeedback(true)}
+                        >
+                          <ThumbsUp className="h-3 w-3 mr-1" />
+                          Yes
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="h-8 px-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-700"
+                          onClick={() => handleFeedback(false)}
+                        >
+                          <ThumbsDown className="h-3 w-3 mr-1" />
+                          No
+                        </Button>
+                      </div>
+                    )}
+                    
+                    {/* If confidence is low, show retry button */}
+                    {confidenceLevel === 'low' && !feedbackGiven && (
+                      <Button 
+                        size="sm"
+                        onClick={handleRetryIdentification}
+                        className="mt-2 bg-orange-100 hover:bg-orange-200 text-orange-800 border-0"
+                      >
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                        Try Again
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}
@@ -422,8 +614,8 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
               <div className="flex gap-3">
                 <Button 
                   onClick={handleSubmit} 
-                  disabled={isHumanImage || isIdentifying}
-                  className={`flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 py-3 text-base font-semibold ${isHumanImage ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={isHumanImage || isIdentifying || !!identificationError}
+                  className={`flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 py-3 text-base font-semibold ${(isHumanImage || !!identificationError) ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   Analyze Property
                 </Button>
@@ -460,7 +652,7 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
               <Home className="mr-2 h-4 w-4" />
               Dashboard
             </Button>
-            {capturedImage && !isHumanImage && (
+            {capturedImage && !isHumanImage && !identificationError && (
               <Button 
                 onClick={handleSubmit} 
                 className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 py-3 text-base font-semibold"

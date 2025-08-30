@@ -159,13 +159,13 @@ export function SmartProspectPreviewPage({
                         <div className="font-semibold text-base mb-1 text-purple-800">
                           {prospect.title}
                         </div>
-                        <div className="text-sm text-purple-600">
+                        <div className="flex items-center gap-2 text-sm text-purple-600">
                           Investment: {formatCompactCurrency(prospect.totalCost)}
+                          <Badge className="bg-purple-200 text-purple-800 flex-shrink-0">
+                            View Details
+                          </Badge>
                         </div>
                       </div>
-                      <Badge className="bg-purple-200 mb-1 text-purple-800 flex-shrink-0">
-                        View Details
-                      </Badge>
                     </div>
                   </div>
                 </Button>
