@@ -4,7 +4,7 @@ let model: tmImage.CustomMobileNet | null = null;
 
 export async function loadModel() {
   if (!model) {
-    const url = "https://teachablemachine.withgoogle.com/models/2i6a7ejJh/";
+    const url = "https://teachablemachine.withgoogle.com/models/3K8dUYMCT/";
     model = await tmImage.load(url + "model.json", url + "metadata.json");
   }
   return model;

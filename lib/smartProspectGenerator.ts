@@ -18,13 +18,18 @@ export interface SmartProspect {
 }
 
 // Map image classifier categories to our prospect categories
+// Note: 'human' is handled separately as it's not a property type
 const categoryMapping: { [key: string]: keyof typeof MOCK_PROSPECTS } = {
   'building': 'residential',
   'room': 'residential', 
   'office space': 'commercial',
   'land': 'agricultural',
-  'material': 'industrial'
+  'material': 'industrial',
+  // Human is not mapped as it's not a valid property type
 }
+
+// Valid property categories (excluding human)
+const validPropertyCategories = ['building', 'room', 'office space', 'land', 'material'];
 
 // Generate property details for the identified image
 export function generatePropertyDetails(category: string) {
@@ -75,14 +80,16 @@ export async function identifyImageCategory(imageFile: File): Promise<Identified
           
           if (predictions && predictions.length > 0) {
             const topPrediction = predictions[0]
+            const predictedCategory = topPrediction.className.toLowerCase()
+            
+            // Return the prediction, including human if detected
             resolve({
-              name: topPrediction.className.toLowerCase(),
+              name: predictedCategory,
               confidence: topPrediction.probability
             })
           } else {
-            // Fallback to random category
-            const categories = ['building', 'room', 'office space', 'land', 'material']
-            const randomCategory = categories[Math.floor(Math.random() * categories.length)]
+            // Fallback to random category (excluding human)
+            const randomCategory = validPropertyCategories[Math.floor(Math.random() * validPropertyCategories.length)]
             resolve({
               name: randomCategory,
               confidence: 0.85
@@ -124,6 +131,12 @@ export function generateSmartProspects(
   identifiedCategory: IdentifiedCategory,
   propertyDetails: ReturnType<typeof generatePropertyDetails>
 ): SmartProspect[] {
+  // Check if the identified category is "human"
+  if (identifiedCategory.name === 'human') {
+    // Return empty array for human images - they should be handled differently in the UI
+    return [];
+  }
+  
   const mappedCategory = categoryMapping[identifiedCategory.name] || 'residential'
   const prospectCategory: string = mappedCategory as string
   const categoryProspects = MOCK_PROSPECTS[mappedCategory] || MOCK_PROSPECTS.residential
@@ -154,6 +167,16 @@ export function generateSmartProspects(
 export async function performSmartAnalysis(imageFile: File) {
   // Step 1: Identify image category
   const identifiedCategory = await identifyImageCategory(imageFile)
+  
+  // Check if this is a human image
+  if (identifiedCategory.name === 'human') {
+    return {
+      identifiedCategory,
+      isHumanImage: true,
+      propertyDetails: null,
+      smartProspects: []
+    }
+  }
   
   // Step 2: Generate property details
   const propertyDetails = generatePropertyDetails(identifiedCategory.name)

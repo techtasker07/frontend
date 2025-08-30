@@ -5,7 +5,8 @@ import type React from "react"
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Camera, Upload, X, ArrowLeft, Home, CheckCircle } from "lucide-react"
+import { Progress } from "@/components/ui/progress"
+import { Camera, Upload, X, ArrowLeft, Home, CheckCircle, AlertCircle, User } from "lucide-react"
 import { toast } from "sonner"
 import { identifyImageCategory, type IdentifiedCategory } from "@/lib/smartProspectGenerator"
 
@@ -23,6 +24,8 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [identifiedCategory, setIdentifiedCategory] = useState<IdentifiedCategory | null>(null)
   const [isIdentifying, setIsIdentifying] = useState(false)
+  const [verificationProgress, setVerificationProgress] = useState(0)
+  const [isHumanImage, setIsHumanImage] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -98,18 +101,50 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
 
   const identifyImage = async (file: File) => {
     setIsIdentifying(true)
+    setVerificationProgress(0)
+    
+    // Simulate progress updates
+    const progressInterval = setInterval(() => {
+      setVerificationProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(progressInterval)
+          return prev
+        }
+        return prev + 10
+      })
+    }, 300)
+    
     try {
       const category = await identifyImageCategory(file)
       setIdentifiedCategory(category)
       
-      // Show success notification
-      toast.success(`✨ Image identified as ${category.name.toUpperCase()} (${Math.round(category.confidence * 100)}% confidence)`, {
-        duration: 3000
-      })
+      // Check if this is a human image
+      if (category.name === 'human') {
+        setIsHumanImage(true)
+        toast.error("Human image detected. Please upload a property image instead.", {
+          duration: 5000
+        })
+      } else {
+        setIsHumanImage(false)
+        // Show success notification for property images
+        toast.success(`✨ Image identified as ${category.name.toUpperCase()} (${Math.round(category.confidence * 100)}% confidence)`, {
+          duration: 3000
+        })
+      }
     } catch (error) {
       console.error('Failed to identify image:', error)
       toast.error('Failed to identify image category')
     } finally {
+      clearInterval(progressInterval)
+      setVerificationProgress(100)
+      
+      // After a short delay, hide the progress bar if identification was successful
+      setTimeout(() => {
+        if (!isHumanImage) {
+          setVerificationProgress(0)
+        }
+      }, 1000)
+      
       setIsIdentifying(false)
     }
   }
@@ -117,6 +152,12 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
   const handleSubmit = () => {
     if (!imageFile) {
       toast.error("Please capture/select an image.")
+      return
+    }
+    
+    // Prevent submission if human image is detected
+    if (isHumanImage) {
+      toast.error("Cannot proceed with a human image. Please retake or upload a property image.")
       return
     }
 
@@ -304,6 +345,17 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
             </div>
           )}
 
+          {/* Progress bar for image verification */}
+          {isIdentifying && (
+            <div className="space-y-2 mb-6">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-purple-700 font-medium">Verifying image...</p>
+                <p className="text-xs text-purple-600">{verificationProgress}%</p>
+              </div>
+              <Progress value={verificationProgress} className="h-2 bg-purple-100" />
+            </div>
+          )}
+
           {capturedImage && (
             <div className="space-y-6">
               <div className="relative rounded-lg overflow-hidden shadow-xl">
@@ -312,18 +364,39 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                   alt="Captured property"
                   className="w-full rounded-lg max-h-96 object-cover"
                 />
-                {identifiedCategory && (
+                {identifiedCategory && !isIdentifying && (
                   <div className="absolute top-3 left-3">
-                    <Badge className="bg-green-500 text-white border-0 shadow-lg flex items-center">
-                      <CheckCircle className="w-3 h-3 mr-1" />
+                    <Badge 
+                      className={`${isHumanImage ? 'bg-red-500' : 'bg-green-500'} text-white border-0 shadow-lg flex items-center`}
+                    >
+                      {isHumanImage ? (
+                        <User className="w-3 h-3 mr-1" />
+                      ) : (
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                      )}
                       {identifiedCategory.name.toUpperCase()} ({Math.round(identifiedCategory.confidence * 100)}%)
                     </Badge>
                   </div>
                 )}
               </div>
 
-              {/* Category identification notification */}
-              {identifiedCategory && (
+              {/* Human image warning */}
+              {isHumanImage && identifiedCategory && !isIdentifying && (
+                <div className="bg-gradient-to-r from-red-50 to-orange-50 p-4 rounded-lg border border-red-200 flex items-center">
+                  <AlertCircle className="h-5 w-5 text-red-600 mr-3 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm text-red-800 font-medium">
+                      Human image detected
+                    </p>
+                    <p className="text-xs text-red-700">
+                      We can only generate prospects for property images. Please retake or upload a photo of a property.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Property category identification notification */}
+              {identifiedCategory && !isHumanImage && !isIdentifying && (
                 <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border border-green-200 flex items-center">
                   <CheckCircle className="h-5 w-5 text-green-600 mr-3 flex-shrink-0" />
                   <div>
@@ -349,7 +422,8 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
               <div className="flex gap-3">
                 <Button 
                   onClick={handleSubmit} 
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 py-3 text-base font-semibold"
+                  disabled={isHumanImage || isIdentifying}
+                  className={`flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 py-3 text-base font-semibold ${isHumanImage ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   Analyze Property
                 </Button>
@@ -386,7 +460,7 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
               <Home className="mr-2 h-4 w-4" />
               Dashboard
             </Button>
-            {capturedImage && (
+            {capturedImage && !isHumanImage && (
               <Button 
                 onClick={handleSubmit} 
                 className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 py-3 text-base font-semibold"

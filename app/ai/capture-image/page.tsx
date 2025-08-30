@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { ImageCapturePage } from "@/components/ai/image-capture-page"
 import { toast } from "sonner"
 
-import { generatePropertyDetails, generateSmartProspects, type IdentifiedCategory } from "@/lib/smartProspectGenerator"
+import { generatePropertyDetails, generateSmartProspects, type IdentifiedCategory, performSmartAnalysis } from "@/lib/smartProspectGenerator"
 
 function AICaptureImagePageContent() {
   const router = useRouter()
@@ -17,6 +17,14 @@ function AICaptureImagePageContent() {
     try {
       // Create object URL for the image
       const imageUrl = URL.createObjectURL(file)
+      
+      // Check if we have a valid category that's not a human
+      if (identifiedCategory && identifiedCategory.name === 'human') {
+        // If it's a human image, it's already handled in the ImageCapturePage component
+        // Just clean up the URL and return without navigating
+        URL.revokeObjectURL(imageUrl)
+        return
+      }
       
       // Use identified category or fallback to 'building'
       const category = identifiedCategory || { name: 'building', confidence: 0.75 }
