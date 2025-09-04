@@ -39,6 +39,7 @@ export default function PropertyDetailsPage() {
   const [voting, setVoting] = useState(false)
   const [hasVoted, setHasVoted] = useState(false)
   const [selectedVoteOption, setSelectedVoteOption] = useState<string | null>(null)
+  const [isPropertyOwner, setIsPropertyOwner] = useState(false)
 
   const propertyId = params.id as string
 
@@ -51,6 +52,12 @@ export default function PropertyDetailsPage() {
       }
     }
   }, [propertyId, isAuthenticated])
+
+  useEffect(() => {
+    if (property && user) {
+      setIsPropertyOwner(property.user_id === user.id)
+    }
+  }, [property, user])
 
   const fetchProperty = async () => {
     try {
@@ -93,7 +100,13 @@ export default function PropertyDetailsPage() {
   }
 
   const handleVote = async () => {
-    if (!selectedVoteOption || !isAuthenticated) return
+    if (!selectedVoteOption || !isAuthenticated || !property) return
+
+    // Prevent property owner from voting
+    if (isPropertyOwner) {
+      toast.error("You cannot vote on your own property")
+      return
+    }
 
     setVoting(true)
     try {
@@ -286,7 +299,11 @@ export default function PropertyDetailsPage() {
                 Cast Your Vote
               </CardTitle>
               <CardDescription>
-                {hasVoted ? "You have already voted on this property" : "Select an option to vote on this property"}
+                {isPropertyOwner
+                  ? "You cannot vote on your own property"
+                  : hasVoted
+                    ? "You have already voted on this property"
+                    : "Select an option to vote on this property"}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -299,6 +316,11 @@ export default function PropertyDetailsPage() {
                     </Link>
                   </AlertDescription>
                 </Alert>
+              ) : isPropertyOwner ? (
+                <div className="flex items-center space-x-2 text-blue-600">
+                  <User className="h-5 w-5" />
+                  <span>As the property lister, you cannot vote on your own property.</span>
+                </div>
               ) : hasVoted ? (
                 <div className="flex items-center space-x-2 text-green-600">
                   <CheckCircle className="h-5 w-5" />
@@ -306,32 +328,41 @@ export default function PropertyDetailsPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {property.vote_options?.map((option: any) => (
-                    <div key={option.id} className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        id={`option-${option.id}`}
-                        name="vote-option"
-                        value={option.id}
-                        onChange={() => setSelectedVoteOption(option.id)}
-                        className="w-4 h-4 text-primary"
-                      />
-                      <label htmlFor={`option-${option.id}`} className="text-sm font-medium">
-                        {option.name}
-                      </label>
-                    </div>
-                  ))}
+                  {property.vote_options && property.vote_options.length > 0 ? (
+                    <>
+                      {property.vote_options.map((option: any) => (
+                        <div key={option.id} className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            id={`option-${option.id}`}
+                            name="vote-option"
+                            value={option.id}
+                            onChange={() => setSelectedVoteOption(option.id)}
+                            className="w-4 h-4 text-primary"
+                          />
+                          <label htmlFor={`option-${option.id}`} className="text-sm font-medium">
+                            {option.name}
+                          </label>
+                        </div>
+                      ))}
 
-                  <Button onClick={handleVote} disabled={!selectedVoteOption || voting} className="w-full">
-                    {voting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Submitting Vote...
-                      </>
-                    ) : (
-                      "Submit Vote"
-                    )}
-                  </Button>
+                      <Button onClick={handleVote} disabled={!selectedVoteOption || voting} className="w-full">
+                        {voting ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Submitting Vote...
+                          </>
+                        ) : (
+                          "Submit Vote"
+                        )}
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="text-center py-4">
+                      <Vote className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                      <p className="text-muted-foreground text-sm">No voting options available for this property category.</p>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>

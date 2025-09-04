@@ -186,6 +186,28 @@ class SupabaseApiClient {
 
       if (error) throw error;
 
+      // Get unique category IDs from the properties
+      const categoryIds = [...new Set(data?.map(item => item.category_id) || [])];
+
+      // Fetch vote options for all categories
+      const { data: allVoteOptions, error: voteOptionsError } = await supabase
+        .from('vote_options')
+        .select('*')
+        .in('category_id', categoryIds);
+
+      if (voteOptionsError) {
+        console.error('Error fetching vote options:', voteOptionsError);
+      }
+
+      // Group vote options by category_id
+      const voteOptionsByCategory: { [key: string]: VoteOption[] } = {};
+      allVoteOptions?.forEach(option => {
+        if (!voteOptionsByCategory[option.category_id]) {
+          voteOptionsByCategory[option.category_id] = [];
+        }
+        voteOptionsByCategory[option.category_id].push(option);
+      });
+
       // Transform data to match expected format
       const transformedData = data?.map(item => ({
         ...item,
@@ -194,7 +216,8 @@ class SupabaseApiClient {
         owner_phone: item.profiles?.phone_number,
         owner_profile_picture: item.profiles?.profile_picture,
         category_name: item.categories?.name,
-        images: item.property_images || []
+        images: item.property_images || [],
+        vote_options: voteOptionsByCategory[item.category_id] || []
       })) || [];
 
       return {
@@ -238,6 +261,16 @@ class SupabaseApiClient {
 
       if (error) throw error;
 
+      // Fetch vote options for this property's category
+      const { data: voteOptionsData, error: voteOptionsError } = await supabase
+        .from('vote_options')
+        .select('*')
+        .eq('category_id', data.category_id);
+
+      if (voteOptionsError) {
+        console.error('Error fetching vote options:', voteOptionsError);
+      }
+
       const transformedData = {
         ...data,
         owner_name: `${data.profiles?.first_name} ${data.profiles?.last_name}`,
@@ -245,7 +278,8 @@ class SupabaseApiClient {
         owner_phone: data.profiles?.phone_number,
         owner_profile_picture: data.profiles?.profile_picture,
         category_name: data.categories?.name,
-        images: data.property_images || []
+        images: data.property_images || [],
+        vote_options: voteOptionsData || []
       };
 
       return {
