@@ -1,0 +1,163 @@
+"use client"
+
+import { Button } from "@/components/ui/button"
+import { Camera, Sparkles, X, Home } from "lucide-react"
+
+interface WelcomeBackPageProps {
+  userName: string
+  onStartAnalysis: () => void
+  onSkip: () => void
+  onClose: () => void
+}
+
+export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: WelcomeBackPageProps) {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-white via-purple-50 to-pink-50 relative overflow-x-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-0 -left-4 w-24 h-24 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+        <div className="absolute bottom-0 -right-4 w-32 h-32 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
+      </div>
+
+      <div className="relative z-10 flex flex-col min-h-screen">
+        {/* Header - Hidden on mobile */}
+        <div className="hidden md:block sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-purple-200">
+          <div className="flex items-center justify-between p-4">
+            <div className="flex items-center flex-1 min-w-0">
+              <Sparkles className="mr-3 h-6 w-6 text-purple-600 flex-shrink-0 animate-pulse" />
+              <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent truncate">
+                Welcome back, {userName}!
+              </h1>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onClose}
+              className="h-9 w-9 p-0 hover:bg-red-100 flex-shrink-0"
+              title="Close and go to Dashboard"
+            >
+              <X className="h-5 w-5 text-red-600" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Mobile Close Button - Top right corner */}
+        <div className="md:hidden fixed top-4 right-4 z-30">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onClose}
+            className="h-10 w-10 p-0 bg-white/90 hover:bg-red-100 rounded-full shadow-lg"
+            title="Close and go to Dashboard"
+          >
+            <X className="h-5 w-5 text-red-600" />
+          </Button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 p-4 pb-6 flex items-center justify-center">
+          <div className="max-w-2xl mx-auto w-full text-center space-y-8">
+            <div className="space-y-6">
+              {/* Welcome Message */}
+              <div className="relative">
+                <h3 className="text-xl sm:text-2xl font-bold mb-4 text-slate-600">
+                  Ready to discover new property investment opportunities?
+                </h3>
+              </div>
+
+              {/* Camera Icon with Animation */}
+              <div className="relative mx-auto w-24 h-24 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mb-8 shadow-xl">
+                <Camera className="h-10 w-10 text-purple-600" />
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-bounce">
+                  <Sparkles className="h-3 w-3 text-white" />
+                </div>
+                {/* Pulse ring */}
+                <div className="absolute inset-0 rounded-full border-4 border-purple-300 animate-ping opacity-30"></div>
+                <div className="absolute inset-2 rounded-full border-2 border-purple-400 animate-pulse opacity-40"></div>
+              </div>
+
+              {/* Feature Description */}
+              <div className="space-y-4">
+                <h3 className="text-xl font-bold bg-gradient-to-r from-purple-700 to-pink-700 bg-clip-text text-transparent">
+                  Smart Property Analysis
+                </h3>
+                <p className="text-slate-600 leading-relaxed text-md">
+                  Take a photo or select an image of any property to get instant smart investment insights and prospect analysis!
+                </p>
+              </div>
+
+              {/* Features List */}
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-2xl border border-purple-200 shadow-lg">
+                <h4 className="font-semibold text-purple-800 mb-4 flex items-center justify-center">
+                  <Sparkles className="mr-2 h-5 w-5" />
+                  What you'll get:
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-purple-700">
+                  <div className="flex items-center">
+                    <span className="w-3 h-3 bg-purple-500 rounded-full mr-3 flex-shrink-0"></span>
+                    <span>Instant property valuation estimate</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="w-3 h-3 bg-pink-500 rounded-full mr-3 flex-shrink-0"></span>
+                    <span>Market analysis and investment insights</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="w-3 h-3 bg-purple-500 rounded-full mr-3 flex-shrink-0"></span>
+                    <span>5 AI-generated prospect options</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="w-3 h-3 bg-pink-500 rounded-full mr-3 flex-shrink-0"></span>
+                    <span>Option to add as prospect property</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Fixed bottom action area */}
+        <div className="sticky bottom-0 z-20 bg-white/95 backdrop-blur-sm border-t border-purple-200 p-4">
+          <div className="flex gap-4 max-w-2xl mx-auto">
+            <Button
+              onClick={onSkip}
+              variant="outline"
+              className="border-gray-300 text-gray-600 hover:bg-gray-50 py-4 px-6"
+            >
+              <Home className="mr-2 h-5 w-5" />
+              Skip
+            </Button>
+            <Button
+              onClick={onStartAnalysis}
+              className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 py-4 px-6 text-lg font-semibold"
+            >
+              <Camera className="mr-3 h-6 w-6" />
+              Start Smart Analysis
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Custom CSS for animations */}
+      <style jsx global>{`
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+
+        @keyframes fadeInScale {
+          from {
+            opacity: 0;
+            transform: scale(0.9);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        .animate-fade-in-scale {
+          animation: fadeInScale 0.5s ease-out;
+        }
+      `}</style>
+    </div>
+  )
+}
