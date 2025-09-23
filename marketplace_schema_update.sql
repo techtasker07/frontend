@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS public.marketplace_listings (
   contact_email TEXT,
   contact_whatsapp TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW') NOT NULL
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
 -- Add bookings table for rental/lease bookings

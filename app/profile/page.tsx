@@ -754,7 +754,10 @@ const ProfilePage: React.FC = () => {
           <div className="relative">
             {/* Background Pattern */}
             <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10" />
-            <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23a855f7" fill-opacity="0.03"%3E%3Ccircle cx="30" cy="30" r="4"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]" />
+            <div className="absolute inset-0 opacity-30" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23a855f7' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+              backgroundRepeat: 'repeat'
+            }} />
             
             <CardContent className="relative p-8">
               <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-6 lg:space-y-0 lg:space-x-8">
@@ -1109,7 +1112,7 @@ const ActivityTab = ({ userProfile }: { userProfile: UserProfile | null }) => {
               <Activity className="w-5 h-5" />
               <span>Activity History</span>
             </CardTitle>
-            <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+            <select className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white" aria-label="Filter activity history by time period">
               <option>Last 30 days</option>
               <option>Last 3 months</option>
               <option>Last year</option>
@@ -1222,6 +1225,8 @@ const SettingsTab = ({ user, userProfile }: { user: User; userProfile: UserProfi
                   type="checkbox"
                   className="sr-only"
                   defaultChecked={user.notifications.email}
+                  aria-label="Toggle email notifications"
+                  title="Enable or disable email notifications"
                 />
                 <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-indigo-600 transition-colors"></div>
                 <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
@@ -1245,6 +1250,8 @@ const SettingsTab = ({ user, userProfile }: { user: User; userProfile: UserProfi
                   type="checkbox"
                   className="sr-only"
                   defaultChecked={user.notifications.sms}
+                  aria-label="Toggle SMS notifications"
+                  title="Enable or disable SMS notifications"
                 />
                 <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-indigo-600 transition-colors"></div>
                 <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
