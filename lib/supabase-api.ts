@@ -114,6 +114,74 @@ export interface PropertyStats {
   total_votes: number;
 }
 
+// Marketplace interfaces
+export interface MarketplaceListing {
+  id: string;
+  property_id: string;
+  listing_type_id: string;
+  property_type_id: string;
+  price: number;
+  currency: string;
+  price_period?: string;
+  available_from?: string;
+  available_to?: string;
+  bedrooms?: number;
+  bathrooms?: number;
+  area_sqft?: number;
+  area_sqm?: number;
+  furnishing_status?: string;
+  parking_spaces: number;
+  amenities: string[];
+  utilities_included: boolean;
+  security_deposit?: number;
+  is_featured: boolean;
+  is_active: boolean;
+  views_count: number;
+  contact_phone?: string;
+  contact_email?: string;
+  contact_whatsapp?: string;
+  created_at: string;
+  updated_at: string;
+  // Relations
+  property: Property;
+  listing_type: { name: string };
+  property_type: { name: string };
+}
+
+export interface PropertyType {
+  id: string;
+  name: string;
+  category_id: string;
+  category?: { name: string };
+}
+
+export interface ListingType {
+  id: string;
+  name: string;
+}
+
+export interface Booking {
+  id: string;
+  marketplace_listing_id: string;
+  user_id: string;
+  booking_type: string;
+  start_date?: string;
+  end_date?: string;
+  guest_count?: number;
+  message?: string;
+  status: string;
+  total_amount?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Favorite {
+  id: string;
+  user_id: string;
+  marketplace_listing_id: string;
+  created_at: string;
+}
+
 class SupabaseApiClient {
   // Users methods
   async updateUser(id: string, userData: Partial<User>): Promise<ApiResponse<User>> {
@@ -940,6 +1008,264 @@ class SupabaseApiClient {
     }
   }
 
+  // Dashboard-specific methods
+  async getDashboardStats(): Promise<ApiResponse<{
+    activePolls: number;
+    smartProspects: number;
+    communityVotes: number;
+    portfolioValue: number;
+  }>> {
+    try {
+      const [propertiesResult, prospectsResult, votesResult] = await Promise.all([
+        supabase.from('properties').select('current_worth', { count: 'exact' }),
+        supabase.from('prospect_properties').select('id', { count: 'exact', head: true }),
+        supabase.from('votes').select('id', { count: 'exact', head: true })
+      ]);
+
+      // Calculate total portfolio value
+      const portfolioValue = propertiesResult.data?.reduce((sum, prop) => {
+        return sum + (prop.current_worth || 0);
+      }, 0) || 0;
+
+      return {
+        success: true,
+        data: {
+          activePolls: propertiesResult.count || 0,
+          smartProspects: prospectsResult.count || 0,
+          communityVotes: votesResult.count || 0,
+          portfolioValue
+        }
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: {
+          activePolls: 0,
+          smartProspects: 0,
+          communityVotes: 0,
+          portfolioValue: 0
+        },
+        error: error.message
+      };
+    }
+  }
+
+  async getDashboardPolls(limit: number = 10): Promise<ApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select(`
+          id,
+          title,
+          description,
+          current_worth,
+          location,
+          created_at,
+          property_images!left (
+            image_url,
+            is_primary
+          ),
+          votes!left (
+            id,
+            vote_options (
+              name
+            )
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+
+      // Transform data to match expected format
+      const transformedData = data?.map((property, index) => {
+        const voteCount = property.votes?.length || 0;
+        const primaryImage = property.property_images?.find((img: any) => img.is_primary);
+        const imageUrl = primaryImage?.image_url || '/api/placeholder/300/200';
+        
+        // Calculate mock progress and time left for demonstration
+        const progress = Math.floor(Math.random() * 100);
+        const timeLeft = `${Math.floor(Math.random() * 30) + 1} days left`;
+        const statusOptions = ['Active', 'Ending Soon', 'New'];
+        const statusColors = ['green', 'orange', 'blue'];
+        const statusIndex = index % statusOptions.length;
+        
+        return {
+          id: property.id,
+          title: property.title,
+          description: property.description,
+          image: imageUrl,
+          price: property.current_worth ? `₦${property.current_worth.toLocaleString()}` : 'Price on request',
+          details: property.location,
+          progress,
+          votes: voteCount,
+          timeLeft,
+          status: statusOptions[statusIndex],
+          statusColor: statusColors[statusIndex]
+        };
+      }) || [];
+
+      return {
+        success: true,
+        data: transformedData
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: [],
+        error: error.message
+      };
+    }
+  }
+
+  async getDashboardProspects(limit: number = 10): Promise<ApiResponse<any[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('prospect_properties')
+        .select(`
+          id,
+          title,
+          location,
+          estimated_worth,
+          categories (
+            name
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+
+      // Transform data to match expected format
+      const transformedData = data?.map((prospect, index) => {
+        const aiScore = Math.floor(Math.random() * 40) + 60; // Random score between 60-100
+        const tagOptions = [
+          ['High ROI', 'Prime Location'],
+          ['Growing Area', 'Good Value'],
+          ['Investment Grade', 'Rental Potential'],
+          ['Development Zone', 'Infrastructure']
+        ];
+        
+        return {
+          id: prospect.id,
+          title: prospect.title,
+          location: prospect.location,
+          aiScore,
+          tags: tagOptions[index % tagOptions.length]
+        };
+      }) || [];
+
+      return {
+        success: true,
+        data: transformedData
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: [],
+        error: error.message
+      };
+    }
+  }
+
+  async getDashboardActivities(limit: number = 10): Promise<ApiResponse<any[]>> {
+    try {
+      // Get recent votes and properties as activities
+      const [votesResponse, propertiesResponse] = await Promise.all([
+        supabase
+          .from('votes')
+          .select(`
+            id,
+            created_at,
+            profiles!votes_user_id_fkey (
+              first_name,
+              last_name
+            ),
+            properties!votes_property_id_fkey (
+              title
+            ),
+            vote_options!votes_vote_option_id_fkey (
+              name
+            )
+          `)
+          .order('created_at', { ascending: false })
+          .limit(limit / 2),
+        supabase
+          .from('properties')
+          .select(`
+            id,
+            title,
+            created_at,
+            profiles!properties_user_id_fkey (
+              first_name,
+              last_name
+            )
+          `)
+          .order('created_at', { ascending: false })
+          .limit(limit / 2)
+      ]);
+
+      const activities: any[] = [];
+
+      // Add vote activities
+      votesResponse.data?.forEach((vote: any) => {
+        const profile = vote.profiles;
+        const userName = `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim();
+        activities.push({
+          id: `vote-${vote.id}`,
+          type: 'vote',
+          message: `${userName} voted "${vote.vote_options?.name}" on ${vote.properties?.title}`,
+          time: this.getRelativeTime(vote.created_at),
+          icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+          color: 'green'
+        });
+      });
+
+      // Add property activities
+      propertiesResponse.data?.forEach((property: any) => {
+        const profile = property.profiles;
+        const userName = `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim();
+        activities.push({
+          id: `property-${property.id}`,
+          type: 'property',
+          message: `${userName} added a new property: ${property.title}`,
+          time: this.getRelativeTime(property.created_at),
+          icon: 'M12 4v16m8-8H4',
+          color: 'blue'
+        });
+      });
+
+      // Sort activities by creation time and limit
+      activities.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      
+      return {
+        success: true,
+        data: activities.slice(0, limit)
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: [],
+        error: error.message
+      };
+    }
+  }
+
+  private getRelativeTime(dateString: string): string {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) {
+      return 'Just now';
+    } else if (diffInHours < 24) {
+      return `${diffInHours}h ago`;
+    } else {
+      const diffInDays = Math.floor(diffInHours / 24);
+      return `${diffInDays}d ago`;
+    }
+  }
+
   // Upload method (using Supabase Storage)
   async uploadFile(file: File): Promise<ApiResponse<{ url: string }>> {
     try {
@@ -965,6 +1291,472 @@ class SupabaseApiClient {
       return {
         success: false,
         data: { url: '' },
+        error: error.message
+      };
+    }
+  }
+
+  // Marketplace methods
+  async getMarketplaceListings(params?: {
+    category?: string;
+    listing_type?: string;
+    property_type?: string;
+    min_price?: number;
+    max_price?: number;
+    location?: string;
+    bedrooms?: number;
+    bathrooms?: number;
+    is_featured?: boolean;
+    limit?: number;
+    offset?: number;
+  }): Promise<ApiResponse<MarketplaceListing[]>> {
+    try {
+      let query = supabase
+        .from('marketplace_listings')
+        .select(`
+          *,
+          property:properties!marketplace_listings_property_id_fkey (
+            id,
+            title,
+            description,
+            location,
+            user_id,
+            category_id,
+            current_worth,
+            year_of_construction,
+            image_url,
+            created_at,
+            updated_at,
+            profiles!properties_user_id_fkey (
+              first_name,
+              last_name,
+              email,
+              phone_number,
+              profile_picture
+            ),
+            categories!properties_category_id_fkey (
+              name
+            ),
+            property_images (
+              id,
+              image_url,
+              is_primary
+            )
+          ),
+          listing_type:listing_types!marketplace_listings_listing_type_id_fkey (
+            name
+          ),
+          property_type:property_types!marketplace_listings_property_type_id_fkey (
+            name
+          )
+        `)
+        .eq('is_active', true);
+
+      // Apply filters
+      if (params?.category) {
+        query = query.eq('property.categories.name', params.category);
+      }
+      if (params?.listing_type) {
+        query = query.eq('listing_type.name', params.listing_type);
+      }
+      if (params?.property_type) {
+        query = query.eq('property_type.name', params.property_type);
+      }
+      if (params?.min_price) {
+        query = query.gte('price', params.min_price);
+      }
+      if (params?.max_price) {
+        query = query.lte('price', params.max_price);
+      }
+      if (params?.location) {
+        query = query.ilike('property.location', `%${params.location}%`);
+      }
+      if (params?.bedrooms) {
+        query = query.eq('bedrooms', params.bedrooms);
+      }
+      if (params?.bathrooms) {
+        query = query.eq('bathrooms', params.bathrooms);
+      }
+      if (params?.is_featured !== undefined) {
+        query = query.eq('is_featured', params.is_featured);
+      }
+      if (params?.limit) {
+        query = query.limit(params.limit);
+      }
+      if (params?.offset) {
+        query = query.range(params.offset, params.offset + (params.limit || 10) - 1);
+      }
+
+      query = query.order('created_at', { ascending: false });
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      return {
+        success: true,
+        data: data as MarketplaceListing[]
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: [],
+        error: error.message
+      };
+    }
+  }
+
+  async getMarketplaceListing(id: string): Promise<ApiResponse<MarketplaceListing>> {
+    try {
+      const { data, error } = await supabase
+        .from('marketplace_listings')
+        .select(`
+          *,
+          property:properties!marketplace_listings_property_id_fkey (
+            id,
+            title,
+            description,
+            location,
+            user_id,
+            category_id,
+            current_worth,
+            year_of_construction,
+            image_url,
+            created_at,
+            updated_at,
+            profiles!properties_user_id_fkey (
+              first_name,
+              last_name,
+              email,
+              phone_number,
+              profile_picture
+            ),
+            categories!properties_category_id_fkey (
+              name
+            ),
+            property_images (
+              id,
+              image_url,
+              is_primary
+            )
+          ),
+          listing_type:listing_types!marketplace_listings_listing_type_id_fkey (
+            name
+          ),
+          property_type:property_types!marketplace_listings_property_type_id_fkey (
+            name
+          )
+        `)
+        .eq('id', id)
+        .eq('is_active', true)
+        .single();
+
+      if (error) throw error;
+
+      // Increment view count
+      await supabase
+        .from('marketplace_listings')
+        .update({ views_count: (data.views_count || 0) + 1 })
+        .eq('id', id);
+
+      return {
+        success: true,
+        data: data as MarketplaceListing
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: {} as MarketplaceListing,
+        error: error.message
+      };
+    }
+  }
+
+  async createMarketplaceListing(listingData: {
+    property_id: string;
+    listing_type_id: string;
+    property_type_id: string;
+    price: number;
+    currency?: string;
+    price_period?: string;
+    available_from?: string;
+    available_to?: string;
+    bedrooms?: number;
+    bathrooms?: number;
+    area_sqft?: number;
+    area_sqm?: number;
+    furnishing_status?: string;
+    parking_spaces?: number;
+    amenities?: string[];
+    utilities_included?: boolean;
+    security_deposit?: number;
+    contact_phone?: string;
+    contact_email?: string;
+    contact_whatsapp?: string;
+  }): Promise<ApiResponse<MarketplaceListing>> {
+    try {
+      const { data, error } = await supabase
+        .from('marketplace_listings')
+        .insert({
+          ...listingData,
+          amenities: listingData.amenities || [],
+          parking_spaces: listingData.parking_spaces || 0,
+          utilities_included: listingData.utilities_included || false,
+          is_featured: false,
+          is_active: true,
+          views_count: 0
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return {
+        success: true,
+        data: data as MarketplaceListing
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: {} as MarketplaceListing,
+        error: error.message
+      };
+    }
+  }
+
+  async getPropertyTypes(categoryId?: string): Promise<ApiResponse<PropertyType[]>> {
+    try {
+      let query = supabase
+        .from('property_types')
+        .select(`
+          *,
+          category:categories!property_types_category_id_fkey (
+            name
+          )
+        `);
+
+      if (categoryId) {
+        query = query.eq('category_id', categoryId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      return {
+        success: true,
+        data: data as PropertyType[]
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: [],
+        error: error.message
+      };
+    }
+  }
+
+  async getListingTypes(): Promise<ApiResponse<ListingType[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('listing_types')
+        .select('*');
+
+      if (error) throw error;
+
+      return {
+        success: true,
+        data: data as ListingType[]
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: [],
+        error: error.message
+      };
+    }
+  }
+
+  // Bookings methods
+  async createBooking(bookingData: {
+    marketplace_listing_id: string;
+    booking_type: string;
+    start_date?: string;
+    end_date?: string;
+    guest_count?: number;
+    message?: string;
+    total_amount?: number;
+  }): Promise<ApiResponse<Booking>> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('bookings')
+        .insert({
+          ...bookingData,
+          user_id: user.id,
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return {
+        success: true,
+        data: data as Booking
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: {} as Booking,
+        error: error.message
+      };
+    }
+  }
+
+  async getUserBookings(): Promise<ApiResponse<Booking[]>> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('bookings')
+        .select(`
+          *,
+          marketplace_listing:marketplace_listings!bookings_marketplace_listing_id_fkey (
+            id,
+            price,
+            currency,
+            property:properties!marketplace_listings_property_id_fkey (
+              title,
+              location
+            )
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return {
+        success: true,
+        data: data as Booking[]
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: [],
+        error: error.message
+      };
+    }
+  }
+
+  // Favorites methods
+  async addToFavorites(marketplaceListingId: string): Promise<ApiResponse<Favorite>> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('favorites')
+        .insert({
+          user_id: user.id,
+          marketplace_listing_id: marketplaceListingId
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return {
+        success: true,
+        data: data as Favorite
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: {} as Favorite,
+        error: error.message
+      };
+    }
+  }
+
+  async removeFromFavorites(marketplaceListingId: string): Promise<ApiResponse<boolean>> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { error } = await supabase
+        .from('favorites')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('marketplace_listing_id', marketplaceListingId);
+
+      if (error) throw error;
+
+      return {
+        success: true,
+        data: true
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: false,
+        error: error.message
+      };
+    }
+  }
+
+  async getUserFavorites(): Promise<ApiResponse<MarketplaceListing[]>> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('favorites')
+        .select(`
+          marketplace_listing:marketplace_listings!favorites_marketplace_listing_id_fkey (
+            *,
+            property:properties!marketplace_listings_property_id_fkey (
+              id,
+              title,
+              description,
+              location,
+              user_id,
+              category_id,
+              current_worth,
+              year_of_construction,
+              image_url,
+              created_at,
+              updated_at,
+              property_images (
+                id,
+                image_url,
+                is_primary
+              )
+            ),
+            listing_type:listing_types!marketplace_listings_listing_type_id_fkey (
+              name
+            ),
+            property_type:property_types!marketplace_listings_property_type_id_fkey (
+              name
+            )
+          )
+        `)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      const listings = data?.map(item => item.marketplace_listing).filter(Boolean) || [];
+
+      return {
+        success: true,
+        data: listings as MarketplaceListing[]
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: [],
         error: error.message
       };
     }

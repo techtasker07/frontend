@@ -21,6 +21,7 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
   const isHomePage = pathname === "/"
   const isAuthPage = pathname === "/login" || pathname === "/register"
   const isAIProspectPage = pathname.startsWith("/ai/")
+  const isDashboardPage = pathname === "/dashboard"
 
   // Mouse hover effect for sidebar
   useEffect(() => {

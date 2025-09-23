@@ -177,3 +177,60 @@
 *:focus-visible {
   @apply outline-2 outline-offset-2 outline-blue-500;
 }
+
+/* Dashboard-specific styles */
+@layer components {
+  .sidebar-active {
+    @apply bg-indigo-50 text-indigo-700;
+  }
+  
+  .sidebar-active svg {
+    @apply text-indigo-600;
+  }
+  
+  .card-hover {
+    @apply shadow-sm hover:shadow-md transition-shadow duration-200;
+  }
+  
+  .poll-progress {
+    @apply transition-all duration-300 ease-in-out;
+  }
+  
+  .ai-score {
+    @apply font-bold;
+  }
+  
+  /* Enhanced sidebar styles */
+  .fixed nav .group:hover .absolute {
+    @apply opacity-100;
+  }
+  
+  /* Dashboard progress bars */
+  .dashboard-progress-bar {
+    @apply w-full bg-gray-200 rounded-full overflow-hidden;
+  }
+  
+  /* Profile page tab styles */
+  .tab-active {
+    @apply text-indigo-600 border-indigo-600 bg-indigo-50;
+  }
+  
+  .tab-active:hover {
+    @apply bg-indigo-50;
+  }
+  
+  /* Profile page activity item styles */
+  .activity-item {
+    @apply bg-gray-50 hover:bg-gray-100 transition-colors duration-200 border border-gray-200;
+  }
+  
+  /* Profile page tab content transitions */
+  .tab-content {
+    @apply opacity-100 transition-opacity duration-200;
+  }
+  
+  /* Profile avatar gradient styles */
+  .avatar-gradient {
+    @apply bg-gradient-to-br text-white;
+  }
+}

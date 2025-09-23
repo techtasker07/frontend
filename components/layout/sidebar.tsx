@@ -4,7 +4,7 @@ import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth"
-import { Home, Building, Lightbulb, Plus, User, LogOut, UserPlus, LogIn, BarChart3 } from "lucide-react"
+import { Home, Building, Lightbulb, Plus, User, LogOut, UserPlus, LogIn, BarChart3, ShoppingBag } from "lucide-react"
 
 interface SidebarProps {
   onClose?: () => void
@@ -19,6 +19,7 @@ interface NavigationItem {
 
 const publicNavigation: NavigationItem[] = [
   { name: "Home", href: "/", icon: Home },
+  { name: "Marketplace", href: "/marketplace", icon: ShoppingBag },
   { name: "About Us", href: "/about", icon: User },
   { name: "Contact Us", href: "/contact", icon: User },
 ]
@@ -26,6 +27,7 @@ const publicNavigation: NavigationItem[] = [
 const authenticatedNavigation: NavigationItem[] = [
   { name: "Home", href: "/", icon: Home },
   { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
+  { name: "Marketplace", href: "/marketplace", icon: ShoppingBag },
   { name: "Properties", href: "/properties", icon: Building },
   { name: "My Smart Prospects", href: "/prospectProperties", icon: Lightbulb },
   { name: "Add Property", href: "/add-property", icon: Plus },
