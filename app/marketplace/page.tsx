@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
-import { supabaseApi, MarketplaceListing, Category, PropertyType, ListingType } from '@/lib/supabase-api';
+import { supabaseApi, MarketplaceListing, Category, PropertyType, ListingType, PropertyImage } from '@/lib/supabase-api';
 import { Search, Filter, Heart, Eye, MapPin, Bed, Bath, Car, Star } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -105,9 +105,9 @@ export default function MarketplacePage() {
   };
 
   const getImageUrl = (listing: MarketplaceListing) => {
-    if (listing.property?.property_images?.length > 0) {
-      const primaryImage = listing.property.property_images.find(img => img.is_primary);
-      return primaryImage?.image_url || listing.property.property_images[0]?.image_url;
+    if (listing.property?.images?.length && listing.property.images.length > 0) {
+      const primaryImage = listing.property.images.find((img: PropertyImage) => img.is_primary);
+      return primaryImage?.image_url || listing.property.images[0]?.image_url;
     }
     return listing.property?.image_url || '/api/placeholder/400/300';
   };
