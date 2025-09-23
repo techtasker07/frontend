@@ -12,7 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/lib/auth";
-import { api, Property } from "@/lib/api";
+import { api, Property, PropertyImage } from "@/lib/api";
 import { supabaseApi, MarketplaceListing } from "@/lib/supabase-api";
 import { BudgetSearchModal } from "@/components/budget/budget-search-modal";
 import { 
@@ -504,9 +504,9 @@ function FeaturedMarketplace() {
   };
 
   const getImageUrl = (listing: MarketplaceListing) => {
-    if (listing.property?.property_images?.length > 0) {
-      const primaryImage = listing.property.property_images.find(img => img.is_primary);
-      return primaryImage?.image_url || listing.property.property_images[0]?.image_url;
+    if (listing.property?.images?.length && listing.property.images.length > 0) {
+      const primaryImage = listing.property.images.find((img: PropertyImage) => img.is_primary);
+      return primaryImage?.image_url || listing.property.images[0]?.image_url;
     }
     return listing.property?.image_url || '/api/placeholder/400/300';
   };
