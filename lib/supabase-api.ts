@@ -1747,11 +1747,11 @@ class SupabaseApiClient {
 
       if (error) throw error;
 
-      const listings = data?.map(item => item.marketplace_listing).filter(Boolean) || [];
+      const listings = (data?.map(item => item.marketplace_listing).filter(Boolean) || []) as unknown as MarketplaceListing[];
 
       return {
         success: true,
-        data: listings as MarketplaceListing[]
+        data: listings
       };
     } catch (error: any) {
       return {
