@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
-import { supabaseApi, MarketplaceListing, Category, PropertyType, ListingType, PropertyImage } from '@/lib/supabase-api';
+import { supabaseApi, MarketplaceListing, Category, PropertyType, ListingType, PropertyImage, Property } from '@/lib/supabase-api';
 import { Search, Filter, Heart, Eye, MapPin, Bed, Bath, Car, Star } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -39,15 +39,40 @@ export default function MarketplacePage() {
 
   const fetchInitialData = async () => {
     try {
+      console.log('Fetching initial data...');
+      console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+      console.log('Supabase Key present:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+      
       const [categoriesRes, propertyTypesRes, listingTypesRes] = await Promise.all([
         supabaseApi.getCategories(),
         supabaseApi.getPropertyTypes(),
         supabaseApi.getListingTypes()
       ]);
 
-      if (categoriesRes.success) setCategories(categoriesRes.data);
-      if (propertyTypesRes.success) setPropertyTypes(propertyTypesRes.data);
-      if (listingTypesRes.success) setListingTypes(listingTypesRes.data);
+      console.log('Categories response:', categoriesRes);
+      console.log('Property types response:', propertyTypesRes);
+      console.log('Listing types response:', listingTypesRes);
+
+      if (categoriesRes.success) {
+        setCategories(categoriesRes.data);
+        console.log('Categories set:', categoriesRes.data.length, 'items');
+      } else {
+        console.error('Categories fetch failed:', categoriesRes.error);
+      }
+      
+      if (propertyTypesRes.success) {
+        setPropertyTypes(propertyTypesRes.data);
+        console.log('Property types set:', propertyTypesRes.data.length, 'items');
+      } else {
+        console.error('Property types fetch failed:', propertyTypesRes.error);
+      }
+      
+      if (listingTypesRes.success) {
+        setListingTypes(listingTypesRes.data);
+        console.log('Listing types set:', listingTypesRes.data.length, 'items');
+      } else {
+        console.error('Listing types fetch failed:', listingTypesRes.error);
+      }
     } catch (error) {
       console.error('Error fetching initial data:', error);
     }
@@ -69,12 +94,20 @@ export default function MarketplacePage() {
         limit: 50
       };
 
+      console.log('Fetching listings with params:', params);
       const response = await supabaseApi.getMarketplaceListings(params);
+      console.log('Listings response:', response);
+      
       if (response.success) {
+        console.log('Setting listings:', response.data.length, 'items');
         setListings(response.data);
+      } else {
+        console.error('Failed to fetch listings:', response.error);
+        setListings([]);
       }
     } catch (error) {
       console.error('Error fetching listings:', error);
+      setListings([]);
     } finally {
       setLoading(false);
     }
@@ -112,12 +145,13 @@ export default function MarketplacePage() {
     return listing.property?.image_url || '/api/placeholder/400/300';
   };
 
+
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* Header */}
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold text-gray-900">Property Marketplace</h1>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+      {/* Header with Background */}
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 rounded-lg p-8 text-center space-y-4 text-white shadow-lg">
+        <h1 className="text-4xl font-bold">Property Marketplace</h1>
+        <p className="text-lg max-w-2xl mx-auto opacity-90">
           Discover your perfect property from our curated selection of homes, apartments, and commercial spaces
         </p>
       </div>

@@ -209,20 +209,12 @@ function Hero({ onOpenModal }: { onOpenModal: (list: Property[], budget: number)
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-cyan-50 pt-16">
       {/* Background decoration */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-100/80 via-purple-50/70 to-transparent" />
-      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-purple-200/30 to-transparent rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-cyan-200/30 to-transparent rounded-full blur-3xl" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-100/80 via-purple-80/900 to-transparent" />
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-purple-200/90 to-transparent rounded-full blur-3xl" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-cyan-200/90 to-transparent rounded-full blur-3xl" />
       
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         <div className="text-center">
-          {/* Badge */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="mb-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-200 px-4 py-2 text-sm backdrop-blur"
-          >
-          </motion.div>
 
           {/* Main heading */}
           <motion.h1
@@ -245,7 +237,7 @@ function Hero({ onOpenModal }: { onOpenModal: (list: Property[], budget: number)
             className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto"
           >
             Make smarter property decisions with collective wisdom. Get real opinions from local communities,
-            AI-powered insights, and data-driven recommendations for your real estate investments.
+            Controlled Market Place, and data-driven recommendations for your real estate investments.
           </motion.p>
 
           {/* Dynamic Action Buttons */}
@@ -374,32 +366,32 @@ function Features() {
       title: "Property Listings",
       desc: "Comprehensive, verified listings with detailed community insights and market analysis.",
       gradient: "from-blue-500 to-cyan-500",
-      bgGradient: "from-blue-50 to-cyan-50",
-      borderColor: "border-blue-200",
+      bgGradient: "bg-white", // Solid white background
+      borderColor: "border-gray-200",
     },
     {
       icon: <Target className="h-8 w-8" />,
       title: "Smart Prospects",
       desc: "AI-powered algorithmic scoring and intelligent watchlists to surface the best opportunities.",
       gradient: "from-green-500 to-emerald-500",
-      bgGradient: "from-green-50 to-emerald-50",
-      borderColor: "border-green-200",
+      bgGradient: "bg-white", // Solid white background
+      borderColor: "border-gray-200",
     },
     {
       icon: <Users className="h-8 w-8" />,
       title: "Community Polls",
       desc: "Real opinions from local communities and investors to validate your investment decisions.",
       gradient: "from-purple-500 to-pink-500",
-      bgGradient: "from-purple-50 to-pink-50",
-      borderColor: "border-purple-200",
+      bgGradient: "bg-white", // Solid white background
+      borderColor: "border-gray-200",
     },
     {
       icon: <LineChart className="h-8 w-8" />,
       title: "Market Insights",
       desc: "Live market trends, analytics, and predictive insights to time your investments perfectly.",
       gradient: "from-orange-500 to-red-500",
-      bgGradient: "from-orange-50 to-red-50",
-      borderColor: "border-orange-200",
+      bgGradient: "bg-white", // Solid white background
+      borderColor: "border-gray-200",
     },
   ];
 
