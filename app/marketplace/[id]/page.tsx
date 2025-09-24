@@ -101,8 +101,8 @@ export default function PropertyDetailsPage() {
     const images = [];
     
     // Add property images
-    if (listing.property?.property_images?.length > 0) {
-      images.push(...listing.property.property_images.map(img => img.image_url));
+    if (listing.property?.images && listing.property.images.length > 0) {
+      images.push(...listing.property.images.map(img => img.image_url));
     }
     
     // Add fallback image if no images
@@ -764,7 +764,7 @@ export default function PropertyDetailsPage() {
                 <Card key={relatedListing.id} className="group hover:shadow-lg transition-shadow overflow-hidden">
                   <div className="aspect-video overflow-hidden">
                     <Image
-                      src={relatedListing.property?.property_images?.[0]?.image_url || relatedListing.property?.image_url || '/api/placeholder/400/300'}
+                      src={relatedListing.property?.images?.[0]?.image_url || relatedListing.property?.image_url || '/api/placeholder/400/300'}
                       alt={relatedListing.property?.title || 'Property'}
                       width={400}
                       height={300}
