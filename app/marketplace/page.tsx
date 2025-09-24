@@ -20,12 +20,12 @@ export default function MarketplacePage() {
   const [listingTypes, setListingTypes] = useState<ListingType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedPropertyType, setSelectedPropertyType] = useState<string>('');
-  const [selectedListingType, setSelectedListingType] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedPropertyType, setSelectedPropertyType] = useState<string>('all');
+  const [selectedListingType, setSelectedListingType] = useState<string>('all');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
-  const [selectedBedrooms, setSelectedBedrooms] = useState<string>('');
-  const [selectedBathrooms, setSelectedBathrooms] = useState<string>('');
+  const [selectedBedrooms, setSelectedBedrooms] = useState<string>('all');
+  const [selectedBathrooms, setSelectedBathrooms] = useState<string>('all');
   const [showFeatured, setShowFeatured] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
@@ -57,14 +57,14 @@ export default function MarketplacePage() {
     setLoading(true);
     try {
       const params = {
-        category: selectedCategory || undefined,
-        property_type: selectedPropertyType || undefined,
-        listing_type: selectedListingType || undefined,
+        category: selectedCategory === 'all' ? undefined : selectedCategory,
+        property_type: selectedPropertyType === 'all' ? undefined : selectedPropertyType,
+        listing_type: selectedListingType === 'all' ? undefined : selectedListingType,
         min_price: priceRange[0],
         max_price: priceRange[1],
         location: searchTerm || undefined,
-        bedrooms: selectedBedrooms ? parseInt(selectedBedrooms) : undefined,
-        bathrooms: selectedBathrooms ? parseInt(selectedBathrooms) : undefined,
+        bedrooms: selectedBedrooms === 'all' ? undefined : parseInt(selectedBedrooms),
+        bathrooms: selectedBathrooms === 'all' ? undefined : parseInt(selectedBathrooms),
         is_featured: showFeatured ? true : undefined,
         limit: 50
       };
@@ -89,12 +89,12 @@ export default function MarketplacePage() {
   };
 
   const clearFilters = () => {
-    setSelectedCategory('');
-    setSelectedPropertyType('');
-    setSelectedListingType('');
+    setSelectedCategory('all');
+    setSelectedPropertyType('all');
+    setSelectedListingType('all');
     setPriceRange([0, 10000000]);
-    setSelectedBedrooms('');
-    setSelectedBathrooms('');
+    setSelectedBedrooms('all');
+    setSelectedBathrooms('all');
     setShowFeatured(false);
     setSearchTerm('');
   };
@@ -153,7 +153,7 @@ export default function MarketplacePage() {
                 <SelectValue placeholder="Listing Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
+                <SelectItem value="all">All Types</SelectItem>
                 {listingTypes.map((type) => (
                   <SelectItem key={type.id} value={type.name}>
                     {type.name}
@@ -167,7 +167,7 @@ export default function MarketplacePage() {
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.name}>
                     {category.name}
@@ -181,7 +181,7 @@ export default function MarketplacePage() {
                 <SelectValue placeholder="Property Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
+                <SelectItem value="all">All Types</SelectItem>
                 {propertyTypes.map((type) => (
                   <SelectItem key={type.id} value={type.name}>
                     {type.name}
@@ -195,7 +195,7 @@ export default function MarketplacePage() {
                 <SelectValue placeholder="Bedrooms" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any</SelectItem>
+                <SelectItem value="all">Any</SelectItem>
                 <SelectItem value="1">1+</SelectItem>
                 <SelectItem value="2">2+</SelectItem>
                 <SelectItem value="3">3+</SelectItem>

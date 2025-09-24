@@ -70,7 +70,7 @@ function Navbar() {
             </div>
             <div className="leading-tight">
               <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">MIPRIPITY</h1>
-              <p className="text-xs text-gray-500">Community-Driven Property Intelligence</p>
+              <p className="text-xs text-white">Community-Driven Property Intelligence</p>
             </div>
           </Link>
 
@@ -209,7 +209,7 @@ function Hero({ onOpenModal }: { onOpenModal: (list: Property[], budget: number)
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-cyan-50 pt-16">
       {/* Background decoration */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-100/20 via-purple-50/10 to-transparent" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-100/80 via-purple-50/70 to-transparent" />
       <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-purple-200/30 to-transparent rounded-full blur-3xl" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-cyan-200/30 to-transparent rounded-full blur-3xl" />
       
@@ -222,8 +222,6 @@ function Hero({ onOpenModal }: { onOpenModal: (list: Property[], budget: number)
             transition={{ duration: 0.5 }}
             className="mb-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-200 px-4 py-2 text-sm backdrop-blur"
           >
-            <Zap className="h-4 w-4 text-indigo-600" />
-            <span className="font-medium text-gray-700">Powered by Community Intelligence</span>
           </motion.div>
 
           {/* Main heading */}
