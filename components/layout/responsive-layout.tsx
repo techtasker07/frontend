@@ -66,8 +66,8 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Mobile Header - Only show on non-homepage, non-auth, and non-AI prospect pages */}
-      {!isHomePage && !isAuthPage && !isAIProspectPage && (
+      {/* Mobile Header - Only show on non-auth and non-AI prospect pages */}
+      {!isAuthPage && !isAIProspectPage && (
         <div className="md:hidden">
           <MobileHeader onMenuClick={() => setSidebarOpen(true)} />
         </div>
@@ -135,7 +135,7 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
 
       {/* Main Content */}
       <div className="w-full">
-        <main className={`min-h-screen ${!isHomePage && !isAuthPage && !isAIProspectPage ? 'pt-16 md:pt-0' : ''}`}>
+        <main className={`min-h-screen ${!isAuthPage && !isAIProspectPage ? 'pt-16 md:pt-0' : ''}`}>
           {children}
         </main>
         <Footer />

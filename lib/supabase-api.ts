@@ -114,38 +114,69 @@ export interface PropertyStats {
   total_votes: number;
 }
 
-// Marketplace interfaces
+// Marketplace interfaces - Independent structure
 export interface MarketplaceListing {
   id: string;
-  property_id: string;
+  // Basic Property Information
+  title: string;
+  description: string;
+  location: string;
+  // Property Type and Category
   listing_type_id: string;
   property_type_id: string;
+  category_id: string;
+  // Pricing Information
   price: number;
   currency: string;
   price_period?: string;
-  available_from?: string;
-  available_to?: string;
+  security_deposit?: number;
+  // Property Details
   bedrooms?: number;
   bathrooms?: number;
   area_sqft?: number;
   area_sqm?: number;
+  year_of_construction?: number;
   furnishing_status?: string;
   parking_spaces: number;
+  // Availability
+  available_from?: string;
+  available_to?: string;
+  // Features and Amenities
   amenities: string[];
   utilities_included: boolean;
-  security_deposit?: number;
+  // Listing Management
   is_featured: boolean;
   is_active: boolean;
   views_count: number;
+  // Contact Information
+  contact_name?: string;
   contact_phone?: string;
   contact_email?: string;
   contact_whatsapp?: string;
+  // User who created the listing
+  user_id: string;
+  // SEO and Additional Info
+  keywords?: string[];
+  virtual_tour_url?: string;
+  video_url?: string;
+  // Timestamps
   created_at: string;
   updated_at: string;
-  // Relations
-  property: Property;
-  listing_type: { name: string };
-  property_type: { name: string };
+  // Relations (populated by joins)
+  listing_type?: { name: string };
+  property_type?: { name: string };
+  category?: { name: string };
+  images?: MarketplaceImage[];
+}
+
+export interface MarketplaceImage {
+  id: string;
+  marketplace_listing_id: string;
+  image_url: string;
+  is_primary: boolean;
+  caption?: string;
+  display_order: number;
+  created_at: string;
 }
 
 export interface PropertyType {
@@ -1296,7 +1327,32 @@ class SupabaseApiClient {
     }
   }
 
-  // Marketplace methods
+  // Hero images methods
+  async getActiveHeroImage(): Promise<ApiResponse<{ image_url: string; alt_text?: string }>> {
+    try {
+      const { data, error } = await supabase
+        .from('hero_images')
+        .select('image_url, alt_text')
+        .eq('is_active', true)
+        .limit(1)
+        .single();
+
+      if (error) throw error;
+
+      return {
+        success: true,
+        data: data as { image_url: string; alt_text?: string }
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: { image_url: '', alt_text: '' },
+        error: error.message
+      };
+    }
+  }
+
+  // Marketplace methods - Independent structure
   async getMarketplaceListings(params?: {
     category?: string;
     listing_type?: string;
@@ -1315,46 +1371,28 @@ class SupabaseApiClient {
         .from('marketplace_listings')
         .select(`
           *,
-          property:properties!marketplace_listings_property_id_fkey (
-            id,
-            title,
-            description,
-            location,
-            user_id,
-            category_id,
-            current_worth,
-            year_of_construction,
-            image_url,
-            created_at,
-            updated_at,
-            profiles!properties_user_id_fkey (
-              first_name,
-              last_name,
-              email,
-              phone_number,
-              profile_picture
-            ),
-            categories!properties_category_id_fkey (
-              name
-            ),
-            property_images (
-              id,
-              image_url,
-              is_primary
-            )
-          ),
           listing_type:listing_types!marketplace_listings_listing_type_id_fkey (
             name
           ),
           property_type:property_types!marketplace_listings_property_type_id_fkey (
             name
+          ),
+          category:categories!marketplace_listings_category_id_fkey (
+            name
+          ),
+          images:marketplace_images (
+            id,
+            image_url,
+            is_primary,
+            caption,
+            display_order
           )
         `)
         .eq('is_active', true);
 
       // Apply filters
       if (params?.category) {
-        query = query.eq('property.categories.name', params.category);
+        query = query.eq('category.name', params.category);
       }
       if (params?.listing_type) {
         query = query.eq('listing_type.name', params.listing_type);
@@ -1369,13 +1407,13 @@ class SupabaseApiClient {
         query = query.lte('price', params.max_price);
       }
       if (params?.location) {
-        query = query.ilike('property.location', `%${params.location}%`);
+        query = query.ilike('location', `%${params.location}%`);
       }
       if (params?.bedrooms) {
-        query = query.eq('bedrooms', params.bedrooms);
+        query = query.gte('bedrooms', params.bedrooms);
       }
       if (params?.bathrooms) {
-        query = query.eq('bathrooms', params.bathrooms);
+        query = query.gte('bathrooms', params.bathrooms);
       }
       if (params?.is_featured !== undefined) {
         query = query.eq('is_featured', params.is_featured);
@@ -1411,39 +1449,21 @@ class SupabaseApiClient {
         .from('marketplace_listings')
         .select(`
           *,
-          property:properties!marketplace_listings_property_id_fkey (
-            id,
-            title,
-            description,
-            location,
-            user_id,
-            category_id,
-            current_worth,
-            year_of_construction,
-            image_url,
-            created_at,
-            updated_at,
-            profiles!properties_user_id_fkey (
-              first_name,
-              last_name,
-              email,
-              phone_number,
-              profile_picture
-            ),
-            categories!properties_category_id_fkey (
-              name
-            ),
-            property_images (
-              id,
-              image_url,
-              is_primary
-            )
-          ),
           listing_type:listing_types!marketplace_listings_listing_type_id_fkey (
             name
           ),
           property_type:property_types!marketplace_listings_property_type_id_fkey (
             name
+          ),
+          category:categories!marketplace_listings_category_id_fkey (
+            name
+          ),
+          images:marketplace_images (
+            id,
+            image_url,
+            is_primary,
+            caption,
+            display_order
           )
         `)
         .eq('id', id)
@@ -1472,35 +1492,49 @@ class SupabaseApiClient {
   }
 
   async createMarketplaceListing(listingData: {
-    property_id: string;
+    title: string;
+    description: string;
+    location: string;
     listing_type_id: string;
     property_type_id: string;
+    category_id: string;
     price: number;
     currency?: string;
     price_period?: string;
-    available_from?: string;
-    available_to?: string;
+    security_deposit?: number;
     bedrooms?: number;
     bathrooms?: number;
     area_sqft?: number;
     area_sqm?: number;
+    year_of_construction?: number;
     furnishing_status?: string;
     parking_spaces?: number;
+    available_from?: string;
+    available_to?: string;
     amenities?: string[];
     utilities_included?: boolean;
-    security_deposit?: number;
+    keywords?: string[];
+    virtual_tour_url?: string;
+    video_url?: string;
+    contact_name?: string;
     contact_phone?: string;
     contact_email?: string;
     contact_whatsapp?: string;
   }): Promise<ApiResponse<MarketplaceListing>> {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
       const { data, error } = await supabase
         .from('marketplace_listings')
         .insert({
           ...listingData,
-          amenities: listingData.amenities || [],
+          user_id: user.id,
+          currency: listingData.currency || 'NGN',
           parking_spaces: listingData.parking_spaces || 0,
+          amenities: listingData.amenities || [],
           utilities_included: listingData.utilities_included || false,
+          keywords: listingData.keywords || [],
           is_featured: false,
           is_active: true,
           views_count: 0
@@ -1625,12 +1659,10 @@ class SupabaseApiClient {
           *,
           marketplace_listing:marketplace_listings!bookings_marketplace_listing_id_fkey (
             id,
+            title,
+            location,
             price,
-            currency,
-            property:properties!marketplace_listings_property_id_fkey (
-              title,
-              location
-            )
+            currency
           )
         `)
         .eq('user_id', user.id)
@@ -1717,29 +1749,21 @@ class SupabaseApiClient {
         .select(`
           marketplace_listing:marketplace_listings!favorites_marketplace_listing_id_fkey (
             *,
-            property:properties!marketplace_listings_property_id_fkey (
-              id,
-              title,
-              description,
-              location,
-              user_id,
-              category_id,
-              current_worth,
-              year_of_construction,
-              image_url,
-              created_at,
-              updated_at,
-              property_images (
-                id,
-                image_url,
-                is_primary
-              )
-            ),
             listing_type:listing_types!marketplace_listings_listing_type_id_fkey (
               name
             ),
             property_type:property_types!marketplace_listings_property_type_id_fkey (
               name
+            ),
+            category:categories!marketplace_listings_category_id_fkey (
+              name
+            ),
+            images:marketplace_images (
+              id,
+              image_url,
+              is_primary,
+              caption,
+              display_order
             )
           )
         `)
