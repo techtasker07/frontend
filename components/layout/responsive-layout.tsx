@@ -6,6 +6,7 @@ import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
 import { Sidebar } from "./sidebar"
 import { MobileHeader } from "./mobile-header"
+import { DesktopHeader } from "./desktop-header"
 import { Footer } from "./footer"
 import { LoginSuccessHandler } from "../ai/login-success-handler"
 
@@ -73,6 +74,13 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
         </div>
       )}
 
+      {/* Desktop Header - Only show on non-auth and non-AI prospect pages */}
+      {!isAuthPage && !isAIProspectPage && (
+        <div className="hidden md:block">
+          <DesktopHeader onMenuClick={() => setSidebarOpen(true)} />
+        </div>
+      )}
+
       {/* Desktop Hover Sidebar */}
       <div className={`hidden md:block fixed top-0 left-0 h-full z-50 transform transition-transform duration-300 ${
         sidebarVisible ? 'translate-x-0' : '-translate-x-full'
@@ -135,7 +143,7 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
 
       {/* Main Content */}
       <div className="w-full">
-        <main className={`min-h-screen ${!isAuthPage && !isAIProspectPage ? 'pt-16 md:pt-0' : ''}`}>
+        <main className={`min-h-screen ${!isAuthPage && !isAIProspectPage ? 'pt-16 md:pt-16' : ''}`}>
           {children}
         </main>
         <Footer />

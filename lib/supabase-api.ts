@@ -1352,6 +1352,28 @@ class SupabaseApiClient {
     }
   }
 
+  async getAllHeroImages(): Promise<ApiResponse<{ id: string; image_url: string; alt_text?: string; is_active: boolean }[]>> {
+    try {
+      const { data, error } = await supabase
+        .from('hero_images')
+        .select('id, image_url, alt_text, is_active')
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      return {
+        success: true,
+        data: data as { id: string; image_url: string; alt_text?: string; is_active: boolean }[]
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: [],
+        error: error.message
+      };
+    }
+  }
+
   // Marketplace methods - Independent structure
   async getMarketplaceListings(params?: {
     category?: string;

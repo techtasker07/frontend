@@ -6,21 +6,43 @@ import { Input } from "./ui/input";
 import { supabaseApi } from "../lib/supabase-api";
 
 export function HeroSection() {
-  const [heroImage, setHeroImage] = useState<{ image_url: string; alt_text?: string }>({
-    image_url: "",
-    alt_text: "Modern 3D house design"
-  });
+  const [heroImages, setHeroImages] = useState<{ id: string; image_url: string; alt_text?: string; is_active: boolean }[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
-    const fetchHeroImage = async () => {
-      const response = await supabaseApi.getActiveHeroImage();
-      if (response.success && response.data.image_url) {
-        setHeroImage(response.data);
+    const fetchHeroImages = async () => {
+      const response = await supabaseApi.getAllHeroImages();
+      if (response.success && response.data.length > 0) {
+        setHeroImages(response.data);
+      } else {
+        // Fallback to active image if no images found
+        const fallbackResponse = await supabaseApi.getActiveHeroImage();
+        if (fallbackResponse.success && fallbackResponse.data.image_url) {
+          setHeroImages([{
+            id: 'fallback',
+            image_url: fallbackResponse.data.image_url,
+            alt_text: fallbackResponse.data.alt_text,
+            is_active: true
+          }]);
+        }
       }
     };
 
-    fetchHeroImage();
+    fetchHeroImages();
   }, []);
+
+  // Cycle through images every 20 seconds
+  useEffect(() => {
+    if (heroImages.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
+    }, 20000); // 20 seconds
+
+    return () => clearInterval(interval);
+  }, [heroImages.length]);
+
+  const currentImage = heroImages[currentImageIndex] || { image_url: "", alt_text: "Modern 3D house design" };
   return (
     <section className="relative bg-gradient-to-br from-[#FBD9B9] to-[#C1DEE8] overflow-hidden">
       <div className="max-w-5xl mx-auto px-2 sm:px-6 lg:px-4 py-1">
@@ -59,9 +81,9 @@ export function HeroSection() {
           <div className="relative lg:justify-self-end">
             <div className="relative w-full max-w-md lg:max-w-lg">
               <img
-                src={heroImage.image_url || "/api/placeholder/400/300"}
-                alt={heroImage.alt_text || "Modern 3D house design"}
-                className="w-full h-auto object-contain"
+                src={currentImage.image_url || "/api/placeholder/400/300"}
+                alt={currentImage.alt_text || "Modern 3D house design"}
+                className="w-full h-auto object-contain transition-opacity duration-1000 ease-in-out"
               />
             </div>
           </div>
