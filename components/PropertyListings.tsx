@@ -14,6 +14,7 @@ export function PropertyListings() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [displayLimit, setDisplayLimit] = useState(3);
   const [searchFilters, setSearchFilters] = useState({
     location: '',
     propertyType: '',
@@ -31,8 +32,9 @@ export function PropertyListings() {
         setError(null);
         const response = await supabaseApi.getProperties({ limit: 10 });
         if (response.success) {
-          setProperties(response.data);
-          setFilteredProperties(response.data);
+          const sortedProperties = response.data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+          setProperties(sortedProperties);
+          setFilteredProperties(sortedProperties);
         } else {
           setError(response.error || 'Failed to load properties');
         }
@@ -159,7 +161,7 @@ export function PropertyListings() {
 
           <TabsContent value="all" className="mt-8">
             <div className={gridClass}>
-              {filteredProperties.map((property) => (
+              {filteredProperties.slice(0, displayLimit).map((property) => (
                 <PropertyCard key={property.id} property={property} />
               ))}
             </div>
@@ -167,7 +169,7 @@ export function PropertyListings() {
 
           <TabsContent value="sale" className="mt-8">
             <div className={gridClass}>
-              {filteredProperties.filter(p => p.type === "sale").map((property) => (
+              {filteredProperties.filter(p => p.type === "sale").slice(0, displayLimit).map((property) => (
                 <PropertyCard key={property.id} property={property} />
               ))}
             </div>
@@ -175,7 +177,7 @@ export function PropertyListings() {
 
           <TabsContent value="rent" className="mt-8">
             <div className={gridClass}>
-              {filteredProperties.filter(p => p.type === "rent").map((property) => (
+              {filteredProperties.filter(p => p.type === "rent").slice(0, displayLimit).map((property) => (
                 <PropertyCard key={property.id} property={property} />
               ))}
             </div>
@@ -183,7 +185,7 @@ export function PropertyListings() {
 
           <TabsContent value="book" className="mt-8">
             <div className={gridClass}>
-              {filteredProperties.filter(p => p.type === "booking").map((property) => (
+              {filteredProperties.filter(p => p.type === "booking").slice(0, displayLimit).map((property) => (
                 <PropertyCard key={property.id} property={property} />
               ))}
             </div>
@@ -193,6 +195,7 @@ export function PropertyListings() {
             <div className={gridClass}>
               {filteredProperties
                 .filter(p => p.pollPercentage && p.pollPercentage > 80)
+                .slice(0, displayLimit)
                 .map((property) => (
                   <PropertyCard key={property.id} property={property} />
                 ))}
@@ -202,7 +205,11 @@ export function PropertyListings() {
 
         {/* Load More */}
         <div className="text-center">
-          <Button variant="outline" size="lg">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => setDisplayLimit(prev => prev === 3 ? 12 : prev + 12)}
+          >
             Load More Properties
           </Button>
         </div>
