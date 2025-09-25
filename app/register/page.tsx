@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -29,6 +29,18 @@ export default function RegisterPage() {
   
   const { register, isAuthenticated } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Prefill email from URL params
+  useEffect(() => {
+    const email = searchParams.get('email')
+    if (email) {
+      setFormData(prev => ({
+        ...prev,
+        email: email
+      }))
+    }
+  }, [searchParams])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({

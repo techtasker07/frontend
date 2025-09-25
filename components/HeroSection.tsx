@@ -12,6 +12,7 @@ export function HeroSection() {
   const router = useRouter();
   const [heroImages, setHeroImages] = useState<{ id: string; image_url: string; alt_text?: string; is_active: boolean }[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [email, setEmail] = useState('');
 
   // Function to check if URL is a video
   const isVideoUrl = (url: string): boolean => {
@@ -77,9 +78,14 @@ export function HeroSection() {
                 <Input
                   type="email"
                   placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="flex-1 h-12 bg-white border-gray-200 rounded-full px-6"
                 />
-                <Button className="h-12 px-8 bg-[#F39322] hover:bg-[#000080] text-white rounded-full">
+                <Button
+                  className="h-12 px-8 bg-[#F39322] hover:bg-[#000080] text-white rounded-full"
+                  onClick={() => router.push(`/register${email ? `?email=${encodeURIComponent(email)}` : ''}`)}
+                >
                   Get Started
                 </Button>
               </div>

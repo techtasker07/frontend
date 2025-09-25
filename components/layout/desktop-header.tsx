@@ -54,9 +54,6 @@ export function DesktopHeader({ onMenuClick }: DesktopHeaderProps) {
           <Link href="/marketplace" className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
             Marketplace
           </Link>
-          <Link href="/ai" className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
-            AI Analysis
-          </Link>
           <Link href="/about" className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
             About
           </Link>

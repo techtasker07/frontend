@@ -115,7 +115,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
         {pollPercentage > 0 && (
           <div className="mb-3">
             <div className="flex justify-between text-xs text-gray-600 mb-1">
-              <span>Investment Appeal</span>
+              <span>Top Votes</span>
               <span>{pollPercentage}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
