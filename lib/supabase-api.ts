@@ -1361,7 +1361,7 @@ class SupabaseApiClient {
       const { data, error } = await supabase
         .from('hero_images')
         .select('id, image_url, alt_text, is_active')
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 

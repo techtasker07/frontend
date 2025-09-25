@@ -87,11 +87,11 @@ export function HeroSection() {
 
           {/* Right Media */}
           <div className="relative lg:justify-self-end">
-            <div className="relative w-full max-w-md lg:max-w-lg">
+            <div className="relative w-full max-w-md lg:max-w-lg h-64">
               {isVideo ? (
                 <video
                   src={currentImage.image_url}
-                  className="w-full h-auto object-contain transition-opacity duration-1000 ease-in-out"
+                  className="w-full h-full object-contain transition-opacity duration-1000 ease-in-out"
                   autoPlay
                   muted
                   loop
@@ -102,7 +102,7 @@ export function HeroSection() {
                 <img
                   src={currentImage.image_url || "/api/placeholder/400/300"}
                   alt={currentImage.alt_text || ""}
-                  className="w-full h-auto object-contain transition-opacity duration-1000 ease-in-out"
+                  className="w-full h-full object-contain transition-opacity duration-1000 ease-in-out"
                 />
               )}
             </div>
