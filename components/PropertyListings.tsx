@@ -85,14 +85,58 @@ export function PropertyListings() {
           </div>
         </div>
 
-        {/* Property Grid */}
-        <div className="mt-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {properties.map((property) => (
-              <PropertyCard key={property.id} id={property.id} />
-            ))}
-          </div>
-        </div>
+        {/* Property Tabs */}
+        <Tabs defaultValue="all" className="mb-8">
+          <TabsList className="grid w-full max-w-lg grid-cols-5">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="sale">For Sale</TabsTrigger>
+            <TabsTrigger value="rent">For Rent</TabsTrigger>
+            <TabsTrigger value="book">For Booking</TabsTrigger>
+            <TabsTrigger value="poll">Top Polls</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="all" className="mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {properties.map((property) => (
+                <PropertyCard key={property.id} property={property} />
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="sale" className="mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {properties.filter(p => p.type === "sale").map((property) => (
+                <PropertyCard key={property.id} property={property} />
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="rent" className="mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {properties.filter(p => p.type === "rent").map((property) => (
+                <PropertyCard key={property.id} property={property} />
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="book" className="mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {properties.filter(p => p.type === "booking").map((property) => (
+                <PropertyCard key={property.id} property={property} />
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="poll" className="mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {properties
+                .filter(p => p.pollPercentage && p.pollPercentage > 80)
+                .map((property) => (
+                  <PropertyCard key={property.id} property={property} />
+                ))}
+            </div>
+          </TabsContent>
+        </Tabs>
 
         {/* Load More */}
         <div className="text-center">

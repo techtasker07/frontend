@@ -43,6 +43,8 @@ export interface Property {
   vote_count?: number;
   images?: PropertyImage[];
   vote_options?: VoteOption[];
+  type?: string;
+  pollPercentage?: number;
 }
 
 export interface ProspectProperty {
@@ -316,7 +318,9 @@ class SupabaseApiClient {
         owner_profile_picture: item.profiles?.profile_picture,
         category_name: item.categories?.name,
         images: item.property_images || [],
-        vote_options: voteOptionsByCategory[item.category_id] || []
+        vote_options: voteOptionsByCategory[item.category_id] || [],
+        type: item.type || 'sale', // Default to 'sale' if not set
+        pollPercentage: item.pollPercentage || 0 // Default to 0
       })) || [];
 
       return {

@@ -7,43 +7,32 @@ import { Heart, MapPin, Bed, Bath, Square, TrendingUp, Users } from "lucide-reac
 import { supabaseApi, Property, PropertyStats } from "../lib/supabase-api";
 
 interface PropertyCardProps {
-  id: string;
+  property: Property;
 }
 
-export function PropertyCard({ id }: PropertyCardProps) {
-  const [property, setProperty] = useState<Property | null>(null);
+export function PropertyCard({ property }: PropertyCardProps) {
   const [pollStats, setPollStats] = useState<PropertyStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchPollStats = async () => {
       try {
         setLoading(true);
-        setError(null);
-
-        // Fetch property data
-        const propertyResponse = await supabaseApi.getProperty(id);
-        if (propertyResponse.success) {
-          setProperty(propertyResponse.data);
-        } else {
-          setError(propertyResponse.error || 'Failed to load property');
-        }
-
         // Fetch poll stats
-        const statsResponse = await supabaseApi.getPropertyStats(id);
+        const statsResponse = await supabaseApi.getPropertyStats(property.id);
         if (statsResponse.success) {
           setPollStats(statsResponse.data);
         }
       } catch (err) {
-        setError('Failed to load data');
+        setError('Failed to load poll stats');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, [id]);
+    fetchPollStats();
+  }, [property.id]);
 
   if (loading) {
     return (
@@ -73,10 +62,10 @@ export function PropertyCard({ id }: PropertyCardProps) {
   const primaryImage = property.images?.find(img => img.is_primary) || property.images?.[0];
   const imageUrl = primaryImage?.image_url || '/api/placeholder/300/200';
   const price = property.current_worth ? `₦${property.current_worth.toLocaleString()}` : 'Price on request';
-  const type = 'sale'; // Assuming sale for now, could be determined from category or other logic
+  const type = property.type || 'sale';
   const isHot = pollStats && pollStats.total_votes > 50; // Example logic for hot properties
   const pollVotes = pollStats?.total_votes || 0;
-  const pollPercentage = pollStats?.statistics?.[0]?.percentage || 0; // Using first stat as example
+  const pollPercentage = property.pollPercentage || pollStats?.statistics?.[0]?.percentage || 0;
   return (
     <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer">
       <div className="relative">
