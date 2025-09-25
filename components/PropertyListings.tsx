@@ -70,10 +70,6 @@ export function PropertyListings() {
           </div>
           
           <div className="flex items-center gap-4 mt-4 md:mt-0">
-            <Button variant="outline" size="sm">
-              <SlidersHorizontal className="h-4 w-4 mr-2" />
-              Filters
-            </Button>
             <div className="flex border rounded-lg">
               <Button variant="ghost" size="sm" className="rounded-r-none">
                 <Grid3X3 className="h-4 w-4" />

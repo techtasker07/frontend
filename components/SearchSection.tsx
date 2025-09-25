@@ -3,7 +3,17 @@ import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Search, MapPin, Filter } from "lucide-react";
 
-export function SearchSection() {
+interface SearchSectionProps {
+  filters: {
+    location: string;
+    propertyType: string;
+    priceRange: string;
+  };
+  onFiltersChange: (filters: { location: string; propertyType: string; priceRange: string }) => void;
+  onSearch: () => void;
+}
+
+export function SearchSection({ filters, onFiltersChange, onSearch }: SearchSectionProps) {
   return (
     <section className="py-12 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -13,15 +23,17 @@ export function SearchSection() {
             {/* Location Input */}
             <div className="flex-1 relative">
               <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <Input 
-                placeholder="Location (City, State, Area)" 
+              <Input
+                placeholder="Location (City, State, Area)"
                 className="pl-10 h-12 bg-white"
+                value={filters.location}
+                onChange={(e) => onFiltersChange({ ...filters, location: e.target.value })}
               />
             </div>
 
             {/* Property Type */}
             <div className="lg:w-48">
-              <Select>
+              <Select value={filters.propertyType} onValueChange={(value) => onFiltersChange({ ...filters, propertyType: value })}>
                 <SelectTrigger className="h-12 bg-white">
                   <SelectValue placeholder="Property Type" />
                 </SelectTrigger>
@@ -38,7 +50,7 @@ export function SearchSection() {
 
             {/* Price Range */}
             <div className="lg:w-52">
-              <Select>
+              <Select value={filters.priceRange} onValueChange={(value) => onFiltersChange({ ...filters, priceRange: value })}>
                 <SelectTrigger className="h-12 bg-white">
                   <SelectValue placeholder="Price Range" />
                 </SelectTrigger>
@@ -60,7 +72,7 @@ export function SearchSection() {
             </Button>
 
             {/* Search Button */}
-            <Button className="h-12 px-8">
+            <Button className="h-12 px-8" onClick={onSearch}>
               <Search className="h-4 w-4 mr-2" />
               Search
             </Button>
