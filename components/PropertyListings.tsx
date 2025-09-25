@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { PropertyCard } from "./PropertyCard";
+import { SearchSection } from "./SearchSection";
 import { Button } from "./ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { SlidersHorizontal, Grid3X3, List } from "lucide-react";
@@ -9,8 +10,19 @@ import { supabaseApi, Property } from "../lib/supabase-api";
 
 export function PropertyListings() {
   const [properties, setProperties] = useState<Property[]>([]);
+  const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [searchFilters, setSearchFilters] = useState({
+    location: '',
+    propertyType: '',
+    priceRange: ''
+  });
+
+  const gridClass = viewMode === 'grid'
+    ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
+    : 'grid grid-cols-1 gap-6';
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -20,6 +32,7 @@ export function PropertyListings() {
         const response = await supabaseApi.getProperties({ limit: 10 });
         if (response.success) {
           setProperties(response.data);
+          setFilteredProperties(response.data);
         } else {
           setError(response.error || 'Failed to load properties');
         }
@@ -32,6 +45,42 @@ export function PropertyListings() {
 
     fetchProperties();
   }, []);
+
+  const applyFilters = () => {
+    let filtered = properties;
+
+    if (searchFilters.location) {
+      filtered = filtered.filter(p =>
+        p.location?.toLowerCase().includes(searchFilters.location.toLowerCase())
+      );
+    }
+
+    if (searchFilters.propertyType) {
+      // Match on title or description
+      filtered = filtered.filter(p =>
+        p.title?.toLowerCase().includes(searchFilters.propertyType.toLowerCase()) ||
+        p.description?.toLowerCase().includes(searchFilters.propertyType.toLowerCase())
+      );
+    }
+
+    if (searchFilters.priceRange) {
+      let min = 0, max = Infinity;
+      switch (searchFilters.priceRange) {
+        case '0-50m': max = 50000000; break;
+        case '50m-100m': min = 50000000; max = 100000000; break;
+        case '100m-200m': min = 100000000; max = 200000000; break;
+        case '200m-500m': min = 200000000; max = 500000000; break;
+        case '500m-1b': min = 500000000; max = 1000000000; break;
+        case '1b+': min = 1000000000; break;
+      }
+      filtered = filtered.filter(p => {
+        const price = p.current_worth || 0;
+        return price >= min && price <= max;
+      });
+    }
+
+    setFilteredProperties(filtered);
+  };
 
   if (loading) {
     return (
@@ -71,15 +120,32 @@ export function PropertyListings() {
           
           <div className="flex items-center gap-4 mt-4 md:mt-0">
             <div className="flex border rounded-lg">
-              <Button variant="ghost" size="sm" className="rounded-r-none">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                size="sm"
+                className="rounded-r-none"
+                onClick={() => setViewMode('grid')}
+              >
                 <Grid3X3 className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="sm" className="rounded-l-none border-l">
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                className="rounded-l-none border-l"
+                onClick={() => setViewMode('list')}
+              >
                 <List className="h-4 w-4" />
               </Button>
             </div>
           </div>
         </div>
+
+        {/* Search Section */}
+        <SearchSection
+          filters={searchFilters}
+          onFiltersChange={setSearchFilters}
+          onSearch={applyFilters}
+        />
 
         {/* Property Tabs */}
         <Tabs defaultValue="all" className="mb-8">
@@ -92,40 +158,40 @@ export function PropertyListings() {
           </TabsList>
 
           <TabsContent value="all" className="mt-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {properties.map((property) => (
+            <div className={gridClass}>
+              {filteredProperties.map((property) => (
                 <PropertyCard key={property.id} property={property} />
               ))}
             </div>
           </TabsContent>
 
           <TabsContent value="sale" className="mt-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {properties.filter(p => p.type === "sale").map((property) => (
+            <div className={gridClass}>
+              {filteredProperties.filter(p => p.type === "sale").map((property) => (
                 <PropertyCard key={property.id} property={property} />
               ))}
             </div>
           </TabsContent>
 
           <TabsContent value="rent" className="mt-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {properties.filter(p => p.type === "rent").map((property) => (
+            <div className={gridClass}>
+              {filteredProperties.filter(p => p.type === "rent").map((property) => (
                 <PropertyCard key={property.id} property={property} />
               ))}
             </div>
           </TabsContent>
 
           <TabsContent value="book" className="mt-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {properties.filter(p => p.type === "booking").map((property) => (
+            <div className={gridClass}>
+              {filteredProperties.filter(p => p.type === "booking").map((property) => (
                 <PropertyCard key={property.id} property={property} />
               ))}
             </div>
           </TabsContent>
 
           <TabsContent value="poll" className="mt-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {properties
+            <div className={gridClass}>
+              {filteredProperties
                 .filter(p => p.pollPercentage && p.pollPercentage > 80)
                 .map((property) => (
                   <PropertyCard key={property.id} property={property} />

@@ -68,13 +68,12 @@ export function PropertyCard({ property }: PropertyCardProps) {
   const pollPercentage = property.pollPercentage || pollStats?.statistics?.[0]?.percentage || 0;
   return (
     <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer">
-      <div className="relative">
+      <div className="relative w-full h-48">
         <Image
           src={imageUrl}
           alt={property.title}
-          width={400}
-          height={256}
-          className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-300"
+          fill
+          className="object-cover group-hover:scale-105 transition-transform duration-300"
         />
 
         {/* Badges */}
