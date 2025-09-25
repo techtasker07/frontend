@@ -5,35 +5,33 @@ import { PropertyCard } from "./PropertyCard";
 import { Button } from "./ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { SlidersHorizontal, Grid3X3, List } from "lucide-react";
-import { supabaseApi, MarketplaceListing } from "../lib/supabase-api";
+import { supabaseApi, Property } from "../lib/supabase-api";
 
 export function PropertyListings() {
-  const [listings, setListings] = useState<MarketplaceListing[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string>("all");
 
   useEffect(() => {
-    const fetchListings = async () => {
+    const fetchProperties = async () => {
       try {
         setLoading(true);
         setError(null);
-        const params = activeTab === "all" ? {} : { listing_type: activeTab };
-        const response = await supabaseApi.getMarketplaceListings({ ...params, limit: 12 });
+        const response = await supabaseApi.getProperties({ limit: 10 });
         if (response.success) {
-          setListings(response.data);
+          setProperties(response.data);
         } else {
-          setError(response.error || 'Failed to load listings');
+          setError(response.error || 'Failed to load properties');
         }
       } catch (err) {
-        setError('Failed to load listings');
+        setError('Failed to load properties');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchListings();
-  }, [activeTab]);
+    fetchProperties();
+  }, []);
 
   if (loading) {
     return (
@@ -68,9 +66,9 @@ export function PropertyListings() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Featured Properties</h2>
-            <p className="text-gray-600">Discover your dream properties and more</p>
+            <p className="text-gray-600">Discover your dream properties and</p>
           </div>
-
+          
           <div className="flex items-center gap-4 mt-4 md:mt-0">
             <Button variant="outline" size="sm">
               <SlidersHorizontal className="h-4 w-4 mr-2" />
@@ -87,56 +85,11 @@ export function PropertyListings() {
           </div>
         </div>
 
-        {/* Listing Type Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="For Sale">For Sale</TabsTrigger>
-            <TabsTrigger value="For Rent">For Rent</TabsTrigger>
-            <TabsTrigger value="For Lease">For Lease</TabsTrigger>
-            <TabsTrigger value="For Booking">For Booking</TabsTrigger>
-            <TabsTrigger value="Poll">Poll</TabsTrigger>
-          </TabsList>
-        </Tabs>
-
         {/* Property Grid */}
         <div className="mt-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {listings.map((listing) => (
-              <div key={listing.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="relative">
-                  <img
-                    src={listing.images?.[0]?.image_url || '/api/placeholder/400/300'}
-                    alt={listing.title}
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="absolute top-3 left-3">
-                    <span className="bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium">
-                      {listing.listing_type?.name}
-                    </span>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-lg mb-2 line-clamp-1">{listing.title}</h3>
-                  <div className="flex items-center text-gray-600 mb-2">
-                    <span className="text-sm">{listing.location}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-xl font-bold text-gray-900">
-                        ₦{listing.price.toLocaleString()}
-                        {listing.price_period && <span className="text-sm font-normal">/{listing.price_period}</span>}
-                      </div>
-                      {listing.property_type && (
-                        <div className="text-sm text-gray-500">{listing.property_type.name}</div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex gap-2 mt-3">
-                    <Button className="flex-1 text-sm">View Details</Button>
-                  </div>
-                </div>
-              </div>
+            {properties.map((property) => (
+              <PropertyCard key={property.id} id={property.id} />
             ))}
           </div>
         </div>
