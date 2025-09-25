@@ -1,7 +1,10 @@
+"use client";
+
+import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Search, MapPin, Filter } from "lucide-react";
+import { Search, MapPin, Filter, ChevronDown, ChevronUp } from "lucide-react";
 
 interface SearchSectionProps {
   filters: {
@@ -14,12 +17,28 @@ interface SearchSectionProps {
 }
 
 export function SearchSection({ filters, onFiltersChange, onSearch }: SearchSectionProps) {
+  const [showFilters, setShowFilters] = useState(false);
+
   return (
     <section className="py-12 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Search Form */}
         <div className="bg-gray-50 rounded-2xl shadow-sm p-6 max-w-5xl mx-auto">
-          <div className="flex flex-col lg:flex-row gap-4">
+          {/* Mobile Filter Toggle */}
+          <div className="md:hidden mb-4">
+            <Button
+              variant="outline"
+              className="w-full h-12 bg-white flex items-center justify-center"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <Filter className="h-4 w-4 mr-2" />
+              Filters
+              {showFilters ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
+            </Button>
+          </div>
+
+          {/* Filter Inputs */}
+          <div className={`flex flex-col lg:flex-row gap-4 ${showFilters ? 'block' : 'hidden md:flex'}`}>
             {/* Location Input */}
             <div className="flex-1 relative">
               <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
@@ -64,7 +83,10 @@ export function SearchSection({ filters, onFiltersChange, onSearch }: SearchSect
                 </SelectContent>
               </Select>
             </div>
+          </div>
 
+          {/* Desktop Filters Button and Search */}
+          <div className="hidden md:flex gap-4 mt-4">
             {/* Filters Button */}
             <Button variant="outline" className="h-12 px-6 bg-white">
               <Filter className="h-4 w-4 mr-2" />
@@ -77,10 +99,18 @@ export function SearchSection({ filters, onFiltersChange, onSearch }: SearchSect
               Search
             </Button>
           </div>
+
+          {/* Mobile Search Button */}
+          <div className="md:hidden mt-4">
+            <Button className="w-full h-12" onClick={onSearch}>
+              <Search className="h-4 w-4 mr-2" />
+              Search
+            </Button>
+          </div>
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-12 max-w-4xl mx-auto">
+        <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-6 mt-12 max-w-4xl mx-auto">
           <div className="text-center">
             <div className="text-1xl font-bold text-gray-900">1,000+</div>
             <div className="text-gray-600">Properties Listed</div>

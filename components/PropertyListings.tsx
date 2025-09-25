@@ -5,7 +5,7 @@ import { PropertyCard } from "./PropertyCard";
 import { SearchSection } from "./SearchSection";
 import { Button } from "./ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { SlidersHorizontal, Grid3X3, List } from "lucide-react";
+import { SlidersHorizontal, Grid3X3, List, ChevronDown, ChevronUp } from "lucide-react";
 import { supabaseApi, Property } from "../lib/supabase-api";
 
 export function PropertyListings() {
@@ -20,6 +20,7 @@ export function PropertyListings() {
     propertyType: '',
     priceRange: ''
   });
+  const [showTabs, setShowTabs] = useState(false);
 
   const gridClass = viewMode === 'grid'
     ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
@@ -120,7 +121,7 @@ export function PropertyListings() {
             <p className="text-gray-600">Discover your dream properties and</p>
           </div>
           
-          <div className="flex items-center gap-4 mt-4 md:mt-0">
+          <div className="hidden md:flex items-center gap-4 mt-4 md:mt-0">
             <div className="flex border rounded-lg">
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'ghost'}
@@ -151,7 +152,19 @@ export function PropertyListings() {
 
         {/* Property Tabs */}
         <Tabs defaultValue="all" className="mb-8">
-          <TabsList className="grid w-full max-w-lg grid-cols-5">
+          {/* Mobile Tab Toggle */}
+          <div className="md:hidden mb-4">
+            <Button
+              variant="outline"
+              className="w-full h-12 bg-white flex items-center justify-center"
+              onClick={() => setShowTabs(!showTabs)}
+            >
+              Browse by Type
+              {showTabs ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
+            </Button>
+          </div>
+
+          <TabsList className={`grid w-full max-w-lg grid-cols-5 ${showTabs ? 'block' : 'hidden md:grid'}`}>
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="sale">For Sale</TabsTrigger>
             <TabsTrigger value="rent">For Rent</TabsTrigger>
