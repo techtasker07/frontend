@@ -164,12 +164,24 @@ export function PropertyListings() {
             </Button>
           </div>
 
-          <TabsList className={`grid w-full max-w-lg grid-cols-5 ${showTabs ? 'block' : 'hidden md:grid'}`}>
+          <TabsList className={`grid w-full max-w-lg grid-cols-5 text-xs md:text-sm ${showTabs ? 'block' : 'hidden md:grid'}`}>
             <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="sale">For Sale</TabsTrigger>
-            <TabsTrigger value="rent">For Rent</TabsTrigger>
-            <TabsTrigger value="book">For Booking</TabsTrigger>
-            <TabsTrigger value="poll">Top Polls</TabsTrigger>
+            <TabsTrigger value="sale">
+              <span className="hidden md:inline">For Sale</span>
+              <span className="md:hidden">Sale</span>
+            </TabsTrigger>
+            <TabsTrigger value="rent">
+              <span className="hidden md:inline">For Rent</span>
+              <span className="md:hidden">Rent</span>
+            </TabsTrigger>
+            <TabsTrigger value="book">
+              <span className="hidden md:inline">For Booking</span>
+              <span className="md:hidden">Book</span>
+            </TabsTrigger>
+            <TabsTrigger value="poll">
+              <span className="hidden md:inline">Top Polls</span>
+              <span className="md:hidden">Polls</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="mt-8">
