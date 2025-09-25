@@ -138,11 +138,11 @@ export default function MarketplacePage() {
   };
 
   const getImageUrl = (listing: MarketplaceListing) => {
-    if (listing.property?.images?.length && listing.property.images.length > 0) {
-      const primaryImage = listing.property.images.find((img: PropertyImage) => img.is_primary);
-      return primaryImage?.image_url || listing.property.images[0]?.image_url;
+    if (listing.images?.length && listing.images.length > 0) {
+      const primaryImage = listing.images.find((img) => img.is_primary);
+      return primaryImage?.image_url || listing.images[0]?.image_url;
     }
-    return listing.property?.image_url || '/api/placeholder/400/300';
+    return '/api/placeholder/400/300';
   };
 
 
@@ -338,7 +338,7 @@ export default function MarketplacePage() {
                   <div className="aspect-video overflow-hidden">
                     <Image
                       src={getImageUrl(listing)}
-                      alt={listing.property?.title || 'Property'}
+                      alt={listing.title || 'Property'}
                       width={400}
                       height={300}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -371,11 +371,11 @@ export default function MarketplacePage() {
                 <CardContent className="p-4 space-y-3">
                   <div className="space-y-2">
                     <h3 className="font-semibold text-lg line-clamp-1">
-                      {listing.property?.title}
+                      {listing.title}
                     </h3>
                     <div className="flex items-center text-gray-500 text-sm">
                       <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
-                      <span className="line-clamp-1">{listing.property?.location}</span>
+                      <span className="line-clamp-1">{listing.location}</span>
                     </div>
                   </div>
 

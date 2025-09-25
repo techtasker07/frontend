@@ -78,7 +78,7 @@ export default function PropertyDetailsPage() {
         
         // Fetch related properties based on same category or location
         const relatedResponse = await supabaseApi.getMarketplaceListings({
-          category: response.data.property?.category_name,
+          category: response.data.category?.name,
           limit: 4
         });
         
@@ -97,24 +97,19 @@ export default function PropertyDetailsPage() {
 
   const getImages = () => {
     if (!listing) return [];
-    
+
     const images = [];
-    
+
     // Add property images
-    if (listing.property?.images && listing.property.images.length > 0) {
-      images.push(...listing.property.images.map(img => img.image_url));
+    if (listing.images && listing.images.length > 0) {
+      images.push(...listing.images.map(img => img.image_url));
     }
-    
-    // Add fallback image if no images
-    if (images.length === 0 && listing.property?.image_url) {
-      images.push(listing.property.image_url);
-    }
-    
+
     // Add placeholder if no images at all
     if (images.length === 0) {
       images.push('/api/placeholder/800/600');
     }
-    
+
     return images;
   };
 
@@ -225,7 +220,7 @@ export default function PropertyDetailsPage() {
       <div className="flex items-center gap-2 text-sm text-gray-600">
         <Link href="/marketplace" className="hover:text-primary">Marketplace</Link>
         <span>/</span>
-        <span>{listing.property?.title}</span>
+        <span>{listing.title}</span>
       </div>
 
       {/* Back Button */}
@@ -241,7 +236,7 @@ export default function PropertyDetailsPage() {
         <div className="relative aspect-video">
           <Image
             src={images[currentImageIndex]}
-            alt={listing.property?.title || 'Property'}
+            alt={listing.title || 'Property'}
             fill
             className="object-cover"
           />
@@ -310,10 +305,10 @@ export default function PropertyDetailsPage() {
           <div className="space-y-4">
             <div className="flex items-start justify-between">
               <div className="space-y-2">
-                <h1 className="text-3xl font-bold">{listing.property?.title}</h1>
+                <h1 className="text-3xl font-bold">{listing.title}</h1>
                 <div className="flex items-center text-gray-600">
                   <MapPin className="h-4 w-4 mr-1" />
-                  <span>{listing.property?.location}</span>
+                  <span>{listing.location}</span>
                 </div>
               </div>
               
@@ -398,7 +393,7 @@ export default function PropertyDetailsPage() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-gray-700 leading-relaxed">
-                      {listing.property?.description || 'No description available.'}
+                      {listing.description || 'No description available.'}
                     </p>
                   </CardContent>
                 </Card>
@@ -428,10 +423,10 @@ export default function PropertyDetailsPage() {
                           <span>Security Deposit: {formatPrice(listing.security_deposit)}</span>
                         </div>
                       )}
-                      {listing.property?.year_of_construction && (
+                      {listing.year_of_construction && (
                         <div className="flex items-center gap-2">
                           <CheckCircle className="h-4 w-4 text-green-500" />
-                          <span>Built in {listing.property.year_of_construction}</span>
+                          <span>Built in {listing.year_of_construction}</span>
                         </div>
                       )}
                     </div>
@@ -503,7 +498,7 @@ export default function PropertyDetailsPage() {
                       )}
                       <div>
                         <span className="font-medium">Year Built:</span>
-                        <span className="ml-2">{listing.property?.year_of_construction || 'N/A'}</span>
+                        <span className="ml-2">{listing.year_of_construction || 'N/A'}</span>
                       </div>
                       <div>
                         <span className="font-medium">Last Updated:</span>
@@ -526,7 +521,7 @@ export default function PropertyDetailsPage() {
                   <div className="space-y-4">
                     <div className="flex items-center gap-2">
                       <MapPin className="h-5 w-5 text-gray-500" />
-                      <span className="text-lg">{listing.property?.location}</span>
+                      <span className="text-lg">{listing.location}</span>
                     </div>
                     <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
                       <p className="text-gray-500">Map integration would go here</p>
@@ -566,23 +561,23 @@ export default function PropertyDetailsPage() {
                 </div>
                 <div>
                   <div className="font-medium">
-                    {listing.property?.owner_name || 'Property Owner'}
+                    {listing.contact_name || 'Property Owner'}
                   </div>
                   <div className="text-sm text-gray-500">Listing Agent</div>
                 </div>
               </div>
 
               <div className="space-y-2">
-                {(listing.contact_phone || listing.property?.owner_phone) && (
+                {listing.contact_phone && (
                   <div className="flex items-center gap-2 text-sm">
                     <Phone className="h-4 w-4 text-gray-500" />
-                    <span>{listing.contact_phone || listing.property?.owner_phone}</span>
+                    <span>{listing.contact_phone}</span>
                   </div>
                 )}
-                {(listing.contact_email || listing.property?.owner_email) && (
+                {listing.contact_email && (
                   <div className="flex items-center gap-2 text-sm">
                     <Mail className="h-4 w-4 text-gray-500" />
-                    <span>{listing.contact_email || listing.property?.owner_email}</span>
+                    <span>{listing.contact_email}</span>
                   </div>
                 )}
               </div>
@@ -740,7 +735,7 @@ export default function PropertyDetailsPage() {
               </div>
               <div className="flex justify-between">
                 <span>Category:</span>
-                <span>{listing.property?.category_name}</span>
+                <span>{listing.category?.name}</span>
               </div>
               <Separator />
               <div className="flex justify-between font-medium">
@@ -764,8 +759,8 @@ export default function PropertyDetailsPage() {
                 <Card key={relatedListing.id} className="group hover:shadow-lg transition-shadow overflow-hidden">
                   <div className="aspect-video overflow-hidden">
                     <Image
-                      src={relatedListing.property?.images?.[0]?.image_url || relatedListing.property?.image_url || '/api/placeholder/400/300'}
-                      alt={relatedListing.property?.title || 'Property'}
+                      src={relatedListing.images?.[0]?.image_url || '/api/placeholder/400/300'}
+                      alt={relatedListing.title || 'Property'}
                       width={400}
                       height={300}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -773,11 +768,11 @@ export default function PropertyDetailsPage() {
                   </div>
                   <CardContent className="p-4 space-y-3">
                     <h3 className="font-semibold line-clamp-1">
-                      {relatedListing.property?.title}
+                      {relatedListing.title}
                     </h3>
                     <div className="flex items-center text-gray-500 text-sm">
                       <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
-                      <span className="line-clamp-1">{relatedListing.property?.location}</span>
+                      <span className="line-clamp-1">{relatedListing.location}</span>
                     </div>
                     <div className="text-lg font-bold text-primary">
                       {formatPrice(relatedListing.price, relatedListing.currency, relatedListing.price_period)}
