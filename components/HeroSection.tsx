@@ -45,11 +45,11 @@ export function HeroSection() {
   const currentImage = heroImages[currentImageIndex] || { image_url: "", alt_text: "" };
   return (
     <section className="relative bg-gradient-to-br from-[#FBD9B9] to-[#C1DEE8] overflow-hidden">
-      <div className="max-w-5xl mx-auto px-2 sm:px-6 lg:px-4 py-1">
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-4 py-1">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Left Content */}
           <div className="max-w-lg">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#000080] mb-6 leading-tight">
+            <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold text-[#000080] mb-6 leading-tight">
               Find Your Perfect{" "}
               <span className="text-[#F39322]">Property</span>
             </h1>
