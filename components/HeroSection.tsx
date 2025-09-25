@@ -4,8 +4,12 @@ import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { supabaseApi } from "../lib/supabase-api";
+import { useAuth } from "../lib/auth";
+import { useRouter } from "next/navigation";
 
 export function HeroSection() {
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
   const [heroImages, setHeroImages] = useState<{ id: string; image_url: string; alt_text?: string; is_active: boolean }[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -67,17 +71,28 @@ export function HeroSection() {
               opportunities.
             </p>
 
-            {/* Email Input */}
-            <div className="flex gap-3 mb-8">
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 h-12 bg-white border-gray-200 rounded-full px-6"
-              />
-              <Button className="h-12 px-8 bg-[#F39322] hover:bg-[#000080] text-white rounded-full">
-                Get Started
-              </Button>
-            </div>
+            {/* Conditional Content based on authentication */}
+            {!isAuthenticated ? (
+              <div className="flex gap-3 mb-8">
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  className="flex-1 h-12 bg-white border-gray-200 rounded-full px-6"
+                />
+                <Button className="h-12 px-8 bg-[#F39322] hover:bg-[#000080] text-white rounded-full">
+                  Get Started
+                </Button>
+              </div>
+            ) : (
+              <div className="mb-8">
+                <Button
+                  className="h-12 px-8 bg-[#F39322] hover:bg-[#000080] text-white rounded-full"
+                  onClick={() => router.push('/add-property')}
+                >
+                  Add a Property
+                </Button>
+              </div>
+            )}
 
             <p className="text-gray-600 text-sm">
               From luxury homes to commercial spaces, find
@@ -87,7 +102,7 @@ export function HeroSection() {
 
           {/* Right Media */}
           <div className="relative lg:justify-self-end">
-            <div className="relative w-full max-w-md lg:max-w-lg h-64">
+            <div className="relative w-full max-w-md lg:max-w-lg h-80">
               {isVideo ? (
                 <video
                   src={currentImage.image_url}
