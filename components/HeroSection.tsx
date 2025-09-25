@@ -9,6 +9,12 @@ export function HeroSection() {
   const [heroImages, setHeroImages] = useState<{ id: string; image_url: string; alt_text?: string; is_active: boolean }[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  // Function to check if URL is a video
+  const isVideoUrl = (url: string): boolean => {
+    const videoExtensions = ['.mp4', '.webm', '.ogg', '.avi', '.mov', '.wmv', '.flv', '.m4v'];
+    return videoExtensions.some(ext => url.toLowerCase().includes(ext));
+  };
+
   useEffect(() => {
     const fetchHeroImages = async () => {
       const response = await supabaseApi.getAllHeroImages();
@@ -43,6 +49,8 @@ export function HeroSection() {
   }, [heroImages.length]);
 
   const currentImage = heroImages[currentImageIndex] || { image_url: "", alt_text: "" };
+  const isVideo = isVideoUrl(currentImage.image_url);
+
   return (
     <section className="relative bg-gradient-to-br from-[#FBD9B9] to-[#C1DEE8] overflow-hidden">
       <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-4 py-1">
@@ -77,14 +85,26 @@ export function HeroSection() {
             </p>
           </div>
 
-          {/* Right Image */}
+          {/* Right Media */}
           <div className="relative lg:justify-self-end">
             <div className="relative w-full max-w-md lg:max-w-lg">
-              <img
-                src={currentImage.image_url || "/api/placeholder/400/300"}
-                alt={currentImage.alt_text || ""}
-                className="w-full h-auto object-contain transition-opacity duration-1000 ease-in-out"
-              />
+              {isVideo ? (
+                <video
+                  src={currentImage.image_url}
+                  className="w-full h-auto object-contain transition-opacity duration-1000 ease-in-out"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  controls
+                />
+              ) : (
+                <img
+                  src={currentImage.image_url || "/api/placeholder/400/300"}
+                  alt={currentImage.alt_text || ""}
+                  className="w-full h-auto object-contain transition-opacity duration-1000 ease-in-out"
+                />
+              )}
             </div>
           </div>
         </div>

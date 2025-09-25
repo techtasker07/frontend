@@ -89,15 +89,6 @@ export function PropertyCard({ property }: PropertyCardProps) {
           )}
         </div>
 
-        {/* Favorite Button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="absolute top-3 right-3 bg-white hover:bg-gray-100 rounded-full p-2 shadow-sm"
-        >
-          <Heart className="h-4 w-4" />
-        </Button>
-
         {/* Poll Indicator */}
         {pollVotes > 0 && (
           <div className="absolute bottom-3 right-3 bg-blue-600 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
