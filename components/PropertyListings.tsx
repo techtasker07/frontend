@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { PropertyCard } from "./PropertyCard";
 import { Button } from "./ui/button";
