@@ -70,19 +70,19 @@ export function SearchSection() {
         {/* Quick Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-12 max-w-4xl mx-auto">
           <div className="text-center">
-            <div className="text-3xl font-bold text-gray-900">15,000+</div>
+            <div className="text-1xl font-bold text-gray-900">1,000+</div>
             <div className="text-gray-600">Properties Listed</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-gray-900">2,500+</div>
+            <div className="text-1xl font-bold text-gray-900">500+</div>
             <div className="text-gray-600">Active Polls</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-gray-900">98%</div>
+            <div className="text-1xl font-bold text-gray-900">98%</div>
             <div className="text-gray-600">Satisfaction Rate</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-gray-900">24/7</div>
+            <div className="text-1xl font-bold text-gray-900">24/7</div>
             <div className="text-gray-600">Support Available</div>
           </div>
         </div>

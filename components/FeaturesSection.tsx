@@ -50,8 +50,8 @@ export function FeaturesSection() {
           {features.map((feature, index) => (
             <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow duration-300">
               <CardHeader>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                  <img src={feature.icon} alt={feature.title} className="h-6 w-6" />
+                <div className="w-12 h-12 bg-white-50 rounded-lg flex items-center justify-center mb-4">
+                  <img src={feature.icon} alt={feature.title} className="h-12 w-12" />
                 </div>
                 <CardTitle className="text-xl">{feature.title}</CardTitle>
               </CardHeader>
