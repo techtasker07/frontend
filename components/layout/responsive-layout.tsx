@@ -143,7 +143,7 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
 
       {/* Main Content */}
       <div className="w-full">
-        <main className={`min-h-screen ${!isAuthPage && !isAIProspectPage ? 'pt-16 md:pt-16' : ''}`}>
+        <main className={`min-h-screen ${!isAuthPage && !isAIProspectPage ? 'pt-2 md:pt-2' : ''}`}>
           {children}
         </main>
         <Footer />

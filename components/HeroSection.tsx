@@ -42,7 +42,7 @@ export function HeroSection() {
     return () => clearInterval(interval);
   }, [heroImages.length]);
 
-  const currentImage = heroImages[currentImageIndex] || { image_url: "", alt_text: "Modern 3D house design" };
+  const currentImage = heroImages[currentImageIndex] || { image_url: "", alt_text: "" };
   return (
     <section className="relative bg-gradient-to-br from-[#FBD9B9] to-[#C1DEE8] overflow-hidden">
       <div className="max-w-5xl mx-auto px-2 sm:px-6 lg:px-4 py-1">
@@ -82,7 +82,7 @@ export function HeroSection() {
             <div className="relative w-full max-w-md lg:max-w-lg">
               <img
                 src={currentImage.image_url || "/api/placeholder/400/300"}
-                alt={currentImage.alt_text || "Modern 3D house design"}
+                alt={currentImage.alt_text || ""}
                 className="w-full h-auto object-contain transition-opacity duration-1000 ease-in-out"
               />
             </div>
