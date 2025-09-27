@@ -10,18 +10,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { supabaseApi, MarketplaceListing } from '@/lib/supabase-api';
-import { 
-  Heart, 
-  Share2, 
-  MapPin, 
-  Bed, 
-  Bath, 
-  Car, 
-  Star, 
-  Eye, 
-  Phone, 
-  Mail, 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { supabaseApi, Property } from '@/lib/supabase-api';
+import {
+  Heart,
+  Share2,
+  MapPin,
+  Bed,
+  Bath,
+  Car,
+  Star,
+  Eye,
+  Phone,
+  Mail,
   Calendar,
   User,
   MessageSquare,
@@ -29,15 +30,16 @@ import {
   ChevronRight,
   ArrowLeft,
   CheckCircle,
-  X
+  X,
+  Vote
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
 export default function MarketPropertyDetailsPage() {
   const params = useParams();
-  const [listing, setListing] = useState<MarketplaceListing | null>(null);
-  const [relatedListings, setRelatedListings] = useState<MarketplaceListing[]>([]);
+  const [listing, setListing] = useState<Property | null>(null);
+  const [relatedListings, setRelatedListings] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
@@ -71,17 +73,17 @@ export default function MarketPropertyDetailsPage() {
   const fetchListingDetails = async () => {
     try {
       setLoading(true);
-      const response = await supabaseApi.getMarketplaceListing(params.id as string);
-      
+      const response = await supabaseApi.getProperty(params.id as string);
+
       if (response.success) {
         setListing(response.data);
-        
+
         // Fetch related properties based on same category or location
-        const relatedResponse = await supabaseApi.getMarketplaceListings({
-          category: response.data.category?.name,
+        const relatedResponse = await supabaseApi.getProperties({
+          category: response.data.category_name,
           limit: 4
         });
-        
+
         if (relatedResponse.success) {
           // Filter out the current property from related listings
           const filtered = relatedResponse.data.filter(item => item.id !== response.data.id);
@@ -116,6 +118,13 @@ export default function MarketPropertyDetailsPage() {
   const formatPrice = (price: number, currency: string = '₦', period?: string) => {
     const formatted = `${currency}${price.toLocaleString()}`;
     return period ? `${formatted}/${period}` : formatted;
+  };
+
+  const getPropertyPrice = (property: Property) => {
+    if (property.current_worth) {
+      return formatPrice(property.current_worth);
+    }
+    return 'Price on request';
   };
 
   const handleInquiry = async () => {
@@ -285,14 +294,8 @@ export default function MarketPropertyDetailsPage() {
 
           {/* Property Badges */}
           <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-            {listing.is_featured && (
-              <Badge className="bg-yellow-500">
-                <Star className="h-3 w-3 mr-1" />
-                Featured
-              </Badge>
-            )}
             <Badge variant="secondary">
-              {listing.listing_type?.name}
+              {listing.category_name}
             </Badge>
           </div>
         </div>
@@ -314,46 +317,25 @@ export default function MarketPropertyDetailsPage() {
               
               <div className="text-right">
                 <div className="text-3xl font-bold text-primary">
-                  {formatPrice(listing.price, listing.currency, listing.price_period)}
+                  {getPropertyPrice(listing)}
                 </div>
-                {listing.property_type && (
-                  <div className="text-sm text-gray-500">
-                    {listing.property_type.name}
-                  </div>
-                )}
+                <div className="text-sm text-gray-500">
+                  {listing.category_name}
+                </div>
               </div>
             </div>
 
             {/* Property Stats */}
             <div className="flex items-center gap-6">
-              {listing.bedrooms && (
+              {listing.year_of_construction && (
                 <div className="flex items-center gap-2">
-                  <Bed className="h-5 w-5 text-gray-500" />
-                  <span>{listing.bedrooms} Bedrooms</span>
-                </div>
-              )}
-              {listing.bathrooms && (
-                <div className="flex items-center gap-2">
-                  <Bath className="h-5 w-5 text-gray-500" />
-                  <span>{listing.bathrooms} Bathrooms</span>
-                </div>
-              )}
-              {listing.parking_spaces > 0 && (
-                <div className="flex items-center gap-2">
-                  <Car className="h-5 w-5 text-gray-500" />
-                  <span>{listing.parking_spaces} Parking</span>
-                </div>
-              )}
-              {(listing.area_sqft || listing.area_sqm) && (
-                <div className="text-gray-600">
-                  {listing.area_sqft && `${listing.area_sqft} sqft`}
-                  {listing.area_sqft && listing.area_sqm && ' • '}
-                  {listing.area_sqm && `${listing.area_sqm} sqm`}
+                  <Calendar className="h-5 w-5 text-gray-500" />
+                  <span>Built in {listing.year_of_construction}</span>
                 </div>
               )}
               <div className="flex items-center gap-1 text-gray-500">
-                <Eye className="h-4 w-4" />
-                <span>{listing.views_count || 0} views</span>
+                <Vote className="h-4 w-4" />
+                <span>{listing.vote_count || 0} votes</span>
               </div>
             </div>
           </div>
@@ -398,59 +380,26 @@ export default function MarketPropertyDetailsPage() {
                   </CardContent>
                 </Card>
 
-                {/* Key Features */}
+                {/* Property Details */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Key Features</CardTitle>
+                    <CardTitle>Property Details</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 gap-4">
-                      {listing.furnishing_status && (
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                          <span>Furnishing: {listing.furnishing_status}</span>
-                        </div>
-                      )}
-                      {listing.utilities_included && (
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                          <span>Utilities Included</span>
-                        </div>
-                      )}
-                      {listing.security_deposit && (
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-500" />
-                          <span>Security Deposit: {formatPrice(listing.security_deposit)}</span>
-                        </div>
-                      )}
                       {listing.year_of_construction && (
                         <div className="flex items-center gap-2">
                           <CheckCircle className="h-4 w-4 text-green-500" />
                           <span>Built in {listing.year_of_construction}</span>
                         </div>
                       )}
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <span>Category: {listing.category_name}</span>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
-
-                {/* Amenities */}
-                {listing.amenities && listing.amenities.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Amenities</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {listing.amenities.map((amenity, index) => (
-                          <div key={index} className="flex items-center gap-2">
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span>{amenity}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
               </div>
             )}
 
@@ -463,42 +412,26 @@ export default function MarketPropertyDetailsPage() {
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-4">
                       <div>
-                        <span className="font-medium">Property Type:</span>
-                        <span className="ml-2">{listing.property_type?.name || 'N/A'}</span>
+                        <span className="font-medium">Category:</span>
+                        <span className="ml-2">{listing.category_name || 'N/A'}</span>
                       </div>
                       <div>
-                        <span className="font-medium">Listing Type:</span>
-                        <span className="ml-2">{listing.listing_type?.name}</span>
+                        <span className="font-medium">Location:</span>
+                        <span className="ml-2">{listing.location}</span>
                       </div>
                       <div>
-                        <span className="font-medium">Available From:</span>
-                        <span className="ml-2">
-                          {listing.available_from ? new Date(listing.available_from).toLocaleDateString() : 'Immediately'}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="font-medium">Available To:</span>
-                        <span className="ml-2">
-                          {listing.available_to ? new Date(listing.available_to).toLocaleDateString() : 'Open'}
-                        </span>
+                        <span className="font-medium">Year Built:</span>
+                        <span className="ml-2">{listing.year_of_construction || 'N/A'}</span>
                       </div>
                     </div>
                     <div className="space-y-4">
                       <div>
                         <span className="font-medium">Price:</span>
-                        <span className="ml-2">
-                          {formatPrice(listing.price, listing.currency, listing.price_period)}
-                        </span>
+                        <span className="ml-2">{getPropertyPrice(listing)}</span>
                       </div>
-                      {listing.security_deposit && (
-                        <div>
-                          <span className="font-medium">Security Deposit:</span>
-                          <span className="ml-2">{formatPrice(listing.security_deposit)}</span>
-                        </div>
-                      )}
                       <div>
-                        <span className="font-medium">Year Built:</span>
-                        <span className="ml-2">{listing.year_of_construction || 'N/A'}</span>
+                        <span className="font-medium">Votes:</span>
+                        <span className="ml-2">{listing.vote_count || 0}</span>
                       </div>
                       <div>
                         <span className="font-medium">Last Updated:</span>
@@ -556,28 +489,39 @@ export default function MarketPropertyDetailsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                  <User className="h-6 w-6 text-gray-500" />
-                </div>
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={listing.owner_profile_picture || "/placeholder.svg"} alt={listing.owner_name} />
+                  <AvatarFallback className="text-lg">
+                    {listing.owner_name
+                      ? `${listing.owner_name.split(" ")[0][0]}${listing.owner_name.split(" ")[1]?.[0] || ""}`.toUpperCase()
+                      : "PO"}
+                  </AvatarFallback>
+                </Avatar>
                 <div>
                   <div className="font-medium">
-                    {listing.contact_name || 'Property Owner'}
+                    {listing.owner_name || 'Property Owner'}
                   </div>
-                  <div className="text-sm text-gray-500">Listing Agent</div>
+                  <div className="text-sm text-gray-500">Property Lister</div>
                 </div>
               </div>
 
               <div className="space-y-2">
-                {listing.contact_phone && (
+                {listing.owner_phone && (
                   <div className="flex items-center gap-2 text-sm">
                     <Phone className="h-4 w-4 text-gray-500" />
-                    <span>{listing.contact_phone}</span>
+                    <span>{listing.owner_phone}</span>
                   </div>
                 )}
-                {listing.contact_email && (
+                {listing.owner_email && (
                   <div className="flex items-center gap-2 text-sm">
                     <Mail className="h-4 w-4 text-gray-500" />
-                    <span>{listing.contact_email}</span>
+                    <span>{listing.owner_email}</span>
+                  </div>
+                )}
+                {listing.lister_phone_number && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone className="h-4 w-4 text-gray-500" />
+                    <span>{listing.lister_phone_number}</span>
                   </div>
                 )}
               </div>
@@ -656,7 +600,7 @@ export default function MarketPropertyDetailsPage() {
                         <SelectContent>
                           <SelectItem value="viewing">Property Viewing</SelectItem>
                           <SelectItem value="consultation">Consultation</SelectItem>
-                          {listing.listing_type?.name === 'Booking' && (
+                          {listing.type === 'booking' && (
                             <SelectItem value="stay">Book Stay</SelectItem>
                           )}
                         </SelectContent>
@@ -720,26 +664,20 @@ export default function MarketPropertyDetailsPage() {
               <div className="flex justify-between">
                 <span>Price:</span>
                 <span className="font-medium">
-                  {formatPrice(listing.price, listing.currency, listing.price_period)}
+                  {getPropertyPrice(listing)}
                 </span>
               </div>
-              {listing.security_deposit && (
-                <div className="flex justify-between">
-                  <span>Deposit:</span>
-                  <span>{formatPrice(listing.security_deposit)}</span>
-                </div>
-              )}
               <div className="flex justify-between">
                 <span>Type:</span>
-                <span>{listing.property_type?.name}</span>
+                <span>{listing.type || 'Property'}</span>
               </div>
               <div className="flex justify-between">
                 <span>Category:</span>
-                <span>{listing.category?.name}</span>
+                <span>{listing.category_name}</span>
               </div>
               <Separator />
               <div className="flex justify-between font-medium">
-                <span>Listing ID:</span>
+                <span>Property ID:</span>
                 <span>#{listing.id.slice(-8)}</span>
               </div>
             </CardContent>
@@ -775,7 +713,7 @@ export default function MarketPropertyDetailsPage() {
                       <span className="line-clamp-1">{relatedListing.location}</span>
                     </div>
                     <div className="text-lg font-bold text-primary">
-                      {formatPrice(relatedListing.price, relatedListing.currency, relatedListing.price_period)}
+                      {getPropertyPrice(relatedListing)}
                     </div>
                     <Button asChild size="sm" className="w-full">
                       <Link href={`/marketplace/${relatedListing.id}`}>
