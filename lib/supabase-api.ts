@@ -319,8 +319,8 @@ class SupabaseApiClient {
         category_name: item.categories?.name,
         images: item.property_images || [],
         vote_options: voteOptionsByCategory[item.category_id] || [],
-        type: item.type || 'sale', // Default to 'sale' if not set
-        pollPercentage: item.pollPercentage || 0 // Default to 0
+         type: item.type || 'poll', // Default to 'poll' if not set
+         pollPercentage: item.pollPercentage || 0 // Default to 0
       })) || [];
 
       return {
@@ -403,6 +403,7 @@ class SupabaseApiClient {
     description: string;
     location: string;
     category_id: string;
+    type?: string;
     current_worth?: number;
     year_of_construction?: number;
     lister_phone_number?: string;

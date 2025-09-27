@@ -69,6 +69,7 @@ export default function PropertiesPage() {
     description: "",
     location: "",
     category_id: "",
+    type: "poll",
     current_worth: "",
     year_of_construction: "",
     lister_phone_number: "",
@@ -168,6 +169,7 @@ export default function PropertiesPage() {
           description: "",
           location: "",
           category_id: "",
+          type: "poll",
           current_worth: "",
           year_of_construction: "",
           lister_phone_number: "",
@@ -268,6 +270,25 @@ export default function PropertiesPage() {
                       onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                       required
                     />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="type">Property Type</Label>
+                    <Select
+                      value={formData.type}
+                      onValueChange={(value) => setFormData({ ...formData, type: value })}
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select property type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="poll">Community Poll</SelectItem>
+                        <SelectItem value="sale">For Sale</SelectItem>
+                        <SelectItem value="rent">For Rent</SelectItem>
+                        <SelectItem value="lease">For Lease</SelectItem>
+                        <SelectItem value="booking">For Booking</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="category">Category</Label>

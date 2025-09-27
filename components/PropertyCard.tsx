@@ -74,7 +74,8 @@ export function PropertyCard({ property }: PropertyCardProps) {
       case 'rent': return 'For Rent';
       case 'lease': return 'For Lease';
       case 'booking': return 'For Booking';
-      default: return 'For Sale';
+      case 'poll': return 'Community Poll';
+      default: return 'Community Poll';
     }
   };
   return (

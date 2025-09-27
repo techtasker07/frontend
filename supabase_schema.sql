@@ -34,18 +34,19 @@ CREATE TABLE IF NOT EXISTS public.vote_options (
 
 -- Create properties table
 CREATE TABLE IF NOT EXISTS public.properties (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  title TEXT NOT NULL,
-  description TEXT NOT NULL,
-  location TEXT NOT NULL,
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
-  category_id UUID REFERENCES public.categories(id) ON DELETE RESTRICT NOT NULL,
-  current_worth NUMERIC(12,2),
-  year_of_construction INTEGER,
-  lister_phone_number TEXT,
-  image_url TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+   title TEXT NOT NULL,
+   description TEXT NOT NULL,
+   location TEXT NOT NULL,
+   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+   category_id UUID REFERENCES public.categories(id) ON DELETE RESTRICT NOT NULL,
+   type TEXT DEFAULT 'poll' CHECK (type IN ('poll', 'sale', 'rent', 'lease', 'booking')),
+   current_worth NUMERIC(12,2),
+   year_of_construction INTEGER,
+   lister_phone_number TEXT,
+   image_url TEXT,
+   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
 -- Create property_images table
