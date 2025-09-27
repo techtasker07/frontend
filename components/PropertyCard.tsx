@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -11,6 +12,7 @@ interface PropertyCardProps {
 }
 
 export function PropertyCard({ property }: PropertyCardProps) {
+  const router = useRouter();
   const [pollStats, setPollStats] = useState<PropertyStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +35,14 @@ export function PropertyCard({ property }: PropertyCardProps) {
 
     fetchPollStats();
   }, [property.id]);
+
+  const handleViewDetails = () => {
+    if (isMarketProperty) {
+      router.push(`/marketplace/${property.id}`);
+    } else {
+      router.push(`/properties/${property.id}`);
+    }
+  };
 
   if (loading) {
     return (
@@ -140,7 +150,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
         )}
 
         <div className="flex gap-2">
-          <Button className="flex-1">View Details</Button>
+          <Button className="flex-1" onClick={handleViewDetails}>View Details</Button>
           {!isMarketProperty && <Button variant="outline">Poll</Button>}
         </div>
       </CardContent>

@@ -34,7 +34,7 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 
-export default function PropertyDetailsPage() {
+export default function MarketPropertyDetailsPage() {
   const params = useParams();
   const [listing, setListing] = useState<MarketplaceListing | null>(null);
   const [relatedListings, setRelatedListings] = useState<MarketplaceListing[]>([]);
