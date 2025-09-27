@@ -63,9 +63,20 @@ export function PropertyCard({ property }: PropertyCardProps) {
   const imageUrl = primaryImage?.image_url || '/api/placeholder/300/200';
   const price = property.current_worth ? `₦${property.current_worth.toLocaleString()}` : 'Price on request';
   const type = property.type || 'sale';
+  const isMarketProperty = type === 'sale' || type === 'rent' || type === 'booking' || type === 'lease';
   const isHot = pollStats && pollStats.total_votes > 50; // Example logic for hot properties
   const pollVotes = pollStats?.total_votes || 0;
   const pollPercentage = property.pollPercentage || pollStats?.statistics?.[0]?.percentage || 0;
+
+  const getTypeLabel = (type: string) => {
+    switch(type) {
+      case 'sale': return 'For Sale';
+      case 'rent': return 'For Rent';
+      case 'lease': return 'For Lease';
+      case 'booking': return 'For Booking';
+      default: return 'For Sale';
+    }
+  };
   return (
     <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer">
       <div className="relative w-full h-48">
@@ -79,7 +90,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
         {/* Badges */}
         <div className="absolute top-3 left-3 flex gap-2">
           <Badge variant="default" className="bg-white text-gray-900">
-            For Sale
+            {getTypeLabel(type)}
           </Badge>
           {isHot && (
             <Badge className="bg-red-500 text-white">
@@ -90,7 +101,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
         </div>
 
         {/* Poll Indicator */}
-        {pollVotes > 0 && (
+        {!isMarketProperty && pollVotes > 0 && (
           <div className="absolute bottom-3 right-3 bg-blue-600 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
             <Users className="w-3 h-3" />
             {pollVotes} votes
@@ -112,7 +123,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
         </div>
 
         {/* Poll Results */}
-        {pollPercentage > 0 && (
+        {!isMarketProperty && pollPercentage > 0 && (
           <div className="mb-3">
             <div className="flex justify-between text-xs text-gray-600 mb-1">
               <span>Top Votes</span>
@@ -129,7 +140,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
 
         <div className="flex gap-2">
           <Button className="flex-1">View Details</Button>
-          <Button variant="outline">Poll</Button>
+          {!isMarketProperty && <Button variant="outline">Poll</Button>}
         </div>
       </CardContent>
     </Card>
