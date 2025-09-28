@@ -6,7 +6,7 @@ import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { Camera, Upload, X, CheckCircle } from "lucide-react"
+import { Camera, Upload, X, CheckCircle, ZoomIn, ZoomOut } from "lucide-react"
 import { toast } from "sonner"
 import { identifyImageCategory, type IdentifiedCategory } from "@/lib/smartProspectGenerator"
 
@@ -22,6 +22,7 @@ export function ImageCaptureModal({ isOpen, onClose, onImageCaptured, fromLogin 
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [isCapturing, setIsCapturing] = useState(false)
   const [stream, setStream] = useState<MediaStream | null>(null)
+  const [zoomLevel, setZoomLevel] = useState(1)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -48,6 +49,15 @@ export function ImageCaptureModal({ isOpen, onClose, onImageCaptured, fromLogin 
       setStream(null)
     }
     setIsCapturing(false)
+    setZoomLevel(1)
+  }
+
+  const zoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 0.5, 3))
+  }
+
+  const zoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 0.5, 1))
   }
 
   const capturePhoto = () => {
@@ -56,11 +66,23 @@ export function ImageCaptureModal({ isOpen, onClose, onImageCaptured, fromLogin 
       const video = videoRef.current
       const context = canvas.getContext("2d")
 
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
+      // Viewfinder dimensions (256x256 pixels, centered)
+      const viewfinderSize = 256
+      const cropX = (video.videoWidth - viewfinderSize) / 2
+      const cropY = (video.videoHeight - viewfinderSize) / 2
+      const cropWidth = viewfinderSize
+      const cropHeight = viewfinderSize
+
+      canvas.width = cropWidth
+      canvas.height = cropHeight
 
       if (context) {
-        context.drawImage(video, 0, 0)
+        // Draw only the cropped portion
+        context.drawImage(
+          video,
+          cropX, cropY, cropWidth, cropHeight, // Source rectangle
+          0, 0, cropWidth, cropHeight // Destination rectangle
+        )
         canvas.toBlob(
           (blob) => {
             if (blob) {
@@ -107,19 +129,21 @@ export function ImageCaptureModal({ isOpen, onClose, onImageCaptured, fromLogin 
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className={`max-w-md ${fromLogin ? 'border-0 bg-gradient-to-br from-white via-purple-50 to-pink-50' : ''}`}>
-        <DialogHeader>
-          <DialogTitle className={`flex items-center ${fromLogin ? 'text-xl font-bold' : ''}`}>
-            <Camera className={`mr-2 h-5 w-5 ${fromLogin ? 'text-purple-600' : ''}`} />
-            {fromLogin ? (
-              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                Capture Property Image
-              </span>
-            ) : (
-              'Capture Property Image'
-            )}
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className={`${isCapturing ? 'fixed inset-0 w-screen h-screen max-w-none p-0 border-0' : `max-w-md ${fromLogin ? 'border-0 bg-gradient-to-br from-white via-purple-50 to-pink-50' : ''}`}`}>
+        {!isCapturing && (
+          <DialogHeader>
+            <DialogTitle className={`flex items-center ${fromLogin ? 'text-xl font-bold' : ''}`}>
+              <Camera className={`mr-2 h-5 w-5 ${fromLogin ? 'text-purple-600' : ''}`} />
+              {fromLogin ? (
+                <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  Capture Property Image
+                </span>
+              ) : (
+                'Capture Property Image'
+              )}
+            </DialogTitle>
+          </DialogHeader>
+        )}
 
         <div className="space-y-4">
           {!capturedImage && !isCapturing && (
@@ -156,19 +180,77 @@ export function ImageCaptureModal({ isOpen, onClose, onImageCaptured, fromLogin 
           )}
 
           {isCapturing && (
-            <div className="space-y-4">
-              <div className="relative">
-                <video ref={videoRef} autoPlay playsInline className="w-full rounded-lg" />
-                <canvas ref={canvasRef} className="hidden" />
+            <div className="relative w-full h-full bg-black">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                className="w-full h-full object-cover"
+                style={{
+                  transform: `scaleX(-1) scale(${zoomLevel})`,
+                  transformOrigin: 'center'
+                }} // Mirror and zoom the video
+              />
+              <canvas ref={canvasRef} className="hidden" />
+
+              {/* Viewfinder overlay */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="relative">
+                  <div className="w-64 h-64 border-2 border-white rounded-lg opacity-80">
+                    <div className="absolute -top-1 -left-1 w-4 h-4 border-l-2 border-t-2 border-white"></div>
+                    <div className="absolute -top-1 -right-1 w-4 h-4 border-r-2 border-t-2 border-white"></div>
+                    <div className="absolute -bottom-1 -left-1 w-4 h-4 border-l-2 border-b-2 border-white"></div>
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 border-r-2 border-b-2 border-white"></div>
+                  </div>
+                </div>
               </div>
 
-              <div className="flex gap-2">
-                <Button onClick={capturePhoto} className="flex-1">
-                  <Camera className="mr-2 h-4 w-4" />
-                  Capture
-                </Button>
-                <Button variant="outline" onClick={stopCamera}>
-                  Cancel
+              {/* Top controls */}
+              <div className="absolute top-4 left-4 right-4 flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={stopCamera}
+                    className="bg-black/50 text-white hover:bg-black/70 border-0"
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
+                  <div className="flex items-center gap-1 bg-black/50 rounded-full p-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={zoomOut}
+                      disabled={zoomLevel <= 1}
+                      className="text-white hover:bg-white/20 border-0 h-8 w-8 p-0 disabled:opacity-50"
+                    >
+                      <ZoomOut className="h-4 w-4" />
+                    </Button>
+                    <span className="text-white text-xs px-2">{zoomLevel}x</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={zoomIn}
+                      disabled={zoomLevel >= 3}
+                      className="text-white hover:bg-white/20 border-0 h-8 w-8 p-0 disabled:opacity-50"
+                    >
+                      <ZoomIn className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="text-white text-sm bg-black/50 px-3 py-1 rounded-full">
+                  Position property in frame
+                </div>
+              </div>
+
+              {/* Bottom controls */}
+              <div className="absolute bottom-8 left-0 right-0 flex justify-center">
+                <Button
+                  onClick={capturePhoto}
+                  size="lg"
+                  className="w-16 h-16 rounded-full bg-white text-black hover:bg-gray-200 border-4 border-white shadow-lg"
+                >
+                  <Camera className="h-8 w-8" />
                 </Button>
               </div>
             </div>
