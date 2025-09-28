@@ -151,21 +151,21 @@ export function PropertyListings() {
 
         {/* Property Tabs */}
         <Tabs defaultValue="all" className="mb-8">
-          <TabsList className="flex flex-wrap md:grid w-full max-w-lg md:grid-cols-5 text-xs md:text-sm gap-2">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="sale">
+          <TabsList className="flex flex-wrap md:grid w-full max-w-lg md:grid-cols-5 text-xs md:text-sm gap-2 bg-transparent md:bg-muted">
+            <TabsTrigger value="all" className="bg-blue-500 text-white rounded-lg border border-blue-600 data-[state=active]:bg-orange-500 data-[state=active]:text-white md:bg-transparent md:text-muted-foreground md:border-transparent md:data-[state=active]:bg-background md:data-[state=active]:text-foreground md:rounded-md">All</TabsTrigger>
+            <TabsTrigger value="sale" className="bg-blue-500 text-white rounded-lg border border-blue-600 data-[state=active]:bg-orange-500 data-[state=active]:text-white md:bg-transparent md:text-muted-foreground md:border-transparent md:data-[state=active]:bg-background md:data-[state=active]:text-foreground md:rounded-md">
               <span className="hidden md:inline">For Sale</span>
               <span className="md:hidden">Sale</span>
             </TabsTrigger>
-            <TabsTrigger value="rent">
+            <TabsTrigger value="rent" className="bg-blue-500 text-white rounded-lg border border-blue-600 data-[state=active]:bg-orange-500 data-[state=active]:text-white md:bg-transparent md:text-muted-foreground md:border-transparent md:data-[state=active]:bg-background md:data-[state=active]:text-foreground md:rounded-md">
               <span className="hidden md:inline">For Rent</span>
               <span className="md:hidden">Rent</span>
             </TabsTrigger>
-            <TabsTrigger value="book">
+            <TabsTrigger value="book" className="bg-blue-500 text-white rounded-lg border border-blue-600 data-[state=active]:bg-orange-500 data-[state=active]:text-white md:bg-transparent md:text-muted-foreground md:border-transparent md:data-[state=active]:bg-background md:data-[state=active]:text-foreground md:rounded-md">
               <span className="hidden md:inline">For Booking</span>
               <span className="md:hidden">Book</span>
             </TabsTrigger>
-            <TabsTrigger value="poll">
+            <TabsTrigger value="poll" className="bg-blue-500 text-white rounded-lg border border-blue-600 data-[state=active]:bg-orange-500 data-[state=active]:text-white md:bg-transparent md:text-muted-foreground md:border-transparent md:data-[state=active]:bg-background md:data-[state=active]:text-foreground md:rounded-md">
               <span className="hidden md:inline">Top Polls</span>
               <span className="md:hidden">Polls</span>
             </TabsTrigger>
