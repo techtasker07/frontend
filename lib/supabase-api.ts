@@ -321,7 +321,8 @@ class SupabaseApiClient {
     offset?: number;
   }): Promise<ApiResponse<Property[]>> {
     try {
-      let query = supabase
+      // Fetch poll properties
+      let pollQuery = supabase
         .from('properties')
         .select(`
           *,
@@ -343,30 +344,70 @@ class SupabaseApiClient {
         `);
 
       if (params?.category) {
-        query = query.eq('categories.name', params.category);
+        pollQuery = pollQuery.eq('categories.name', params.category);
       }
       if (params?.user_id) {
-        query = query.eq('user_id', params.user_id);
-      }
-      if (params?.limit) {
-        query = query.limit(params.limit);
-      }
-      if (params?.offset) {
-        query = query.range(params.offset, params.offset + (params.limit || 10) - 1);
+        pollQuery = pollQuery.eq('user_id', params.user_id);
       }
 
-      const { data, error, count } = await query;
+      // Fetch marketplace listings
+      let marketplaceQuery = supabase
+        .from('marketplace_listings')
+        .select(`
+          *,
+          listing_type:listing_types!marketplace_listings_listing_type_id_fkey (
+            name
+          ),
+          property_type:property_types!marketplace_listings_property_type_id_fkey (
+            name
+          ),
+          category:categories!marketplace_listings_category_id_fkey (
+            name
+          ),
+          profiles!marketplace_listings_user_id_fkey (
+            first_name,
+            last_name,
+            email,
+            phone_number,
+            profile_picture
+          ),
+          marketplace_images (
+            id,
+            image_url,
+            is_primary
+          )
+        `)
+        .eq('is_active', true);
 
-      if (error) throw error;
+      if (params?.category) {
+        marketplaceQuery = marketplaceQuery.eq('category.name', params.category);
+      }
+      if (params?.user_id) {
+        marketplaceQuery = marketplaceQuery.eq('user_id', params.user_id);
+      }
 
-      // Get unique category IDs from the properties
-      const categoryIds = [...new Set(data?.map(item => item.category_id) || [])];
+      // Execute both queries in parallel
+      const [pollResult, marketplaceResult] = await Promise.all([
+        pollQuery,
+        marketplaceQuery
+      ]);
 
-      // Fetch vote options for all categories
+      if (pollResult.error) throw pollResult.error;
+      if (marketplaceResult.error) throw marketplaceResult.error;
+
+      // Get unique category IDs from both sources
+      const allCategoryIds = [
+        ...new Set([
+          ...(pollResult.data?.map(item => item.category_id) || []),
+          ...(marketplaceResult.data?.map(item => item.category_id) || [])
+        ])
+      ];
+
+      // Fetch vote options for all categories (only for poll properties)
       const { data: allVoteOptions, error: voteOptionsError } = await supabase
         .from('vote_options')
         .select('*')
-        .in('category_id', categoryIds);
+        .in('category_id', allCategoryIds);
 
       if (voteOptionsError) {
         console.error('Error fetching vote options:', voteOptionsError);
@@ -381,8 +422,8 @@ class SupabaseApiClient {
         voteOptionsByCategory[option.category_id].push(option);
       });
 
-      // Transform data to match expected format
-      const transformedData = data?.map(item => ({
+      // Transform poll properties
+      const transformedPollProperties = pollResult.data?.map(item => ({
         ...item,
         owner_name: `${item.profiles?.first_name} ${item.profiles?.last_name}`,
         owner_email: item.profiles?.email,
@@ -391,14 +432,71 @@ class SupabaseApiClient {
         category_name: item.categories?.name,
         images: item.property_images || [],
         vote_options: voteOptionsByCategory[item.category_id] || [],
-         type: item.type || 'poll', // Default to 'poll' if not set
-         pollPercentage: item.pollPercentage || 0 // Default to 0
+        type: item.type || 'poll',
+        pollPercentage: item.pollPercentage || 0
       })) || [];
+
+      // Transform marketplace listings to Property format
+      const transformedMarketplaceProperties = marketplaceResult.data?.map(item => {
+        // Map listing type to property type
+        const typeMapping: { [key: string]: string } = {
+          'For Sale': 'sale',
+          'For Rent': 'rent',
+          'For Lease': 'lease',
+          'For Booking': 'booking'
+        };
+
+        return {
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          location: item.location,
+          user_id: item.user_id,
+          category_id: item.category_id,
+          current_worth: item.price,
+          year_of_construction: item.year_of_construction,
+          lister_phone_number: item.contact_phone,
+          image_url: item.marketplace_images?.find((img: any) => img.is_primary)?.image_url,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          owner_name: `${item.profiles?.first_name} ${item.profiles?.last_name}`,
+          owner_email: item.profiles?.email,
+          owner_phone: item.profiles?.phone_number,
+          owner_profile_picture: item.profiles?.profile_picture,
+          category_name: item.category?.name,
+          vote_count: 0, // Marketplace listings don't have votes
+          images: item.marketplace_images?.map((img: any) => ({
+            id: img.id,
+            property_id: item.id,
+            image_url: img.image_url,
+            is_primary: img.is_primary,
+            created_at: img.created_at || item.created_at
+          })) || [],
+          vote_options: [], // Marketplace listings don't have vote options
+          type: typeMapping[item.listing_type?.name] || 'sale',
+          pollPercentage: 0 // Marketplace listings don't have poll percentages
+        };
+      }) || [];
+
+      // Combine and sort by creation date
+      const combinedProperties = [
+        ...transformedPollProperties,
+        ...transformedMarketplaceProperties
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      // Apply limit and offset to combined results
+      let finalProperties = combinedProperties;
+      if (params?.offset) {
+        finalProperties = finalProperties.slice(params.offset);
+      }
+      if (params?.limit) {
+        finalProperties = finalProperties.slice(0, params.limit);
+      }
 
       return {
         success: true,
-        data: transformedData as Property[],
-        count: count || 0
+        data: finalProperties as Property[],
+        count: combinedProperties.length
       };
     } catch (error: any) {
       return {
