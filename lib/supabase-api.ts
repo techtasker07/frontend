@@ -169,6 +169,78 @@ export interface MarketplaceListing {
   property_type?: { name: string };
   category?: { name: string };
   images?: MarketplaceImage[];
+
+  // General Property Details
+  property_condition?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+
+  // Residential specific fields
+  toilets?: number;
+  kitchen_size?: string;
+  dining_room?: boolean;
+  balcony_terrace?: boolean;
+  pet_friendly?: boolean;
+  appliances_included?: string[];
+  security_features?: string[];
+  neighbourhood_features?: string[];
+
+  // Commercial specific fields
+  property_usage_type?: string;
+  total_floors?: number;
+  floor_number?: number;
+  office_rooms?: number;
+  conference_rooms?: number;
+  internet_available?: boolean;
+  power_supply?: string;
+  loading_dock?: boolean;
+  storage_space?: string;
+  accessibility_features?: string[];
+  fire_safety_features?: string[];
+
+  // Land specific fields
+  land_type?: string;
+  title_document?: string;
+  topography?: string;
+  water_access?: boolean;
+  electricity_access?: boolean;
+  fence_boundary_status?: string;
+  road_access?: boolean;
+  soil_type?: string;
+  proximity_to_amenities?: string[];
+
+  // Function-specific fields
+  payment_frequency?: string;
+  minimum_rental_period?: string;
+  lease_duration?: string;
+  renewal_terms?: string;
+
+  // Booking-specific fields
+  daily_rate?: number;
+  weekly_rate?: number;
+  hourly_rate?: number; // For commercial bookings
+  check_in_time?: string;
+  check_out_time?: string;
+  minimum_stay_duration?: number;
+  maximum_stay_duration?: number;
+  minimum_booking_duration?: number; // For commercial bookings
+  maximum_booking_duration?: number; // For commercial bookings
+  cancellation_policy?: string;
+  caution_fee?: number;
+  services_included?: string[];
+
+  // Missing general fields
+  property_size?: string; // Alternative/additional to area_sqft/area_sqm
+
+  // Additional Residential fields
+  monthly_rent_amount?: number; // For rent function
+
+  // Additional Commercial fields - missing ones
+  parking_capacity?: number; // Different from parking_spaces
+
+  // Additional Lease-specific fields
+  lease_amount?: number;
 }
 
 export interface MarketplaceImage {
@@ -1547,6 +1619,65 @@ class SupabaseApiClient {
     contact_phone?: string;
     contact_email?: string;
     contact_whatsapp?: string;
+    // General Property Details
+    property_condition?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    // Residential specific fields
+    toilets?: number;
+    kitchen_size?: string;
+    dining_room?: boolean;
+    balcony_terrace?: boolean;
+    pet_friendly?: boolean;
+    appliances_included?: string[];
+    security_features?: string[];
+    neighbourhood_features?: string[];
+    // Commercial specific fields
+    property_usage_type?: string;
+    total_floors?: number;
+    floor_number?: number;
+    office_rooms?: number;
+    conference_rooms?: number;
+    internet_available?: boolean;
+    power_supply?: string;
+    loading_dock?: boolean;
+    storage_space?: string;
+    accessibility_features?: string[];
+    fire_safety_features?: string[];
+    // Land specific fields
+    land_type?: string;
+    title_document?: string;
+    topography?: string;
+    water_access?: boolean;
+    electricity_access?: boolean;
+    fence_boundary_status?: string;
+    road_access?: boolean;
+    soil_type?: string;
+    proximity_to_amenities?: string[];
+    // Function-specific fields
+    payment_frequency?: string;
+    minimum_rental_period?: string;
+    lease_duration?: string;
+    renewal_terms?: string;
+    // Booking-specific fields
+    daily_rate?: number;
+    weekly_rate?: number;
+    hourly_rate?: number;
+    check_in_time?: string;
+    check_out_time?: string;
+    minimum_stay_duration?: number;
+    maximum_stay_duration?: number;
+    minimum_booking_duration?: number;
+    maximum_booking_duration?: number;
+    cancellation_policy?: string;
+    caution_fee?: number;
+    services_included?: string[];
+    // Additional fields
+    property_size?: string;
+    monthly_rent_amount?: number;
+    parking_capacity?: number;
+    lease_amount?: number;
   }): Promise<ApiResponse<MarketplaceListing>> {
     try {
       const { data: { user } } = await supabase.auth.getUser();

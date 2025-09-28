@@ -1,0 +1,585 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import { supabaseApi, Category, PropertyType, ListingType } from '@/lib/supabase-api';
+import { useAuth } from '@/lib/auth';
+import { ArrowLeft, Plus, X, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { toast } from 'sonner';
+
+interface FormData {
+  // Basic Information
+  title: string;
+  description: string;
+  location: string;
+  city: string;
+  state: string;
+  country: string;
+  
+  // Property Details
+  listing_type_id: string;
+  property_type_id: string;
+  category_id: string;
+  price: string;
+  currency: string;
+  price_period: string;
+  property_condition: string;
+  property_size: string;
+  area_sqft: string;
+  area_sqm: string;
+  year_of_construction: string;
+  
+  // Residential Fields
+  bedrooms: string;
+  bathrooms: string;
+  toilets: string;
+  kitchen_size: string;
+  dining_room: boolean;
+  balcony_terrace: boolean;
+  furnishing_status: string;
+  parking_spaces: string;
+  pet_friendly: boolean;
+  appliances_included: string[];
+  security_features: string[];
+  neighbourhood_features: string[];
+  
+  // Commercial Fields
+  property_usage_type: string;
+  total_floors: string;
+  floor_number: string;
+  office_rooms: string;
+  conference_rooms: string;
+  internet_available: boolean;
+  power_supply: string;
+  loading_dock: boolean;
+  storage_space: string;
+  accessibility_features: string[];
+  fire_safety_features: string[];
+  
+  // Land Fields
+  land_type: string;
+  title_document: string;
+  topography: string;
+  water_access: boolean;
+  electricity_access: boolean;
+  fence_boundary_status: string;
+  road_access: boolean;
+  soil_type: string;
+  proximity_to_amenities: string[];
+  
+  // Rent-specific Fields
+  monthly_rent_amount: string;
+  security_deposit: string;
+  utilities_included: boolean;
+  payment_frequency: string;
+  minimum_rental_period: string;
+  
+  // Lease-specific Fields
+  lease_amount: string;
+  lease_duration: string;
+  renewal_terms: string;
+  
+  // Booking-specific Fields
+  hourly_rate: string;
+  daily_rate: string;
+  weekly_rate: string;
+  check_in_time: string;
+  check_out_time: string;
+  minimum_stay_duration: string;
+  maximum_stay_duration: string;
+  minimum_booking_duration: string;
+  maximum_booking_duration: string;
+  cancellation_policy: string;
+  caution_fee: string;
+  services_included: string[];
+  
+  // General Fields
+  available_from: string;
+  available_to: string;
+  amenities: string[];
+  keywords: string[];
+  contact_name: string;
+  contact_phone: string;
+  contact_email: string;
+  contact_whatsapp: string;
+  virtual_tour_url: string;
+  video_url: string;
+}
+
+const initialFormData: FormData = {
+  title: '', description: '', location: '', city: '', state: '', country: 'Nigeria',
+  listing_type_id: '', property_type_id: '', category_id: '', price: '', currency: 'NGN',
+  price_period: '', property_condition: '', property_size: '', area_sqft: '', area_sqm: '',
+  year_of_construction: '', bedrooms: '', bathrooms: '', toilets: '', kitchen_size: '',
+  dining_room: false, balcony_terrace: false, furnishing_status: '', parking_spaces: '',
+  pet_friendly: false, appliances_included: [], security_features: [], neighbourhood_features: [],
+  property_usage_type: '', total_floors: '', floor_number: '', office_rooms: '',
+  conference_rooms: '', internet_available: false, power_supply: '', loading_dock: false,
+  storage_space: '', accessibility_features: [], fire_safety_features: [], land_type: '',
+  title_document: '', topography: '', water_access: false, electricity_access: false,
+  fence_boundary_status: '', road_access: false, soil_type: '', proximity_to_amenities: [],
+  monthly_rent_amount: '', security_deposit: '', utilities_included: false, payment_frequency: '',
+  minimum_rental_period: '', lease_amount: '', lease_duration: '', renewal_terms: '',
+  hourly_rate: '', daily_rate: '', weekly_rate: '', check_in_time: '', check_out_time: '',
+  minimum_stay_duration: '', maximum_stay_duration: '', minimum_booking_duration: '',
+  maximum_booking_duration: '', cancellation_policy: '', caution_fee: '', services_included: [],
+  available_from: '', available_to: '', amenities: [], keywords: [], contact_name: '',
+  contact_phone: '', contact_email: '', contact_whatsapp: '', virtual_tour_url: '', video_url: ''
+};
+
+export default function CreateMarketplacePropertyPage() {
+  const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [propertyTypes, setPropertyTypes] = useState<PropertyType[]>([]);
+  const [listingTypes, setListingTypes] = useState<ListingType[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [step, setStep] = useState(1);
+  const [newTag, setNewTag] = useState('');
+
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+    fetchInitialData();
+  }, [isAuthenticated]);
+
+  const fetchInitialData = async () => {
+    try {
+      const [categoriesRes, propertyTypesRes, listingTypesRes] = await Promise.all([
+        supabaseApi.getCategories(),
+        supabaseApi.getPropertyTypes(),
+        supabaseApi.getListingTypes()
+      ]);
+
+      if (categoriesRes.success) setCategories(categoriesRes.data);
+      if (propertyTypesRes.success) setPropertyTypes(propertyTypesRes.data);
+      if (listingTypesRes.success) setListingTypes(listingTypesRes.data);
+    } catch (error) {
+      console.error('Error fetching initial data:', error);
+    }
+  };
+
+  const handleInputChange = (field: keyof FormData, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const addTag = (field: keyof FormData, value: string) => {
+    if (value.trim() && !((formData[field] as string[])?.includes(value.trim()))) {
+      handleInputChange(field, [...((formData[field] as string[]) || []), value.trim()]);
+    }
+  };
+
+  const removeTag = (field: keyof FormData, index: number) => {
+    const currentArray = (formData[field] as string[]) || [];
+    handleInputChange(field, currentArray.filter((_, i) => i !== index));
+  };
+
+  const validateStep = (currentStep: number): boolean => {
+    switch (currentStep) {
+      case 1:
+        return !!(formData.title && formData.description && formData.location && 
+                  formData.category_id && formData.property_type_id && formData.listing_type_id);
+      case 2:
+        return !!formData.price;
+      case 3:
+        return true; // Category-specific fields are optional
+      case 4:
+        return true; // Function-specific fields are optional
+      default:
+        return true;
+    }
+  };
+
+  const handleNext = () => {
+    if (validateStep(step)) {
+      setStep(prev => Math.min(prev + 1, 5));
+      setError('');
+    } else {
+      setError('Please fill in all required fields');
+    }
+  };
+
+  const handlePrev = () => {
+    setStep(prev => Math.max(prev - 1, 1));
+    setError('');
+  };
+
+  const handleSubmit = async () => {
+    if (!validateStep(step)) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const submissionData = {
+        ...formData,
+        price: parseFloat(formData.price),
+        area_sqft: formData.area_sqft ? parseInt(formData.area_sqft) : undefined,
+        area_sqm: formData.area_sqm ? parseInt(formData.area_sqm) : undefined,
+        year_of_construction: formData.year_of_construction ? parseInt(formData.year_of_construction) : undefined,
+        bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : undefined,
+        bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : undefined,
+        toilets: formData.toilets ? parseInt(formData.toilets) : undefined,
+        parking_spaces: formData.parking_spaces ? parseInt(formData.parking_spaces) : undefined,
+        total_floors: formData.total_floors ? parseInt(formData.total_floors) : undefined,
+        floor_number: formData.floor_number ? parseInt(formData.floor_number) : undefined,
+        office_rooms: formData.office_rooms ? parseInt(formData.office_rooms) : undefined,
+        conference_rooms: formData.conference_rooms ? parseInt(formData.conference_rooms) : undefined,
+        monthly_rent_amount: formData.monthly_rent_amount ? parseFloat(formData.monthly_rent_amount) : undefined,
+        security_deposit: formData.security_deposit ? parseFloat(formData.security_deposit) : undefined,
+        lease_amount: formData.lease_amount ? parseFloat(formData.lease_amount) : undefined,
+        hourly_rate: formData.hourly_rate ? parseFloat(formData.hourly_rate) : undefined,
+        daily_rate: formData.daily_rate ? parseFloat(formData.daily_rate) : undefined,
+        weekly_rate: formData.weekly_rate ? parseFloat(formData.weekly_rate) : undefined,
+        minimum_stay_duration: formData.minimum_stay_duration ? parseInt(formData.minimum_stay_duration) : undefined,
+        maximum_stay_duration: formData.maximum_stay_duration ? parseInt(formData.maximum_stay_duration) : undefined,
+        minimum_booking_duration: formData.minimum_booking_duration ? parseInt(formData.minimum_booking_duration) : undefined,
+        maximum_booking_duration: formData.maximum_booking_duration ? parseInt(formData.maximum_booking_duration) : undefined,
+        caution_fee: formData.caution_fee ? parseFloat(formData.caution_fee) : undefined,
+      };
+
+      const response = await supabaseApi.createMarketplaceListing(submissionData);
+
+      if (response.success) {
+        toast.success('Property listed successfully!');
+        router.push(`/marketplace/${response.data.id}`);
+      } else {
+        setError(response.error || 'Failed to create listing');
+      }
+    } catch (error: any) {
+      setError(error.message || 'Failed to create listing');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const selectedCategory = categories.find(cat => cat.id === formData.category_id);
+  const selectedListingType = listingTypes.find(type => type.id === formData.listing_type_id);
+  const filteredPropertyTypes = propertyTypes.filter(type => type.category_id === formData.category_id);
+
+  const renderBasicInfo = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <Label htmlFor="title">Property Title *</Label>
+          <Input
+            id="title"
+            value={formData.title}
+            onChange={(e) => handleInputChange('title', e.target.value)}
+            placeholder="e.g., Modern 3-bedroom apartment in Victoria Island"
+            required
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="location">Location *</Label>
+          <Input
+            id="location"
+            value={formData.location}
+            onChange={(e) => handleInputChange('location', e.target.value)}
+            placeholder="e.g., Victoria Island, Lagos"
+            required
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="description">Description *</Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) => handleInputChange('description', e.target.value)}
+          placeholder="Provide a detailed description of the property..."
+          rows={4}
+          required
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="space-y-2">
+          <Label>City</Label>
+          <Input
+            value={formData.city}
+            onChange={(e) => handleInputChange('city', e.target.value)}
+            placeholder="e.g., Lagos"
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label>State</Label>
+          <Input
+            value={formData.state}
+            onChange={(e) => handleInputChange('state', e.target.value)}
+            placeholder="e.g., Lagos State"
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label>Country</Label>
+          <Input
+            value={formData.country}
+            onChange={(e) => handleInputChange('country', e.target.value)}
+            placeholder="e.g., Nigeria"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="space-y-2">
+          <Label>Category *</Label>
+          <Select value={formData.category_id} onValueChange={(value) => handleInputChange('category_id', value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map(category => (
+                <SelectItem key={category.id} value={category.id}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="space-y-2">
+          <Label>Property Type *</Label>
+          <Select value={formData.property_type_id} onValueChange={(value) => handleInputChange('property_type_id', value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select property type" />
+            </SelectTrigger>
+            <SelectContent>
+              {filteredPropertyTypes.map(type => (
+                <SelectItem key={type.id} value={type.id}>
+                  {type.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="space-y-2">
+          <Label>Listing Type *</Label>
+          <Select value={formData.listing_type_id} onValueChange={(value) => handleInputChange('listing_type_id', value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select listing type" />
+            </SelectTrigger>
+            <SelectContent>
+              {listingTypes.map(type => (
+                <SelectItem key={type.id} value={type.id}>
+                  {type.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderPriceAndDetails = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="space-y-2">
+          <Label htmlFor="price">Price *</Label>
+          <Input
+            id="price"
+            type="number"
+            value={formData.price}
+            onChange={(e) => handleInputChange('price', e.target.value)}
+            placeholder="0"
+            required
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label>Currency</Label>
+          <Select value={formData.currency} onValueChange={(value) => handleInputChange('currency', value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="NGN">Nigerian Naira (₦)</SelectItem>
+              <SelectItem value="USD">US Dollar ($)</SelectItem>
+              <SelectItem value="EUR">Euro (€)</SelectItem>
+              <SelectItem value="GBP">British Pound (£)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="space-y-2">
+          <Label>Price Period</Label>
+          <Select value={formData.price_period} onValueChange={(value) => handleInputChange('price_period', value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select period" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">One-time (Sale)</SelectItem>
+              <SelectItem value="month">Monthly</SelectItem>
+              <SelectItem value="year">Yearly</SelectItem>
+              <SelectItem value="day">Daily</SelectItem>
+              <SelectItem value="week">Weekly</SelectItem>
+              <SelectItem value="hour">Hourly</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <Label>Property Condition</Label>
+          <Select value={formData.property_condition} onValueChange={(value) => handleInputChange('property_condition', value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select condition" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="new">New</SelectItem>
+              <SelectItem value="excellent">Excellent</SelectItem>
+              <SelectItem value="good">Good</SelectItem>
+              <SelectItem value="fair">Fair</SelectItem>
+              <SelectItem value="needs_renovation">Needs Renovation</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="space-y-2">
+          <Label>Year of Construction</Label>
+          <Input
+            type="number"
+            value={formData.year_of_construction}
+            onChange={(e) => handleInputChange('year_of_construction', e.target.value)}
+            placeholder="e.g., 2020"
+            min="1800"
+            max={new Date().getFullYear()}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="space-y-2">
+          <Label>Property Size (Description)</Label>
+          <Input
+            value={formData.property_size}
+            onChange={(e) => handleInputChange('property_size', e.target.value)}
+            placeholder="e.g., Large, Spacious"
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label>Area (sqft)</Label>
+          <Input
+            type="number"
+            value={formData.area_sqft}
+            onChange={(e) => handleInputChange('area_sqft', e.target.value)}
+            placeholder="e.g., 1200"
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label>Area (sqm)</Label>
+          <Input
+            type="number"
+            value={formData.area_sqm}
+            onChange={(e) => handleInputChange('area_sqm', e.target.value)}
+            placeholder="e.g., 111"
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <Button variant="ghost" asChild className="mb-6">
+        <Link href="/marketplace">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Marketplace
+        </Link>
+      </Button>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Plus className="mr-2 h-5 w-5" />
+            Create Marketplace Listing
+          </CardTitle>
+          <div className="flex items-center space-x-2 text-sm text-gray-500">
+            <span>Step {step} of 5</span>
+            <div className="flex-1 bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-primary h-2 rounded-full transition-all duration-300" 
+                style={{ width: `${(step / 5) * 100}%` }}
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          {step === 1 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
+              {renderBasicInfo()}
+            </div>
+          )}
+
+          {step === 2 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Pricing & Property Details</h3>
+              {renderPriceAndDetails()}
+            </div>
+          )}
+
+          {/* Additional steps would be rendered here based on category and listing type */}
+          
+          <div className="flex justify-between pt-6">
+            {step > 1 && (
+              <Button variant="outline" onClick={handlePrev}>
+                Previous
+              </Button>
+            )}
+            
+            <div className="ml-auto flex space-x-2">
+              {step < 5 ? (
+                <Button onClick={handleNext}>
+                  Next
+                </Button>
+              ) : (
+                <Button onClick={handleSubmit} disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating Listing...
+                    </>
+                  ) : (
+                    'Create Listing'
+                  )}
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

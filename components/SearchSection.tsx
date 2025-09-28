@@ -24,16 +24,21 @@ export function SearchSection({ filters, onFiltersChange, onSearch }: SearchSect
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Search Form */}
         <div className="bg-gray-50 rounded-2xl shadow-sm p-6 max-w-5xl mx-auto">
-          {/* Mobile Filter Toggle */}
-          <div className="md:hidden mb-4">
+          {/* Mobile Buttons */}
+          <div className="md:hidden flex gap-4 mb-4">
             <Button
               variant="outline"
-              className="w-full h-12 bg-white flex items-center justify-center"
+              className="flex-1 h-12 bg-white flex items-center justify-center"
               onClick={() => setShowFilters(!showFilters)}
             >
               <Filter className="h-4 w-4 mr-2" />
               Filters
               {showFilters ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
+            </Button>
+
+            <Button className="flex-1 h-12" onClick={onSearch}>
+              <Search className="h-4 w-4 mr-2" />
+              Search
             </Button>
           </div>
 
@@ -100,13 +105,6 @@ export function SearchSection({ filters, onFiltersChange, onSearch }: SearchSect
             </Button>
           </div>
 
-          {/* Mobile Search Button */}
-          <div className="md:hidden mt-4">
-            <Button className="w-full h-12" onClick={onSearch}>
-              <Search className="h-4 w-4 mr-2" />
-              Search
-            </Button>
-          </div>
         </div>
 
         {/* Quick Stats */}

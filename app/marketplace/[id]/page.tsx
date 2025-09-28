@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { supabaseApi, Property } from '@/lib/supabase-api';
+import { supabaseApi, MarketplaceListing } from '@/lib/supabase-api';
 import {
   Heart,
   Share2,
@@ -37,8 +37,8 @@ import Image from 'next/image';
 
 export default function MarketPropertyDetailsPage() {
   const params = useParams();
-  const [listing, setListing] = useState<Property | null>(null);
-  const [relatedListings, setRelatedListings] = useState<Property[]>([]);
+  const [listing, setListing] = useState<MarketplaceListing | null>(null);
+  const [relatedListings, setRelatedListings] = useState<MarketplaceListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -66,14 +66,14 @@ export default function MarketPropertyDetailsPage() {
   const fetchListingDetails = async () => {
     try {
       setLoading(true);
-      const response = await supabaseApi.getProperty(params.id as string);
+      const response = await supabaseApi.getMarketplaceListing(params.id as string);
 
       if (response.success) {
         setListing(response.data);
 
         // Fetch related properties based on same category or location
-        const relatedResponse = await supabaseApi.getProperties({
-          category: response.data.category_name,
+        const relatedResponse = await supabaseApi.getMarketplaceListings({
+          category: response.data.category?.name,
           limit: 4
         });
 
@@ -113,9 +113,9 @@ export default function MarketPropertyDetailsPage() {
     return period ? `${formatted}/${period}` : formatted;
   };
 
-  const getPropertyPrice = (property: Property) => {
-    if (property.current_worth) {
-      return formatPrice(property.current_worth);
+  const getPropertyPrice = (property: MarketplaceListing) => {
+    if (property.price) {
+      return formatPrice(property.price, property.currency, property.price_period);
     }
     return 'Price on request';
   };
@@ -266,7 +266,7 @@ export default function MarketPropertyDetailsPage() {
           {/* Property Badges */}
           <div className="absolute top-4 left-4 flex flex-wrap gap-2">
             <Badge variant="secondary">
-              {listing.category_name}
+              {listing.category?.name}
             </Badge>
           </div>
         </div>
@@ -291,7 +291,7 @@ export default function MarketPropertyDetailsPage() {
                   {getPropertyPrice(listing)}
                 </div>
                 <div className="text-sm text-gray-500">
-                  {listing.category_name}
+                  {listing.category?.name}
                 </div>
               </div>
             </div>
@@ -362,7 +362,7 @@ export default function MarketPropertyDetailsPage() {
                       )}
                       <div className="flex items-center gap-2">
                         <CheckCircle className="h-4 w-4 text-green-500" />
-                        <span>Category: {listing.category_name}</span>
+                        <span>Category: {listing.category?.name}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -371,41 +371,615 @@ export default function MarketPropertyDetailsPage() {
             )}
 
             {activeTab === 'details' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Property Details</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-4">
+              <div className="space-y-6">
+                {/* General Property Details */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>General Information</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <span className="font-medium">Property Type:</span>
+                        <span className="ml-2">{listing.property_type?.name || 'N/A'}</span>
+                      </div>
                       <div>
                         <span className="font-medium">Category:</span>
-                        <span className="ml-2">{listing.category_name || 'N/A'}</span>
+                        <span className="ml-2">{listing.category?.name || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Listing Type:</span>
+                        <span className="ml-2">{listing.listing_type?.name || 'N/A'}</span>
                       </div>
                       <div>
                         <span className="font-medium">Location:</span>
                         <span className="ml-2">{listing.location}</span>
                       </div>
-                      <div>
-                        <span className="font-medium">Year Built:</span>
-                        <span className="ml-2">{listing.year_of_construction || 'N/A'}</span>
-                      </div>
+                      {listing.city && (
+                        <div>
+                          <span className="font-medium">City:</span>
+                          <span className="ml-2">{listing.city}</span>
+                        </div>
+                      )}
+                      {listing.state && (
+                        <div>
+                          <span className="font-medium">State:</span>
+                          <span className="ml-2">{listing.state}</span>
+                        </div>
+                      )}
+                      {listing.country && (
+                        <div>
+                          <span className="font-medium">Country:</span>
+                          <span className="ml-2">{listing.country}</span>
+                        </div>
+                      )}
+                      {listing.year_of_construction && (
+                        <div>
+                          <span className="font-medium">Year Built:</span>
+                          <span className="ml-2">{listing.year_of_construction}</span>
+                        </div>
+                      )}
+                      {listing.property_condition && (
+                        <div>
+                          <span className="font-medium">Condition:</span>
+                          <span className="ml-2">{listing.property_condition}</span>
+                        </div>
+                      )}
+                      {(listing.area_sqft || listing.area_sqm || listing.property_size) && (
+                        <div>
+                          <span className="font-medium">Property Size:</span>
+                          <span className="ml-2">
+                            {listing.property_size && listing.property_size}
+                            {listing.area_sqft && ` ${listing.area_sqft} sqft`}
+                            {listing.area_sqm && ` ${listing.area_sqm} sqm`}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                    <div className="space-y-4">
-                      <div>
-                        <span className="font-medium">Price:</span>
-                        <span className="ml-2">{getPropertyPrice(listing)}</span>
+                  </CardContent>
+                </Card>
+
+                {/* Category-specific Details */}
+                {listing.category?.name === 'Residential' && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Residential Details</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {listing.bedrooms && (
+                          <div>
+                            <span className="font-medium">Bedrooms:</span>
+                            <span className="ml-2">{listing.bedrooms}</span>
+                          </div>
+                        )}
+                        {listing.bathrooms && (
+                          <div>
+                            <span className="font-medium">Bathrooms:</span>
+                            <span className="ml-2">{listing.bathrooms}</span>
+                          </div>
+                        )}
+                        {listing.toilets && (
+                          <div>
+                            <span className="font-medium">Toilets:</span>
+                            <span className="ml-2">{listing.toilets}</span>
+                          </div>
+                        )}
+                        {listing.kitchen_size && (
+                          <div>
+                            <span className="font-medium">Kitchen Size:</span>
+                            <span className="ml-2">{listing.kitchen_size}</span>
+                          </div>
+                        )}
+                        {listing.dining_room && (
+                          <div>
+                            <span className="font-medium">Dining Room:</span>
+                            <span className="ml-2">Yes</span>
+                          </div>
+                        )}
+                        {listing.balcony_terrace && (
+                          <div>
+                            <span className="font-medium">Balcony/Terrace:</span>
+                            <span className="ml-2">Yes</span>
+                          </div>
+                        )}
+                        {listing.furnishing_status && (
+                          <div>
+                            <span className="font-medium">Furnishing Status:</span>
+                            <span className="ml-2">{listing.furnishing_status}</span>
+                          </div>
+                        )}
+                        {listing.parking_spaces > 0 && (
+                          <div>
+                            <span className="font-medium">Parking Spaces:</span>
+                            <span className="ml-2">{listing.parking_spaces}</span>
+                          </div>
+                        )}
+                        {listing.pet_friendly && (
+                          <div>
+                            <span className="font-medium">Pet Friendly:</span>
+                            <span className="ml-2">Yes</span>
+                          </div>
+                        )}
                       </div>
-                      <div>
-                        <span className="font-medium">Last Updated:</span>
-                        <span className="ml-2">
-                          {new Date(listing.updated_at).toLocaleDateString()}
-                        </span>
+                      {listing.appliances_included && listing.appliances_included.length > 0 && (
+                        <div className="mt-4">
+                          <span className="font-medium">Appliances Included:</span>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {listing.appliances_included.map((appliance, index) => (
+                              <Badge key={index} variant="secondary">{appliance}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {listing.security_features && listing.security_features.length > 0 && (
+                        <div className="mt-4">
+                          <span className="font-medium">Security Features:</span>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {listing.security_features.map((feature, index) => (
+                              <Badge key={index} variant="secondary">{feature}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {listing.neighbourhood_features && listing.neighbourhood_features.length > 0 && (
+                        <div className="mt-4">
+                          <span className="font-medium">Neighbourhood Features:</span>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {listing.neighbourhood_features.map((feature, index) => (
+                              <Badge key={index} variant="secondary">{feature}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {listing.category?.name === 'Commercial' && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Commercial Details</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {listing.property_usage_type && (
+                          <div>
+                            <span className="font-medium">Property Usage Type:</span>
+                            <span className="ml-2">{listing.property_usage_type}</span>
+                          </div>
+                        )}
+                        {listing.total_floors && (
+                          <div>
+                            <span className="font-medium">Total Floors (Building):</span>
+                            <span className="ml-2">{listing.total_floors}</span>
+                          </div>
+                        )}
+                        {listing.floor_number && (
+                          <div>
+                            <span className="font-medium">Floor Number (Property Location):</span>
+                            <span className="ml-2">{listing.floor_number}</span>
+                          </div>
+                        )}
+                        {listing.office_rooms && (
+                          <div>
+                            <span className="font-medium">Office Rooms/Sections:</span>
+                            <span className="ml-2">{listing.office_rooms}</span>
+                          </div>
+                        )}
+                        {listing.conference_rooms && (
+                          <div>
+                            <span className="font-medium">Conference Rooms:</span>
+                            <span className="ml-2">{listing.conference_rooms}</span>
+                          </div>
+                        )}
+                        {listing.parking_spaces > 0 && (
+                          <div>
+                            <span className="font-medium">Parking Capacity:</span>
+                            <span className="ml-2">{listing.parking_spaces}</span>
+                          </div>
+                        )}
+                        {listing.internet_available && (
+                          <div>
+                            <span className="font-medium">Internet Available:</span>
+                            <span className="ml-2">Yes</span>
+                          </div>
+                        )}
+                        {listing.power_supply && (
+                          <div>
+                            <span className="font-medium">Power Supply:</span>
+                            <span className="ml-2">{listing.power_supply}</span>
+                          </div>
+                        )}
+                        {listing.loading_dock && (
+                          <div>
+                            <span className="font-medium">Loading Dock:</span>
+                            <span className="ml-2">Yes</span>
+                          </div>
+                        )}
+                        {listing.storage_space && (
+                          <div>
+                            <span className="font-medium">Storage Space:</span>
+                            <span className="ml-2">{listing.storage_space}</span>
+                          </div>
+                        )}
                       </div>
+                      {listing.accessibility_features && listing.accessibility_features.length > 0 && (
+                        <div className="mt-4">
+                          <span className="font-medium">Accessibility Features:</span>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {listing.accessibility_features.map((feature, index) => (
+                              <Badge key={index} variant="secondary">{feature}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {listing.fire_safety_features && listing.fire_safety_features.length > 0 && (
+                        <div className="mt-4">
+                          <span className="font-medium">Fire Safety & Compliance Features:</span>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {listing.fire_safety_features.map((feature, index) => (
+                              <Badge key={index} variant="secondary">{feature}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {listing.neighbourhood_features && listing.neighbourhood_features.length > 0 && (
+                        <div className="mt-4">
+                          <span className="font-medium">Neighbourhood Features:</span>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {listing.neighbourhood_features.map((feature, index) => (
+                              <Badge key={index} variant="secondary">{feature}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {listing.category?.name === 'Land' && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Land Details</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {listing.land_type && (
+                          <div>
+                            <span className="font-medium">Land Type:</span>
+                            <span className="ml-2">{listing.land_type}</span>
+                          </div>
+                        )}
+                        {listing.title_document && (
+                          <div>
+                            <span className="font-medium">Title Document:</span>
+                            <span className="ml-2">{listing.title_document}</span>
+                          </div>
+                        )}
+                        {listing.topography && (
+                          <div>
+                            <span className="font-medium">Topography:</span>
+                            <span className="ml-2">{listing.topography}</span>
+                          </div>
+                        )}
+                        {listing.water_access && (
+                          <div>
+                            <span className="font-medium">Water Access:</span>
+                            <span className="ml-2">Yes</span>
+                          </div>
+                        )}
+                        {listing.electricity_access && (
+                          <div>
+                            <span className="font-medium">Electricity Access:</span>
+                            <span className="ml-2">Yes</span>
+                          </div>
+                        )}
+                        {listing.fence_boundary_status && (
+                          <div>
+                            <span className="font-medium">Fence/Boundary Status:</span>
+                            <span className="ml-2">{listing.fence_boundary_status}</span>
+                          </div>
+                        )}
+                        {listing.road_access && (
+                          <div>
+                            <span className="font-medium">Road Access:</span>
+                            <span className="ml-2">Yes</span>
+                          </div>
+                        )}
+                        {listing.soil_type && (
+                          <div>
+                            <span className="font-medium">Soil Type:</span>
+                            <span className="ml-2">{listing.soil_type}</span>
+                          </div>
+                        )}
+                      </div>
+                      {listing.proximity_to_amenities && listing.proximity_to_amenities.length > 0 && (
+                        <div className="mt-4">
+                          <span className="font-medium">Proximity to Amenities:</span>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {listing.proximity_to_amenities.map((amenity, index) => (
+                              <Badge key={index} variant="secondary">{amenity}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Rent-specific Details */}
+                {listing.listing_type?.name === 'For Rent' && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Rental Details</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {listing.monthly_rent_amount && (
+                          <div>
+                            <span className="font-medium">Monthly Rent Amount:</span>
+                            <span className="ml-2">{formatPrice(listing.monthly_rent_amount, listing.currency)}</span>
+                          </div>
+                        )}
+                        {listing.security_deposit && (
+                          <div>
+                            <span className="font-medium">Security Deposit:</span>
+                            <span className="ml-2">{formatPrice(listing.security_deposit, listing.currency)}</span>
+                          </div>
+                        )}
+                        {listing.utilities_included && (
+                          <div>
+                            <span className="font-medium">Utilities Included:</span>
+                            <span className="ml-2">Yes</span>
+                          </div>
+                        )}
+                        {listing.payment_frequency && (
+                          <div>
+                            <span className="font-medium">Payment Frequency:</span>
+                            <span className="ml-2">{listing.payment_frequency}</span>
+                          </div>
+                        )}
+                        {listing.minimum_rental_period && (
+                          <div>
+                            <span className="font-medium">Minimum Rental Period:</span>
+                            <span className="ml-2">{listing.minimum_rental_period}</span>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Lease-specific Details */}
+                {listing.listing_type?.name === 'For Lease' && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Lease Details</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {listing.lease_amount && (
+                          <div>
+                            <span className="font-medium">Lease Amount:</span>
+                            <span className="ml-2">{formatPrice(listing.lease_amount, listing.currency)}</span>
+                          </div>
+                        )}
+                        {listing.lease_duration && (
+                          <div>
+                            <span className="font-medium">Lease Duration:</span>
+                            <span className="ml-2">{listing.lease_duration}</span>
+                          </div>
+                        )}
+                        {listing.renewal_terms && (
+                          <div>
+                            <span className="font-medium">Renewal Terms:</span>
+                            <span className="ml-2">{listing.renewal_terms}</span>
+                          </div>
+                        )}
+                        {listing.security_deposit && (
+                          <div>
+                            <span className="font-medium">Security Deposit:</span>
+                            <span className="ml-2">{formatPrice(listing.security_deposit, listing.currency)}</span>
+                          </div>
+                        )}
+                        {listing.payment_frequency && (
+                          <div>
+                            <span className="font-medium">Payment Frequency:</span>
+                            <span className="ml-2">{listing.payment_frequency}</span>
+                          </div>
+                        )}
+                        {listing.utilities_included && (
+                          <div>
+                            <span className="font-medium">Utilities Included:</span>
+                            <span className="ml-2">Yes</span>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {listing.listing_type?.name === 'For Booking' && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Booking Details</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Rates */}
+                        {listing.hourly_rate && (
+                          <div>
+                            <span className="font-medium">Hourly Rate:</span>
+                            <span className="ml-2">{formatPrice(listing.hourly_rate, listing.currency)}</span>
+                          </div>
+                        )}
+                        {listing.daily_rate && (
+                          <div>
+                            <span className="font-medium">Daily Rate:</span>
+                            <span className="ml-2">{formatPrice(listing.daily_rate, listing.currency)}</span>
+                          </div>
+                        )}
+                        {listing.weekly_rate && (
+                          <div>
+                            <span className="font-medium">Weekly Rate:</span>
+                            <span className="ml-2">{formatPrice(listing.weekly_rate, listing.currency)}</span>
+                          </div>
+                        )}
+                        {/* Check-in/Check-out Times */}
+                        {listing.check_in_time && (
+                          <div>
+                            <span className="font-medium">Check-in Time:</span>
+                            <span className="ml-2">{listing.check_in_time}</span>
+                          </div>
+                        )}
+                        {listing.check_out_time && (
+                          <div>
+                            <span className="font-medium">Check-out Time:</span>
+                            <span className="ml-2">{listing.check_out_time}</span>
+                          </div>
+                        )}
+                        {/* Duration Limits */}
+                        {listing.minimum_stay_duration && (
+                          <div>
+                            <span className="font-medium">Minimum Stay Duration:</span>
+                            <span className="ml-2">{listing.minimum_stay_duration} days</span>
+                          </div>
+                        )}
+                        {listing.maximum_stay_duration && (
+                          <div>
+                            <span className="font-medium">Maximum Stay Duration:</span>
+                            <span className="ml-2">{listing.maximum_stay_duration} days</span>
+                          </div>
+                        )}
+                        {/* Commercial booking fields */}
+                        {listing.minimum_booking_duration && (
+                          <div>
+                            <span className="font-medium">Minimum Booking Duration:</span>
+                            <span className="ml-2">{listing.minimum_booking_duration} hours</span>
+                          </div>
+                        )}
+                        {listing.maximum_booking_duration && (
+                          <div>
+                            <span className="font-medium">Maximum Booking Duration:</span>
+                            <span className="ml-2">{listing.maximum_booking_duration} hours</span>
+                          </div>
+                        )}
+                        {/* Policies and Fees */}
+                        {listing.cancellation_policy && (
+                          <div>
+                            <span className="font-medium">Cancellation Policy:</span>
+                            <span className="ml-2">{listing.cancellation_policy}</span>
+                          </div>
+                        )}
+                        {listing.caution_fee && (
+                          <div>
+                            <span className="font-medium">Caution Fee:</span>
+                            <span className="ml-2">{formatPrice(listing.caution_fee, listing.currency)}</span>
+                          </div>
+                        )}
+                      </div>
+                      {listing.services_included && listing.services_included.length > 0 && (
+                        <div className="mt-4">
+                          <span className="font-medium">Services Included:</span>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {listing.services_included.map((service, index) => (
+                              <Badge key={index} variant="secondary">{service}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Amenities */}
+                {listing.amenities && listing.amenities.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Amenities & Features</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-2">
+                        {listing.amenities.map((amenity, index) => (
+                          <Badge key={index} variant="secondary">{amenity}</Badge>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Availability */}
+                {(listing.available_from || listing.available_to) && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Availability</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {listing.available_from && (
+                          <div>
+                            <span className="font-medium">Available From:</span>
+                            <span className="ml-2">{new Date(listing.available_from).toLocaleDateString()}</span>
+                          </div>
+                        )}
+                        {listing.available_to && (
+                          <div>
+                            <span className="font-medium">Available To:</span>
+                            <span className="ml-2">{new Date(listing.available_to).toLocaleDateString()}</span>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Contact Information */}
+                {(listing.contact_name || listing.contact_phone || listing.contact_email || listing.contact_whatsapp) && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Contact Information</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {listing.contact_name && (
+                          <div>
+                            <span className="font-medium">Contact Name:</span>
+                            <span className="ml-2">{listing.contact_name}</span>
+                          </div>
+                        )}
+                        {listing.contact_phone && (
+                          <div>
+                            <span className="font-medium">Phone:</span>
+                            <span className="ml-2">{listing.contact_phone}</span>
+                          </div>
+                        )}
+                        {listing.contact_email && (
+                          <div>
+                            <span className="font-medium">Email:</span>
+                            <span className="ml-2">{listing.contact_email}</span>
+                          </div>
+                        )}
+                        {listing.contact_whatsapp && (
+                          <div>
+                            <span className="font-medium">WhatsApp:</span>
+                            <span className="ml-2">{listing.contact_whatsapp}</span>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Last Updated */}
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-sm text-gray-500 text-center">
+                      Last updated: {new Date(listing.updated_at).toLocaleDateString()} at {new Date(listing.updated_at).toLocaleTimeString()}
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
             )}
 
             {activeTab === 'location' && (
@@ -544,11 +1118,11 @@ export default function MarketPropertyDetailsPage() {
               </div>
               <div className="flex justify-between">
                 <span>Type:</span>
-                <span>{listing.type || 'Property'}</span>
+                <span>{listing.property_type?.name || 'Property'}</span>
               </div>
               <div className="flex justify-between">
                 <span>Category:</span>
-                <span>{listing.category_name}</span>
+                <span>{listing.category?.name}</span>
               </div>
               <Separator />
               <div className="flex justify-between font-medium">
