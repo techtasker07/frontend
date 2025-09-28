@@ -31,7 +31,6 @@ import {
   ArrowLeft,
   CheckCircle,
   X,
-  Vote
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -42,27 +41,21 @@ export default function MarketPropertyDetailsPage() {
   const [relatedListings, setRelatedListings] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isInquiryOpen, setIsInquiryOpen] = useState(false);
-  const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'details' | 'location' | 'reviews'>('overview');
 
-  // Inquiry form state
-  const [inquiryForm, setInquiryForm] = useState({
+  // Engagement form state
+  const [engagementForm, setEngagementForm] = useState({
     name: '',
     email: '',
     phone: '',
-    message: ''
+    intention: '',
+    meeting_type: 'call',
+    scheduled_date: '',
+    scheduled_time: ''
   });
 
-  // Booking form state
-  const [bookingForm, setBookingForm] = useState({
-    booking_type: 'viewing',
-    start_date: '',
-    end_date: '',
-    guest_count: 1,
-    message: ''
-  });
+  const [isEngagementOpen, setIsEngagementOpen] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -127,42 +120,20 @@ export default function MarketPropertyDetailsPage() {
     return 'Price on request';
   };
 
-  const handleInquiry = async () => {
-    // Here you would typically send the inquiry to your backend
-    console.log('Inquiry submitted:', inquiryForm);
-    setIsInquiryOpen(false);
-    setInquiryForm({ name: '', email: '', phone: '', message: '' });
-  };
-
-  const handleBooking = async () => {
+  const handleEngagement = async () => {
     try {
-      if (!listing) return;
-      
-      const response = await supabaseApi.createBooking({
-        marketplace_listing_id: listing.id,
-        booking_type: bookingForm.booking_type,
-        start_date: bookingForm.start_date || undefined,
-        end_date: bookingForm.end_date || undefined,
-        guest_count: bookingForm.guest_count,
-        message: bookingForm.message || undefined
-      });
-
-      if (response.success) {
-        setIsBookingOpen(false);
-        setBookingForm({
-          booking_type: 'viewing',
-          start_date: '',
-          end_date: '',
-          guest_count: 1,
-          message: ''
-        });
-        alert('Booking request submitted successfully!');
-      }
+      // Here you would send the engagement to your backend
+      console.log('Engagement submitted:', engagementForm);
+      // TODO: Implement API call to store in property_contact_requests table
+      alert('Engagement request submitted successfully!');
+      setIsEngagementOpen(false);
+      setEngagementForm({ name: '', email: '', phone: '', intention: '', meeting_type: 'call', scheduled_date: '', scheduled_time: '' });
     } catch (error) {
-      console.error('Error creating booking:', error);
-      alert('Failed to submit booking request');
+      console.error('Error submitting engagement:', error);
+      alert('Failed to submit engagement request');
     }
   };
+
 
   const toggleFavorite = async () => {
     if (!listing) return;
@@ -333,10 +304,6 @@ export default function MarketPropertyDetailsPage() {
                   <span>Built in {listing.year_of_construction}</span>
                 </div>
               )}
-              <div className="flex items-center gap-1 text-gray-500">
-                <Vote className="h-4 w-4" />
-                <span>{listing.vote_count || 0} votes</span>
-              </div>
             </div>
           </div>
 
@@ -430,10 +397,6 @@ export default function MarketPropertyDetailsPage() {
                         <span className="ml-2">{getPropertyPrice(listing)}</span>
                       </div>
                       <div>
-                        <span className="font-medium">Votes:</span>
-                        <span className="ml-2">{listing.vote_count || 0}</span>
-                      </div>
-                      <div>
                         <span className="font-medium">Last Updated:</span>
                         <span className="ml-2">
                           {new Date(listing.updated_at).toLocaleDateString()}
@@ -482,176 +445,88 @@ export default function MarketPropertyDetailsPage() {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Contact Card */}
+          {/* Engagement Card */}
           <Card>
             <CardHeader>
-              <CardTitle>Contact Property Owner</CardTitle>
+              <CardTitle>Engage with Mipripity</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={listing.owner_profile_picture || "/placeholder.svg"} alt={listing.owner_name} />
-                  <AvatarFallback className="text-lg">
-                    {listing.owner_name
-                      ? `${listing.owner_name.split(" ")[0][0]}${listing.owner_name.split(" ")[1]?.[0] || ""}`.toUpperCase()
-                      : "PO"}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <div className="font-medium">
-                    {listing.owner_name || 'Property Owner'}
-                  </div>
-                  <div className="text-sm text-gray-500">Property Lister</div>
-                </div>
-              </div>
+              <p className="text-sm text-gray-600">
+                Connect with our team to discuss this property. We'll mediate between you and the lister to ensure a smooth transaction.
+              </p>
 
-              <div className="space-y-2">
-                {listing.owner_phone && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="h-4 w-4 text-gray-500" />
-                    <span>{listing.owner_phone}</span>
-                  </div>
-                )}
-                {listing.owner_email && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Mail className="h-4 w-4 text-gray-500" />
-                    <span>{listing.owner_email}</span>
-                  </div>
-                )}
-                {listing.lister_phone_number && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="h-4 w-4 text-gray-500" />
-                    <span>{listing.lister_phone_number}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                {/* Contact Buttons */}
-                <Dialog open={isInquiryOpen} onOpenChange={setIsInquiryOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="w-full">
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Send Message
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Send Inquiry</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <Input
-                        placeholder="Your Name"
-                        value={inquiryForm.name}
-                        onChange={(e) => setInquiryForm({ ...inquiryForm, name: e.target.value })}
-                      />
-                      <Input
-                        type="email"
-                        placeholder="Your Email"
-                        value={inquiryForm.email}
-                        onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })}
-                      />
-                      <Input
-                        placeholder="Your Phone"
-                        value={inquiryForm.phone}
-                        onChange={(e) => setInquiryForm({ ...inquiryForm, phone: e.target.value })}
-                      />
-                      <Textarea
-                        placeholder="Your message..."
-                        value={inquiryForm.message}
-                        onChange={(e) => setInquiryForm({ ...inquiryForm, message: e.target.value })}
-                        rows={4}
-                      />
-                      <div className="flex gap-2">
-                        <Button onClick={handleInquiry} className="flex-1">
-                          Send Message
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => setIsInquiryOpen(false)}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-
-                {/* Booking Button */}
-                <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Book Viewing
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Book a Viewing</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <Select
-                        value={bookingForm.booking_type}
-                        onValueChange={(value) => setBookingForm({ ...bookingForm, booking_type: value })}
+              <Dialog open={isEngagementOpen} onOpenChange={setIsEngagementOpen}>
+                <DialogTrigger asChild>
+                  <Button className="w-full">
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Schedule Meeting
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Schedule a Meeting</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <Input
+                      placeholder="Your Name"
+                      value={engagementForm.name}
+                      onChange={(e) => setEngagementForm({ ...engagementForm, name: e.target.value })}
+                    />
+                    <Input
+                      type="email"
+                      placeholder="Your Email"
+                      value={engagementForm.email}
+                      onChange={(e) => setEngagementForm({ ...engagementForm, email: e.target.value })}
+                    />
+                    <Input
+                      placeholder="Your Phone"
+                      value={engagementForm.phone}
+                      onChange={(e) => setEngagementForm({ ...engagementForm, phone: e.target.value })}
+                    />
+                    <Textarea
+                      placeholder="Your intention towards this property..."
+                      value={engagementForm.intention}
+                      onChange={(e) => setEngagementForm({ ...engagementForm, intention: e.target.value })}
+                      rows={3}
+                    />
+                    <Select
+                      value={engagementForm.meeting_type}
+                      onValueChange={(value) => setEngagementForm({ ...engagementForm, meeting_type: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="call">Call Meeting</SelectItem>
+                        <SelectItem value="physical">Physical Meeting</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="date"
+                      placeholder="Preferred Date"
+                      value={engagementForm.scheduled_date}
+                      onChange={(e) => setEngagementForm({ ...engagementForm, scheduled_date: e.target.value })}
+                    />
+                    <Input
+                      type="time"
+                      placeholder="Preferred Time"
+                      value={engagementForm.scheduled_time}
+                      onChange={(e) => setEngagementForm({ ...engagementForm, scheduled_time: e.target.value })}
+                    />
+                    <div className="flex gap-2">
+                      <Button onClick={handleEngagement} className="flex-1">
+                        Submit Request
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsEngagementOpen(false)}
                       >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="viewing">Property Viewing</SelectItem>
-                          <SelectItem value="consultation">Consultation</SelectItem>
-                          {listing.type === 'booking' && (
-                            <SelectItem value="stay">Book Stay</SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                      
-                      <Input
-                        type="date"
-                        placeholder="Start Date"
-                        value={bookingForm.start_date}
-                        onChange={(e) => setBookingForm({ ...bookingForm, start_date: e.target.value })}
-                      />
-                      
-                      {bookingForm.booking_type === 'stay' && (
-                        <Input
-                          type="date"
-                          placeholder="End Date"
-                          value={bookingForm.end_date}
-                          onChange={(e) => setBookingForm({ ...bookingForm, end_date: e.target.value })}
-                        />
-                      )}
-                      
-                      <Input
-                        type="number"
-                        placeholder="Number of Guests"
-                        value={bookingForm.guest_count}
-                        onChange={(e) => setBookingForm({ ...bookingForm, guest_count: parseInt(e.target.value) || 1 })}
-                        min={1}
-                      />
-                      
-                      <Textarea
-                        placeholder="Special requests or message..."
-                        value={bookingForm.message}
-                        onChange={(e) => setBookingForm({ ...bookingForm, message: e.target.value })}
-                        rows={3}
-                      />
-                      
-                      <div className="flex gap-2">
-                        <Button onClick={handleBooking} className="flex-1">
-                          Submit Request
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => setIsBookingOpen(false)}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
+                        Cancel
+                      </Button>
                     </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
 
