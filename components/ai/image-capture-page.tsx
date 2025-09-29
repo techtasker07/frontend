@@ -42,7 +42,8 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
   const [isCroppingMode, setIsCroppingMode] = useState<boolean>(false)
   const [cropArea, setCropArea] = useState({ x: 0, y: 0, width: 0, height: 0 })
   const [isDragging, setIsDragging] = useState(false)
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const [isResizing, setIsResizing] = useState<null | 'se' | 'ne' | 'sw' | 'nw'>(null)
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [imageScale, setImageScale] = useState(1)
   const [imageTranslate, setImageTranslate] = useState({ x: 0, y: 0 })
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -308,15 +309,24 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
       const ctx = canvas.getContext('2d')
       
       if (ctx) {
-        // Set canvas size to crop area
-        canvas.width = cropArea.width
-        canvas.height = cropArea.height
+        // Map displayed crop area to the image's natural size
+        const rect = img.getBoundingClientRect()
+        const scaleX = img.naturalWidth / rect.width
+        const scaleY = img.naturalHeight / rect.height
+        const srcX = Math.max(0, Math.round(cropArea.x * scaleX))
+        const srcY = Math.max(0, Math.round(cropArea.y * scaleY))
+        const srcW = Math.min(img.naturalWidth - srcX, Math.round(cropArea.width * scaleX))
+        const srcH = Math.min(img.naturalHeight - srcY, Math.round(cropArea.height * scaleY))
+        
+        // Set canvas size to crop area (destination size)
+        canvas.width = Math.max(1, Math.round(cropArea.width))
+        canvas.height = Math.max(1, Math.round(cropArea.height))
         
         // Draw cropped portion of image
         ctx.drawImage(
           img,
-          cropArea.x, cropArea.y, cropArea.width, cropArea.height,
-          0, 0, cropArea.width, cropArea.height
+          srcX, srcY, srcW, srcH,
+          0, 0, canvas.width, canvas.height
         )
         
         // Convert canvas to blob
@@ -375,42 +385,51 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
   }
 
   // Handle crop area dragging
-  const handleCropMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true)
-    setDragStart({ x: e.clientX - cropArea.x, y: e.clientY - cropArea.y })
-  }
-
-  const handleCropMouseMove = (e: React.MouseEvent) => {
-    if (isDragging && imageRef.current) {
-      const rect = imageRef.current.getBoundingClientRect()
-      const newX = Math.max(0, Math.min(e.clientX - dragStart.x, rect.width - cropArea.width))
-      const newY = Math.max(0, Math.min(e.clientY - dragStart.y, rect.height - cropArea.height))
-      setCropArea(prev => ({ ...prev, x: newX, y: newY }))
+  // Helpers to unify mouse/touch
+  const getClient = (evt: any) => {
+    if (evt.touches && evt.touches[0]) {
+      return { clientX: evt.touches[0].clientX, clientY: evt.touches[0].clientY }
     }
+    return { clientX: evt.clientX, clientY: evt.clientY }
   }
 
-  const handleCropMouseUp = () => {
-    setIsDragging(false)
-  }
-
-  // Handle crop area resizing
-  const handleCropResize = (corner: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    // Simple resize logic - you can enhance this
+  const handleCropMouseDown = (e: any) => {
+    const { clientX, clientY } = getClient(e)
     const rect = imageRef.current?.getBoundingClientRect()
     if (!rect) return
-    
-    const minSize = 50
-    const maxWidth = rect.width - cropArea.x
-    const maxHeight = rect.height - cropArea.y
-    
-    if (corner === 'se') {
-      setCropArea(prev => ({
-        ...prev,
-        width: Math.max(minSize, Math.min(e.clientX - rect.left - prev.x, maxWidth)),
-        height: Math.max(minSize, Math.min(e.clientY - rect.top - prev.y, maxHeight))
-      }))
+    setIsDragging(true)
+    // store pointer offset inside the crop box (local coords)
+    setDragOffset({ x: clientX - rect.left - cropArea.x, y: clientY - rect.top - cropArea.y })
+  }
+
+  const handlePointerMove = (e: any) => {
+    const rect = imageRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const { clientX, clientY } = getClient(e)
+
+    if (isDragging) {
+      const newX = Math.max(0, Math.min(clientX - rect.left - dragOffset.x, rect.width - cropArea.width))
+      const newY = Math.max(0, Math.min(clientY - rect.top - dragOffset.y, rect.height - cropArea.height))
+      setCropArea(prev => ({ ...prev, x: newX, y: newY }))
+    } else if (isResizing === 'se') {
+      const minSize = 50
+      const maxW = rect.width - cropArea.x
+      const maxH = rect.height - cropArea.y
+      const newW = Math.max(minSize, Math.min(clientX - rect.left - cropArea.x, maxW))
+      const newH = Math.max(minSize, Math.min(clientY - rect.top - cropArea.y, maxH))
+      setCropArea(prev => ({ ...prev, width: newW, height: newH }))
     }
+  }
+
+  const handlePointerUp = () => {
+    setIsDragging(false)
+    setIsResizing(null)
+  }
+
+  // Handle crop area resizing start
+  const handleCropResizeStart = (corner: 'se' | 'ne' | 'sw' | 'nw', e: any) => {
+    e.stopPropagation()
+    setIsResizing(corner)
   }
 
   const handleClose = () => {
@@ -620,9 +639,12 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
               {/* Full screen image container */}
               <div 
                 className="absolute inset-0 z-10 flex items-center justify-center overflow-hidden"
-                onMouseMove={handleCropMouseMove}
-                onMouseUp={handleCropMouseUp}
-                onMouseLeave={handleCropMouseUp}
+                onMouseMove={handlePointerMove}
+                onMouseUp={handlePointerUp}
+                onMouseLeave={handlePointerUp}
+                onTouchMove={handlePointerMove}
+                onTouchEnd={handlePointerUp}
+                onTouchCancel={handlePointerUp}
               >
                 <div className="relative max-w-full max-h-full">
                   <img
@@ -660,6 +682,7 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                         boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)'
                       }}
                       onMouseDown={handleCropMouseDown}
+                      onTouchStart={handleCropMouseDown}
                     >
                       {/* Corner handles */}
                       <div className="absolute -top-1 -left-1 w-3 h-3 bg-white border border-gray-400 cursor-nw-resize" />
@@ -667,7 +690,8 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                       <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-white border border-gray-400 cursor-sw-resize" />
                       <div 
                         className="absolute -bottom-1 -right-1 w-3 h-3 bg-white border border-gray-400 cursor-se-resize"
-                        onMouseDown={(e) => handleCropResize('se', e)}
+                        onMouseDown={(e) => handleCropResizeStart('se', e)}
+                        onTouchStart={(e) => handleCropResizeStart('se', e)}
                       />
                       
                       {/* Grid lines */}
