@@ -9,7 +9,6 @@ import { Progress } from "@/components/ui/progress"
 import { Camera, Upload, X, ArrowLeft, Home, CheckCircle, AlertCircle, User, RefreshCw, ThumbsUp, ThumbsDown, Crop, RotateCw, ZoomIn, ZoomOut } from "lucide-react"
 import { toast } from "sonner"
 import { identifyImageCategory, type IdentifiedCategory } from "@/lib/smartProspectGenerator"
-import Cropper from 'cropperjs'
 
 // Confidence thresholds for identification results
 const CONFIDENCE_THRESHOLDS = {
@@ -41,7 +40,11 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
   const [showFeedback, setShowFeedback] = useState(false)
   const [feedbackGiven, setFeedbackGiven] = useState(false)
   const [isCroppingMode, setIsCroppingMode] = useState<boolean>(false)
-  const [cropper, setCropper] = useState<Cropper | null>(null)
+  const [cropArea, setCropArea] = useState({ x: 0, y: 0, width: 0, height: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const [imageScale, setImageScale] = useState(1)
+  const [imageTranslate, setImageTranslate] = useState({ x: 0, y: 0 })
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -92,30 +95,18 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
               stopCamera()
               setIsCroppingMode(true)
 
-              // Initialize cropper after image loads (client-side only)
+              // Initialize crop area
               setTimeout(() => {
-                if (typeof window !== 'undefined' && imageRef.current) {
-                  const cropperInstance = new Cropper(imageRef.current, {
-                    aspectRatio: undefined,
-                    viewMode: 2,
-                    autoCropArea: 1,
-                    background: false,
-                    modal: true,
-                    guides: true,
-                    dragMode: 'move',
-                    movable: true,
-                    zoomable: true,
-                    zoomOnWheel: true,
-                    cropBoxMovable: true,
-                    cropBoxResizable: true,
-                    ready() {
-                      const containerData = (this as any).cropper.getContainerData()
-                      const targetW = containerData.width
-                      const targetH = containerData.height
-                      ;(this as any).cropper.setCropBoxData({ width: targetW, height: targetH })
-                    },
-                  } as any)
-                  setCropper(cropperInstance)
+                if (imageRef.current) {
+                  const rect = imageRef.current.getBoundingClientRect()
+                  const centerX = rect.width / 2 - 100
+                  const centerY = rect.height / 2 - 100
+                  setCropArea({
+                    x: Math.max(0, centerX),
+                    y: Math.max(0, centerY),
+                    width: Math.min(200, rect.width),
+                    height: Math.min(200, rect.height)
+                  })
                 }
               }, 100)
             }
@@ -135,30 +126,18 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
       setImageFile(file)
       setIsCroppingMode(true)
 
-      // Initialize cropper after image mounts in the overlay (client-side only)
+      // Initialize crop area for uploaded images
       setTimeout(() => {
-        if (typeof window !== 'undefined' && imageRef.current) {
-          const cropperInstance = new Cropper(imageRef.current, {
-            aspectRatio: undefined,
-            viewMode: 2,
-            autoCropArea: 1,
-            background: false,
-            modal: true,
-            guides: true,
-            dragMode: 'move',
-            movable: true,
-            zoomable: true,
-            zoomOnWheel: true,
-            cropBoxMovable: true,
-            cropBoxResizable: true,
-            ready() {
-              const containerData = (this as any).cropper.getContainerData()
-              const targetW = containerData.width
-              const targetH = containerData.height
-              ;(this as any).cropper.setCropBoxData({ width: targetW, height: targetH })
-            },
-          } as any)
-          setCropper(cropperInstance)
+        if (imageRef.current) {
+          const rect = imageRef.current.getBoundingClientRect()
+          const centerX = rect.width / 2 - 150
+          const centerY = rect.height / 2 - 150
+          setCropArea({
+            x: Math.max(0, centerX),
+            y: Math.max(0, centerY),
+            width: Math.min(300, rect.width),
+            height: Math.min(300, rect.height)
+          })
         }
       }, 150)
     } else {
@@ -323,53 +302,59 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
   }
 
   const handleCropAndContinue = useCallback(async () => {
-    if (cropper && canvasRef.current) {
+    if (imageRef.current && canvasRef.current && capturedImage) {
       const canvas = canvasRef.current
-      const croppedCanvas = (cropper as any).getCroppedCanvas({
-        width: 1200,
-        height: 1600,
-      })
-
-      if (croppedCanvas) {
-        const blob = await new Promise<Blob | null>((resolve) => {
-          croppedCanvas.toBlob(resolve, "image/jpeg", 0.9)
-        })
-
-        if (blob) {
-          const croppedFile = new File([blob], `prospect-cropped-${Date.now()}.jpg`, { type: "image/jpeg" })
-          const croppedImageUrl = URL.createObjectURL(blob)
-
-          // Clean up old image URL
-          if (capturedImage) {
-            URL.revokeObjectURL(capturedImage)
+      const img = imageRef.current
+      const ctx = canvas.getContext('2d')
+      
+      if (ctx) {
+        // Set canvas size to crop area
+        canvas.width = cropArea.width
+        canvas.height = cropArea.height
+        
+        // Draw cropped portion of image
+        ctx.drawImage(
+          img,
+          cropArea.x, cropArea.y, cropArea.width, cropArea.height,
+          0, 0, cropArea.width, cropArea.height
+        )
+        
+        // Convert canvas to blob
+        canvas.toBlob(async (blob) => {
+          if (blob) {
+            const croppedFile = new File([blob], `prospect-cropped-${Date.now()}.jpg`, { type: "image/jpeg" })
+            const croppedImageUrl = URL.createObjectURL(blob)
+            
+            // Clean up old image URL
+            if (capturedImage) {
+              URL.revokeObjectURL(capturedImage)
+            }
+            
+            // Update state
+            setCapturedImage(croppedImageUrl)
+            setImageFile(croppedFile)
+            setIsCroppingMode(false)
+            
+            // Reset crop state
+            setCropArea({ x: 0, y: 0, width: 0, height: 0 })
+            setImageScale(1)
+            setImageTranslate({ x: 0, y: 0 })
+            
+            // Identify image category with cropped image
+            await identifyImage(croppedFile)
           }
-
-          // Update state
-          setCapturedImage(croppedImageUrl)
-          setImageFile(croppedFile)
-          setIsCroppingMode(false)
-
-          // Destroy cropper (client-side only)
-          if (typeof window !== 'undefined' && cropper) {
-            (cropper as any).destroy()
-          }
-          setCropper(null)
-
-          // Identify image category with cropped image
-          await identifyImage(croppedFile)
-        }
+        }, 'image/jpeg', 0.9)
       }
     }
-  }, [cropper, canvasRef, capturedImage, setCapturedImage, setImageFile, setIsCroppingMode, setCropper])
+  }, [cropArea, capturedImage, imageRef, canvasRef])
 
   const handleSkipCrop = async () => {
     if (imageFile) {
       setIsCroppingMode(false)
-      // Destroy cropper (client-side only)
-      if (typeof window !== 'undefined' && cropper) {
-        (cropper as any).destroy()
-        setCropper(null)
-      }
+      // Reset crop state
+      setCropArea({ x: 0, y: 0, width: 0, height: 0 })
+      setImageScale(1)
+      setImageTranslate({ x: 0, y: 0 })
       // Identify image category with original image
       await identifyImage(imageFile)
     }
@@ -383,22 +368,50 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
     if (capturedImage) {
       URL.revokeObjectURL(capturedImage)
     }
-    // Destroy cropper if exists (client-side only)
-    if (typeof window !== 'undefined' && cropper) {
-      (cropper as any).destroy()
-      setCropper(null)
+    // Reset crop state
+    setCropArea({ x: 0, y: 0, width: 0, height: 0 })
+    setImageScale(1)
+    setImageTranslate({ x: 0, y: 0 })
+  }
+
+  // Handle crop area dragging
+  const handleCropMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true)
+    setDragStart({ x: e.clientX - cropArea.x, y: e.clientY - cropArea.y })
+  }
+
+  const handleCropMouseMove = (e: React.MouseEvent) => {
+    if (isDragging && imageRef.current) {
+      const rect = imageRef.current.getBoundingClientRect()
+      const newX = Math.max(0, Math.min(e.clientX - dragStart.x, rect.width - cropArea.width))
+      const newY = Math.max(0, Math.min(e.clientY - dragStart.y, rect.height - cropArea.height))
+      setCropArea(prev => ({ ...prev, x: newX, y: newY }))
     }
   }
 
-  // Cleanup effect
-  useEffect(() => {
-    return () => {
-      // Cleanup cropper on unmount (client-side only)
-      if (typeof window !== 'undefined' && cropper) {
-        (cropper as any).destroy()
-      }
+  const handleCropMouseUp = () => {
+    setIsDragging(false)
+  }
+
+  // Handle crop area resizing
+  const handleCropResize = (corner: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    // Simple resize logic - you can enhance this
+    const rect = imageRef.current?.getBoundingClientRect()
+    if (!rect) return
+    
+    const minSize = 50
+    const maxWidth = rect.width - cropArea.x
+    const maxHeight = rect.height - cropArea.y
+    
+    if (corner === 'se') {
+      setCropArea(prev => ({
+        ...prev,
+        width: Math.max(minSize, Math.min(e.clientX - rect.left - prev.x, maxWidth)),
+        height: Math.max(minSize, Math.min(e.clientY - rect.top - prev.y, maxHeight))
+      }))
     }
-  }, [cropper])
+  }
 
   const handleClose = () => {
     stopCamera()
@@ -409,11 +422,10 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
     if (capturedImage) {
       URL.revokeObjectURL(capturedImage)
     }
-    // Clean up cropper (client-side only)
-    if (typeof window !== 'undefined' && cropper) {
-      (cropper as any).destroy()
-      setCropper(null)
-    }
+    // Reset crop state
+    setCropArea({ x: 0, y: 0, width: 0, height: 0 })
+    setImageScale(1)
+    setImageTranslate({ x: 0, y: 0 })
     onClose()
   }
 
@@ -595,40 +607,96 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
           {isCroppingMode && capturedImage && (
             <div className="fixed inset-0 z-50 bg-black">
               {/* Top bar */}
-              <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 py-3 bg-gradient-to-b from-black/60 to-transparent">
-                <Button variant="ghost" size="sm" onClick={handleSkipCrop} className="text-white border-0 hover:bg-white/10">
+              <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-4 bg-gradient-to-b from-black/80 to-transparent">
+                <Button variant="ghost" size="sm" onClick={handleSkipCrop} className="text-white border-0 hover:bg-white/10 flex items-center">
                   <ArrowLeft className="h-5 w-5 mr-1" /> Back
                 </Button>
-                <h3 className="text-white text-base font-semibold">Crop Your Property Image</h3>
+                <h3 className="text-white text-lg font-semibold">Crop Your Property Image</h3>
                 <Button variant="ghost" size="sm" onClick={handleSkipCrop} className="text-white border-0 hover:bg-white/10">
                   <X className="h-5 w-5" />
                 </Button>
               </div>
 
-              {/* Fullscreen cropper container */}
-              <div className="absolute inset-0 z-10">
-                <div className="w-screen h-screen">
-                  <div className="relative w-full h-full">
-                    <div className="absolute inset-0">
-                      <img
-                        ref={imageRef}
-                        src={capturedImage}
-                        alt="Captured property for cropping"
-                        className="max-w-none"
+              {/* Full screen image container */}
+              <div 
+                className="absolute inset-0 z-10 flex items-center justify-center overflow-hidden"
+                onMouseMove={handleCropMouseMove}
+                onMouseUp={handleCropMouseUp}
+                onMouseLeave={handleCropMouseUp}
+              >
+                <div className="relative max-w-full max-h-full">
+                  <img
+                    ref={imageRef}
+                    src={capturedImage}
+                    alt="Property image for cropping"
+                    className="max-w-full max-h-full object-contain select-none"
+                    draggable={false}
+                    onLoad={() => {
+                      if (imageRef.current) {
+                        const rect = imageRef.current.getBoundingClientRect()
+                        setCropArea({
+                          x: rect.width * 0.1,
+                          y: rect.height * 0.1,
+                          width: rect.width * 0.8,
+                          height: rect.height * 0.8
+                        })
+                      }
+                    }}
+                  />
+                  
+                  {/* Crop overlay */}
+                  <div className="absolute inset-0 pointer-events-none">
+                    {/* Dark overlay */}
+                    <div className="absolute inset-0 bg-black/50" />
+                    
+                    {/* Crop area */}
+                    <div 
+                      className="absolute border-2 border-white bg-transparent cursor-move pointer-events-auto"
+                      style={{
+                        left: cropArea.x,
+                        top: cropArea.y,
+                        width: cropArea.width,
+                        height: cropArea.height,
+                        boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)'
+                      }}
+                      onMouseDown={handleCropMouseDown}
+                    >
+                      {/* Corner handles */}
+                      <div className="absolute -top-1 -left-1 w-3 h-3 bg-white border border-gray-400 cursor-nw-resize" />
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-white border border-gray-400 cursor-ne-resize" />
+                      <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-white border border-gray-400 cursor-sw-resize" />
+                      <div 
+                        className="absolute -bottom-1 -right-1 w-3 h-3 bg-white border border-gray-400 cursor-se-resize"
+                        onMouseDown={(e) => handleCropResize('se', e)}
                       />
+                      
+                      {/* Grid lines */}
+                      <div className="absolute inset-0 pointer-events-none">
+                        <div className="absolute left-1/3 top-0 bottom-0 w-px bg-white/30" />
+                        <div className="absolute left-2/3 top-0 bottom-0 w-px bg-white/30" />
+                        <div className="absolute top-1/3 left-0 right-0 h-px bg-white/30" />
+                        <div className="absolute top-2/3 left-0 right-0 h-px bg-white/30" />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Bottom controls */}
-              <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-6 pt-4 bg-gradient-to-t from-black/70 to-transparent">
-                <div className="flex gap-3">
-                  <Button onClick={handleCropAndContinue} className="flex-1 bg-white text-black hover:bg-gray-100 border-0 shadow-xl py-3 text-base font-semibold">
+              <div className="absolute bottom-0 left-0 right-0 z-30 px-6 pb-8 pt-6 bg-gradient-to-t from-black/90 to-transparent">
+                <div className="flex gap-4">
+                  <Button 
+                    onClick={handleCropAndContinue} 
+                    className="flex-1 bg-white text-black hover:bg-gray-100 border-0 shadow-xl py-4 text-lg font-semibold rounded-xl"
+                  >
                     <Crop className="mr-2 h-5 w-5" />
                     Crop & Continue
                   </Button>
-                  <Button variant="outline" onClick={handleSkipCrop} className="border-white/40 text-white hover:bg-white/10">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleSkipCrop} 
+                    className="border-2 border-white/60 text-white hover:bg-white/10 py-4 px-6 text-lg font-medium rounded-xl"
+                  >
                     Skip
                   </Button>
                 </div>
