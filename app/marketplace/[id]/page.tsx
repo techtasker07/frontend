@@ -232,7 +232,8 @@ export default function MarketPropertyDetailsPage() {
 
       {/* Image Gallery */}
       <Card className="overflow-hidden">
-        <div className="relative aspect-video">
+        <CardContent className="p-0">
+          <div className="relative aspect-video">
           <Image
             src={images[currentImageIndex]}
             alt={listing.title || 'Property'}
@@ -313,7 +314,8 @@ export default function MarketPropertyDetailsPage() {
               {listing.category?.name}
             </Badge>
           </div>
-        </div>
+          </div>
+      </CardContent>
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -1187,7 +1189,7 @@ export default function MarketPropertyDetailsPage() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {relatedListings.map((relatedListing) => (
-                <Card key={relatedListing.id} className="group hover:shadow-lg transition-shadow overflow-hidden">
+                <div key={relatedListing.id} className="bg-white rounded-lg shadow-md overflow-hidden group hover:shadow-lg transition-shadow">
                   <div className="aspect-video overflow-hidden">
                     <Image
                       src={relatedListing.images?.[0]?.image_url || '/api/placeholder/400/300'}
@@ -1197,7 +1199,7 @@ export default function MarketPropertyDetailsPage() {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
-                  <CardContent className="p-4 space-y-3">
+                  <div className="p-4 space-y-3">
                     <h3 className="font-semibold line-clamp-1">
                       {relatedListing.title}
                     </h3>
@@ -1213,12 +1215,12 @@ export default function MarketPropertyDetailsPage() {
                         View Details
                       </Link>
                     </Button>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               ))}
             </div>
           </CardContent>
-        </div>
+        </Card>
       )}
       
       {/* Virtual Tour Viewer */}

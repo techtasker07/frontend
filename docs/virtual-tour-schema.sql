@@ -230,7 +230,7 @@ CREATE TRIGGER trigger_update_marketplace_virtual_tour_status
 CREATE VIEW virtual_tours_complete AS
 SELECT 
     vt.id,
-    vt.property_id,
+    vt.marketplace_listing_id,
     vt.title,
     vt.description,
     vt.default_scene_id,

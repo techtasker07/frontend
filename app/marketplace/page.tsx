@@ -6,13 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { supabaseApi, MarketplaceListing, PropertyImage, Property } from '@/lib/supabase-api';
+import { supabaseApi, Property } from '@/lib/supabase-api';
 import { Search, Filter, Heart, Eye, MapPin, Bed, Bath, Car, Star } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
 export default function MarketplacePage() {
-  const [listings, setListings] = useState<MarketplaceListing[]>([]);
+  const [listings, setListings] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -22,7 +22,7 @@ export default function MarketplacePage() {
     listing.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     listing.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     listing.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    listing.price?.toString().includes(searchTerm)
+    listing.current_worth?.toString().includes(searchTerm)
   );
 
   useEffect(() => {
@@ -36,19 +36,19 @@ export default function MarketplacePage() {
         limit: 100 // Fetch more since no server-side filtering
       };
 
-      console.log('Fetching marketplace listings with params:', params);
-      const response = await supabaseApi.getMarketplaceListings(params);
-      console.log('Marketplace listings response:', response);
+      console.log('Fetching properties with params:', params);
+      const response = await supabaseApi.getProperties(params);
+      console.log('Properties response:', response);
 
       if (response.success) {
-        console.log('Setting marketplace listings:', response.data.length, 'items');
+        console.log('Setting properties:', response.data.length, 'items');
         setListings(response.data);
       } else {
-        console.error('Failed to fetch marketplace listings:', response.error);
+        console.error('Failed to fetch properties:', response.error);
         setListings([]);
       }
     } catch (error) {
-      console.error('Error fetching marketplace listings:', error);
+      console.error('Error fetching properties:', error);
       setListings([]);
     } finally {
       setLoading(false);
@@ -61,9 +61,9 @@ export default function MarketplacePage() {
     return period ? `${formatted}/${period}` : formatted;
   };
 
-  const getImageUrl = (listing: MarketplaceListing) => {
+  const getImageUrl = (listing: Property) => {
     if (listing.images?.length && listing.images.length > 0) {
-      const primaryImage = listing.images.find((img) => img.is_primary);
+      const primaryImage = listing.images.find((img: any) => img.is_primary);
       return primaryImage?.image_url || listing.images[0]?.image_url;
     }
     return '/api/placeholder/400/300';
@@ -176,14 +176,11 @@ export default function MarketplacePage() {
                   
                   {/* Property Badges */}
                   <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-                    {listing.is_featured && (
-                      <Badge className="bg-yellow-500">
-                        <Star className="h-3 w-3 mr-1" />
-                        Featured
-                      </Badge>
-                    )}
                     <Badge variant="secondary">
-                      {listing.listing_type?.name}
+                      {listing.category_name || 'Property'}
+                    </Badge>
+                    <Badge variant="outline">
+                      {listing.type || 'sale'}
                     </Badge>
                   </div>
 
@@ -209,52 +206,26 @@ export default function MarketplacePage() {
                   </div>
 
                   {/* Property Details */}
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    {listing.bedrooms && (
-                      <div className="flex items-center gap-1">
-                        <Bed className="h-4 w-4" />
-                        <span>{listing.bedrooms}</span>
-                      </div>
-                    )}
-                    {listing.bathrooms && (
-                      <div className="flex items-center gap-1">
-                        <Bath className="h-4 w-4" />
-                        <span>{listing.bathrooms}</span>
-                      </div>
-                    )}
-                    {listing.parking_spaces > 0 && (
-                      <div className="flex items-center gap-1">
-                        <Car className="h-4 w-4" />
-                        <span>{listing.parking_spaces}</span>
-                      </div>
+                  <div className="text-sm text-gray-600">
+                    {listing.year_of_construction && (
+                      <div>Built in {listing.year_of_construction}</div>
                     )}
                   </div>
-
-                  {/* Area */}
-                  {(listing.area_sqft || listing.area_sqm) && (
-                    <div className="text-sm text-gray-600">
-                      {listing.area_sqft && `${listing.area_sqft} sqft`}
-                      {listing.area_sqft && listing.area_sqm && ' • '}
-                      {listing.area_sqm && `${listing.area_sqm} sqm`}
-                    </div>
-                  )}
 
                   {/* Price */}
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-2xl font-bold text-primary">
-                        {formatPrice(listing.price, listing.currency, listing.price_period)}
+                        {formatPrice(listing.current_worth || 0, '₦')}
                       </div>
-                      {listing.property_type && (
-                        <div className="text-sm text-gray-500">
-                          {listing.property_type.name}
-                        </div>
-                      )}
+                      <div className="text-sm text-gray-500">
+                        {listing.category_name}
+                      </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-1 text-sm text-gray-500">
                       <Eye className="h-4 w-4" />
-                      <span>{listing.views_count || 0}</span>
+                      <span>{listing.vote_count || 0}</span>
                     </div>
                   </div>
 

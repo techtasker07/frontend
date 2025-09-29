@@ -57,7 +57,7 @@ export function HeroSection() {
   const isVideo = isVideoUrl(currentImage.image_url);
 
   return (
-    <section className="relative bg-gradient-to-br from-[#FBD9B9] to-[#C1DEE8] overflow-hidden">
+    <section className="relative bg-gradient-to-br from-[135deg, #667eea 0%, #764ba2 100%] overflow-hidden">
       <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-4 py-1">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Left Content */}
