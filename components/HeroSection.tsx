@@ -64,7 +64,7 @@ export function HeroSection() {
           <div className="max-w-lg">
             <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold text-[#000080] mb-6 leading-tight">
               Find Your Perfect{" "}
-              <span className="text-[#F39322]">Property</span>
+              <span className="text-[#FFFFFF]">Property</span>
             </h1>
 
             <p className="text-gray-600 mb-8 text-lg leading-relaxed">
