@@ -96,18 +96,21 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
               setTimeout(() => {
                 if (typeof window !== 'undefined' && imageRef.current) {
                   const cropperInstance = new Cropper(imageRef.current, {
-                    aspectRatio: 3 / 4, // 3:4 aspect ratio for property images
-                    viewMode: 1,
-                    dragMode: 'move',
-                    autoCropArea: 0.8,
-                    restore: false,
-                    guides: true,
-                    center: true,
-                    highlight: false,
+                    aspectRatio: 3 / 4,
+                    viewMode: 2,
+                    autoCropArea: 0.9,
+                    movable: true,
+                    zoomable: true,
                     cropBoxMovable: true,
                     cropBoxResizable: true,
-                    toggleDragModeOnDblclick: false,
-                    cropBoxHeight: 500,
+                    ready() {
+                      const containerData = (this as any).cropper.getContainerData()
+                      // make crop box ~80% of container height and center it
+                      const targetH = containerData.height * 0.8
+                      const targetW = targetH * (3 / 4)
+                      ;(this as any).cropper.setCropBoxData({ width: targetW, height: targetH })
+                      ;(this as any).cropper.setCanvasData({ top: 0 }) // optional: nudge if needed
+                    },
                   } as any)
                   setCropper(cropperInstance)
                 }
@@ -295,8 +298,8 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
     if (cropper && canvasRef.current) {
       const canvas = canvasRef.current
       const croppedCanvas = (cropper as any).getCroppedCanvas({
-        width: 800,
-        height: 800,
+        width: 1200,
+        height: 1600,
       })
 
       if (croppedCanvas) {
@@ -570,7 +573,7 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                 </p>
               </div>
 
-              <div className="relative rounded-lg overflow-hidden shadow-xl bg-gray-100 h-[500px]">
+              <div className="relative rounded-lg overflow-hidden shadow-xl bg-gray-100 h-[70vh]">
                 <img
                   ref={imageRef}
                   src={capturedImage}
