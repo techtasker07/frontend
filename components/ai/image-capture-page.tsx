@@ -107,6 +107,7 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                     cropBoxMovable: true,
                     cropBoxResizable: true,
                     toggleDragModeOnDblclick: false,
+                    cropBoxHeight: 256,
                   } as any)
                   setCropper(cropperInstance)
                 }
