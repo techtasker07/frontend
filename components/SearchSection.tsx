@@ -89,7 +89,6 @@ export function SearchSection({ filters, onFiltersChange, onSearch }: SearchSect
               </Select>
             </div>
 
-            <div className="hidden md:flex gap-4 mt-4">
             {/* Filters Button */}
             <Button variant="outline" className="h-12 px-6 bg-white">
               <Filter className="h-4 w-4 mr-2" />
@@ -101,8 +100,6 @@ export function SearchSection({ filters, onFiltersChange, onSearch }: SearchSect
               <Search className="h-4 w-4 mr-2" />
               Search
             </Button>
-          </div>
-
           </div>
         </div>
 
