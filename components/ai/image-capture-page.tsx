@@ -574,7 +574,7 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                   ref={imageRef}
                   src={capturedImage}
                   alt="Captured property for cropping"
-                  className="w-full max-h-128 object-contain"
+                  className="w-full max-h-256 object-contain"
                 />
               </div>
 
@@ -592,13 +592,6 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                   className="border-purple-200 text-purple-600 hover:bg-purple-50 py-3"
                 >
                   Skip Cropping
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleRetakeImage}
-                  className="border-gray-200 text-gray-600 hover:bg-gray-50 py-3"
-                >
-                  Retake
                 </Button>
               </div>
             </div>
