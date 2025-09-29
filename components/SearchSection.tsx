@@ -73,7 +73,7 @@ export function SearchSection({ filters, onFiltersChange, onSearch }: SearchSect
             </div>
 
             {/* Price Range */}
-            <div className="lg:w-52">
+            <div className="lg:w-48">
               <Select value={filters.priceRange} onValueChange={(value) => onFiltersChange({ ...filters, priceRange: value })}>
                 <SelectTrigger className="h-12 bg-white">
                   <SelectValue placeholder="Price Range" />
@@ -89,7 +89,7 @@ export function SearchSection({ filters, onFiltersChange, onSearch }: SearchSect
               </Select>
             </div>
 
-            <div className="hidden md:flex gap-4 mt-4">
+            <div className="lg:w-32">
             {/* Filters Button */}
             <Button variant="outline" className="h-12 px-6 bg-white">
               <Filter className="h-4 w-4 mr-2" />
