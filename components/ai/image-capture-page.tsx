@@ -105,8 +105,8 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                     cropBoxResizable: true,
                     ready() {
                       const containerData = (this as any).cropper.getContainerData()
-                      // make crop box ~80% of container height and center it
-                      const targetH = containerData.height * 0.8
+                      // make crop box ~90% of container height and center it
+                      const targetH = containerData.height * 0.9
                       const targetW = targetH * (3 / 4)
                       ;(this as any).cropper.setCropBoxData({ width: targetW, height: targetH })
                       ;(this as any).cropper.setCanvasData({ top: 0 }) // optional: nudge if needed
@@ -573,7 +573,7 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                 </p>
               </div>
 
-              <div className="relative rounded-lg overflow-hidden shadow-xl bg-gray-100 h-[70vh]">
+              <div className="relative rounded-lg overflow-hidden shadow-xl bg-gray-100 h-[60vh] sm:h-[50vh]">
                 <img
                   ref={imageRef}
                   src={capturedImage}
