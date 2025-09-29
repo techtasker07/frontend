@@ -574,7 +574,7 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                   ref={imageRef}
                   src={capturedImage}
                   alt="Captured property for cropping"
-                  className="w-full max-h-96 object-contain"
+                  className="w-full max-h-128 object-contain"
                 />
               </div>
 
