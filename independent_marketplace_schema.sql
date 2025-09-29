@@ -208,6 +208,7 @@ CREATE TRIGGER update_bookings_updated_at BEFORE UPDATE ON public.bookings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Insert some sample data
+
 INSERT INTO public.marketplace_listings (
   title, description, location, listing_type_id, property_type_id, category_id,
   price, currency, price_period, bedrooms, bathrooms, area_sqft, area_sqm,

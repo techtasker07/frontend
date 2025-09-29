@@ -2,13 +2,15 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Camera, Upload, X, ArrowLeft, Home, CheckCircle, AlertCircle, User, RefreshCw, ThumbsUp, ThumbsDown } from "lucide-react"
+import { Camera, Upload, X, ArrowLeft, Home, CheckCircle, AlertCircle, User, RefreshCw, ThumbsUp, ThumbsDown, Crop, RotateCw, ZoomIn, ZoomOut } from "lucide-react"
 import { toast } from "sonner"
 import { identifyImageCategory, type IdentifiedCategory } from "@/lib/smartProspectGenerator"
+import Cropper from 'cropperjs'
+import 'cropperjs/dist/cropper.css'
 
 // Confidence thresholds for identification results
 const CONFIDENCE_THRESHOLDS = {
@@ -39,9 +41,12 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
   const [confidenceLevel, setConfidenceLevel] = useState<'high' | 'medium' | 'low' | null>(null)
   const [showFeedback, setShowFeedback] = useState(false)
   const [feedbackGiven, setFeedbackGiven] = useState(false)
+  const [isCroppingMode, setIsCroppingMode] = useState<boolean>(false)
+  const [cropper, setCropper] = useState<Cropper | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const imageRef = useRef<HTMLImageElement>(null)
 
   const startCamera = async () => {
     try {
@@ -86,9 +91,27 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
               setCapturedImage(imageUrl)
               setImageFile(file)
               stopCamera()
-              
-              // Identify image category
-              await identifyImage(file)
+              setIsCroppingMode(true)
+
+              // Initialize cropper after image loads
+              setTimeout(() => {
+                if (imageRef.current) {
+                  const cropperInstance = new Cropper(imageRef.current, {
+                    aspectRatio: 1, // Square crop for property images
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 0.8,
+                    restore: false,
+                    guides: true,
+                    center: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false,
+                  } as any)
+                  setCropper(cropperInstance)
+                }
+              }, 100)
             }
           },
           "image/jpeg",
@@ -268,22 +291,97 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
     onImageCaptured(imageFile, identifiedCategory || undefined)
   }
 
+  const handleCropAndContinue = useCallback(async () => {
+    if (cropper && canvasRef.current) {
+      const canvas = canvasRef.current
+      const croppedCanvas = (cropper as any).getCroppedCanvas({
+        width: 800,
+        height: 800,
+      })
+
+      if (croppedCanvas) {
+        const blob = await new Promise<Blob | null>((resolve) => {
+          croppedCanvas.toBlob(resolve, "image/jpeg", 0.9)
+        })
+
+        if (blob) {
+          const croppedFile = new File([blob], `prospect-cropped-${Date.now()}.jpg`, { type: "image/jpeg" })
+          const croppedImageUrl = URL.createObjectURL(blob)
+
+          // Clean up old image URL
+          if (capturedImage) {
+            URL.revokeObjectURL(capturedImage)
+          }
+
+          // Update state
+          setCapturedImage(croppedImageUrl)
+          setImageFile(croppedFile)
+          setIsCroppingMode(false)
+
+          // Destroy cropper
+          if (cropper) {
+            (cropper as any).destroy()
+          }
+          setCropper(null)
+
+          // Identify image category with cropped image
+          await identifyImage(croppedFile)
+        }
+      }
+    }
+  }, [cropper, canvasRef, capturedImage, setCapturedImage, setImageFile, setIsCroppingMode, setCropper])
+
+  const handleSkipCrop = async () => {
+    if (imageFile) {
+      setIsCroppingMode(false)
+      // Destroy cropper
+      if (cropper) {
+        (cropper as any).destroy()
+        setCropper(null)
+      }
+      // Identify image category with original image
+      await identifyImage(imageFile)
+    }
+  }
+
   const handleRetakeImage = () => {
     setCapturedImage(null)
     setImageFile(null)
+    setIsCroppingMode(false)
     // Clean up the old image URL
     if (capturedImage) {
       URL.revokeObjectURL(capturedImage)
     }
+    // Destroy cropper if exists
+    if (cropper) {
+      (cropper as any).destroy()
+      setCropper(null)
+    }
   }
+
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      // Cleanup cropper on unmount
+      if (cropper) {
+        (cropper as any).destroy()
+      }
+    }
+  }, [cropper])
 
   const handleClose = () => {
     stopCamera()
     setCapturedImage(null)
     setImageFile(null)
+    setIsCroppingMode(false)
     // Clean up image URL
     if (capturedImage) {
       URL.revokeObjectURL(capturedImage)
+    }
+    // Clean up cropper
+    if (cropper) {
+      (cropper as any).destroy()
+      setCropper(null)
     }
     onClose()
   }
@@ -424,26 +522,84 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
           )}
 
           {isCapturing && (
+            <div className="fixed inset-0 z-50 bg-black flex flex-col">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                className="flex-1 w-full h-full object-cover"
+              />
+              <canvas ref={canvasRef} className="hidden" />
+
+              {/* Camera controls overlay */}
+              <div className="absolute bottom-8 left-0 right-0 flex justify-center">
+                <div className="flex gap-4">
+                  <Button
+                    onClick={stopCamera}
+                    variant="ghost"
+                    size="lg"
+                    className="w-12 h-12 rounded-full bg-black/50 text-white hover:bg-black/70 border-0"
+                  >
+                    <X className="h-6 w-6" />
+                  </Button>
+                  <Button
+                    onClick={capturePhoto}
+                    size="lg"
+                    className="w-16 h-16 rounded-full bg-white text-black hover:bg-gray-200 border-4 border-white shadow-lg"
+                  >
+                    <Camera className="h-8 w-8" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Top hint */}
+              <div className="absolute top-8 left-0 right-0 flex justify-center">
+                <div className="bg-black/50 text-white px-4 py-2 rounded-full text-sm">
+                  Position property in frame and tap to capture
+                </div>
+              </div>
+            </div>
+          )}
+
+          {isCroppingMode && capturedImage && (
             <div className="space-y-6">
-              <div className="relative rounded-lg overflow-hidden shadow-xl">
-                <video ref={videoRef} autoPlay playsInline className="w-full rounded-lg" />
-                <canvas ref={canvasRef} className="hidden" />
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">Crop Your Property Image</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Adjust the crop area to focus on the property for better AI analysis
+                </p>
+              </div>
+
+              <div className="relative rounded-lg overflow-hidden shadow-xl bg-gray-100">
+                <img
+                  ref={imageRef}
+                  src={capturedImage}
+                  alt="Captured property for cropping"
+                  className="w-full max-h-96 object-contain"
+                />
               </div>
 
               <div className="flex gap-3">
-                <Button 
-                  onClick={capturePhoto} 
+                <Button
+                  onClick={handleCropAndContinue}
                   className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 py-3 text-base font-semibold"
                 >
-                  <Camera className="mr-2 h-5 w-5" />
-                  Capture Photo
+                  <Crop className="mr-2 h-5 w-5" />
+                  Crop & Continue
                 </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={stopCamera}
+                <Button
+                  variant="outline"
+                  onClick={handleSkipCrop}
                   className="border-purple-200 text-purple-600 hover:bg-purple-50 py-3"
                 >
-                  Cancel
+                  Skip Cropping
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleRetakeImage}
+                  className="border-gray-200 text-gray-600 hover:bg-gray-50 py-3"
+                >
+                  Retake
                 </Button>
               </div>
             </div>
@@ -480,7 +636,7 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
             </div>
           )}
 
-          {capturedImage && (
+          {capturedImage && !isCroppingMode && (
             <div className="space-y-6">
               <div className="relative rounded-lg overflow-hidden shadow-xl">
                 <img
