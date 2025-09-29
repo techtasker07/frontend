@@ -96,20 +96,23 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
               setTimeout(() => {
                 if (typeof window !== 'undefined' && imageRef.current) {
                   const cropperInstance = new Cropper(imageRef.current, {
-                    aspectRatio: undefined, // Allow free cropping to fill the container
+                    aspectRatio: undefined,
                     viewMode: 2,
-                    autoCropArea: 0.9,
+                    autoCropArea: 1,
+                    background: false,
+                    modal: true,
+                    guides: true,
+                    dragMode: 'move',
                     movable: true,
                     zoomable: true,
+                    zoomOnWheel: true,
                     cropBoxMovable: true,
                     cropBoxResizable: true,
                     ready() {
                       const containerData = (this as any).cropper.getContainerData()
-                      // make crop box fill the entire container for better visibility
                       const targetW = containerData.width
                       const targetH = containerData.height
                       ;(this as any).cropper.setCropBoxData({ width: targetW, height: targetH })
-                      ;(this as any).cropper.setCanvasData({ top: 0 }) // optional: nudge if needed
                     },
                   } as any)
                   setCropper(cropperInstance)
@@ -130,9 +133,34 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
       const imageUrl = URL.createObjectURL(file)
       setCapturedImage(imageUrl)
       setImageFile(file)
-      
-      // Identify image category
-      await identifyImage(file)
+      setIsCroppingMode(true)
+
+      // Initialize cropper after image mounts in the overlay (client-side only)
+      setTimeout(() => {
+        if (typeof window !== 'undefined' && imageRef.current) {
+          const cropperInstance = new Cropper(imageRef.current, {
+            aspectRatio: undefined,
+            viewMode: 2,
+            autoCropArea: 1,
+            background: false,
+            modal: true,
+            guides: true,
+            dragMode: 'move',
+            movable: true,
+            zoomable: true,
+            zoomOnWheel: true,
+            cropBoxMovable: true,
+            cropBoxResizable: true,
+            ready() {
+              const containerData = (this as any).cropper.getContainerData()
+              const targetW = containerData.width
+              const targetH = containerData.height
+              ;(this as any).cropper.setCropBoxData({ width: targetW, height: targetH })
+            },
+          } as any)
+          setCropper(cropperInstance)
+        }
+      }, 150)
     } else {
       toast.error("Please select a valid image file.")
     }
@@ -565,38 +593,45 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
           )}
 
           {isCroppingMode && capturedImage && (
-            <div className="space-y-4">
-              <div className="text-center">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Crop Your Property Image</h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Adjust the crop area to focus on the property for better AI analysis
-                </p>
+            <div className="fixed inset-0 z-50 bg-black">
+              {/* Top bar */}
+              <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 py-3 bg-gradient-to-b from-black/60 to-transparent">
+                <Button variant="ghost" size="sm" onClick={handleSkipCrop} className="text-white border-0 hover:bg-white/10">
+                  <ArrowLeft className="h-5 w-5 mr-1" /> Back
+                </Button>
+                <h3 className="text-white text-base font-semibold">Crop Your Property Image</h3>
+                <Button variant="ghost" size="sm" onClick={handleSkipCrop} className="text-white border-0 hover:bg-white/10">
+                  <X className="h-5 w-5" />
+                </Button>
               </div>
 
-              <div className="relative rounded-lg overflow-hidden shadow-xl bg-gray-100 h-[75vh] sm:h-[70vh] md:h-[65vh] lg:h-[70vh]">
-                <img
-                  ref={imageRef}
-                  src={capturedImage}
-                  alt="Captured property for cropping"
-                  className="w-full h-full object-contain"
-                />
+              {/* Fullscreen cropper container */}
+              <div className="absolute inset-0 z-10">
+                <div className="w-screen h-screen">
+                  <div className="relative w-full h-full">
+                    <div className="absolute inset-0">
+                      <img
+                        ref={imageRef}
+                        src={capturedImage}
+                        alt="Captured property for cropping"
+                        className="max-w-none"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="flex gap-3">
-                <Button
-                  onClick={handleCropAndContinue}
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 py-3 text-base font-semibold"
-                >
-                  <Crop className="mr-2 h-5 w-5" />
-                  Crop & Continue
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleSkipCrop}
-                  className="border-purple-200 text-purple-600 hover:bg-purple-50 py-3"
-                >
-                  Skip Cropping
-                </Button>
+              {/* Bottom controls */}
+              <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-6 pt-4 bg-gradient-to-t from-black/70 to-transparent">
+                <div className="flex gap-3">
+                  <Button onClick={handleCropAndContinue} className="flex-1 bg-white text-black hover:bg-gray-100 border-0 shadow-xl py-3 text-base font-semibold">
+                    <Crop className="mr-2 h-5 w-5" />
+                    Crop & Continue
+                  </Button>
+                  <Button variant="outline" onClick={handleSkipCrop} className="border-white/40 text-white hover:bg-white/10">
+                    Skip
+                  </Button>
+                </div>
               </div>
             </div>
           )}
