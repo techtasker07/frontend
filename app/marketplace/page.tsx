@@ -5,132 +5,56 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Slider } from '@/components/ui/slider';
-import { supabaseApi, MarketplaceListing, Category, PropertyType, ListingType, PropertyImage, Property } from '@/lib/supabase-api';
+import { supabaseApi, MarketplaceListing, PropertyImage, Property } from '@/lib/supabase-api';
 import { Search, Filter, Heart, Eye, MapPin, Bed, Bath, Car, Star } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
 export default function MarketplacePage() {
   const [listings, setListings] = useState<MarketplaceListing[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [propertyTypes, setPropertyTypes] = useState<PropertyType[]>([]);
-  const [listingTypes, setListingTypes] = useState<ListingType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedPropertyType, setSelectedPropertyType] = useState<string>('all');
-  const [selectedListingType, setSelectedListingType] = useState<string>('all');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
-  const [selectedBedrooms, setSelectedBedrooms] = useState<string>('all');
-  const [selectedBathrooms, setSelectedBathrooms] = useState<string>('all');
-  const [showFeatured, setShowFeatured] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  useEffect(() => {
-    fetchInitialData();
-  }, []);
+  const filteredListings = listings.filter((listing) =>
+    searchTerm === '' ||
+    listing.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    listing.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    listing.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    listing.price?.toString().includes(searchTerm)
+  );
 
   useEffect(() => {
     fetchListings();
-  }, [selectedCategory, selectedPropertyType, selectedListingType, selectedBedrooms, selectedBathrooms, showFeatured]);
-
-  const fetchInitialData = async () => {
-    try {
-      console.log('Fetching initial data...');
-      console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-      console.log('Supabase Key present:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-      
-      const [categoriesRes, propertyTypesRes, listingTypesRes] = await Promise.all([
-        supabaseApi.getCategories(),
-        supabaseApi.getPropertyTypes(),
-        supabaseApi.getListingTypes()
-      ]);
-
-      console.log('Categories response:', categoriesRes);
-      console.log('Property types response:', propertyTypesRes);
-      console.log('Listing types response:', listingTypesRes);
-
-      if (categoriesRes.success) {
-        setCategories(categoriesRes.data);
-        console.log('Categories set:', categoriesRes.data.length, 'items');
-      } else {
-        console.error('Categories fetch failed:', categoriesRes.error);
-      }
-      
-      if (propertyTypesRes.success) {
-        setPropertyTypes(propertyTypesRes.data);
-        console.log('Property types set:', propertyTypesRes.data.length, 'items');
-      } else {
-        console.error('Property types fetch failed:', propertyTypesRes.error);
-      }
-      
-      if (listingTypesRes.success) {
-        setListingTypes(listingTypesRes.data);
-        console.log('Listing types set:', listingTypesRes.data.length, 'items');
-      } else {
-        console.error('Listing types fetch failed:', listingTypesRes.error);
-      }
-    } catch (error) {
-      console.error('Error fetching initial data:', error);
-    }
-  };
+  }, []);
 
   const fetchListings = async () => {
     setLoading(true);
     try {
       const params = {
-        category: selectedCategory === 'all' ? undefined : selectedCategory,
-        property_type: selectedPropertyType === 'all' ? undefined : selectedPropertyType,
-        listing_type: selectedListingType === 'all' ? undefined : selectedListingType,
-        min_price: priceRange[0],
-        max_price: priceRange[1],
-        location: searchTerm || undefined,
-        bedrooms: selectedBedrooms === 'all' ? undefined : parseInt(selectedBedrooms),
-        bathrooms: selectedBathrooms === 'all' ? undefined : parseInt(selectedBathrooms),
-        is_featured: showFeatured ? true : undefined,
-        limit: 50
+        limit: 100 // Fetch more since no server-side filtering
       };
 
-      console.log('Fetching listings with params:', params);
+      console.log('Fetching marketplace listings with params:', params);
       const response = await supabaseApi.getMarketplaceListings(params);
-      console.log('Listings response:', response);
-      
+      console.log('Marketplace listings response:', response);
+
       if (response.success) {
-        console.log('Setting listings:', response.data.length, 'items');
+        console.log('Setting marketplace listings:', response.data.length, 'items');
         setListings(response.data);
       } else {
-        console.error('Failed to fetch listings:', response.error);
+        console.error('Failed to fetch marketplace listings:', response.error);
         setListings([]);
       }
     } catch (error) {
-      console.error('Error fetching listings:', error);
+      console.error('Error fetching marketplace listings:', error);
       setListings([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearch = () => {
-    fetchListings();
-  };
-
-  const handlePriceRangeChange = (newRange: [number, number]) => {
-    setPriceRange(newRange);
-  };
-
-  const clearFilters = () => {
-    setSelectedCategory('all');
-    setSelectedPropertyType('all');
-    setSelectedListingType('all');
-    setPriceRange([0, 10000000]);
-    setSelectedBedrooms('all');
-    setSelectedBathrooms('all');
-    setShowFeatured(false);
-    setSearchTerm('');
-  };
 
   const formatPrice = (price: number, currency: string = '₦', period?: string) => {
     const formatted = `${currency}${price.toLocaleString()}`;
@@ -160,8 +84,8 @@ export default function MarketplacePage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Search & Filters
+            <Search className="h-5 w-5" />
+            Search
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -170,125 +94,31 @@ export default function MarketplacePage() {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="Search by location, property name, or description..."
+                placeholder="Search by location, property name, description, or price..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               />
             </div>
-            <Button onClick={handleSearch}>Search</Button>
+            <Button>Search</Button>
           </div>
 
-          {/* Filter Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Select value={selectedListingType} onValueChange={setSelectedListingType}>
-              <SelectTrigger>
-                <SelectValue placeholder="Listing Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                {listingTypes.map((type) => (
-                  <SelectItem key={type.id} value={type.name}>
-                    {type.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger>
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.name}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedPropertyType} onValueChange={setSelectedPropertyType}>
-              <SelectTrigger>
-                <SelectValue placeholder="Property Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                {propertyTypes.map((type) => (
-                  <SelectItem key={type.id} value={type.name}>
-                    {type.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedBedrooms} onValueChange={setSelectedBedrooms}>
-              <SelectTrigger>
-                <SelectValue placeholder="Bedrooms" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Any</SelectItem>
-                <SelectItem value="1">1+</SelectItem>
-                <SelectItem value="2">2+</SelectItem>
-                <SelectItem value="3">3+</SelectItem>
-                <SelectItem value="4">4+</SelectItem>
-                <SelectItem value="5">5+</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Price Range */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <label className="text-sm font-medium">Price Range</label>
-              <span className="text-sm text-gray-500">
-                {formatPrice(priceRange[0])} - {formatPrice(priceRange[1])}
-              </span>
-            </div>
-            <Slider
-              min={0}
-              max={50000000}
-              step={100000}
-              value={priceRange}
-              onValueChange={handlePriceRangeChange}
-              className="w-full"
-            />
-          </div>
-
-          {/* Additional Filters */}
-          <div className="flex flex-wrap gap-4 items-center">
+          {/* View Mode */}
+          <div className="flex justify-end gap-2">
             <Button
-              variant={showFeatured ? "default" : "outline"}
+              variant={viewMode === 'grid' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setShowFeatured(!showFeatured)}
-              className="flex items-center gap-2"
+              onClick={() => setViewMode('grid')}
             >
-              <Star className="h-4 w-4" />
-              Featured Only
+              Grid
             </Button>
-            
-            <Button variant="outline" size="sm" onClick={clearFilters}>
-              Clear Filters
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+            >
+              List
             </Button>
-
-            <div className="ml-auto flex gap-2">
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-              >
-                Grid
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-              >
-                List
-              </Button>
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -297,7 +127,7 @@ export default function MarketplacePage() {
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-semibold">
-            {listings.length} Properties Found
+            {filteredListings.length} Properties Found
           </h2>
         </div>
 
@@ -314,7 +144,7 @@ export default function MarketplacePage() {
               </Card>
             ))}
           </div>
-        ) : listings.length === 0 ? (
+        ) : filteredListings.length === 0 ? (
           <Card className="p-12 text-center">
             <div className="space-y-4">
               <div className="w-16 h-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center">
@@ -322,9 +152,8 @@ export default function MarketplacePage() {
               </div>
               <h3 className="text-xl font-medium">No Properties Found</h3>
               <p className="text-gray-500">
-                Try adjusting your search criteria or filters to find more properties.
+                Try adjusting your search criteria to find more properties.
               </p>
-              <Button onClick={clearFilters}>Clear All Filters</Button>
             </div>
           </Card>
         ) : (
@@ -332,7 +161,7 @@ export default function MarketplacePage() {
             ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" 
             : "space-y-4"
           }>
-            {listings.map((listing) => (
+            {filteredListings.map((listing) => (
               <Card key={listing.id} className="group hover:shadow-lg transition-shadow overflow-hidden">
                 <div className="relative">
                   <div className="aspect-video overflow-hidden">

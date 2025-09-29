@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { VirtualTourViewer, ImageTourViewer } from '@/components/virtual-tour/VirtualTourViewer';
 
 export default function MarketPropertyDetailsPage() {
   const params = useParams();
@@ -43,6 +44,8 @@ export default function MarketPropertyDetailsPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'details' | 'location' | 'reviews'>('overview');
+  const [showVirtualTour, setShowVirtualTour] = useState(false);
+  const [showImageTour, setShowImageTour] = useState(false);
 
   // Engagement form state
   const [engagementForm, setEngagementForm] = useState({
@@ -194,6 +197,22 @@ export default function MarketPropertyDetailsPage() {
 
   const images = getImages();
 
+  // Mock virtual tour data - in real implementation, this would come from the API
+  const virtualTourData = listing.virtual_tour_url ? {
+    id: listing.id,
+    title: `${listing.title} - Virtual Tour`,
+    scenes: [
+      {
+        id: 'main-view',
+        name: 'Main View',
+        image_url: images[0] || '/api/placeholder/800/600',
+        description: 'Main property view',
+        hotspots: []
+      }
+    ],
+    default_scene_id: 'main-view'
+  } : null;
+
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
       {/* Breadcrumb */}
@@ -261,6 +280,31 @@ export default function MarketPropertyDetailsPage() {
             <Button size="sm" variant="outline" className="bg-white/80 hover:bg-white">
               <Share2 className="h-4 w-4" />
             </Button>
+          </div>
+
+          {/* Virtual Tour & Image Gallery Buttons */}
+          <div className="absolute bottom-4 right-4 flex space-x-2">
+            {virtualTourData && (
+              <Button
+                onClick={() => setShowVirtualTour(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                size="sm"
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                Virtual Tour
+              </Button>
+            )}
+            {images.length > 1 && (
+              <Button
+                onClick={() => setShowImageTour(true)}
+                variant="secondary"
+                size="sm"
+                className="bg-black/60 backdrop-blur-sm text-white hover:bg-black/80"
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                View All ({images.length})
+              </Button>
+            )}
           </div>
 
           {/* Property Badges */}
@@ -1174,8 +1218,22 @@ export default function MarketPropertyDetailsPage() {
               ))}
             </div>
           </CardContent>
-        </Card>
+        </div>
       )}
+      
+      {/* Virtual Tour Viewer */}
+      <VirtualTourViewer
+        tourData={virtualTourData}
+        isOpen={showVirtualTour}
+        onClose={() => setShowVirtualTour(false)}
+      />
+      
+      {/* Image Tour Viewer */}
+      <ImageTourViewer
+        images={images}
+        isOpen={showImageTour}
+        onClose={() => setShowImageTour(false)}
+      />
     </div>
   );
 }

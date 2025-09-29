@@ -17,6 +17,7 @@ import { useAuth } from '@/lib/auth';
 import { ArrowLeft, Plus, X, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { VirtualTourUpload, type VirtualTourUploadData } from '@/components/virtual-tour/VirtualTourUpload';
 
 interface FormData {
   // Basic Information
@@ -147,6 +148,7 @@ export default function CreateMarketplacePropertyPage() {
   const [error, setError] = useState('');
   const [step, setStep] = useState(1);
   const [newTag, setNewTag] = useState('');
+  const [virtualTourData, setVirtualTourData] = useState<VirtualTourUploadData | null>(null);
 
   const { isAuthenticated } = useAuth();
   const router = useRouter();
@@ -550,7 +552,188 @@ export default function CreateMarketplacePropertyPage() {
             </div>
           )}
 
-          {/* Additional steps would be rendered here based on category and listing type */}
+          {step === 3 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Property Images & Virtual Tour</h3>
+              <div className="space-y-6">
+                {/* Regular Images Upload */}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Property Images</Label>
+                    <Input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={(e) => {
+                        // Handle regular image uploads here
+                        console.log('Regular images:', e.target.files);
+                      }}
+                      disabled={loading}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Upload high-quality photos of your property. First image will be the primary image.
+                    </p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Virtual Tour Upload */}
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-md font-semibold mb-2">Virtual Tour (Optional)</h4>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Create an immersive 360° virtual tour to help buyers explore your property remotely.
+                    </p>
+                    <VirtualTourUpload
+                      onTourDataChange={setVirtualTourData}
+                      initialData={virtualTourData || undefined}
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 4 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Additional Details & Amenities</h3>
+              <div className="space-y-6">
+                {/* Contact Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label>Contact Name</Label>
+                    <Input
+                      value={formData.contact_name}
+                      onChange={(e) => handleInputChange('contact_name', e.target.value)}
+                      placeholder="Your name or business name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Contact Phone</Label>
+                    <Input
+                      value={formData.contact_phone}
+                      onChange={(e) => handleInputChange('contact_phone', e.target.value)}
+                      placeholder="e.g., +234 XXX XXX XXXX"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Contact Email</Label>
+                    <Input
+                      type="email"
+                      value={formData.contact_email}
+                      onChange={(e) => handleInputChange('contact_email', e.target.value)}
+                      placeholder="your.email@example.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>WhatsApp Number</Label>
+                    <Input
+                      value={formData.contact_whatsapp}
+                      onChange={(e) => handleInputChange('contact_whatsapp', e.target.value)}
+                      placeholder="e.g., +234 XXX XXX XXXX"
+                    />
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Amenities */}
+                <div className="space-y-4">
+                  <Label>Amenities & Features</Label>
+                  <div className="flex gap-2 mb-2">
+                    <Input
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      placeholder="Add amenity (e.g., Swimming Pool)"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (newTag.trim()) {
+                            addTag('amenities', newTag);
+                            setNewTag('');
+                          }
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        if (newTag.trim()) {
+                          addTag('amenities', newTag);
+                          setNewTag('');
+                        }
+                      }}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {formData.amenities.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {formData.amenities.map((amenity, index) => (
+                        <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                          {amenity}
+                          <X
+                            className="h-3 w-3 cursor-pointer"
+                            onClick={() => removeTag('amenities', index)}
+                          />
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 5 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Review & Publish</h3>
+              <div className="space-y-6">
+                <Alert>
+                  <AlertDescription>
+                    Please review your listing details before publishing. You can edit these details later if needed.
+                  </AlertDescription>
+                </Alert>
+
+                {/* Summary */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Listing Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div>
+                        <strong>Title:</strong> {formData.title}
+                      </div>
+                      <div>
+                        <strong>Location:</strong> {formData.location}
+                      </div>
+                      <div>
+                        <strong>Price:</strong> {formData.currency} {parseInt(formData.price || '0').toLocaleString()}{formData.price_period && ` / ${formData.price_period}`}
+                      </div>
+                      <div>
+                        <strong>Category:</strong> {categories.find(c => c.id === formData.category_id)?.name}
+                      </div>
+                      <div>
+                        <strong>Property Type:</strong> {propertyTypes.find(p => p.id === formData.property_type_id)?.name}
+                      </div>
+                      <div>
+                        <strong>Listing Type:</strong> {listingTypes.find(l => l.id === formData.listing_type_id)?.name}
+                      </div>
+                      {virtualTourData && virtualTourData.scenes.length > 0 && (
+                        <div>
+                          <strong>Virtual Tour:</strong> ✅ {virtualTourData.scenes.length} scenes configured
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
           
           <div className="flex justify-between pt-6">
             {step > 1 && (
