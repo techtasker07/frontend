@@ -719,7 +719,7 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                   <Button 
                     variant="outline" 
                     onClick={handleSkipCrop} 
-                    className="border-2 border-white/60 text-white hover:bg-white/10 py-4 px-6 text-lg font-medium rounded-xl"
+                    className="border-2 border-white/60 text-black hover:bg-white/10 py-4 px-6 text-lg font-medium rounded-xl"
                   >
                     Skip
                   </Button>
