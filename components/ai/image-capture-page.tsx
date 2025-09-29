@@ -565,15 +565,15 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
           )}
 
           {isCroppingMode && capturedImage && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div className="text-center">
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">Crop Your Property Image</h3>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-muted-foreground mb-3">
                   Adjust the crop area to focus on the property for better AI analysis
                 </p>
               </div>
 
-              <div className="relative rounded-lg overflow-hidden shadow-xl bg-gray-100 h-[60vh] sm:h-[50vh]">
+              <div className="relative rounded-lg overflow-hidden shadow-xl bg-gray-100 h-[75vh] sm:h-[70vh] md:h-[65vh] lg:h-[70vh]">
                 <img
                   ref={imageRef}
                   src={capturedImage}
