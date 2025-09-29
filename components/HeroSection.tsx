@@ -67,7 +67,7 @@ export function HeroSection() {
               <span className="text-[#FFFFFF]">Property</span>
             </h1>
 
-            <p className="text-gray-600 mb-8 text-lg leading-relaxed">
+            <p className="text-[#FFFFFF] mb-8 text-lg leading-relaxed">
               Discover, poll, and invest in the best real estate
               opportunities.
             </p>
@@ -83,7 +83,7 @@ export function HeroSection() {
                   className="flex-1 h-12 bg-white border-gray-200 rounded-full px-6"
                 />
                 <Button
-                  className="h-12 px-8 bg-[#F39322] hover:bg-[#000080] text-white rounded-full"
+                  className="h-12 px-8 bg-[#F000080] hover:bg-[#F39322] text-white rounded-full"
                   onClick={() => router.push(`/register${email ? `?email=${encodeURIComponent(email)}` : ''}`)}
                 >
                   Get Started
@@ -92,18 +92,13 @@ export function HeroSection() {
             ) : (
               <div className="mb-8">
                 <Button
-                  className="h-12 px-8 bg-[#F39322] hover:bg-[#000080] text-white rounded-full"
+                  className="h-12 px-8 bg-[#000080] hover:bg-[#F39322] text-white rounded-full"
                   onClick={() => router.push('/add-property')}
                 >
                   Add a Property
                 </Button>
               </div>
             )}
-
-            <p className="text-gray-600 text-sm">
-              From luxury homes to commercial spaces, find
-              properties that match your vision.
-            </p>
           </div>
 
           {/* Right Media */}
