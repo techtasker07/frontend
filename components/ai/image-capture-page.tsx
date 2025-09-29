@@ -96,7 +96,7 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
               setTimeout(() => {
                 if (typeof window !== 'undefined' && imageRef.current) {
                   const cropperInstance = new Cropper(imageRef.current, {
-                    aspectRatio: 1, // Square crop for property images
+                    aspectRatio: 3 / 4, // 3:4 aspect ratio for property images
                     viewMode: 1,
                     dragMode: 'move',
                     autoCropArea: 0.8,
