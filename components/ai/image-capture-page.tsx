@@ -10,7 +10,6 @@ import { Camera, Upload, X, ArrowLeft, Home, CheckCircle, AlertCircle, User, Ref
 import { toast } from "sonner"
 import { identifyImageCategory, type IdentifiedCategory } from "@/lib/smartProspectGenerator"
 import Cropper from 'cropperjs'
-import 'cropperjs/dist/cropper.css'
 
 // Confidence thresholds for identification results
 const CONFIDENCE_THRESHOLDS = {
@@ -93,9 +92,9 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
               stopCamera()
               setIsCroppingMode(true)
 
-              // Initialize cropper after image loads
+              // Initialize cropper after image loads (client-side only)
               setTimeout(() => {
-                if (imageRef.current) {
+                if (typeof window !== 'undefined' && imageRef.current) {
                   const cropperInstance = new Cropper(imageRef.current, {
                     aspectRatio: 1, // Square crop for property images
                     viewMode: 1,
@@ -318,8 +317,8 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
           setImageFile(croppedFile)
           setIsCroppingMode(false)
 
-          // Destroy cropper
-          if (cropper) {
+          // Destroy cropper (client-side only)
+          if (typeof window !== 'undefined' && cropper) {
             (cropper as any).destroy()
           }
           setCropper(null)
@@ -334,8 +333,8 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
   const handleSkipCrop = async () => {
     if (imageFile) {
       setIsCroppingMode(false)
-      // Destroy cropper
-      if (cropper) {
+      // Destroy cropper (client-side only)
+      if (typeof window !== 'undefined' && cropper) {
         (cropper as any).destroy()
         setCropper(null)
       }
@@ -352,8 +351,8 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
     if (capturedImage) {
       URL.revokeObjectURL(capturedImage)
     }
-    // Destroy cropper if exists
-    if (cropper) {
+    // Destroy cropper if exists (client-side only)
+    if (typeof window !== 'undefined' && cropper) {
       (cropper as any).destroy()
       setCropper(null)
     }
@@ -362,8 +361,8 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
   // Cleanup effect
   useEffect(() => {
     return () => {
-      // Cleanup cropper on unmount
-      if (cropper) {
+      // Cleanup cropper on unmount (client-side only)
+      if (typeof window !== 'undefined' && cropper) {
         (cropper as any).destroy()
       }
     }
@@ -378,8 +377,8 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
     if (capturedImage) {
       URL.revokeObjectURL(capturedImage)
     }
-    // Clean up cropper
-    if (cropper) {
+    // Clean up cropper (client-side only)
+    if (typeof window !== 'undefined' && cropper) {
       (cropper as any).destroy()
       setCropper(null)
     }

@@ -2,10 +2,20 @@
 
 import { useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { ImageCapturePage } from "@/components/ai/image-capture-page"
+import dynamic from "next/dynamic"
 import { toast } from "sonner"
 
 import { generatePropertyDetails, generateSmartProspects, type IdentifiedCategory, performSmartAnalysis } from "@/lib/smartProspectGenerator"
+
+// Dynamically import ImageCapturePage to avoid SSR issues with Cropper.js
+const ImageCapturePage = dynamic(() => import("@/components/ai/image-capture-page").then(mod => ({ default: mod.ImageCapturePage })), {
+  ssr: false,
+  loading: () => (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+    </div>
+  )
+})
 
 function AICaptureImagePageContent() {
   const router = useRouter()
