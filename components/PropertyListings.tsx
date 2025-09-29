@@ -151,7 +151,7 @@ export function PropertyListings() {
 
         {/* Property Tabs */}
         <Tabs defaultValue="all" className="mb-8">
-          <TabsList className="flex flex-wrap w-full max-w-lg text-xs gap-2 bg-transparent">
+          <TabsList className="flex flex-wrap w-full text-xs gap-2 bg-transparent">
             <TabsTrigger value="all" className="bg-blue-500 text-white rounded-lg border border-blue-600 data-[state=active]:bg-orange-500 data-[state=active]:text-white">All</TabsTrigger>
             <TabsTrigger value="sale" className="bg-blue-500 text-white rounded-lg border border-blue-600 data-[state=active]:bg-orange-500 data-[state=active]:text-white">
               <span className="hidden md:inline">For Sale</span>
