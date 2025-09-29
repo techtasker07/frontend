@@ -96,7 +96,7 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
               setTimeout(() => {
                 if (typeof window !== 'undefined' && imageRef.current) {
                   const cropperInstance = new Cropper(imageRef.current, {
-                    aspectRatio: 3 / 4,
+                    aspectRatio: undefined, // Allow free cropping to fill the container
                     viewMode: 2,
                     autoCropArea: 0.9,
                     movable: true,
@@ -105,9 +105,9 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                     cropBoxResizable: true,
                     ready() {
                       const containerData = (this as any).cropper.getContainerData()
-                      // make crop box ~90% of container height and center it
-                      const targetH = containerData.height * 0.9
-                      const targetW = targetH * (3 / 4)
+                      // make crop box fill the entire container for better visibility
+                      const targetW = containerData.width
+                      const targetH = containerData.height
                       ;(this as any).cropper.setCropBoxData({ width: targetW, height: targetH })
                       ;(this as any).cropper.setCanvasData({ top: 0 }) // optional: nudge if needed
                     },
