@@ -77,7 +77,17 @@ export function VirtualTourViewer({ tourData, isOpen, onClose, className }: Virt
           maxFov: 90,
           mousewheel: true,
           mousemove: true,
-          keyboard: true,
+          keyboard: {
+            'ArrowUp': 'rotateLatUp',
+            'ArrowDown': 'rotateLatDown',
+            'ArrowRight': 'rotateLongRight',
+            'ArrowLeft': 'rotateLongLeft',
+            'PageUp': 'zoomIn',
+            'PageDown': 'zoomOut',
+            '+': 'zoomIn',
+            '-': 'zoomOut',
+            ' ': 'toggleAutorotate',
+          },
           // Add hotspots for navigation
           plugins: [],
         })

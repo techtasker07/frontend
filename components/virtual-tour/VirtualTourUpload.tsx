@@ -248,6 +248,7 @@ export function VirtualTourUpload({ onTourDataChange, initialData, disabled = fa
                 onChange={(e) => handleFileSelect(e.target.files)}
                 className="hidden"
                 disabled={disabled}
+                aria-label="Select 360° images for virtual tour upload"
               />
             </div>
           </div>
