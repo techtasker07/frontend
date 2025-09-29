@@ -107,7 +107,7 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                     cropBoxMovable: true,
                     cropBoxResizable: true,
                     toggleDragModeOnDblclick: false,
-                    cropBoxHeight: 256,
+                    cropBoxHeight: 500,
                   } as any)
                   setCropper(cropperInstance)
                 }
@@ -570,12 +570,12 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                 </p>
               </div>
 
-              <div className="relative rounded-lg overflow-hidden shadow-xl bg-gray-100">
+              <div className="relative rounded-lg overflow-hidden shadow-xl bg-gray-100 h-[500px]">
                 <img
                   ref={imageRef}
                   src={capturedImage}
                   alt="Captured property for cropping"
-                  className="w-full max-h-256 object-contain"
+                  className="w-full h-full object-contain"
                 />
               </div>
 
