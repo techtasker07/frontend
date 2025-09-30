@@ -177,21 +177,9 @@ export default function MarketplacePage() {
                   {/* Property Badges */}
                   <div className="absolute top-4 left-4 flex flex-wrap gap-2">
                     <Badge variant="secondary">
-                      {listing.category_name || 'Property'}
-                    </Badge>
-                    <Badge variant="outline">
                       {listing.type || 'sale'}
                     </Badge>
                   </div>
-
-                  {/* Favorite Button */}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="absolute top-4 right-4 h-8 w-8 p-0 bg-white/80 hover:bg-white"
-                  >
-                    <Heart className="h-4 w-4" />
-                  </Button>
                 </div>
 
                 <CardContent className="p-4 space-y-3">
