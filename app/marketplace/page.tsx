@@ -6,13 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { supabaseApi, Property } from '@/lib/supabase-api';
+import { supabaseApi, MarketplaceListing } from '@/lib/supabase-api';
 import { Search, Filter, Heart, Eye, MapPin, Bed, Bath, Car, Star } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
 export default function MarketplacePage() {
-  const [listings, setListings] = useState<Property[]>([]);
+  const [listings, setListings] = useState<MarketplaceListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -22,7 +22,7 @@ export default function MarketplacePage() {
     listing.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     listing.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     listing.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    listing.current_worth?.toString().includes(searchTerm)
+    listing.price?.toString().includes(searchTerm)
   );
 
   useEffect(() => {
@@ -36,8 +36,8 @@ export default function MarketplacePage() {
         limit: 100 // Fetch more since no server-side filtering
       };
 
-      console.log('Fetching properties with params:', params);
-      const response = await supabaseApi.getProperties(params);
+      console.log('Fetching marketplace listings with params:', params);
+      const response = await supabaseApi.getMarketplaceListings(params);
       console.log('Properties response:', response);
 
       if (response.success) {
@@ -61,7 +61,7 @@ export default function MarketplacePage() {
     return period ? `${formatted}/${period}` : formatted;
   };
 
-  const getImageUrl = (listing: Property) => {
+  const getImageUrl = (listing: MarketplaceListing) => {
     if (listing.images?.length && listing.images.length > 0) {
       const primaryImage = listing.images.find((img: any) => img.is_primary);
       return primaryImage?.image_url || listing.images[0]?.image_url;
@@ -177,7 +177,7 @@ export default function MarketplacePage() {
                   {/* Property Badges */}
                   <div className="absolute top-4 left-4 flex flex-wrap gap-2">
                     <Badge variant="secondary">
-                      {listing.type || 'sale'}
+                      {listing.listing_type?.name || 'sale'}
                     </Badge>
                   </div>
                 </div>
@@ -204,16 +204,16 @@ export default function MarketplacePage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-2xl font-bold text-primary">
-                        {formatPrice(listing.current_worth || 0, '₦')}
+                        {formatPrice(listing.price || 0, '₦')}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {listing.category_name}
+                        {listing.category?.name}
                       </div>
                     </div>
 
                     <div className="flex items-center gap-1 text-sm text-gray-500">
                       <Eye className="h-4 w-4" />
-                      <span>{listing.vote_count || 0}</span>
+                      <span>{listing.views_count || 0}</span>
                     </div>
                   </div>
 
