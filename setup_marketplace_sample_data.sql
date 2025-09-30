@@ -1,6 +1,11 @@
 -- Sample data for marketplace listings
 -- This script inserts sample data for testing the marketplace page
 
+-- First, create a dummy user if none exists
+INSERT INTO profiles (id, first_name, last_name, email, phone_number)
+VALUES ('550e8400-e29b-41d4-a716-446655440000', 'Marketplace', 'Admin', 'admin@marketplace.com', '+234-800-000-0000')
+ON CONFLICT (id) DO NOTHING;
+
 -- First, insert listing types
 INSERT INTO listing_types (name) VALUES
 ('For Sale'),
@@ -77,7 +82,7 @@ INSERT INTO marketplace_listings (
   45,
   '+234-801-234-5678',
   'contact@modernapartments.ng',
-  'c189d980-8a80-411a-b01d-36a4b9c7963c',
+  '550e8400-e29b-41d4-a716-446655440000',
   NOW(),
   NOW()
 ),
@@ -102,7 +107,7 @@ INSERT INTO marketplace_listings (
   78,
   '+234-802-345-6789',
   'sales@luxuryvillas.ng',
-  'c189d980-8a80-411a-b01d-36a4b9c7963c',
+  '550e8400-e29b-41d4-a716-446655440000',
   NOW(),
   NOW()
 ),
@@ -127,7 +132,7 @@ INSERT INTO marketplace_listings (
   23,
   '+234-803-456-7890',
   'leasing@officecomplex.ng',
-  '2e51a29b-d1c8-41a3-96a6-00c9501cce62',
+  '550e8400-e29b-41d4-a716-446655440000',
   NOW(),
   NOW()
 ),
@@ -152,7 +157,7 @@ INSERT INTO marketplace_listings (
   12,
   '+234-804-567-8901',
   'land@realestate.ng',
-  'c07eff48-6879-4d61-88a5-00f88afe6305',
+  '550e8400-e29b-41d4-a716-446655440000',
   NOW(),
   NOW()
 ),
@@ -177,7 +182,7 @@ INSERT INTO marketplace_listings (
   34,
   '+234-805-678-9012',
   'rentals@studios.ng',
-  'c07eff48-6879-4d61-88a5-00f88afe6305',
+  '550e8400-e29b-41d4-a716-446655440000',
   NOW(),
   NOW()
 );
