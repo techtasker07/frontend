@@ -30,28 +30,43 @@ export default function MarketplacePage() {
   }, []);
 
   const fetchListings = async () => {
+    console.log('🔄 Marketplace: Starting to fetch listings...');
     setLoading(true);
     try {
       const params = {
         limit: 100 // Fetch more since no server-side filtering
       };
 
-      console.log('Fetching marketplace listings with params:', params);
+      console.log('🚀 Marketplace: Calling getMarketplaceListings API with params:', params);
       const response = await supabaseApi.getMarketplaceListings(params);
-      console.log('Properties response:', response);
+      const firstListing = response.data?.[0];
+      console.log('📊 Marketplace: API response:', {
+        success: response.success,
+        dataLength: response.data?.length || 0,
+        error: response.error,
+        sampleData: firstListing ? {
+          id: firstListing.id,
+          title: firstListing.title,
+          price: firstListing.price,
+          location: firstListing.location,
+          hasImages: (firstListing.images?.length ?? 0) > 0,
+          isActive: firstListing.is_active
+        } : 'No data'
+      });
 
       if (response.success) {
-        console.log('Setting properties:', response.data.length, 'items');
+        console.log('✅ Marketplace: Setting listings data, count:', response.data.length);
         setListings(response.data);
       } else {
-        console.error('Failed to fetch properties:', response.error);
+        console.error('❌ Marketplace: Failed to fetch listings:', response.error);
         setListings([]);
       }
     } catch (error) {
-      console.error('Error fetching properties:', error);
+      console.error('💥 Marketplace: Exception during fetch:', error);
       setListings([]);
     } finally {
       setLoading(false);
+      console.log('🏁 Marketplace: Fetch completed');
     }
   };
 

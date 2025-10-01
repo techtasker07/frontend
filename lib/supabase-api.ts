@@ -1564,41 +1564,18 @@ class SupabaseApiClient {
     offset?: number;
   }): Promise<ApiResponse<MarketplaceListing[]>> {
     try {
-      // First try with full joins, if that fails, try basic query
-      let query;
-      try {
-        query = supabase
-          .from('marketplace_listings')
-          .select(`
-            *,
-            listing_type:listing_types!marketplace_listings_listing_type_id_fkey (
-              name
-            ),
-            property_type:property_types!marketplace_listings_property_type_id_fkey (
-              name
-            ),
-            category:categories!marketplace_listings_category_id_fkey (
-              name
-            ),
-            images:marketplace_images (
-              id,
-              image_url,
-              is_primary,
-              caption,
-              display_order
-            )
-          `)
-          .eq('is_active', true);
-      } catch (joinError) {
-        console.warn('Full join query failed, trying basic query:', joinError);
-        // Fallback to basic query without joins
-        query = supabase
-          .from('marketplace_listings')
-          .select('*')
-          .eq('is_active', true);
-      }
+      console.log('🔍 Fetching marketplace listings with params:', params);
+      
+      // Start with the most basic query possible
+      let query = supabase
+        .from('marketplace_listings')
+        .select('*');
 
-      // Apply filters (only basic filters if using fallback query)
+      // Only filter by is_active if explicitly requested
+      // Since RLS is disabled, let's try without this filter first
+      // query = query.eq('is_active', true);
+
+      // Apply basic filters
       if (params?.min_price) {
         query = query.gte('price', params.min_price);
       }
@@ -1626,12 +1603,14 @@ class SupabaseApiClient {
 
       query = query.order('created_at', { ascending: false });
 
+      console.log('📊 Executing basic marketplace query...');
       const { data, error } = await query;
+      
       if (error) {
-        console.error('Marketplace query error:', error);
+        console.error('❌ Marketplace query error:', error);
         // If marketplace_listings table doesn't exist, return empty array
         if (error.message?.includes('relation "marketplace_listings" does not exist')) {
-          console.warn('Marketplace listings table does not exist, returning empty array');
+          console.warn('⚠️ Marketplace listings table does not exist, returning empty array');
           return {
             success: true,
             data: []
@@ -1640,11 +1619,87 @@ class SupabaseApiClient {
         throw error;
       }
 
+      console.log('✅ Raw marketplace data fetched:', data?.length || 0, 'records');
+      
+      // If we got basic data, try to enrich it with related data
+      if (data && data.length > 0) {
+        try {
+          // Try to get related data separately
+          const enrichedData = await Promise.all(data.map(async (listing: any) => {
+            try {
+              // Try to get listing type
+              let listingType = null;
+              if (listing.listing_type_id) {
+                const { data: ltData } = await supabase
+                  .from('listing_types')
+                  .select('name')
+                  .eq('id', listing.listing_type_id)
+                  .single();
+                listingType = ltData;
+              }
+              
+              // Try to get property type  
+              let propertyType = null;
+              if (listing.property_type_id) {
+                const { data: ptData } = await supabase
+                  .from('property_types')
+                  .select('name')
+                  .eq('id', listing.property_type_id)
+                  .single();
+                propertyType = ptData;
+              }
+              
+              // Try to get category
+              let category = null;
+              if (listing.category_id) {
+                const { data: catData } = await supabase
+                  .from('categories')
+                  .select('name')
+                  .eq('id', listing.category_id)
+                  .single();
+                category = catData;
+              }
+              
+              // Try to get images
+              const { data: imagesData } = await supabase
+                .from('marketplace_images')
+                .select('id, image_url, is_primary, caption, display_order')
+                .eq('marketplace_listing_id', listing.id)
+                .order('display_order');
+              
+              return {
+                ...listing,
+                listing_type: listingType,
+                property_type: propertyType,
+                category: category,
+                images: imagesData || []
+              };
+            } catch (enrichError) {
+              console.warn('⚠️ Failed to enrich listing data:', enrichError);
+              return listing; // Return basic data if enrichment fails
+            }
+          }));
+          
+          console.log('✅ Marketplace data enriched successfully');
+          return {
+            success: true,
+            data: enrichedData as MarketplaceListing[]
+          };
+        } catch (enrichError) {
+          console.warn('⚠️ Failed to enrich data, returning basic data:', enrichError);
+          return {
+            success: true,
+            data: data as MarketplaceListing[]
+          };
+        }
+      }
+
       return {
         success: true,
         data: data as MarketplaceListing[]
       };
     } catch (error: any) {
+      console.error('💥 Marketplace listings fetch failed:', error);
       return {
         success: false,
         data: [],
