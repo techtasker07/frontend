@@ -67,29 +67,31 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Mobile Header - Only show on non-auth and non-AI prospect pages */}
-      {!isAuthPage && !isAIProspectPage && (
+      {/* Mobile Header - Only show on non-auth, non-AI prospect, and non-dashboard pages */}
+      {!isAuthPage && !isAIProspectPage && !isDashboardPage && (
         <div className="md:hidden">
           <MobileHeader onMenuClick={() => setSidebarOpen(true)} />
         </div>
       )}
 
-      {/* Desktop Header - Only show on non-auth and non-AI prospect pages */}
-      {!isAuthPage && !isAIProspectPage && (
+      {/* Desktop Header - Only show on non-auth, non-AI prospect, and non-dashboard pages */}
+      {!isAuthPage && !isAIProspectPage && !isDashboardPage && (
         <div className="hidden md:block">
           <DesktopHeader onMenuClick={() => setSidebarOpen(true)} />
         </div>
       )}
 
-      {/* Desktop Hover Sidebar */}
-      <div className={`hidden md:block fixed top-0 left-0 h-full z-50 transform transition-transform duration-300 ${
-        sidebarVisible ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <Sidebar />
-      </div>
+      {/* Desktop Hover Sidebar - Hide on dashboard page */}
+      {!isDashboardPage && (
+        <div className={`hidden md:block fixed top-0 left-0 h-full z-50 transform transition-transform duration-300 ${
+          sidebarVisible ? 'translate-x-0' : '-translate-x-full'
+        }`}>
+          <Sidebar />
+        </div>
+      )}
 
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
+      {/* Mobile Sidebar Overlay - Hide on dashboard page */}
+      {!isDashboardPage && sidebarOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="fixed inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
           <div className="fixed left-0 top-0 h-full">

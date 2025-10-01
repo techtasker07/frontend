@@ -230,44 +230,17 @@ export default function MarketPropertyDetailsPage() {
         </Link>
       </Button>
 
-      {/* Image Gallery */}
-      <Card className="overflow-hidden">
-        <CardContent className="p-0">
-          <div className="relative aspect-video">
+      {/* Image Gallery Grid */}
+      <div className="grid grid-cols-4 gap-2 h-96">
+        {/* Main Large Image */}
+        <div className="col-span-3 relative overflow-hidden rounded-lg bg-gray-100">
           <Image
-            src={images[currentImageIndex]}
+            src={images[currentImageIndex] || '/api/placeholder/800/600'}
             alt={listing.title || 'Property'}
             fill
             className="object-cover"
           />
           
-          {/* Image Navigation */}
-          {images.length > 1 && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white"
-                onClick={prevImage}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white"
-                onClick={nextImage}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              
-              {/* Image Counter */}
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
-                {currentImageIndex + 1} / {images.length}
-              </div>
-            </>
-          )}
-
           {/* Action Buttons */}
           <div className="absolute top-4 right-4 flex gap-2">
             <Button
@@ -283,40 +256,66 @@ export default function MarketPropertyDetailsPage() {
             </Button>
           </div>
 
-          {/* Virtual Tour & Image Gallery Buttons */}
-          <div className="absolute bottom-4 right-4 flex space-x-2">
-            {virtualTourData && (
-              <Button
-                onClick={() => setShowVirtualTour(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-                size="sm"
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                Virtual Tour
-              </Button>
-            )}
-            {images.length > 1 && (
-              <Button
-                onClick={() => setShowImageTour(true)}
-                variant="secondary"
-                size="sm"
-                className="bg-black/60 backdrop-blur-sm text-white hover:bg-black/80"
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                View All ({images.length})
-              </Button>
-            )}
-          </div>
-
           {/* Property Badges */}
           <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-            <Badge variant="secondary">
+            <Badge variant="secondary" className="bg-white/90 text-gray-800">
               {listing.category?.name}
             </Badge>
+            <Badge variant="outline" className="bg-white/90 text-gray-800 border-gray-300">
+              {listing.listing_type?.name || 'For Sale'}
+            </Badge>
           </div>
-          </div>
-      </CardContent>
-      </Card>
+        </div>
+        
+        {/* Right Side Grid */}
+        <div className="flex flex-col gap-2">
+          {/* Virtual Tour Tile */}
+          {(virtualTourData || listing.virtual_tour_url) && (
+            <div 
+              className="relative h-[94px] bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg overflow-hidden cursor-pointer group"
+              onClick={() => setShowVirtualTour(true)}
+            >
+              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
+                <Eye className="h-6 w-6 mb-1" />
+                <span className="text-xs font-medium">Virtual Tour</span>
+              </div>
+            </div>
+          )}
+          
+          {/* Additional Images */}
+          {images.slice(1, virtualTourData ? 4 : 5).map((imageUrl, index) => (
+            <div 
+              key={index + 1}
+              className="relative h-[94px] overflow-hidden rounded-lg cursor-pointer group"
+              onClick={() => setCurrentImageIndex(index + 1)}
+            >
+              <Image
+                src={imageUrl}
+                alt={`Property image ${index + 2}`}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-200"
+              />
+              {currentImageIndex === index + 1 && (
+                <div className="absolute inset-0 ring-2 ring-blue-500 bg-blue-500/10" />
+              )}
+            </div>
+          ))}
+          
+          {/* More Images Indicator */}
+          {images.length > (virtualTourData ? 4 : 5) && (
+            <div 
+              className="relative h-[94px] bg-gray-900/80 rounded-lg overflow-hidden cursor-pointer group flex items-center justify-center"
+              onClick={() => setShowImageTour(true)}
+            >
+              <div className="text-center text-white">
+                <div className="text-lg font-bold">{images.length - (virtualTourData ? 4 : 5)}+</div>
+                <div className="text-xs">More Photos</div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
@@ -980,42 +979,8 @@ export default function MarketPropertyDetailsPage() {
                   </Card>
                 )}
 
-                {/* Contact Information */}
-                {(listing.contact_name || listing.contact_phone || listing.contact_email || listing.contact_whatsapp) && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Contact Information</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {listing.contact_name && (
-                          <div>
-                            <span className="font-medium">Contact Name:</span>
-                            <span className="ml-2">{listing.contact_name}</span>
-                          </div>
-                        )}
-                        {listing.contact_phone && (
-                          <div>
-                            <span className="font-medium">Phone:</span>
-                            <span className="ml-2">{listing.contact_phone}</span>
-                          </div>
-                        )}
-                        {listing.contact_email && (
-                          <div>
-                            <span className="font-medium">Email:</span>
-                            <span className="ml-2">{listing.contact_email}</span>
-                          </div>
-                        )}
-                        {listing.contact_whatsapp && (
-                          <div>
-                            <span className="font-medium">WhatsApp:</span>
-                            <span className="ml-2">{listing.contact_whatsapp}</span>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+                {/* Contact Information - Hidden for Privacy
+                     Contact is handled through Mipripity engagement system */}
 
                 {/* Last Updated */}
                 <Card>
