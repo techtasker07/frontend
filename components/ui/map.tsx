@@ -22,8 +22,53 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Geocode address using Nominatim (OpenStreetMap's free geocoding service)
+  const geocodeAddress = async (address: string): Promise<{ lat: number; lng: number } | null> => {
+    try {
+      // First, try to extract coordinates if they're already in the address
+      const coordMatch = address.match(/(-?\d+\.?\d*),\s*(-?\d+\.?\d*)/);
+      if (coordMatch) {
+        return {
+          lat: parseFloat(coordMatch[1]),
+          lng: parseFloat(coordMatch[2])
+        };
+      }
+
+      // Use Nominatim geocoding service
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`,
+        {
+          headers: {
+            'User-Agent': 'Mipripity/1.0' // Required by Nominatim
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Geocoding service unavailable');
+      }
+
+      const data = await response.json();
+
+      if (data && data.length > 0) {
+        return {
+          lat: parseFloat(data[0].lat),
+          lng: parseFloat(data[0].lon)
+        };
+      }
+
+      // Fallback to Lagos, Nigeria if geocoding fails
+      console.warn('Geocoding failed for address:', address, 'using default location');
+      return { lat: 6.5244, lng: 3.3792 }; // Lagos coordinates
+
+    } catch (err) {
+      console.error('Geocoding error:', err);
+      return { lat: 6.5244, lng: 3.3792 }; // Lagos coordinates
+    }
+  };
+
   useEffect(() => {
-    const geocodeAddress = async () => {
+    const initializeMap = async () => {
       if (!address) {
         setError('No address provided');
         setLoading(false);
@@ -31,44 +76,42 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
       }
 
       try {
-        // Simple geocoding using a free service or fallback
-        // For production, you might want to use a proper geocoding service
-        // For now, we'll use a simple approach or fallback coordinates
+        setLoading(true);
 
-        // Try to extract coordinates from address if they exist
-        const coordMatch = address.match(/(-?\d+\.?\d*),\s*(-?\d+\.?\d*)/);
-        if (coordMatch) {
-          setCoordinates({
-            lat: parseFloat(coordMatch[1]),
-            lng: parseFloat(coordMatch[2])
-          });
-        } else {
-          // Fallback to Lagos, Nigeria coordinates for demo
-          console.warn('Could not parse coordinates from address, using default location');
-          setCoordinates({ lat: 6.5244, lng: 3.3792 });
+        // Geocode the address
+        const coords = await geocodeAddress(address);
+        if (!coords) {
+          throw new Error('Could not geocode address');
         }
+
+        setCoordinates(coords);
+        setLoading(false);
+
       } catch (err) {
-        console.error('Geocoding error:', err);
-        setCoordinates({ lat: 6.5244, lng: 3.3792 }); // Lagos coordinates
+        console.error('Error initializing map:', err);
+        setError('Failed to load map location');
+        setLoading(false);
       }
-      setLoading(false);
     };
 
-    geocodeAddress();
+    initializeMap();
   }, [address]);
 
   useEffect(() => {
-    if (!coordinates || !cesiumContainerRef.current || loading) return;
+    if (!coordinates || !cesiumContainerRef.current || loading || error) return;
+
+    let resizeViewer: () => void;
 
     const initializeViewer = async () => {
       try {
         // Dynamically import CesiumJS
         if (!Cesium) {
           Cesium = await import('cesium');
-          // Set the access token after importing
+
+          // Set your personal access token (user should replace this)
           Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyYmY1MTczYy1jN2IxLTQzOWEtYmM1ZC03OTZjOGZhMmYwMzIiLCJpZCI6MzQ2NDEyLCJpYXQiOjE3NTkzNDgzMzJ9.AtgkBF3QFYfTTEp1YYLhPDxKCLSPVpEvHrf5Y0Pe0YU';
 
-          // Dynamically import Cesium CSS
+          // Load Cesium CSS
           if (typeof document !== 'undefined') {
             const link = document.createElement('link');
             link.rel = 'stylesheet';
@@ -77,9 +120,10 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
           }
         }
 
-        // Initialize Cesium Viewer
+        // Initialize Cesium Viewer with minimal configuration
         const viewer = new Cesium.Viewer(cesiumContainerRef.current!, {
-          terrainProvider: await Cesium.createWorldTerrainAsync(),
+          // Use simple ellipsoid terrain (no 3D terrain to avoid async issues)
+          terrainProvider: new Cesium.EllipsoidTerrainProvider(),
           baseLayerPicker: false,
           geocoder: false,
           homeButton: true,
@@ -88,22 +132,33 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
           animation: false,
           timeline: false,
           fullscreenButton: false,
-          creditContainer: document.createElement('div') // Hide credits
+          creditContainer: document.createElement('div'), // Hide credits
+          imageryProvider: new Cesium.OpenStreetMapImageryProvider({
+            url: 'https://a.tile.openstreetmap.org/'
+          }),
+          // Disable some features that might cause issues
+          selectionIndicator: false,
+          infoBox: false
         });
 
-        // Set OpenStreetMap imagery provider
-        viewer.imageryLayers.removeAll();
-        viewer.imageryLayers.addImageryProvider(
-          new Cesium.OpenStreetMapImageryProvider({
-            url: 'https://a.tile.openstreetmap.org/'
-          })
-        );
+        // Define resize function
+        resizeViewer = () => {
+          if (viewer && !viewer.isDestroyed()) {
+            viewer.resize();
+          }
+        };
+
+        // Handle window resize
+        window.addEventListener('resize', resizeViewer);
+
+        // Initial resize
+        setTimeout(resizeViewer, 100);
 
         // Set the camera to the property location
         const destination = Cesium.Cartesian3.fromDegrees(
           coordinates.lng,
           coordinates.lat,
-          1000 // Height in meters
+          2000 // Higher altitude for better view
         );
 
         viewer.camera.setView({
@@ -121,24 +176,30 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
               </svg>
             `),
             verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+            scale: 1.0
           },
           label: {
-            text: address,
+            text: address.length > 30 ? address.substring(0, 30) + '...' : address,
             font: '12pt sans-serif',
             fillColor: Cesium.Color.WHITE,
             outlineColor: Cesium.Color.BLACK,
             outlineWidth: 2,
             style: Cesium.LabelStyle.FILL_AND_OUTLINE,
             verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-            pixelOffset: new Cesium.Cartesian2(0, -32)
+            pixelOffset: new Cesium.Cartesian2(0, -40),
+            show: true
           }
         });
 
         viewerRef.current = viewer;
+
+        // Force a render to ensure the view updates
+        viewer.scene.requestRender();
+
       } catch (err) {
         console.error('Error initializing Cesium viewer:', err);
-        setError('Failed to initialize 3D map');
+        setError(`Failed to initialize 3D map: ${err instanceof Error ? err.message : 'Unknown error'}`);
       }
     };
 
@@ -146,11 +207,12 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
 
     // Cleanup function
     return () => {
+      window.removeEventListener('resize', resizeViewer);
       if (viewerRef.current && !viewerRef.current.isDestroyed()) {
         viewerRef.current.destroy();
       }
     };
-  }, [coordinates, loading, address]);
+  }, [coordinates, loading, error]);
 
   const openInGoogleMaps = () => {
     if (coordinates) {
@@ -184,6 +246,7 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
       >
         <div className="text-center">
           <p>Unable to load 3D map for this location</p>
+          <p className="text-sm mt-1">{error}</p>
           <Button
             variant="outline"
             size="sm"
