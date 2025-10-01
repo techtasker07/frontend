@@ -102,24 +102,6 @@ export default function MarketplacePage() {
             </div>
             <Button>Search</Button>
           </div>
-
-          {/* View Mode */}
-          <div className="flex justify-end gap-2">
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-            >
-              Grid
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-            >
-              List
-            </Button>
-          </div>
         </CardContent>
       </Card>
 

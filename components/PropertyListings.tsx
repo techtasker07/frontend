@@ -6,15 +6,22 @@ import { SearchSection } from "./SearchSection";
 import { Button } from "./ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { SlidersHorizontal, Grid3X3, List } from "lucide-react";
-import { supabaseApi, Property } from "../lib/supabase-api";
+import { supabaseApi, Property, MarketplaceListing } from "../lib/supabase-api";
+
+// Combined property type for both poll and marketplace properties
+type CombinedProperty = Property & {
+  source?: 'poll' | 'marketplace';
+  listing_type?: { name: string };
+  property_type?: { name: string };
+};
 
 export function PropertyListings() {
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
+  const [properties, setProperties] = useState<CombinedProperty[]>([]);
+  const [filteredProperties, setFilteredProperties] = useState<CombinedProperty[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [displayLimit, setDisplayLimit] = useState(3);
+  const [displayLimit, setDisplayLimit] = useState(6);
   const [searchFilters, setSearchFilters] = useState({
     location: '',
     propertyType: '',
@@ -30,15 +37,75 @@ export function PropertyListings() {
       try {
         setLoading(true);
         setError(null);
-        const response = await supabaseApi.getProperties({ limit: 10 });
-        if (response.success) {
-          const sortedProperties = response.data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-          setProperties(sortedProperties);
-          setFilteredProperties(sortedProperties);
-        } else {
-          setError(response.error || 'Failed to load properties');
+        
+        // Fetch both poll properties and marketplace listings
+        const pollResponse = await supabaseApi.getProperties({ limit: 15 });
+        let marketplaceResponse;
+        
+        try {
+          marketplaceResponse = await supabaseApi.getMarketplaceListings({ limit: 15 });
+        } catch (error) {
+          console.warn('Marketplace listings not available:', error);
+          marketplaceResponse = { success: false, data: [], error: 'Marketplace not available' };
         }
+        
+        let allProperties: CombinedProperty[] = [];
+        
+        // Add poll properties
+        if (pollResponse.success) {
+          const pollProperties = pollResponse.data.map(prop => ({
+            ...prop,
+            source: 'poll' as const,
+            current_worth: prop.current_worth || 0
+          }));
+          allProperties = [...allProperties, ...pollProperties];
+        }
+        
+        // Add marketplace properties, converting to Property format (if available)
+        if (marketplaceResponse.success && marketplaceResponse.data.length > 0) {
+          const marketplaceProperties = marketplaceResponse.data.map((listing: MarketplaceListing): CombinedProperty => ({
+            id: listing.id,
+            title: listing.title,
+            description: listing.description,
+            location: listing.location,
+            user_id: listing.user_id,
+            category_id: listing.category_id,
+            current_worth: listing.price,
+            year_of_construction: listing.year_of_construction,
+            image_url: listing.images?.[0]?.image_url,
+            created_at: listing.created_at,
+            updated_at: listing.updated_at,
+            category_name: listing.category?.name,
+            images: listing.images?.map(img => ({
+              id: img.id,
+              property_id: listing.id,
+              image_url: img.image_url,
+              is_primary: img.is_primary,
+              created_at: listing.created_at
+            })) || [],
+            source: 'marketplace' as const,
+            type: listing.listing_type?.name?.toLowerCase().replace('for ', '') || 'sale',
+            listing_type: listing.listing_type,
+            property_type: listing.property_type,
+            vote_count: 0
+          }));
+          allProperties = [...allProperties, ...marketplaceProperties];
+        }
+        
+        // Sort by creation date (most recent first)
+        const sortedProperties = allProperties.sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        
+        setProperties(sortedProperties);
+        setFilteredProperties(sortedProperties);
+        
+        if (sortedProperties.length === 0) {
+          console.warn('No properties found from either source');
+        }
+        
       } catch (err) {
+        console.error('Error fetching properties:', err);
         setError('Failed to load properties');
       } finally {
         setLoading(false);

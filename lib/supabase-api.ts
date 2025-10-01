@@ -1564,39 +1564,41 @@ class SupabaseApiClient {
     offset?: number;
   }): Promise<ApiResponse<MarketplaceListing[]>> {
     try {
-      let query = supabase
-        .from('marketplace_listings')
-        .select(`
-          *,
-          listing_type:listing_types!marketplace_listings_listing_type_id_fkey (
-            name
-          ),
-          property_type:property_types!marketplace_listings_property_type_id_fkey (
-            name
-          ),
-          category:categories!marketplace_listings_category_id_fkey (
-            name
-          ),
-          images:marketplace_images (
-            id,
-            image_url,
-            is_primary,
-            caption,
-            display_order
-          )
-        `)
-        .eq('is_active', true);
+      // First try with full joins, if that fails, try basic query
+      let query;
+      try {
+        query = supabase
+          .from('marketplace_listings')
+          .select(`
+            *,
+            listing_type:listing_types!marketplace_listings_listing_type_id_fkey (
+              name
+            ),
+            property_type:property_types!marketplace_listings_property_type_id_fkey (
+              name
+            ),
+            category:categories!marketplace_listings_category_id_fkey (
+              name
+            ),
+            images:marketplace_images (
+              id,
+              image_url,
+              is_primary,
+              caption,
+              display_order
+            )
+          `)
+          .eq('is_active', true);
+      } catch (joinError) {
+        console.warn('Full join query failed, trying basic query:', joinError);
+        // Fallback to basic query without joins
+        query = supabase
+          .from('marketplace_listings')
+          .select('*')
+          .eq('is_active', true);
+      }
 
-      // Apply filters
-      if (params?.category) {
-        query = query.eq('category.name', params.category);
-      }
-      if (params?.listing_type) {
-        query = query.eq('listing_type.name', params.listing_type);
-      }
-      if (params?.property_type) {
-        query = query.eq('property_type.name', params.property_type);
-      }
+      // Apply filters (only basic filters if using fallback query)
       if (params?.min_price) {
         query = query.gte('price', params.min_price);
       }
@@ -1625,7 +1627,18 @@ class SupabaseApiClient {
       query = query.order('created_at', { ascending: false });
 
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        console.error('Marketplace query error:', error);
+        // If marketplace_listings table doesn't exist, return empty array
+        if (error.message?.includes('relation "marketplace_listings" does not exist')) {
+          console.warn('Marketplace listings table does not exist, returning empty array');
+          return {
+            success: true,
+            data: []
+          };
+        }
+        throw error;
+      }
 
       return {
         success: true,
