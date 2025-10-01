@@ -35,6 +35,7 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { VirtualTourViewer, ImageTourViewer } from '@/components/virtual-tour/VirtualTourViewer';
+import Map from '@/components/ui/map';
 
 export default function MarketPropertyDetailsPage() {
   const params = useParams();
@@ -995,19 +996,8 @@ export default function MarketPropertyDetailsPage() {
 
             {activeTab === 'location' && (
               <Card>
-                <CardHeader>
-                  <CardTitle>Location</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-5 w-5 text-gray-500" />
-                      <span className="text-lg">{listing.location}</span>
-                    </div>
-                    <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                      <p className="text-gray-500">Map integration would go here</p>
-                    </div>
-                  </div>
+                <CardContent className="p-6">
+                  <Map address={listing.location} height="400px" zoom={15} />
                 </CardContent>
               </Card>
             )}
