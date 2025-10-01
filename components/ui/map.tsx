@@ -4,12 +4,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Button } from './button';
 import { ExternalLink, Loader2 } from 'lucide-react';
 
-// Import Cesium types
-import * as Cesium from 'cesium';
-
-// CesiumJS requires setting the access token
-// For development, we'll use the default ion access token
-Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyYmY1MTczYy1jN2IxLTQzOWEtYmM1ZC03OTZjOGZhMmYwMzIiLCJpZCI6MzQ2NDEyLCJpYXQiOjE3NTkzNDgzMzJ9.AtgkBF3QFYfTTEp1YYLhPDxKCLSPVpEvHrf5Y0Pe0YU';
+// Dynamic import for Cesium to avoid bundling in main bundle
+let Cesium: any = null;
 
 interface MapProps {
   address: string;
@@ -21,7 +17,7 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
   height
 }) => {
   const cesiumContainerRef = useRef<HTMLDivElement>(null);
-  const viewerRef = useRef<Cesium.Viewer | null>(null);
+  const viewerRef = useRef<any>(null);
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +62,21 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
 
     const initializeViewer = async () => {
       try {
+        // Dynamically import CesiumJS
+        if (!Cesium) {
+          Cesium = await import('cesium');
+          // Set the access token after importing
+          Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyYmY1MTczYy1jN2IxLTQzOWEtYmM1ZC03OTZjOGZhMmYwMzIiLCJpZCI6MzQ2NDEyLCJpYXQiOjE3NTkzNDgzMzJ9.AtgkBF3QFYfTTEp1YYLhPDxKCLSPVpEvHrf5Y0Pe0YU';
+
+          // Dynamically import Cesium CSS
+          if (typeof document !== 'undefined') {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/Widgets/widgets.css';
+            document.head.appendChild(link);
+          }
+        }
+
         // Initialize Cesium Viewer
         const viewer = new Cesium.Viewer(cesiumContainerRef.current!, {
           terrainProvider: await Cesium.createWorldTerrainAsync(),

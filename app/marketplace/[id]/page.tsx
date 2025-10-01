@@ -997,7 +997,7 @@ export default function MarketPropertyDetailsPage() {
             {activeTab === 'location' && (
               <Card>
                 <CardContent className="p-6">
-                  <Map address={listing.location} height="400px" zoom={15} />
+                  <Map address={listing.location} height="400px" />
                 </CardContent>
               </Card>
             )}

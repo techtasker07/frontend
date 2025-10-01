@@ -4,8 +4,7 @@
 @import "tailwindcss/utilities";
 @import "tw-animate-css";
 
-/* CesiumJS Styles */
-@import "cesium/Widgets/widgets.css";
+/* CesiumJS Styles - Import dynamically in component instead */
 
 :root {
   --background: 0 0% 100%;
