@@ -4,6 +4,9 @@
 @import "tailwindcss/utilities";
 @import "tw-animate-css";
 
+/* CesiumJS Styles */
+@import "cesium/Widgets/widgets.css";
+
 :root {
   --background: 0 0% 100%;
   --foreground: 222.2 84% 4.9%;
