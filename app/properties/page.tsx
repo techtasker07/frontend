@@ -22,8 +22,9 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { api, type Property, type Category } from "@/lib/api"
+import { supabaseApi, type Property, type Category } from "@/lib/supabase-api"
 import { useAuth } from "@/lib/auth"
+import { PropertyTypeDialog } from "@/components/PropertyTypeDialog"
 import {
   MapPin,
   Calendar,
@@ -57,6 +58,7 @@ export default function PropertiesPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("grid")
   const [sortBy, setSortBy] = useState<SortOption>("newest")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [showPropertyTypeDialog, setShowPropertyTypeDialog] = useState(false)
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1)
@@ -86,16 +88,18 @@ export default function PropertiesPage() {
         category?: string
         limit?: number
         offset?: number
+        source?: 'poll' | 'marketplace' | 'both'
       } = {
         limit: propertiesPerPage,
         offset: (currentPage - 1) * propertiesPerPage,
+        source: 'poll' // Only fetch poll properties
       }
 
       if (selectedCategory !== "all") {
         params.category = selectedCategory
       }
 
-      const response = await api.getProperties(params)
+      const response = await supabaseApi.getProperties(params)
       if (response.success) {
         const sortedProperties = [...response.data]
 
@@ -122,7 +126,7 @@ export default function PropertiesPage() {
         }
 
         setProperties(sortedProperties)
-        setTotalProperties(response.total || response.data.length)
+        setTotalProperties(response.count || response.data.length)
       }
     } catch (error) {
       toast.error("Failed to fetch properties")
@@ -133,7 +137,7 @@ export default function PropertiesPage() {
 
   const fetchCategories = async () => {
     try {
-      const response = await api.getCategories()
+      const response = await supabaseApi.getCategories()
       if (response.success) {
         setCategories(response.data)
       }
@@ -160,7 +164,7 @@ export default function PropertiesPage() {
           : undefined,
       }
 
-      const response = await api.createProperty(propertyData)
+      const response = await supabaseApi.createProperty(propertyData)
       if (response.success) {
         toast.success("Property created successfully!")
         setIsDialogOpen(false)
@@ -234,6 +238,16 @@ export default function PropertiesPage() {
           <h1 className="text-3xl font-bold mb-2">Properties</h1>
           <p className="text-muted-foreground">Browse and evaluate properties from our community-driven platform</p>
         </div>
+        
+        {isAuthenticated && (
+          <Button 
+            onClick={() => setShowPropertyTypeDialog(true)}
+            className="mt-4 md:mt-0"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Create Listing
+          </Button>
+        )}
 
         {isAuthenticated && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -678,6 +692,11 @@ export default function PropertiesPage() {
           )}
         </>
       )}
+      
+      <PropertyTypeDialog 
+        open={showPropertyTypeDialog} 
+        onOpenChange={setShowPropertyTypeDialog} 
+      />
     </div>
   )
 }

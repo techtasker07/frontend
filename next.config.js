@@ -35,7 +35,7 @@ const nextConfig = {
   },
   // Disable font optimization that causes lightningcss issues
   optimizeFonts: false,
-  // Add webpack configuration to handle native dependencies
+  // Add webpack configuration to handle native dependencies and Cesium
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
@@ -45,6 +45,30 @@ const nextConfig = {
         crypto: false,
       }
     }
+    
+    // Handle Cesium webpack configuration
+    config.module = config.module || {};
+    config.module.rules = config.module.rules || [];
+    
+    // Handle Cesium's web workers and assets
+    config.module.rules.push({
+      test: /\.js$/,
+      include: /node_modules\/cesium/,
+      use: {
+        loader: 'babel-loader',
+        options: {
+          presets: ['@babel/preset-env']
+        }
+      }
+    });
+    
+    // Allow importing Cesium assets
+    config.module.rules.push({
+      test: /\.(png|gif|jpg|jpeg|svg|xml|json)$/,
+      include: /node_modules\/cesium/,
+      type: 'asset/resource'
+    });
+    
     return config
   },
   // Disable experimental features that might conflict

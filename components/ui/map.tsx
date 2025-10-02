@@ -1,16 +1,64 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Button } from './button';
-import { ExternalLink, Loader2 } from 'lucide-react';
+import { ExternalLink, Loader2, MapPin, RotateCcw } from 'lucide-react';
 
 // Dynamic import for Cesium to avoid bundling in main bundle
 let Cesium: any = null;
+let cesiumLoaded = false;
+let cesiumError = false;
 
 interface MapProps {
   address: string;
   height?: string;
 }
+
+const SimpleMapFallback: React.FC<{ address: string; height: string; coordinates: { lat: number; lng: number } | null }> = ({
+  address,
+  height,
+  coordinates
+}) => {
+  const openInGoogleMaps = useCallback(() => {
+    if (coordinates) {
+      const url = `https://www.google.com/maps/search/?api=1&query=${coordinates.lat},${coordinates.lng}`;
+      window.open(url, '_blank');
+    } else {
+      const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+      window.open(url, '_blank');
+    }
+  }, [coordinates, address]);
+
+  return (
+    <div className="space-y-4">
+      <div
+        className="w-full bg-gradient-to-br from-blue-50 to-green-50 rounded-lg border relative overflow-hidden"
+        style={{ height }}
+      >
+        {coordinates ? (
+          <iframe
+            src={`https://www.openstreetmap.org/export/embed.html?bbox=${coordinates.lng-0.01},${coordinates.lat-0.01},${coordinates.lng+0.01},${coordinates.lat+0.01}&layer=mapnik&marker=${coordinates.lat},${coordinates.lng}`}
+            style={{ width: '100%', height: '100%', border: 'none' }}
+            title="Property Location Map"
+            loading="lazy"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center text-gray-500">
+              <MapPin className="h-12 w-12 mx-auto mb-4 text-blue-500" />
+              <h3 className="text-lg font-medium mb-2">Location Map</h3>
+              <p className="text-sm text-gray-600 mb-4">Click below to view this location on Google Maps</p>
+              <Button onClick={openInGoogleMaps} variant="outline" size="sm">
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Open in Google Maps
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
   address,
@@ -21,6 +69,7 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Geocode address using Nominatim (OpenStreetMap's free geocoding service)
   const geocodeAddress = async (address: string): Promise<{ lat: number; lng: number } | null> => {
@@ -104,23 +153,53 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
 
     const initializeViewer = async () => {
       try {
-        // Dynamically import CesiumJS
-        if (!Cesium) {
-          Cesium = await import('cesium');
-
-          // Set your personal access token (user should replace this)
-          Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyYmY1MTczYy1jN2IxLTQzOWEtYmM1ZC03OTZjOGZhMmYwMzIiLCJpZCI6MzQ2NDEyLCJpYXQiOjE3NTkzNDgzMzJ9.AtgkBF3QFYfTTEp1YYLhPDxKCLSPVpEvHrf5Y0Pe0YU';
-
-          // Load Cesium CSS
-          if (typeof document !== 'undefined') {
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = 'https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/Widgets/widgets.css';
-            document.head.appendChild(link);
-          }
+        // Check if we're in browser environment
+        if (typeof window === 'undefined') {
+          setError('Map not available in server environment');
+          return;
         }
 
-        // Initialize Cesium Viewer with minimal configuration
+        // Dynamically import CesiumJS with better error handling
+        if (!cesiumLoaded && !cesiumError) {
+          try {
+            Cesium = await import('cesium');
+            cesiumLoaded = true;
+
+            // Set your personal access token
+            if (Cesium.Ion) {
+              Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyYmY1MTczYy1jN2IxLTQzOWEtYmM1ZC03OTZjOGZhMmYwMzIiLCJpZCI6MzQ2NDEyLCJpYXQiOjE3NTkzNDgzMzJ9.AtgkBF3QFYfTTEp1YYLhPDxKCLSPVpEvHrf5Y0Pe0YU';
+            }
+
+            // Load Cesium CSS if not already loaded
+            if (!document.querySelector('link[href*="cesium"][href*="widgets.css"]')) {
+              const link = document.createElement('link');
+              link.rel = 'stylesheet';
+              link.href = 'https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/Widgets/widgets.css';
+              document.head.appendChild(link);
+              
+              // Wait for CSS to load
+              await new Promise((resolve) => {
+                link.onload = resolve;
+                setTimeout(resolve, 2000); // Fallback timeout
+              });
+            }
+          } catch (importError) {
+            console.error('Failed to import Cesium:', importError);
+            cesiumError = true;
+            setError('3D map library failed to load. Using 2D map fallback.');
+            return;
+          }
+        } else if (cesiumError) {
+          setError('3D map library unavailable. Using 2D map fallback.');
+          return;
+        }
+
+        // Verify Cesium classes are available
+        if (!Cesium.Viewer || !Cesium.EllipsoidTerrainProvider || !Cesium.OpenStreetMapImageryProvider) {
+          throw new Error('Required Cesium classes not available');
+        }
+
+        // Initialize Cesium Viewer with minimal configuration and error handling
         const viewer = new Cesium.Viewer(cesiumContainerRef.current!, {
           // Use simple ellipsoid terrain (no 3D terrain to avoid async issues)
           terrainProvider: new Cesium.EllipsoidTerrainProvider(),
@@ -138,7 +217,16 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
           }),
           // Disable some features that might cause issues
           selectionIndicator: false,
-          infoBox: false
+          infoBox: false,
+          // Add error handling
+          contextOptions: {
+            webgl: {
+              alpha: false,
+              antialias: true,
+              preserveDrawingBuffer: false,
+              failIfMajorPerformanceCaveat: false
+            }
+          }
         });
 
         // Define resize function
@@ -199,7 +287,9 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
 
       } catch (err) {
         console.error('Error initializing Cesium viewer:', err);
-        setError(`Failed to initialize 3D map: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        cesiumError = true; // Mark Cesium as having issues
+        setError(`3D map unavailable (${errorMessage}). Showing 2D map instead.`);
       }
     };
 
@@ -212,9 +302,9 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
         viewerRef.current.destroy();
       }
     };
-  }, [coordinates, loading, error]);
+  }, [coordinates, loading, error, retryCount]);
 
-  const openInGoogleMaps = () => {
+  const openInGoogleMaps = useCallback(() => {
     if (coordinates) {
       const url = `https://www.google.com/maps/search/?api=1&query=${coordinates.lat},${coordinates.lng}`;
       window.open(url, '_blank');
@@ -222,7 +312,15 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
       const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
       window.open(url, '_blank');
     }
-  };
+  }, [coordinates, address]);
+
+  const retryMap = useCallback(() => {
+    setRetryCount(prev => prev + 1);
+    setError(null);
+    setLoading(true);
+    cesiumError = false;
+    cesiumLoaded = false;
+  }, []);
 
   if (loading) {
     return (
@@ -238,25 +336,39 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
     );
   }
 
-  if (error || !coordinates) {
+  if (error) {
     return (
-      <div
-        className="w-full bg-gray-100 rounded-lg flex items-center justify-center text-gray-500"
-        style={{ height }}
-      >
-        <div className="text-center">
-          <p>Unable to load 3D map for this location</p>
-          <p className="text-sm mt-1">{error}</p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={openInGoogleMaps}
-            className="mt-2 flex items-center gap-2"
-          >
-            <ExternalLink className="h-4 w-4" />
-            Open in Google Maps
-          </Button>
+      <div className="space-y-4">
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-amber-800 mb-2">
+            <MapPin className="h-4 w-4" />
+            <span className="text-sm font-medium">3D Map Unavailable</span>
+          </div>
+          <p className="text-xs text-amber-700 mb-3">{error}</p>
+          <div className="flex gap-2">
+            {retryCount < 2 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={retryMap}
+                className="flex items-center gap-2 text-amber-700 border-amber-300"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Retry 3D Map
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={openInGoogleMaps}
+              className="flex items-center gap-2"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Open in Google Maps
+            </Button>
+          </div>
         </div>
+        <SimpleMapFallback address={address} height={height} coordinates={coordinates} />
       </div>
     );
   }

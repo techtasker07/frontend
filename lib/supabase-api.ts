@@ -287,6 +287,28 @@ export interface Favorite {
   created_at: string;
 }
 
+interface GetPropertiesParams {
+  category?: string;
+  user_id?: string;
+  limit?: number;
+  offset?: number;
+  source?: 'poll' | 'marketplace' | 'both';
+}
+
+interface GetMarketplaceListingsParams {
+  category?: string;
+  listing_type?: string;
+  property_type?: string;
+  min_price?: number;
+  max_price?: number;
+  location?: string;
+  bedrooms?: number;
+  bathrooms?: number;
+  is_featured?: boolean;
+  limit?: number;
+  offset?: number;
+}
+
 class SupabaseApiClient {
   // Users methods
   async updateUser(id: string, userData: Partial<User>): Promise<ApiResponse<User>> {
@@ -314,131 +336,117 @@ class SupabaseApiClient {
   }
 
   // Properties methods
-  async getProperties(params?: {
-    category?: string;
-    user_id?: string;
-    limit?: number;
-    offset?: number;
-  }): Promise<ApiResponse<Property[]>> {
+  async getProperties(params?: GetPropertiesParams): Promise<ApiResponse<Property[]>> {
     try {
-      // Fetch poll properties
-      let pollQuery = supabase
-        .from('properties')
-        .select(`
-          *,
-          profiles!properties_user_id_fkey (
-            first_name,
-            last_name,
-            email,
-            phone_number,
-            profile_picture
-          ),
-          categories!properties_category_id_fkey (
-            name
-          ),
-          property_images (
-            id,
-            image_url,
-            is_primary
-          )
-        `);
+      const sourceFilter = params?.source || 'both';
+      let allProperties: Property[] = [];
 
-      if (params?.category) {
-        pollQuery = pollQuery.eq('categories.name', params.category);
-      }
-      if (params?.user_id) {
-        pollQuery = pollQuery.eq('user_id', params.user_id);
-      }
+      // Only fetch poll properties if source is 'poll' or 'both'
+      if (sourceFilter === 'poll' || sourceFilter === 'both') {
+        let pollQuery = supabase
+          .from('properties')
+          .select(`
+            *,
+            profiles!properties_user_id_fkey (
+              first_name,
+              last_name,
+              email,
+              phone_number,
+              profile_picture
+            ),
+            categories!properties_category_id_fkey (
+              name
+            ),
+            property_images (
+              id,
+              image_url,
+              is_primary
+            )
+          `);
 
-      // Fetch marketplace listings
-      let marketplaceQuery = supabase
-        .from('marketplace_listings')
-        .select(`
-          *,
-          listing_type:listing_types!marketplace_listings_listing_type_id_fkey (
-            name
-          ),
-          property_type:property_types!marketplace_listings_property_type_id_fkey (
-            name
-          ),
-          category:categories!marketplace_listings_category_id_fkey (
-            name
-          ),
-          profiles!marketplace_listings_user_id_fkey (
-            first_name,
-            last_name,
-            email,
-            phone_number,
-            profile_picture
-          ),
-          marketplace_images (
-            id,
-            image_url,
-            is_primary
-          )
-        `)
-        .eq('is_active', true);
-
-      if (params?.category) {
-        marketplaceQuery = marketplaceQuery.eq('category.name', params.category);
-      }
-      if (params?.user_id) {
-        marketplaceQuery = marketplaceQuery.eq('user_id', params.user_id);
-      }
-
-      // Execute both queries in parallel
-      const [pollResult, marketplaceResult] = await Promise.all([
-        pollQuery,
-        marketplaceQuery
-      ]);
-
-      if (pollResult.error) throw pollResult.error;
-      if (marketplaceResult.error) throw marketplaceResult.error;
-
-      // Get unique category IDs from both sources
-      const allCategoryIds = [
-        ...new Set([
-          ...(pollResult.data?.map(item => item.category_id) || []),
-          ...(marketplaceResult.data?.map(item => item.category_id) || [])
-        ])
-      ];
-
-      // Fetch vote options for all categories (only for poll properties)
-      const { data: allVoteOptions, error: voteOptionsError } = await supabase
-        .from('vote_options')
-        .select('*')
-        .in('category_id', allCategoryIds);
-
-      if (voteOptionsError) {
-        console.error('Error fetching vote options:', voteOptionsError);
-      }
-
-      // Group vote options by category_id
-      const voteOptionsByCategory: { [key: string]: VoteOption[] } = {};
-      allVoteOptions?.forEach(option => {
-        if (!voteOptionsByCategory[option.category_id]) {
-          voteOptionsByCategory[option.category_id] = [];
+        if (params?.category) {
+          pollQuery = pollQuery.eq('categories.name', params.category);
         }
-        voteOptionsByCategory[option.category_id].push(option);
-      });
+        if (params?.user_id) {
+          pollQuery = pollQuery.eq('user_id', params.user_id);
+        }
 
-      // Transform poll properties
-      const transformedPollProperties = pollResult.data?.map(item => ({
-        ...item,
-        owner_name: `${item.profiles?.first_name} ${item.profiles?.last_name}`,
-        owner_email: item.profiles?.email,
-        owner_phone: item.profiles?.phone_number,
-        owner_profile_picture: item.profiles?.profile_picture,
-        category_name: item.categories?.name,
-        images: item.property_images || [],
-        vote_options: voteOptionsByCategory[item.category_id] || [],
-        type: item.type || 'poll',
-        pollPercentage: item.pollPercentage || 0
-      })) || [];
+        const { data: pollData, error: pollError } = await pollQuery;
+        if (pollError) throw pollError;
 
-      // Transform marketplace listings to Property format
-      const transformedMarketplaceProperties = marketplaceResult.data?.map(item => {
-        // Map listing type to property type
+        // Get vote options for poll properties
+        const pollCategoryIds = [...new Set(pollData?.map(item => item.category_id) || [])];
+        let allVoteOptions: VoteOption[] = [];
+        if (pollCategoryIds.length > 0) {
+          const { data: voteOptionsData } = await supabase
+            .from('vote_options')
+            .select('*')
+            .in('category_id', pollCategoryIds);
+          allVoteOptions = voteOptionsData || [];
+        }
+
+        const voteOptionsByCategory = allVoteOptions.reduce((acc, option) => {
+          if (!acc[option.category_id]) acc[option.category_id] = [];
+          acc[option.category_id].push(option);
+          return acc;
+        }, {} as { [key: string]: VoteOption[] });
+
+        const transformedPollProperties = pollData?.map(item => ({
+          ...item,
+          owner_name: `${item.profiles?.first_name} ${item.profiles?.last_name}`,
+          owner_email: item.profiles?.email,
+          owner_phone: item.profiles?.phone_number,
+          owner_profile_picture: item.profiles?.profile_picture,
+          category_name: item.categories?.name,
+          images: item.property_images || [],
+          vote_options: voteOptionsByCategory[item.category_id] || [],
+          type: item.type || 'poll',
+          pollPercentage: item.pollPercentage || 0
+        })) || [];
+
+        allProperties.push(...transformedPollProperties);
+      }
+
+      // Only fetch marketplace listings if source is 'marketplace' or 'both'
+      if (sourceFilter === 'marketplace' || sourceFilter === 'both') {
+        let marketplaceQuery = supabase
+          .from('marketplace_listings')
+          .select(`
+            *,
+            listing_type:listing_types!marketplace_listings_listing_type_id_fkey (
+              name
+            ),
+            property_type:property_types!marketplace_listings_property_type_id_fkey (
+              name
+            ),
+            category:categories!marketplace_listings_category_id_fkey (
+              name
+            ),
+            profiles!marketplace_listings_user_id_fkey (
+              first_name,
+              last_name,
+              email,
+              phone_number,
+              profile_picture
+            ),
+            marketplace_images (
+              id,
+              image_url,
+              is_primary
+            )
+          `)
+          .eq('is_active', true);
+
+        if (params?.category) {
+          marketplaceQuery = marketplaceQuery.eq('category.name', params.category);
+        }
+        if (params?.user_id) {
+          marketplaceQuery = marketplaceQuery.eq('user_id', params.user_id);
+        }
+
+        const { data: marketplaceData, error: marketplaceError } = await marketplaceQuery;
+        if (marketplaceError) throw marketplaceError;
+
         const typeMapping: { [key: string]: string } = {
           'For Sale': 'sale',
           'For Rent': 'rent',
@@ -446,7 +454,7 @@ class SupabaseApiClient {
           'For Booking': 'booking'
         };
 
-        return {
+        const transformedMarketplaceProperties = marketplaceData?.map(item => ({
           id: item.id,
           title: item.title,
           description: item.description,
@@ -464,7 +472,7 @@ class SupabaseApiClient {
           owner_phone: item.profiles?.phone_number,
           owner_profile_picture: item.profiles?.profile_picture,
           category_name: item.category?.name,
-          vote_count: 0, // Marketplace listings don't have votes
+          vote_count: 0,
           images: item.marketplace_images?.map((img: any) => ({
             id: img.id,
             property_id: item.id,
@@ -472,20 +480,19 @@ class SupabaseApiClient {
             is_primary: img.is_primary,
             created_at: img.created_at || item.created_at
           })) || [],
-          vote_options: [], // Marketplace listings don't have vote options
+          vote_options: [],
           type: typeMapping[item.listing_type?.name] || 'sale',
-          pollPercentage: 0 // Marketplace listings don't have poll percentages
-        };
-      }) || [];
+          pollPercentage: 0
+        })) || [];
 
-      // Combine and sort by creation date
-      const combinedProperties = [
-        ...transformedPollProperties,
-        ...transformedMarketplaceProperties
-      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        allProperties.push(...transformedMarketplaceProperties);
+      }
 
-      // Apply limit and offset to combined results
-      let finalProperties = combinedProperties;
+      // Sort by creation date
+      allProperties.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      // Apply limit and offset
+      let finalProperties = allProperties;
       if (params?.offset) {
         finalProperties = finalProperties.slice(params.offset);
       }
@@ -495,8 +502,8 @@ class SupabaseApiClient {
 
       return {
         success: true,
-        data: finalProperties as Property[],
-        count: combinedProperties.length
+        data: finalProperties,
+        count: allProperties.length
       };
     } catch (error: any) {
       return {
@@ -1550,19 +1557,7 @@ class SupabaseApiClient {
   }
 
   // Marketplace methods - Independent structure
-  async getMarketplaceListings(params?: {
-    category?: string;
-    listing_type?: string;
-    property_type?: string;
-    min_price?: number;
-    max_price?: number;
-    location?: string;
-    bedrooms?: number;
-    bathrooms?: number;
-    is_featured?: boolean;
-    limit?: number;
-    offset?: number;
-  }): Promise<ApiResponse<MarketplaceListing[]>> {
+  async getMarketplaceListings(params?: GetMarketplaceListingsParams): Promise<ApiResponse<MarketplaceListing[]>> {
     try {
       console.log('🔍 Fetching marketplace listings with params:', params);
       

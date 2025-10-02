@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { supabaseApi, MarketplaceListing } from '@/lib/supabase-api';
-import { Search, Filter, Heart, Eye, MapPin, Bed, Bath, Car, Star } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
+import { Search, Filter, Heart, Eye, MapPin, Bed, Bath, Car, Star, Plus } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -16,6 +17,7 @@ export default function MarketplacePage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const { isAuthenticated } = useAuth();
 
   const filteredListings = listings.filter((listing) =>
     searchTerm === '' ||
@@ -89,10 +91,22 @@ export default function MarketplacePage() {
     <div className="container mx-auto px-4 py-8 space-y-8">
       {/* Header with Background */}
       <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 rounded-lg p-8 text-center space-y-4 text-white shadow-lg">
-        <h1 className="text-4xl font-bold">Property Marketplace</h1>
-        <p className="text-lg max-w-2xl mx-auto opacity-90">
-          Discover your perfect property from our curated selection of homes, apartments, and commercial spaces
-        </p>
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="text-center sm:text-left">
+            <h1 className="text-4xl font-bold">Property Marketplace</h1>
+            <p className="text-lg max-w-2xl opacity-90">
+              Discover your perfect property from our curated selection of homes, apartments, and commercial spaces
+            </p>
+          </div>
+          {isAuthenticated && (
+            <Button asChild variant="secondary" size="lg" className="shrink-0">
+              <Link href="/marketplace/create">
+                <Plus className="mr-2 h-5 w-5" />
+                Create Listing
+              </Link>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Search and Filters */}
@@ -122,10 +136,18 @@ export default function MarketplacePage() {
 
       {/* Results */}
       <div className="space-y-4">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h2 className="text-2xl font-semibold">
             {filteredListings.length} Properties Found
           </h2>
+          {isAuthenticated && (
+            <Button asChild variant="outline">
+              <Link href="/marketplace/create">
+                <Plus className="mr-2 h-4 w-4" />
+                Create Listing
+              </Link>
+            </Button>
+          )}
         </div>
 
         {loading ? (

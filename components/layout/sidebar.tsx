@@ -2,8 +2,10 @@
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth"
+import { PropertyTypeDialog } from "@/components/PropertyTypeDialog"
 import { Home, Building, Lightbulb, Plus, User, LogOut, UserPlus, LogIn, BarChart3, ShoppingBag, FileText } from "lucide-react"
 
 interface SidebarProps {
@@ -40,6 +42,7 @@ const authenticatedNavigation: NavigationItem[] = [
 export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname()
   const { user, isAuthenticated, logout } = useAuth()
+  const [showPropertyTypeDialog, setShowPropertyTypeDialog] = useState(false)
 
   // Choose navigation based on authentication status
   const navigation = isAuthenticated ? authenticatedNavigation : publicNavigation
@@ -63,6 +66,28 @@ export function Sidebar({ onClose }: SidebarProps) {
           <nav className="space-y-3 md:space-y-4 flex-1">
             {navigation.map((item) => {
               const isActive = pathname === item.href
+              
+              // Special handling for Add Property
+              if (item.name === "Add Property" && isAuthenticated) {
+                return (
+                  <button
+                    key={item.name}
+                    onClick={() => {
+                      setShowPropertyTypeDialog(true)
+                      onClose?.()
+                    }}
+                    className={`flex items-center space-x-2 md:space-x-3 transition-colors text-sm md:text-base w-full text-left ${
+                      isActive
+                        ? "text-blue-600 font-medium"
+                        : "text-gray-700 hover:text-blue-600"
+                    }`}
+                  >
+                    <item.icon className="h-4 w-4 md:h-5 md:w-5" />
+                    <span>{item.name}</span>
+                  </button>
+                )
+              }
+              
               return (
                 <Link
                   key={item.name}
@@ -151,6 +176,11 @@ export function Sidebar({ onClose }: SidebarProps) {
           ×
         </Button>
       )}
+      
+      <PropertyTypeDialog 
+        open={showPropertyTypeDialog} 
+        onOpenChange={setShowPropertyTypeDialog} 
+      />
     </div>
   )
 }
