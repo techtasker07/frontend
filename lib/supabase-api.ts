@@ -1925,33 +1925,45 @@ class SupabaseApiClient {
     lease_amount?: number;
   }): Promise<ApiResponse<MarketplaceListing>> {
     try {
+      console.log('🔍 Getting user...');
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
+      console.log('✅ User authenticated:', user.id);
+
+      const insertData = {
+        ...listingData,
+        user_id: user.id,
+        currency: listingData.currency || 'NGN',
+        parking_spaces: listingData.parking_spaces || 0,
+        amenities: listingData.amenities || [],
+        utilities_included: listingData.utilities_included || false,
+        keywords: listingData.keywords || [],
+        is_featured: false,
+        is_active: true,
+        views_count: 0
+      };
+
+      console.log('📝 Inserting data:', insertData);
 
       const { data, error } = await supabase
         .from('marketplace_listings')
-        .insert({
-          ...listingData,
-          user_id: user.id,
-          currency: listingData.currency || 'NGN',
-          parking_spaces: listingData.parking_spaces || 0,
-          amenities: listingData.amenities || [],
-          utilities_included: listingData.utilities_included || false,
-          keywords: listingData.keywords || [],
-          is_featured: false,
-          is_active: true,
-          views_count: 0
-        })
+        .insert(insertData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Insert error:', error);
+        throw error;
+      }
+
+      console.log('✅ Listing created:', data);
 
       return {
         success: true,
         data: data as MarketplaceListing
       };
     } catch (error: any) {
+      console.error('💥 Create listing failed:', error);
       return {
         success: false,
         data: {} as MarketplaceListing,

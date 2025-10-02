@@ -229,7 +229,9 @@ export default function CreateMarketplacePropertyPage() {
     }
 
     setLoading(true);
+    setError('');
     try {
+      console.log('Starting submission...');
       const processedFormData = { ...formData };
       if (processedFormData.price_period === 'sale') {
         processedFormData.price_period = '';
@@ -261,12 +263,15 @@ export default function CreateMarketplacePropertyPage() {
         caution_fee: formData.caution_fee ? parseFloat(formData.caution_fee) : undefined,
       };
 
+      console.log('Calling createMarketplaceListing with:', submissionData);
       const response = await supabaseApi.createMarketplaceListing(submissionData);
+      console.log('Response:', response);
 
       if (response.success) {
         toast.success('Property listed successfully!');
         router.push(`/marketplace/${response.data.id}`);
       } else {
+        console.error('Error creating listing:', response.error);
         setError(response.error || 'Failed to create listing');
       }
     } catch (error: any) {
