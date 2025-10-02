@@ -1632,8 +1632,19 @@ class SupabaseApiClient {
                   .single();
                 listingType = ltData;
               }
-              
-              // Try to get property type  
+
+              // If listing type is not found, infer from price_period
+              if (!listingType) {
+                if (!listing.price_period) {
+                  listingType = { name: 'For Sale' };
+                } else if (listing.price_period === 'monthly') {
+                  listingType = { name: 'For Rent' };
+                } else {
+                  listingType = { name: 'For Lease' };
+                }
+              }
+
+              // Try to get property type
               let propertyType = null;
               if (listing.property_type_id) {
                 const { data: ptData } = await supabase
@@ -1643,7 +1654,12 @@ class SupabaseApiClient {
                   .single();
                 propertyType = ptData;
               }
-              
+
+              // If property type is not found, provide a default
+              if (!propertyType) {
+                propertyType = { name: 'Property' };
+              }
+
               // Try to get category
               let category = null;
               if (listing.category_id) {
@@ -1654,14 +1670,14 @@ class SupabaseApiClient {
                   .single();
                 category = catData;
               }
-              
+
               // Try to get images
               const { data: imagesData } = await supabase
                 .from('marketplace_images')
                 .select('id, image_url, is_primary, caption, display_order')
                 .eq('marketplace_listing_id', listing.id)
                 .order('display_order');
-              
+
               return {
                 ...listing,
                 listing_type: listingType,
@@ -1671,10 +1687,17 @@ class SupabaseApiClient {
               };
             } catch (enrichError) {
               console.warn('⚠️ Failed to enrich listing data:', enrichError);
-              return listing; // Return basic data if enrichment fails
+              // Return listing with fallback values
+              return {
+                ...listing,
+                listing_type: listing.price_period ? { name: 'For Rent' } : { name: 'For Sale' },
+                property_type: { name: 'Property' },
+                category: null,
+                images: []
+              };
             }
           }));
-          
+
           console.log('✅ Marketplace data enriched successfully');
           return {
             success: true,
@@ -1705,42 +1728,103 @@ class SupabaseApiClient {
 
   async getMarketplaceListing(id: string): Promise<ApiResponse<MarketplaceListing>> {
     try {
-      const { data, error } = await supabase
+      // First, get the basic listing data
+      const { data: listing, error: listingError } = await supabase
         .from('marketplace_listings')
-        .select(`
-          *,
-          listing_type:listing_types!marketplace_listings_listing_type_id_fkey (
-            name
-          ),
-          property_type:property_types!marketplace_listings_property_type_id_fkey (
-            name
-          ),
-          category:categories!marketplace_listings_category_id_fkey (
-            name
-          ),
-          images:marketplace_images (
-            id,
-            image_url,
-            is_primary,
-            caption,
-            display_order
-          )
-        `)
+        .select('*')
         .eq('id', id)
         .eq('is_active', true)
         .single();
 
-      if (error) throw error;
+      if (listingError) throw listingError;
+
+      // Get images
+      const { data: images, error: imagesError } = await supabase
+        .from('marketplace_images')
+        .select('id, image_url, is_primary, caption, display_order')
+        .eq('marketplace_listing_id', id)
+        .order('display_order');
+
+      if (imagesError) {
+        console.warn('Error fetching images:', imagesError);
+      }
+
+      // Get category
+      let category = null;
+      if (listing.category_id) {
+        const { data: catData } = await supabase
+          .from('categories')
+          .select('name')
+          .eq('id', listing.category_id)
+          .single();
+        category = catData;
+      }
+
+      // Get listing type - try to fetch, fallback to default
+      let listingType = null;
+      if (listing.listing_type_id) {
+        const { data: ltData } = await supabase
+          .from('listing_types')
+          .select('name')
+          .eq('id', listing.listing_type_id)
+          .single();
+        listingType = ltData;
+      }
+
+      // If listing type is not found, infer from price_period
+      if (!listingType) {
+        if (!listing.price_period) {
+          listingType = { name: 'For Sale' };
+        } else if (listing.price_period === 'monthly') {
+          listingType = { name: 'For Rent' };
+        } else {
+          listingType = { name: 'For Lease' };
+        }
+      }
+
+      // Get property type - try to fetch, fallback to default
+      let propertyType = null;
+      if (listing.property_type_id) {
+        const { data: ptData } = await supabase
+          .from('property_types')
+          .select('name')
+          .eq('id', listing.property_type_id)
+          .single();
+        propertyType = ptData;
+      }
+
+      // If property type is not found, provide a default based on category
+      if (!propertyType) {
+        const categoryName = category?.name;
+        if (categoryName === 'Residential') {
+          propertyType = { name: 'Property' };
+        } else if (categoryName === 'Commercial') {
+          propertyType = { name: 'Commercial Property' };
+        } else if (categoryName === 'Land') {
+          propertyType = { name: 'Land' };
+        } else {
+          propertyType = { name: 'Property' };
+        }
+      }
+
+      // Construct the full listing object
+      const fullListing = {
+        ...listing,
+        listing_type: listingType,
+        property_type: propertyType,
+        category: category,
+        images: images || []
+      };
 
       // Increment view count
       await supabase
         .from('marketplace_listings')
-        .update({ views_count: (data.views_count || 0) + 1 })
+        .update({ views_count: (listing.views_count || 0) + 1 })
         .eq('id', id);
 
       return {
         success: true,
-        data: data as MarketplaceListing
+        data: fullListing as MarketplaceListing
       };
     } catch (error: any) {
       return {

@@ -4,68 +4,18 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Button } from './button';
 import { ExternalLink, Loader2, MapPin, RotateCcw } from 'lucide-react';
 
-// Dynamic import for Cesium to avoid bundling in main bundle
-let Cesium: any = null;
-let cesiumLoaded = false;
-let cesiumError = false;
-
 interface MapProps {
   address: string;
   height?: string;
 }
 
-const SimpleMapFallback: React.FC<{ address: string; height: string; coordinates: { lat: number; lng: number } | null }> = ({
-  address,
-  height,
-  coordinates
-}) => {
-  const openInGoogleMaps = useCallback(() => {
-    if (coordinates) {
-      const url = `https://www.google.com/maps/search/?api=1&query=${coordinates.lat},${coordinates.lng}`;
-      window.open(url, '_blank');
-    } else {
-      const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
-      window.open(url, '_blank');
-    }
-  }, [coordinates, address]);
-
-  return (
-    <div className="space-y-4">
-      <div
-        className="w-full bg-gradient-to-br from-blue-50 to-green-50 rounded-lg border relative overflow-hidden"
-        style={{ height }}
-      >
-        {coordinates ? (
-          <iframe
-            src={`https://www.openstreetmap.org/export/embed.html?bbox=${coordinates.lng-0.01},${coordinates.lat-0.01},${coordinates.lng+0.01},${coordinates.lat+0.01}&layer=mapnik&marker=${coordinates.lat},${coordinates.lng}`}
-            style={{ width: '100%', height: '100%', border: 'none' }}
-            title="Property Location Map"
-            loading="lazy"
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center text-gray-500">
-              <MapPin className="h-12 w-12 mx-auto mb-4 text-blue-500" />
-              <h3 className="text-lg font-medium mb-2">Location Map</h3>
-              <p className="text-sm text-gray-600 mb-4">Click below to view this location on Google Maps</p>
-              <Button onClick={openInGoogleMaps} variant="outline" size="sm">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Open in Google Maps
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
+// Simple 2D Map using Leaflet
+const SimpleMap: React.FC<{ address: string; height: string }> = ({
   address,
   height
 }) => {
-  const cesiumContainerRef = useRef<HTMLDivElement>(null);
-  const viewerRef = useRef<any>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const leafletMapRef = useRef<any>(null);
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -88,7 +38,7 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`,
         {
           headers: {
-            'User-Agent': 'Mipripity/1.0' // Required by Nominatim
+            'User-Agent': 'Property-Map/1.0'
           }
         }
       );
@@ -116,6 +66,7 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
     }
   };
 
+  // Initialize map
   useEffect(() => {
     const initializeMap = async () => {
       if (!address) {
@@ -126,6 +77,7 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
 
       try {
         setLoading(true);
+        setError(null);
 
         // Geocode the address
         const coords = await geocodeAddress(address);
@@ -134,175 +86,110 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
         }
 
         setCoordinates(coords);
+
+        // Check if we're in browser environment
+        if (typeof window === 'undefined') {
+          setError('Map not available in server environment');
+          setLoading(false);
+          return;
+        }
+
+        // Dynamically import Leaflet to avoid SSR issues
+        const L = await import('leaflet');
+        
+        // Load Leaflet CSS if not already loaded
+        if (!document.querySelector('link[href*="leaflet.css"]')) {
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+          document.head.appendChild(link);
+          
+          // Wait for CSS to load
+          await new Promise((resolve) => {
+            link.onload = resolve;
+            setTimeout(resolve, 1000); // Fallback timeout
+          });
+        }
+
+        // Clear any existing map
+        if (leafletMapRef.current) {
+          leafletMapRef.current.remove();
+        }
+
+        if (!mapRef.current) {
+          setError('Map container not available');
+          setLoading(false);
+          return;
+        }
+
+        // Create the Leaflet map
+        const map = L.map(mapRef.current).setView([coords.lat, coords.lng], 15);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '© <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        // Create custom marker icon
+        const markerIcon = L.divIcon({
+          html: `
+            <div style="
+              background-color: #ef4444;
+              width: 24px;
+              height: 24px;
+              border-radius: 50%;
+              border: 3px solid white;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+              position: relative;
+            ">
+              <div style="
+                background-color: white;
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+              "></div>
+            </div>
+          `,
+          className: 'custom-marker',
+          iconSize: [24, 24],
+          iconAnchor: [12, 24]
+        });
+
+        // Add marker at the property location
+        const marker = L.marker([coords.lat, coords.lng], { icon: markerIcon }).addTo(map);
+        
+        // Add popup with address (truncated if too long)
+        const displayAddress = address.length > 50 ? address.substring(0, 50) + '...' : address;
+        marker.bindPopup(displayAddress);
+
+        // Store map reference for cleanup
+        leafletMapRef.current = map;
+
         setLoading(false);
 
       } catch (err) {
         console.error('Error initializing map:', err);
-        setError('Failed to load map location');
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        setError(`Map failed to load: ${errorMessage}`);
         setLoading(false);
       }
     };
 
     initializeMap();
-  }, [address]);
-
-  useEffect(() => {
-    if (!coordinates || !cesiumContainerRef.current || loading || error) return;
-
-    let resizeViewer: () => void;
-
-    const initializeViewer = async () => {
-      try {
-        // Check if we're in browser environment
-        if (typeof window === 'undefined') {
-          setError('Map not available in server environment');
-          return;
-        }
-
-        // Dynamically import CesiumJS with better error handling
-        if (!cesiumLoaded && !cesiumError) {
-          try {
-            Cesium = await import('cesium');
-            cesiumLoaded = true;
-
-            // Set your personal access token
-            if (Cesium.Ion) {
-              Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyYmY1MTczYy1jN2IxLTQzOWEtYmM1ZC03OTZjOGZhMmYwMzIiLCJpZCI6MzQ2NDEyLCJpYXQiOjE3NTkzNDgzMzJ9.AtgkBF3QFYfTTEp1YYLhPDxKCLSPVpEvHrf5Y0Pe0YU';
-            }
-
-            // Load Cesium CSS if not already loaded
-            if (!document.querySelector('link[href*="cesium"][href*="widgets.css"]')) {
-              const link = document.createElement('link');
-              link.rel = 'stylesheet';
-              link.href = 'https://cesium.com/downloads/cesiumjs/releases/1.115/Build/Cesium/Widgets/widgets.css';
-              document.head.appendChild(link);
-              
-              // Wait for CSS to load
-              await new Promise((resolve) => {
-                link.onload = resolve;
-                setTimeout(resolve, 2000); // Fallback timeout
-              });
-            }
-          } catch (importError) {
-            console.error('Failed to import Cesium:', importError);
-            cesiumError = true;
-            setError('3D map library failed to load. Using 2D map fallback.');
-            return;
-          }
-        } else if (cesiumError) {
-          setError('3D map library unavailable. Using 2D map fallback.');
-          return;
-        }
-
-        // Verify Cesium classes are available
-        if (!Cesium.Viewer || !Cesium.EllipsoidTerrainProvider || !Cesium.OpenStreetMapImageryProvider) {
-          throw new Error('Required Cesium classes not available');
-        }
-
-        // Initialize Cesium Viewer with minimal configuration and error handling
-        const viewer = new Cesium.Viewer(cesiumContainerRef.current!, {
-          // Use simple ellipsoid terrain (no 3D terrain to avoid async issues)
-          terrainProvider: new Cesium.EllipsoidTerrainProvider(),
-          baseLayerPicker: false,
-          geocoder: false,
-          homeButton: true,
-          sceneModePicker: true,
-          navigationHelpButton: false,
-          animation: false,
-          timeline: false,
-          fullscreenButton: false,
-          creditContainer: document.createElement('div'), // Hide credits
-          imageryProvider: new Cesium.OpenStreetMapImageryProvider({
-            url: 'https://a.tile.openstreetmap.org/'
-          }),
-          // Disable some features that might cause issues
-          selectionIndicator: false,
-          infoBox: false,
-          // Add error handling
-          contextOptions: {
-            webgl: {
-              alpha: false,
-              antialias: true,
-              preserveDrawingBuffer: false,
-              failIfMajorPerformanceCaveat: false
-            }
-          }
-        });
-
-        // Define resize function
-        resizeViewer = () => {
-          if (viewer && !viewer.isDestroyed()) {
-            viewer.resize();
-          }
-        };
-
-        // Handle window resize
-        window.addEventListener('resize', resizeViewer);
-
-        // Initial resize
-        setTimeout(resizeViewer, 100);
-
-        // Set the camera to the property location
-        const destination = Cesium.Cartesian3.fromDegrees(
-          coordinates.lng,
-          coordinates.lat,
-          2000 // Higher altitude for better view
-        );
-
-        viewer.camera.setView({
-          destination: destination
-        });
-
-        // Add a marker (billboard) at the property location
-        const entity = viewer.entities.add({
-          position: Cesium.Cartesian3.fromDegrees(coordinates.lng, coordinates.lat),
-          billboard: {
-            image: 'data:image/svg+xml;base64,' + btoa(`
-              <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="16" cy="16" r="12" fill="#ef4444" stroke="#ffffff" stroke-width="3"/>
-                <circle cx="16" cy="16" r="6" fill="#ffffff"/>
-              </svg>
-            `),
-            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-            scale: 1.0
-          },
-          label: {
-            text: address.length > 30 ? address.substring(0, 30) + '...' : address,
-            font: '12pt sans-serif',
-            fillColor: Cesium.Color.WHITE,
-            outlineColor: Cesium.Color.BLACK,
-            outlineWidth: 2,
-            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-            pixelOffset: new Cesium.Cartesian2(0, -40),
-            show: true
-          }
-        });
-
-        viewerRef.current = viewer;
-
-        // Force a render to ensure the view updates
-        viewer.scene.requestRender();
-
-      } catch (err) {
-        console.error('Error initializing Cesium viewer:', err);
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        cesiumError = true; // Mark Cesium as having issues
-        setError(`3D map unavailable (${errorMessage}). Showing 2D map instead.`);
-      }
-    };
-
-    initializeViewer();
 
     // Cleanup function
     return () => {
-      window.removeEventListener('resize', resizeViewer);
-      if (viewerRef.current && !viewerRef.current.isDestroyed()) {
-        viewerRef.current.destroy();
+      if (leafletMapRef.current) {
+        leafletMapRef.current.remove();
+        leafletMapRef.current = null;
       }
     };
-  }, [coordinates, loading, error, retryCount]);
+  }, [address, retryCount]);
 
   const openInGoogleMaps = useCallback(() => {
     if (coordinates) {
@@ -318,8 +205,6 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
     setRetryCount(prev => prev + 1);
     setError(null);
     setLoading(true);
-    cesiumError = false;
-    cesiumLoaded = false;
   }, []);
 
   if (loading) {
@@ -330,7 +215,7 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
       >
         <div className="flex items-center gap-2 text-gray-500">
           <Loader2 className="h-4 w-4 animate-spin" />
-          <span>Loading 3D map...</span>
+          <span>Loading map...</span>
         </div>
       </div>
     );
@@ -342,11 +227,11 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
           <div className="flex items-center gap-2 text-amber-800 mb-2">
             <MapPin className="h-4 w-4" />
-            <span className="text-sm font-medium">3D Map Unavailable</span>
+            <span className="text-sm font-medium">Map Unavailable</span>
           </div>
           <p className="text-xs text-amber-700 mb-3">{error}</p>
           <div className="flex gap-2">
-            {retryCount < 2 && (
+            {retryCount < 3 && (
               <Button
                 variant="outline"
                 size="sm"
@@ -354,7 +239,7 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
                 className="flex items-center gap-2 text-amber-700 border-amber-300"
               >
                 <RotateCcw className="h-4 w-4" />
-                Retry 3D Map
+                Retry Map
               </Button>
             )}
             <Button
@@ -368,16 +253,42 @@ const Cesium3DMap: React.FC<{ address: string; height: string }> = ({
             </Button>
           </div>
         </div>
-        <SimpleMapFallback address={address} height={height} coordinates={coordinates} />
+        
+        {/* Simple fallback display */}
+        <div
+          className="w-full bg-gradient-to-br from-blue-50 to-green-50 rounded-lg border relative overflow-hidden"
+          style={{ height }}
+        >
+          {coordinates ? (
+            <iframe
+              src={`https://www.openstreetmap.org/export/embed.html?bbox=${coordinates.lng-0.01},${coordinates.lat-0.01},${coordinates.lng+0.01},${coordinates.lat+0.01}&layer=mapnik&marker=${coordinates.lat},${coordinates.lng}`}
+              style={{ width: '100%', height: '100%', border: 'none' }}
+              title="Property Location Map"
+              loading="lazy"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center text-gray-500">
+                <MapPin className="h-12 w-12 mx-auto mb-4 text-blue-500" />
+                <h3 className="text-lg font-medium mb-2">Location Map</h3>
+                <p className="text-sm text-gray-600 mb-4">Click below to view this location on Google Maps</p>
+                <Button onClick={openInGoogleMaps} variant="outline" size="sm">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Open in Google Maps
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
 
   return (
     <div
-      ref={cesiumContainerRef}
+      ref={mapRef}
       style={{ width: '100%', height }}
-      className="rounded-lg overflow-hidden"
+      className="rounded-lg overflow-hidden border"
     />
   );
 };
@@ -404,7 +315,7 @@ const Map: React.FC<MapProps> = ({
         </Button>
       </div>
 
-      <Cesium3DMap address={address} height={height} />
+      <SimpleMap address={address} height={height} />
     </div>
   );
 };
