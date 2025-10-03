@@ -385,7 +385,7 @@ export function QuadrilateralCropper({
   return (
     <div className={`relative bg-black ${className}`} ref={containerRef}>
       {/* Canvas for image and crop overlay */}
-      <div className="flex items-center justify-center min-h-[400px] p-4">
+      <div className="flex items-center justify-center min-h-[400px] p-4 relative">
         {/* Hidden image ensures reliable load events on mobile browsers */}
         <img
           src={src}
@@ -426,18 +426,58 @@ export function QuadrilateralCropper({
             setIsLoading(false)
           }}
         />
-        <canvas
-          ref={canvasRef}
-          className="max-w-full max-h-[70vh] cursor-crosshair touch-none"
-          onMouseDown={handleStart}
-          onMouseMove={handleMove}
-          onMouseUp={handleEnd}
-          onMouseLeave={handleEnd}
-          onTouchStart={handleStart}
-          onTouchMove={handleMove}
-          onTouchEnd={handleEnd}
-          onTouchCancel={handleEnd}
-        />
+        <div className="relative">
+          <canvas
+            ref={canvasRef}
+            className="max-w-full max-h-[70vh] cursor-crosshair touch-none"
+            onMouseDown={handleStart}
+            onMouseMove={handleMove}
+            onMouseUp={handleEnd}
+            onMouseLeave={handleEnd}
+            onTouchStart={handleStart}
+            onTouchMove={handleMove}
+            onTouchEnd={handleEnd}
+            onTouchCancel={handleEnd}
+          />
+
+          {/* Responsive Frame Overlay */}
+          {cropPoints.length === 4 && canvasRef.current && (
+            <div className="absolute inset-0 pointer-events-none">
+              {(() => {
+                const canvas = canvasRef.current!
+                // Calculate scale factors (displayed size / actual pixel size)
+                const scaleX = canvas.offsetWidth / canvas.width
+                const scaleY = canvas.offsetHeight / canvas.height
+
+                // Calculate bounding box of crop points in display coordinates
+                const minX = Math.min(...cropPoints.map(p => p.x)) * scaleX
+                const maxX = Math.max(...cropPoints.map(p => p.x)) * scaleX
+                const minY = Math.min(...cropPoints.map(p => p.y)) * scaleY
+                const maxY = Math.max(...cropPoints.map(p => p.y)) * scaleY
+                const width = maxX - minX
+                const height = maxY - minY
+
+                return (
+                  <div
+                    className="absolute"
+                    style={{
+                      left: `${minX}px`,
+                      top: `${minY}px`,
+                      width: `${width}px`,
+                      height: `${height}px`,
+                    }}
+                  >
+                    {/* Corner frames */}
+                    <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-white rounded-tl-xl"></div>
+                    <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-white rounded-tr-xl"></div>
+                    <div className="absolute bottom-0 left-0 w-8 h-8 border-l-2 border-b-2 border-white rounded-bl-xl"></div>
+                    <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-white rounded-br-xl"></div>
+                  </div>
+                )
+              })()}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Top controls */}

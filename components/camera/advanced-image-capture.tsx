@@ -669,7 +669,7 @@ export function AdvancedImageCapture({
 
           {/* Viewfinder Frame Overlay */}
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-            <div className="relative w-80 h-80 max-w-[80vw] max-h-[80vh]">
+            <div className="relative w-80 h-80 max-w-[80vw] max-h-[900vh]">
               {/* Corner frames */}
               <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-white rounded-tl-xl"></div>
               <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-white rounded-tr-xl"></div>
