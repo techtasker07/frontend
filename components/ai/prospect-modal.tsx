@@ -87,41 +87,41 @@ export function ProspectModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
-      <div className="flex items-start justify-center min-h-full p-4">
-        <div className="w-full max-w-2xl bg-white rounded-t-xl shadow-2xl">
+      <div className="flex items-start justify-center min-h-full p-4 sm:p-6">
+        <div className="w-full max-w-sm sm:max-w-lg md:max-w-xl bg-white rounded-t-xl shadow-2xl">
           {/* Modal Header */}
           <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-purple-200 rounded-t-xl">
-            <div className="flex items-center justify-between p-4">
+            <div className="flex items-center justify-between p-2 sm:p-3">
               <div className="flex items-center flex-1 min-w-0">
-                <Camera className="mr-3 h-6 w-6 text-purple-600 flex-shrink-0" />
-                <h1 className="text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent truncate">
+                <Camera className="mr-2 h-4 w-4 text-purple-600 flex-shrink-0" />
+                <h1 className="text-sm sm:text-base font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent truncate">
                   Smart Prospects Generated!
                 </h1>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   onClick={onRetakeImage}
-                  className="h-9 w-9 p-0 hover:bg-blue-100 flex-shrink-0"
+                  className="h-7 w-7 p-0 hover:bg-blue-100 flex-shrink-0"
                   title="Retake Image"
                 >
-                  <ArrowLeft className="h-4 w-4 text-blue-600" />
+                  <ArrowLeft className="h-3 w-3 text-blue-600" />
                 </Button>
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   onClick={onClose}
-                  className="h-9 w-9 p-0 hover:bg-red-100 flex-shrink-0"
+                  className="h-7 w-7 p-0 hover:bg-red-100 flex-shrink-0"
                   title="Close"
                 >
-                  <X className="h-4 w-4 text-red-600" />
+                  <X className="h-3 w-3 text-red-600" />
                 </Button>
               </div>
             </div>
 
             {/* Scroll Progress Indicator */}
-            <div className="h-1 bg-gray-200">
+            <div className="h-0.5 bg-gray-200">
               <div 
                 className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-300"
                 style={{ width: `${scrollProgress}%` }}
@@ -130,18 +130,18 @@ export function ProspectModal({
           </div>
 
           {/* Scrollable Content */}
-          <div 
+          <div
             ref={modalRef}
-            className="max-h-[80vh] overflow-y-auto overscroll-contain"
+            className="max-h-[70vh] sm:max-h-[80vh] overflow-y-auto overscroll-contain"
             onScroll={handleScroll}
           >
-            <div ref={contentRef} className="p-6 space-y-6">
+            <div ref={contentRef} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
               {/* Property Image with Category Badge */}
               <div className="relative">
                 <img
                   src={imageUrl || "/placeholder.svg"}
                   alt="Property preview"
-                  className="w-full h-48 object-cover rounded-lg shadow-lg"
+                  className="w-full h-32 sm:h-40 md:h-48 object-cover rounded-lg shadow-lg"
                 />
                 <div className="absolute bottom-3 left-3">
                   <Badge className="bg-green-500 text-white border-0 shadow-lg flex items-center">
@@ -200,7 +200,7 @@ export function ProspectModal({
                     >
                       <div className="flex w-full">
                         {/* Prospect Image */}
-                        <div className="w-20 h-20 flex-shrink-0">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">
                           <img
                             src={prospect.imageUrl || '/placeholder.svg'}
                             alt={prospect.title}
@@ -208,15 +208,15 @@ export function ProspectModal({
                           />
                         </div>
                         {/* Content */}
-                        <div className="flex-1 flex justify-between items-center p-4 min-w-0">
+                        <div className="flex-1 flex justify-between items-center p-3 sm:p-4 min-w-0">
                           <div className="flex-1 min-w-0 mr-3">
-                            <div className="font-semibold text-base mb-1 text-purple-800 group-hover:text-purple-900">
+                            <div className="font-semibold text-sm sm:text-base mb-1 text-purple-800 group-hover:text-purple-900">
                               {prospect.title}
                             </div>
-                            <div className="text-sm text-purple-600 mb-2">
-                              {prospect.description.substring(0, 80)}...
+                            <div className="text-xs sm:text-sm text-purple-600 mb-2">
+                              {prospect.description.substring(0, 60)}...
                             </div>
-                            <div className="flex items-center gap-2 text-sm">
+                            <div className="flex items-center gap-2 text-xs sm:text-sm">
                               <span className="text-purple-600">Investment:</span>
                               <Badge className="bg-purple-200 text-purple-800">
                                 {formatCompactCurrency(prospect.totalCost)}
@@ -229,7 +229,7 @@ export function ProspectModal({
                             </Badge>
                             {prospect.estimatedCost && (
                               <span className="text-xs text-purple-600">
-                                Initial: {formatCompactCurrency(prospect.estimatedCost)}
+                                Est: {formatCompactCurrency(prospect.estimatedCost)}
                               </span>
                             )}
                           </div>
@@ -275,21 +275,21 @@ export function ProspectModal({
               )}
 
               {/* Action Buttons at Bottom */}
-              <div className="flex gap-3 pt-6 border-t border-purple-200">
-                <Button 
+              <div className="flex gap-2 sm:gap-3 pt-4 sm:pt-6 border-t border-purple-200">
+                <Button
                   onClick={onRetakeImage}
                   variant="outline"
-                  className="border-purple-200 text-purple-600 hover:bg-purple-50 py-3"
+                  className="border-purple-200 text-purple-600 hover:bg-purple-50 py-2 sm:py-3 text-sm"
                 >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  <ArrowLeft className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                   Retake Image
                 </Button>
-                <Button 
+                <Button
                   onClick={onClose}
                   variant="outline"
-                  className="border-gray-300 text-gray-600 hover:bg-gray-50 py-3"
+                  className="border-gray-300 text-gray-600 hover:bg-gray-50 py-2 sm:py-3 text-sm"
                 >
-                  <Home className="mr-2 h-4 w-4" />
+                  <Home className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                   Dashboard
                 </Button>
               </div>

@@ -465,14 +465,6 @@ export function AdvancedImageCapture({
                 <div className="w-full h-full bg-white rounded-full opacity-90 animate-pulse drop-shadow-lg"></div>
                 <div className="absolute inset-0 bg-white/50 rounded-full animate-ping"></div>
               </div>
-              
-              {/* Grid overlay for rule of thirds */}
-              <div className="absolute inset-0 opacity-40">
-                <div className="absolute top-1/3 left-0 right-0 h-px bg-white"></div>
-                <div className="absolute top-2/3 left-0 right-0 h-px bg-white"></div>
-                <div className="absolute left-1/3 top-0 bottom-0 w-px bg-white"></div>
-                <div className="absolute left-2/3 top-0 bottom-0 w-px bg-white"></div>
-              </div>
             </div>
           </div>
             </div>

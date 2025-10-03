@@ -179,47 +179,6 @@ export function QuadrilateralCropper({
       // Reset composite operation
       ctx.globalCompositeOperation = 'source-over'
       
-      // Draw grid inside crop area if enabled
-      if (showGrid) {
-        ctx.save()
-        ctx.clip()
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'
-        ctx.lineWidth = 1
-        
-        // Rule of thirds grid
-        const [tl, tr, br, bl] = cropPoints
-        
-        // Vertical lines
-        for (let i = 1; i < 3; i++) {
-          const t = i / 3
-          const x1 = tl.x + (tr.x - tl.x) * t
-          const y1 = tl.y + (tr.y - tl.y) * t
-          const x2 = bl.x + (br.x - bl.x) * t
-          const y2 = bl.y + (br.y - bl.y) * t
-          
-          ctx.beginPath()
-          ctx.moveTo(x1, y1)
-          ctx.lineTo(x2, y2)
-          ctx.stroke()
-        }
-        
-        // Horizontal lines
-        for (let i = 1; i < 3; i++) {
-          const t = i / 3
-          const x1 = tl.x + (bl.x - tl.x) * t
-          const y1 = tl.y + (bl.y - tl.y) * t
-          const x2 = tr.x + (br.x - tr.x) * t
-          const y2 = tr.y + (br.y - tr.y) * t
-          
-          ctx.beginPath()
-          ctx.moveTo(x1, y1)
-          ctx.lineTo(x2, y2)
-          ctx.stroke()
-        }
-        
-        ctx.restore()
-      }
-      
       // Draw crop border
       ctx.strokeStyle = '#3b82f6'
       ctx.lineWidth = 2
@@ -250,7 +209,7 @@ export function QuadrilateralCropper({
         ctx.fillText(labels[index], point.x, point.y - HANDLE_SIZE)
       })
     }
-  }, [cropPoints, imageLoaded, showGrid, loadedImage])
+  }, [cropPoints, imageLoaded, loadedImage])
 
   // Redraw when crop points change
   useEffect(() => {
@@ -513,15 +472,6 @@ export function QuadrilateralCropper({
             {isDetecting ? 'Detecting...' : 'Auto-Detect'}
           </Button>
         </div>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowGrid(!showGrid)}
-          className="text-white hover:bg-white/10"
-        >
-          Grid
-        </Button>
       </div>
 
       {/* Enhanced Instructions */}
@@ -586,10 +536,6 @@ export function QuadrilateralCropper({
             <li className="flex items-center">
               <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
               Auto-perspective correction
-            </li>
-            <li className="flex items-center">
-              <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
-              Grid guides alignment
             </li>
             <li className="flex items-center">
               <span className="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
