@@ -644,7 +644,6 @@ export function AdvancedImageCapture({
                     className="w-12 h-16 rounded-full bg-black/50 text-white hover:bg-black/70 border-2 border-white/30 flex flex-col items-center justify-center"
                     title="Select from gallery"
                   >
-                    <Upload className="w-6 h-6" />
                     <span className="text-xs text-white mt-1">Pick</span>
                   </Button>
 
@@ -655,6 +654,7 @@ export function AdvancedImageCapture({
                     title="Capture with auto-detection"
                   >
                     <Target className="h-8 w-8 text-black" />
+                    <span className="text-xs text-black mt-1">Capture</span>
                   </Button>
                 </div>
               </div>
@@ -669,7 +669,7 @@ export function AdvancedImageCapture({
 
           {/* Viewfinder Frame Overlay */}
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-            <div className="relative w-80 h-60 max-w-[80vw] max-h-[70vh]">
+            <div className="relative w-80 h-60 max-w-[80vw] max-h-[60vh]">
               {/* Corner frames */}
               <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-white rounded-tl-x1"></div>
               <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-white rounded-tr-x1"></div>
