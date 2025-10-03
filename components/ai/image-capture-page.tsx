@@ -612,7 +612,6 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                     className="w-12 h-16 rounded-full bg-black/50 text-white hover:bg-black/70 border-2 border-white/30 flex flex-col items-center justify-center"
                     title="Select from gallery"
                   >
-                    <Upload className="h-6 w-6 text-white" />
                     <span className="text-xs text-white mt-1">Pick</span>
                   </Button>
 
@@ -624,6 +623,7 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                     title="Take photo"
                   >
                     <Camera className="h-10 w-10 text-black" />
+                    <span className="text-xs text-black mt-1">Capture</span>
                   </Button>
                 </div>
               </div>
