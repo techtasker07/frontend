@@ -58,16 +58,22 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
         <div className="flex-1 p-4 pb-6 flex items-center justify-center">
           <div className="max-w-2xl mx-auto w-full text-center space-y-6">
             <div className="space-y-6">
-              {/* Camera Icon with Animation */}
-              <div className="relative mx-auto w-24 h-24 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mb-8 shadow-xl">
+              {/* Camera Icon as a Button with Animation */}
+              <button
+                onClick={onStartAnalysis}
+                className="relative mx-auto w-24 h-24 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mb-8 shadow-xl focus:outline-none focus:ring-4 focus:ring-purple-300 transition transform hover:scale-105"
+              >
                 <Camera className="h-10 w-10 text-purple-600" />
+                
+                {/* Sparkle animation */}
                 <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-bounce">
                   <Sparkles className="h-3 w-3 text-white" />
                 </div>
-                {/* Pulse ring */}
+
+                {/* Pulse rings */}
                 <div className="absolute inset-0 rounded-full border-4 border-purple-300 animate-ping opacity-30"></div>
                 <div className="absolute inset-2 rounded-full border-2 border-purple-400 animate-pulse opacity-40"></div>
-              </div>
+              </button>
 
               {/* Feature Description */}
               <div className="space-y-4">
@@ -77,29 +83,16 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
                 <p className="text-slate-600 leading-relaxed text-md">
                   Analyze properties with AI
                 </p>
+                <Button
+                  onClick={onSkip}
+                  variant="outline"
+                  className="border-gray-300 text-gray-600 hover:bg-gray-50 py-4 px-6"
+                >
+                  <Home className="mr-2 h-5 w-5" />
+                  Skip
+                </Button>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Fixed bottom action area */}
-        <div className="sticky bottom-0 z-20 bg-white/95 backdrop-blur-sm border-t border-purple-200 p-4">
-          <div className="flex gap-4 max-w-2xl mx-auto">
-            <Button
-              onClick={onSkip}
-              variant="outline"
-              className="border-gray-300 text-gray-600 hover:bg-gray-50 py-4 px-6"
-            >
-              <Home className="mr-2 h-5 w-5" />
-              Skip
-            </Button>
-            <Button
-              onClick={onStartAnalysis}
-              className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 py-4 px-6 text-lg font-semibold"
-            >
-              <Camera className="mr-3 h-6 w-6" />
-              Start Smart Analysis
-            </Button>
           </div>
         </div>
       </div>

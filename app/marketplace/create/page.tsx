@@ -229,15 +229,9 @@ export default function CreateMarketplacePropertyPage() {
     }
 
     setLoading(true);
-    setError('');
     try {
-      console.log('Starting submission...');
-      const processedFormData = { ...formData };
-      if (processedFormData.price_period === 'sale') {
-        processedFormData.price_period = '';
-      }
       const submissionData = {
-        ...processedFormData,
+        ...formData,
         price: parseFloat(formData.price),
         area_sqft: formData.area_sqft ? parseInt(formData.area_sqft) : undefined,
         area_sqm: formData.area_sqm ? parseInt(formData.area_sqm) : undefined,
@@ -263,15 +257,12 @@ export default function CreateMarketplacePropertyPage() {
         caution_fee: formData.caution_fee ? parseFloat(formData.caution_fee) : undefined,
       };
 
-      console.log('Calling createMarketplaceListing with:', submissionData);
       const response = await supabaseApi.createMarketplaceListing(submissionData);
-      console.log('Response:', response);
 
       if (response.success) {
         toast.success('Property listed successfully!');
         router.push(`/marketplace/${response.data.id}`);
       } else {
-        console.error('Error creating listing:', response.error);
         setError(response.error || 'Failed to create listing');
       }
     } catch (error: any) {
@@ -441,7 +432,7 @@ export default function CreateMarketplacePropertyPage() {
               <SelectValue placeholder="Select period" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="sale">One-time (Sale)</SelectItem>
+              <SelectItem value="">One-time (Sale)</SelectItem>
               <SelectItem value="month">Monthly</SelectItem>
               <SelectItem value="year">Yearly</SelectItem>
               <SelectItem value="day">Daily</SelectItem>
@@ -721,7 +712,7 @@ export default function CreateMarketplacePropertyPage() {
                         <strong>Location:</strong> {formData.location}
                       </div>
                       <div>
-                        <strong>Price:</strong> {formData.currency} {parseInt(formData.price || '0').toLocaleString()}{formData.price_period && formData.price_period !== 'sale' ? ` / ${formData.price_period}` : ''}
+                        <strong>Price:</strong> {formData.currency} {parseInt(formData.price || '0').toLocaleString()}{formData.price_period && ` / ${formData.price_period}`}
                       </div>
                       <div>
                         <strong>Category:</strong> {categories.find(c => c.id === formData.category_id)?.name}
@@ -730,7 +721,7 @@ export default function CreateMarketplacePropertyPage() {
                         <strong>Property Type:</strong> {propertyTypes.find(p => p.id === formData.property_type_id)?.name}
                       </div>
                       <div>
-                        <strong>Listing Type:</strong> {listingTypes.find(l => l.id === formData.listing_type_id)?.name}
+                        <strong>Function:</strong> {listingTypes.find(l => l.id === formData.listing_type_id)?.name}
                       </div>
                       {virtualTourData && virtualTourData.scenes.length > 0 && (
                         <div>
