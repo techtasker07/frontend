@@ -1,8 +1,7 @@
 "use client"
 
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { 
   Camera, 
@@ -10,38 +9,23 @@ import {
   X, 
   ArrowLeft, 
   Home, 
-  CheckCircle, 
-  AlertCircle, 
-  User, 
-  RefreshCw, 
-  ThumbsUp, 
-  ThumbsDown, 
-  Crop, 
-  RotateCw,
-  Maximize2,
-  Zap,
   Target
 } from 'lucide-react'
-import { QuadrilateralCropper } from './quadrilateral-cropper'
 import { toast } from 'sonner'
 import { 
   captureFromCamera,
-  autoDetectSubject,
-  compressImage,
-  createImageFile,
-  loadOpenCV,
-  DetectedSubject,
-  Point
+  compressImage
 } from '@/lib/advanced-image-processing'
-import { identifyImageCategory, type IdentifiedCategory } from '@/lib/smartProspectGenerator'
+import { 
+  identifyImageCategory, 
+  type IdentifiedCategory, 
+  performSmartAnalysis, 
+  type SmartProspect 
+} from '@/lib/smartProspectGenerator'
+import { ProspectModal } from '@/components/ai/prospect-modal'
 
-// Confidence thresholds for identification results
-const CONFIDENCE_THRESHOLDS = {
-  HIGH: 0.85, // 85% and above is high confidence
-  MEDIUM: 0.60, // 60% to 85% is medium confidence
-  LOW: 0.40,    // Below 60% is low confidence
-  RETRY_ATTEMPTS: 2 // Maximum number of automatic retry attempts
-}
+// Invalid image categories that should be rejected
+const INVALID_CATEGORIES = ['human', 'material']
 
 interface AdvancedImageCaptureProps {
   onClose: () => void
@@ -58,43 +42,20 @@ export function AdvancedImageCapture({
   fromLogin = false, 
   autoStartCamera = false 
 }: AdvancedImageCaptureProps) {
-  const [capturedImage, setCapturedImage] = useState<string | null>(null)
-  const [imageFile, setImageFile] = useState<File | null>(null)
   const [isCapturing, setIsCapturing] = useState(false)
   const [stream, setStream] = useState<MediaStream | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [showProspectModal, setShowProspectModal] = useState(false)
+  const [prospects, setProspects] = useState<SmartProspect[]>([])
   const [identifiedCategory, setIdentifiedCategory] = useState<IdentifiedCategory | null>(null)
-  const [isIdentifying, setIsIdentifying] = useState(false)
-  const [verificationProgress, setVerificationProgress] = useState(0)
-  const [isHumanImage, setIsHumanImage] = useState(false)
-  const [identificationError, setIdentificationError] = useState<string | null>(null)
-  const [retryCount, setRetryCount] = useState(0)
-  const [confidenceLevel, setConfidenceLevel] = useState<'high' | 'medium' | 'low' | null>(null)
-  const [showFeedback, setShowFeedback] = useState(false)
-  const [feedbackGiven, setFeedbackGiven] = useState(false)
-  const [isCroppingMode, setIsCroppingMode] = useState<boolean>(false)
-  const [detectedSubject, setDetectedSubject] = useState<DetectedSubject | null>(null)
-  const [isDetectingSubject, setIsDetectingSubject] = useState(false)
-  const [isCompressing, setIsCompressing] = useState(false)
-  const [compressionProgress, setCompressionProgress] = useState(0)
-  const [openCVLoaded, setOpenCVLoaded] = useState(false)
+  const [propertyDetails, setPropertyDetails] = useState<any>(null)
+  const [processedImageUrl, setProcessedImageUrl] = useState<string>('')
   
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Load OpenCV on component mount
-  useEffect(() => {
-    loadOpenCV().then(loaded => {
-      setOpenCVLoaded(loaded)
-      if (loaded) {
-        toast.success('Advanced image processing enabled!')
-      } else {
-        toast.info('Using basic image processing (OpenCV unavailable)')
-      }
-    }).catch(console.error)
-  }, [])
-
-  // Enhanced camera startup with better settings
+  // Simplified camera startup
   const startCamera = async () => {
     try {
       setIsCapturing(true)
@@ -109,7 +70,7 @@ export function AdvancedImageCapture({
         videoRef.current.srcObject = mediaStream
       }
       
-      toast.success('Camera ready with enhanced settings!')
+      toast.success('Camera ready!')
     } catch (error) {
       console.error('Camera access failed:', error)
       toast.error("Unable to access camera. Please check permissions.")
@@ -125,7 +86,7 @@ export function AdvancedImageCapture({
     setIsCapturing(false)
   }
 
-  // Enhanced photo capture with auto-detection
+  // Simplified photo capture with instant processing
   const capturePhoto = async () => {
     if (videoRef.current && canvasRef.current) {
       const canvas = canvasRef.current
@@ -155,15 +116,12 @@ export function AdvancedImageCapture({
           })
           
           const file = new File([blob], `prospect-${Date.now()}.jpg`, { type: "image/jpeg" })
-          const imageUrl = URL.createObjectURL(blob)
           
-          setCapturedImage(imageUrl)
-          setImageFile(file)
           stopCamera()
+          console.log('📷 Photo captured, processing instantly...')
           
-          console.log('📷 Photo captured, starting auto-detection pipeline')
-          // Auto-detect subject immediately
-          await performAutoDetection(imageUrl)
+          // Process image instantly and navigate to prospects
+          await processImageInstantly(file)
           
         } catch (error) {
           console.error('Photo capture failed:', error)
@@ -176,310 +134,127 @@ export function AdvancedImageCapture({
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file && file.type.startsWith("image/")) {
-      const imageUrl = URL.createObjectURL(file)
-      setCapturedImage(imageUrl)
-      setImageFile(file)
+      console.log('📁 File selected, processing instantly...')
       
-      console.log('📁 File selected, starting auto-detection pipeline')
-      // Auto-detect subject in uploaded file
-      await performAutoDetection(imageUrl)
-      
+      // Process uploaded image instantly
+      await processImageInstantly(file)
     } else {
       toast.error("Please select a valid image file.")
     }
   }
 
-  // Perform auto-detection on captured/uploaded image
-  const performAutoDetection = async (imageUrl: string) => {
-    console.log('🔍 AdvancedImageCapture: Starting auto-detection with URL:', imageUrl)
-    setIsDetectingSubject(true)
-    try {
-      const img = new Image()
-      img.crossOrigin = 'anonymous'
-      
-      await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error('Image loading timeout for auto-detection'))
-        }, 10000) // 10 second timeout
-
-        img.onload = () => {
-          clearTimeout(timeout)
-          console.log('📸 Image loaded for auto-detection:', img.naturalWidth, 'x', img.naturalHeight)
-          resolve(img)
-        }
-        img.onerror = (e) => {
-          clearTimeout(timeout)
-          console.error('❌ Image failed to load for auto-detection:', e)
-          reject(e)
-        }
-        img.src = imageUrl
-      })
-
-      console.log('🤖 Running auto-detection...')
-      const detected = await autoDetectSubject(img)
-      
-      if (detected) {
-        console.log('✅ Auto-detection successful:', detected)
-        setDetectedSubject(detected)
-        toast.success(`Auto-detected ${detected.type} (${Math.round(detected.confidence * 100)}% confidence)`)
-        
-        // If confidence is high enough, go directly to cropping
-        if (detected.confidence >= CONFIDENCE_THRESHOLDS.HIGH) {
-          console.log('🎯 High confidence, entering crop mode immediately')
-          setIsCroppingMode(true)
-        } else {
-          // Show options for medium/low confidence
-          console.log('⚠️ Medium/low confidence, delaying crop mode')
-          toast.info("Detection confidence is moderate. You can adjust the crop manually.")
-          setTimeout(() => setIsCroppingMode(true), 2000)
-        }
-      } else {
-        console.log('❌ No subject detected')
-        toast.info("No subject detected. Manual crop adjustment available.")
-        setIsCroppingMode(true)
-      }
-    } catch (error) {
-      console.error('❌ Auto-detection failed:', error)
-      toast.warning("Auto-detection failed. Proceeding with manual crop.")
-      setIsCroppingMode(true)
-    } finally {
-      setIsDetectingSubject(false)
-    }
-  }
-
-  // Enhanced image identification with retry logic
-  const identifyImage = async (file: File, isRetry: boolean = false) => {
-    if (!isRetry) {
-      setIdentificationError(null)
-      setRetryCount(0)
-      setConfidenceLevel(null)
-      setShowFeedback(false)
-      setFeedbackGiven(false)
-    }
-    
-    setIsIdentifying(true)
-    setVerificationProgress(0)
-    
-    // Simulate progress updates
-    const progressInterval = setInterval(() => {
-      setVerificationProgress(prev => {
-        if (prev >= 90) {
-          clearInterval(progressInterval)
-          return prev
-        }
-        return prev + 10
-      })
-    }, 300)
+  // Instant image processing function with complete smart analysis
+  const processImageInstantly = async (file: File) => {
+    setIsProcessing(true)
     
     try {
-      const category = await identifyImageCategory(file)
-      setIdentifiedCategory(category)
+      console.log('🚀 Starting instant processing for:', file.name)
       
-      // Determine confidence level
-      if (category.confidence >= CONFIDENCE_THRESHOLDS.HIGH) {
-        setConfidenceLevel('high')
-      } else if (category.confidence >= CONFIDENCE_THRESHOLDS.MEDIUM) {
-        setConfidenceLevel('medium')
-      } else {
-        setConfidenceLevel('low')
+      // Compress image if needed
+      let processedFile = file
+      if (file.size > 2 * 1024 * 1024) {
+        console.log('🗜️ Compressing large image...')
+        toast.info('Optimizing image...')
+        processedFile = await compressImage(file, { 
+          maxSizeMB: 1.5,
+          maxWidthOrHeight: 2048,
+          quality: 0.85
+        })
       }
+      
+      // Create image URL for display
+      const imageUrl = URL.createObjectURL(processedFile)
+      setProcessedImageUrl(imageUrl)
+      
+      // Perform complete smart analysis
+      console.log('🔍 Performing complete smart analysis...')
+      toast.info('Generating smart prospects...')
+      
+      const analysisResult = await performSmartAnalysis(processedFile)
+      console.log('✅ Analysis complete:', analysisResult)
       
       // Check if this is a human image
-      if (category.name === 'human') {
-        setIsHumanImage(true)
-        toast.error("Human image detected. Please upload a property image instead.", {
+      if (analysisResult.identifiedCategory.name === 'human') {
+        console.log('❌ Human image detected')
+        toast.error('HUMAN image detected. Please capture a property image instead.', {
           duration: 5000
         })
-      } else {
-        setIsHumanImage(false)
-        // Show appropriate notification based on confidence
-        if (category.confidence >= CONFIDENCE_THRESHOLDS.HIGH) {
-          toast.success(`✨ Image identified as ${category.name.toUpperCase()} (${Math.round(category.confidence * 100)}% confidence)`, {
-            duration: 3000
-          })
-        } else if (category.confidence >= CONFIDENCE_THRESHOLDS.MEDIUM) {
-          toast.info(`🔍 Image appears to be ${category.name.toUpperCase()} (${Math.round(category.confidence * 100)}% confidence)`, {
-            duration: 4000
-          })
-          setTimeout(() => setShowFeedback(true), 1000)
-        } else {
-          toast.warning(`⚠️ Low confidence identification: ${category.name.toUpperCase()} (${Math.round(category.confidence * 100)}%)`, {
-            duration: 4000
-          })
-          setTimeout(() => setShowFeedback(true), 1000)
-        }
-      }
-    } catch (error) {
-      console.error('Failed to identify image:', error)
-      
-      let errorMessage = 'Failed to identify image category'
-      
-      if (error instanceof Error) {
-        if (error.message.includes('network')) {
-          errorMessage = 'Network error. Please check your connection and try again.'
-        } else if (error.message.includes('timeout')) {
-          errorMessage = 'Request timed out. Please try again.'
-        }
-      }
-      
-      setIdentificationError(errorMessage)
-      
-      // Auto-retry for certain error types
-      if (retryCount < CONFIDENCE_THRESHOLDS.RETRY_ATTEMPTS && !isRetry) {
-        toast.info("Retrying image identification...", { duration: 2000 })
-        setRetryCount(prev => prev + 1)
-        setTimeout(() => {
-          identifyImage(file, true)
-        }, 2000)
+        URL.revokeObjectURL(imageUrl)
         return
-      } else {
-        toast.error(errorMessage)
       }
-    } finally {
-      clearInterval(progressInterval)
-      setVerificationProgress(100)
       
-      setTimeout(() => {
-        if (!isHumanImage && !identificationError && confidenceLevel === 'high') {
-          setVerificationProgress(0)
-        }
-      }, 1000)
-      
-      setIsIdentifying(false)
-    }
-  }
-
-  // Handle user feedback on identification
-  const handleFeedback = (isCorrect: boolean) => {
-    if (isCorrect) {
-      toast.success("Thanks for confirming! This helps us improve.", { duration: 3000 })
-    } else {
-      toast.info("Thanks for your feedback. We'll work on improving our identification.", { duration: 3000 })
-    }
-    
-    console.log("User feedback on identification:", {
-      category: identifiedCategory?.name,
-      confidence: identifiedCategory?.confidence,
-      userFeedback: isCorrect ? "correct" : "incorrect"
-    })
-    
-    setFeedbackGiven(true)
-    setTimeout(() => {
-      setShowFeedback(false)
-    }, 3000)
-  }
-
-  // Handle crop completion with compression
-  const handleCropComplete = async (croppedBlob: Blob) => {
-    setIsCompressing(true)
-    setCompressionProgress(0)
-    
-    try {
-      // Convert blob to file
-      const croppedFile = new File([croppedBlob], `cropped-${Date.now()}.jpg`, { type: "image/jpeg" })
-      
-      // Simulate compression progress
-      const progressInterval = setInterval(() => {
-        setCompressionProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval)
-            return prev
-          }
-          return prev + 20
+      // Check if image category is material
+      if (analysisResult.identifiedCategory.name === 'material') {
+        console.log('❌ Material image detected')
+        toast.error('MATERIAL image detected. Please capture a property image instead.', {
+          duration: 5000
         })
-      }, 200)
-      
-      // Compress the cropped image
-      const compressedFile = await compressImage(croppedFile, {
-        maxSizeMB: 1,
-        maxWidthOrHeight: 1920,
-        quality: 0.8
-      })
-      
-      clearInterval(progressInterval)
-      setCompressionProgress(100)
-      
-      // Clean up old URLs
-      if (capturedImage) {
-        URL.revokeObjectURL(capturedImage)
+        URL.revokeObjectURL(imageUrl)
+        return
       }
       
-      // Create new URL for display
-      const compressedImageUrl = URL.createObjectURL(compressedFile)
-      setCapturedImage(compressedImageUrl)
-      setImageFile(compressedFile)
-      setIsCroppingMode(false)
+      // Valid property image - set up modal data
+      setIdentifiedCategory(analysisResult.identifiedCategory)
+      setPropertyDetails(analysisResult.propertyDetails)
+      setProspects(analysisResult.smartProspects || [])
       
-      // Identify the processed image
-      await identifyImage(compressedFile)
+      console.log('✅ Valid property image, showing prospects modal...')
+      toast.success(`Smart prospects generated for ${analysisResult.identifiedCategory.name.toUpperCase()}!`)
       
-      toast.success(`Image processed! Size reduced to ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`)
+      // Show prospects modal instantly
+      setShowProspectModal(true)
       
     } catch (error) {
-      console.error('Image processing failed:', error)
-      toast.error('Failed to process image')
+      console.error('💥 Instant processing failed:', error)
+      toast.error('Failed to process image. Please try again.')
+      if (processedImageUrl) {
+        URL.revokeObjectURL(processedImageUrl)
+      }
     } finally {
-      setIsCompressing(false)
-      setCompressionProgress(0)
+      setIsProcessing(false)
     }
   }
 
-  const handleSubmit = async () => {
-    if (!imageFile) {
-      toast.error("Please capture/select an image.")
-      return
-    }
-    
-    // Prevent submission if human image is detected
-    if (isHumanImage) {
-      toast.error("Cannot proceed with a human image. Please retake or upload a property image.")
-      return
-    }
 
-    // Final compression if not already done
-    let finalFile = imageFile
-    if (finalFile.size > 2 * 1024 * 1024) { // If larger than 2MB
-      toast.info("Optimizing image for upload...")
-      finalFile = await compressImage(finalFile, { maxSizeMB: 1.5 })
-    }
-
-    onImageCaptured(finalFile, identifiedCategory || undefined)
-  }
-
-  const handleSkipCrop = async () => {
-    if (imageFile) {
-      setIsCroppingMode(false)
-      await identifyImage(imageFile)
+  // Modal handlers
+  const handleCloseModal = () => {
+    setShowProspectModal(false)
+    if (processedImageUrl) {
+      URL.revokeObjectURL(processedImageUrl)
+      setProcessedImageUrl('')
     }
   }
 
   const handleRetakeImage = () => {
-    setCapturedImage(null)
-    setImageFile(null)
-    setIsCroppingMode(false)
-    setDetectedSubject(null)
-    if (capturedImage) {
-      URL.revokeObjectURL(capturedImage)
+    handleCloseModal()
+    // Reset all state
+    setProspects([])
+    setIdentifiedCategory(null)
+    setPropertyDetails(null)
+  }
+
+  const handleSelectProspect = (prospect: SmartProspect) => {
+    console.log('🎯 Prospect selected:', prospect.title)
+    // Pass the prospect data along with the original file data
+    if (identifiedCategory) {
+      onImageCaptured(new File([], 'processed-image.jpg'), identifiedCategory)
     }
+    handleCloseModal()
+    toast.success(`Selected: ${prospect.title}`)
   }
 
   const handleClose = () => {
     stopCamera()
-    setCapturedImage(null)
-    setImageFile(null)
-    setIsCroppingMode(false)
-    if (capturedImage) {
-      URL.revokeObjectURL(capturedImage)
-    }
+    handleCloseModal()
     onClose()
   }
 
   // Auto-start camera if requested
   useEffect(() => {
-    if (autoStartCamera && !isCapturing && !capturedImage) {
+    if (autoStartCamera && !isCapturing) {
       startCamera()
     }
-  }, [autoStartCamera])
+  }, [autoStartCamera, isCapturing])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-purple-50 to-pink-50 relative overflow-x-hidden">
@@ -507,14 +282,8 @@ export function AdvancedImageCapture({
               )}
               <Target className="mr-3 h-6 w-6 text-purple-600 flex-shrink-0" />
               <h1 className={`text-lg sm:text-xl font-bold truncate ${fromLogin ? 'bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent' : 'text-gray-800'}`}>
-                Advanced Property Capture
+                Smart Property Capture
               </h1>
-              {openCVLoaded && (
-                <Badge className="ml-3 bg-green-100 text-green-800 border-green-200">
-                  <Zap className="w-3 h-3 mr-1" />
-                  AI Enhanced
-                </Badge>
-              )}
             </div>
             <Button 
               variant="ghost" 
@@ -565,31 +334,33 @@ export function AdvancedImageCapture({
             aria-label="Select image file"
           />
 
-          {!capturedImage && !isCapturing && (
+          {!isCapturing && !isProcessing && (
             <div className="space-y-6">
               <div className="text-center">
                 <p className="text-muted-foreground mb-6">
-                  Capture property images with AI-powered auto-detection, quadrilateral cropping, and perspective correction!
+                  Capture property images with instant AI-powered processing!
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                   <Button
                     onClick={startCamera}
+                    disabled={isProcessing}
                     className="flex flex-col items-center p-8 h-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
                   >
                     <Camera className="h-12 w-12 mb-3" />
                     <span className="text-lg font-semibold">Smart Capture</span>
-                    <span className="text-sm opacity-90">AI-powered camera</span>
+                    <span className="text-sm opacity-90">Instant processing</span>
                   </Button>
 
                   <Button
                     variant="outline"
                     onClick={() => fileInputRef.current?.click()}
+                    disabled={isProcessing}
                     className="flex flex-col items-center p-8 h-auto border-purple-300 hover:bg-purple-50 hover:border-purple-400"
                   >
                     <Upload className="h-12 w-12 mb-3 text-purple-600" />
                     <span className="text-lg font-semibold text-purple-800">Select & Process</span>
-                    <span className="text-sm text-purple-600">Auto-enhance images</span>
+                    <span className="text-sm text-purple-600">Instant analysis</span>
                   </Button>
                 </div>
               </div>
@@ -598,24 +369,24 @@ export function AdvancedImageCapture({
                 <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-xl border border-purple-200 shadow-sm">
                   <h4 className="font-semibold text-purple-800 mb-3 flex items-center">
                     <Target className="mr-2 h-4 w-4" />
-                    Enhanced Features:
+                    Smart Features:
                   </h4>
                   <ul className="text-sm text-purple-700 space-y-2">
                     <li className="flex items-center">
                       <span className="w-2 h-2 bg-purple-500 rounded-full mr-3"></span>
-                      Auto-detect building facades and subjects
+                      Instant category detection
                     </li>
                     <li className="flex items-center">
                       <span className="w-2 h-2 bg-pink-500 rounded-full mr-3"></span>
-                      Quadrilateral cropping with perspective correction
+                      Automatic image compression
                     </li>
                     <li className="flex items-center">
                       <span className="w-2 h-2 bg-purple-500 rounded-full mr-3"></span>
-                      On-device compression for optimized uploads
+                      Human/material image filtering
                     </li>
                     <li className="flex items-center">
                       <span className="w-2 h-2 bg-pink-500 rounded-full mr-3"></span>
-                      Smart analysis with enhanced accuracy
+                      Direct prospect generation
                     </li>
                   </ul>
                 </div>
@@ -634,197 +405,101 @@ export function AdvancedImageCapture({
               />
               <canvas ref={canvasRef} className="hidden" />
 
-              {/* Camera controls overlay - Enhanced */}
-              <div className="absolute bottom-8 left-0 right-0 flex justify-center items-center">
-                <div className="flex items-center gap-8">
+              {/* Camera controls overlay - Enhanced with better visibility */}
+              <div className="absolute bottom-8 left-0 right-0 flex justify-center items-center z-20">
+                <div className="flex items-center gap-6">
                   <Button
                     onClick={() => fileInputRef.current?.click()}
                     variant="ghost"
                     size="lg"
-                    className="w-12 h-16 rounded-full bg-black/50 text-white hover:bg-black/70 border-2 border-white/30 flex flex-col items-center justify-center"
+                    className="w-14 h-14 rounded-full bg-black/60 text-white hover:bg-black/80 border-2 border-white/40 flex flex-col items-center justify-center backdrop-blur-sm"
                     title="Select from gallery"
                   >
-                    <span className="text-xs text-white mt-1">Pick</span>
+                    <Upload className="w-5 h-5" />
                   </Button>
 
                   <Button
                     onClick={capturePhoto}
                     size="lg"
-                    className="w-16 h-16 rounded-full bg-white text-black hover:bg-gray-200 border-4 border-white shadow-lg flex items-center justify-center"
+                    className="w-20 h-20 rounded-full bg-white text-black hover:bg-gray-100 border-4 border-white shadow-2xl flex items-center justify-center relative overflow-hidden"
                     title="Capture with auto-detection"
                   >
-                    <Target className="h-8 w-8 text-black" />
-                    <span className="text-xs text-black mt-1">Capture</span>
+                    <div className="absolute inset-2 rounded-full border-2 border-black/20"></div>
+                    <Camera className="h-8 w-8 text-black" />
+                  </Button>
+                  
+                  <Button
+                    onClick={stopCamera}
+                    variant="ghost"
+                    size="lg"
+                    className="w-14 h-14 rounded-full bg-black/60 text-white hover:bg-black/80 border-2 border-white/40 flex flex-col items-center justify-center backdrop-blur-sm"
+                    title="Close camera"
+                  >
+                    <X className="w-5 h-5" />
                   </Button>
                 </div>
               </div>
 
-          {/* Enhanced top hint */}
-          <div className="absolute top-8 left-0 right-0 flex justify-center">
-            <div className="bg-black/70 text-white px-6 py-3 rounded-full text-sm flex items-center">
-              <Target className="w-4 h-4 mr-2" />
-              Position property in frame • Auto-detection enabled
+          {/* Enhanced top hint with better positioning */}
+          <div className="absolute top-8 left-0 right-0 flex justify-center z-20">
+            <div className="bg-black/80 text-white px-6 py-3 rounded-full text-sm flex items-center backdrop-blur-sm border border-white/20">
+              <Target className="w-4 h-4 mr-2 animate-pulse" />
+              Position property within frame • AI detection active
             </div>
           </div>
 
           {/* Viewfinder Frame Overlay */}
-          <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-            <div className="relative w-80 h-80 max-w-[80vw] max-h-[900vh]">
-              {/* Corner frames */}
-              <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-white rounded-tl-xl"></div>
-              <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-white rounded-tr-xl"></div>
-              <div className="absolute bottom-0 left-0 w-8 h-8 border-l-2 border-b-2 border-white rounded-bl-xl"></div>
-              <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-white rounded-br-xl"></div>
+          <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
+            <div className="relative w-80 h-80 max-w-[85vw] max-h-[60vh]">
+              {/* Semi-transparent background overlay */}
+              <div className="absolute inset-0 border-2 border-white/30 bg-transparent rounded-lg"></div>
+              
+              {/* Corner frames - Enhanced visibility */}
+              <div className="absolute -top-1 -left-1 w-12 h-12 border-l-4 border-t-4 border-white drop-shadow-lg rounded-tl-xl"></div>
+              <div className="absolute -top-1 -right-1 w-12 h-12 border-r-4 border-t-4 border-white drop-shadow-lg rounded-tr-xl"></div>
+              <div className="absolute -bottom-1 -left-1 w-12 h-12 border-l-4 border-b-4 border-white drop-shadow-lg rounded-bl-xl"></div>
+              <div className="absolute -bottom-1 -right-1 w-12 h-12 border-r-4 border-b-4 border-white drop-shadow-lg rounded-br-xl"></div>
 
-              {/* Focus indicator */}
-              <div className="absolute top-1/2 left-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-full opacity-75 animate-pulse"></div>
+              {/* Focus indicator - Enhanced */}
+              <div className="absolute top-1/2 left-1/2 w-3 h-3 -translate-x-1/2 -translate-y-1/2">
+                <div className="w-full h-full bg-white rounded-full opacity-90 animate-pulse drop-shadow-lg"></div>
+                <div className="absolute inset-0 bg-white/50 rounded-full animate-ping"></div>
+              </div>
+              
+              {/* Grid overlay for rule of thirds */}
+              <div className="absolute inset-0 opacity-40">
+                <div className="absolute top-1/3 left-0 right-0 h-px bg-white"></div>
+                <div className="absolute top-2/3 left-0 right-0 h-px bg-white"></div>
+                <div className="absolute left-1/3 top-0 bottom-0 w-px bg-white"></div>
+                <div className="absolute left-2/3 top-0 bottom-0 w-px bg-white"></div>
+              </div>
             </div>
           </div>
             </div>
           )}
 
-          {/* Cropping mode */}
-          {isCroppingMode && capturedImage && (
-            <div className="fixed inset-0 z-50 bg-black flex flex-col">
-              <QuadrilateralCropper
-                src={capturedImage}
-                onCrop={handleCropComplete}
-                onCancel={handleSkipCrop}
-                detectedSubject={detectedSubject}
-              />
-            </div>
-          )}
-
-          {/* Auto-detection progress */}
-          {isDetectingSubject && (
-            <div className="space-y-2 mb-6">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-purple-700 font-medium flex items-center">
-                  <Target className="w-4 h-4 mr-2" />
-                  Auto-detecting subject...
-                </p>
-              </div>
-              <Progress value={75} className="h-2 bg-purple-100" />
-            </div>
-          )}
-
-          {/* Compression progress */}
-          {isCompressing && (
-            <div className="space-y-2 mb-6">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-blue-700 font-medium">Optimizing image...</p>
-                <p className="text-xs text-blue-600">{compressionProgress}%</p>
-              </div>
-              <Progress value={compressionProgress} className="h-2 bg-blue-100" />
-            </div>
-          )}
-
-          {/* Image verification progress */}
-          {isIdentifying && (
-            <div className="space-y-2 mb-6">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-purple-700 font-medium">Verifying image...</p>
-                <p className="text-xs text-purple-600">{verificationProgress}%</p>
-              </div>
-              <Progress value={verificationProgress} className="h-2 bg-purple-100" />
-            </div>
-          )}
-          
-          {/* Error state with retry option */}
-          {identificationError && !isIdentifying && (
-            <div className="bg-red-50 p-4 rounded-lg border border-red-200 mb-6">
-              <div className="flex items-start">
-                <AlertCircle className="h-5 w-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="text-sm text-red-800 font-medium mb-2">{identificationError}</p>
-                  <Button 
-                    onClick={() => imageFile && identifyImage(imageFile, true)}
-                    size="sm"
-                    className="bg-red-100 hover:bg-red-200 text-red-800 border-0"
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Retry Identification
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Preview with enhanced features */}
-          {capturedImage && !isCroppingMode && (
+          {/* Processing indicator */}
+          {isProcessing && (
             <div className="space-y-6">
-              <div className="relative rounded-lg overflow-hidden shadow-xl">
-                <img
-                  src={capturedImage}
-                  alt="Captured property"
-                  className="w-full rounded-lg max-h-96 object-cover"
-                />
-                {identifiedCategory && !isIdentifying && (
-                  <div className="absolute top-3 left-3 flex gap-2">
-                    <Badge 
-                      className={`${isHumanImage ? 'bg-red-500' : 
-                        confidenceLevel === 'high' ? 'bg-green-500' : 
-                        confidenceLevel === 'medium' ? 'bg-yellow-500' : 'bg-orange-500'} 
-                        text-white border-0 shadow-lg flex items-center`}
-                    >
-                      {isHumanImage ? (
-                        <User className="w-3 h-3 mr-1" />
-                      ) : confidenceLevel === 'high' ? (
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                      ) : (
-                        <AlertCircle className="w-3 h-3 mr-1" />
-                      )}
-                      {identifiedCategory.name.toUpperCase()} ({Math.round(identifiedCategory.confidence * 100)}%)
-                    </Badge>
-                    
-                    {detectedSubject && (
-                      <Badge className="bg-blue-500 text-white border-0 shadow-lg flex items-center">
-                        <Target className="w-3 h-3 mr-1" />
-                        Auto-detected
-                      </Badge>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Rest of the preview UI remains the same but with enhanced messaging */}
-              {!isHumanImage && identifiedCategory && !isIdentifying && !identificationError && (
-                <div className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200 p-4 rounded-lg border flex items-start">
-                  <CheckCircle className="h-5 w-5 text-green-600 mr-3 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-green-800">
-                      ✅ Advanced processing complete!
-                    </p>
-                    <p className="text-xs text-green-700">
-                      Image optimized with auto-detection, perspective correction, and compression. Ready for AI analysis!
-                    </p>
-                  </div>
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="w-16 h-16 mb-4">
+                  <Target className="w-full h-full text-purple-600 animate-pulse" />
                 </div>
-              )}
-
-              <div className="flex gap-3">
-                <Button 
-                  onClick={handleSubmit} 
-                  disabled={isHumanImage || isIdentifying || !!identificationError}
-                  className={`flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 py-3 text-base font-semibold ${(isHumanImage || !!identificationError) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  <Target className="mr-2 h-4 w-4" />
-                  Analyze Property
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={handleRetakeImage}
-                  className="border-purple-200 text-purple-600 hover:bg-purple-50 py-3"
-                >
-                  <RotateCw className="mr-2 h-4 w-4" />
-                  Retake
-                </Button>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                  Processing Image...
+                </h3>
+                <p className="text-sm text-gray-600 mb-4 text-center">
+                  Analyzing image category and optimizing for AI processing
+                </p>
+                <div className="w-full max-w-xs">
+                  <Progress value={75} className="h-2 bg-purple-100" />
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Enhanced bottom action area */}
+        {/* Simplified bottom action area */}
         <div className="sticky bottom-0 z-20 bg-white/95 backdrop-blur-sm border-t border-purple-200 p-4">
           <div className="flex gap-3 max-w-2xl mx-auto">
             {fromLogin && onBack && (
@@ -845,15 +520,6 @@ export function AdvancedImageCapture({
               <Home className="mr-2 h-4 w-4" />
               Dashboard
             </Button>
-            {capturedImage && !isHumanImage && !identificationError && (
-              <Button 
-                onClick={handleSubmit} 
-                className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 py-3 text-base font-semibold"
-              >
-                <Zap className="mr-2 h-4 w-4" />
-                Continue with AI
-              </Button>
-            )}
           </div>
         </div>
       </div>
@@ -864,6 +530,20 @@ export function AdvancedImageCapture({
           animation-delay: 2s;
         }
       `}</style>
+
+      {/* Prospect Modal - Displays instantly when processing is complete */}
+      {showProspectModal && identifiedCategory && propertyDetails && (
+        <ProspectModal
+          isOpen={showProspectModal}
+          onClose={handleCloseModal}
+          onRetakeImage={handleRetakeImage}
+          onSelectProspect={handleSelectProspect}
+          imageUrl={processedImageUrl}
+          prospects={prospects}
+          identifiedCategory={identifiedCategory}
+          propertyDetails={propertyDetails}
+        />
+      )}
     </div>
   )
 }

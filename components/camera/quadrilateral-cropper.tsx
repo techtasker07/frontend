@@ -440,7 +440,7 @@ export function QuadrilateralCropper({
             onTouchCancel={handleEnd}
           />
 
-          {/* Responsive Frame Overlay */}
+          {/* Enhanced Responsive Frame Overlay */}
           {cropPoints.length === 4 && canvasRef.current && (
             <div className="absolute inset-0 pointer-events-none">
               {(() => {
@@ -458,21 +458,29 @@ export function QuadrilateralCropper({
                 const height = maxY - minY
 
                 return (
-                  <div
-                    className="absolute"
-                    style={{
-                      left: `${minX}px`,
-                      top: `${minY}px`,
-                      width: `${width}px`,
-                      height: `${height}px`,
-                    }}
-                  >
-                    {/* Corner frames */}
-                    <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-white rounded-tl-xl"></div>
-                    <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-white rounded-tr-xl"></div>
-                    <div className="absolute bottom-0 left-0 w-8 h-8 border-l-2 border-b-2 border-white rounded-bl-xl"></div>
-                    <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-white rounded-br-xl"></div>
-                  </div>
+                  <>
+                    {/* Crop area highlight */}
+                    <div
+                      className="absolute border-2 border-white/60 bg-white/5 backdrop-blur-sm"
+                      style={{
+                        left: `${minX}px`,
+                        top: `${minY}px`,
+                        width: `${width}px`,
+                        height: `${height}px`,
+                      }}
+                    >
+                      {/* Corner frames - Enhanced */}
+                      <div className="absolute -top-2 -left-2 w-12 h-12 border-l-4 border-t-4 border-white drop-shadow-lg rounded-tl-xl bg-blue-600/20"></div>
+                      <div className="absolute -top-2 -right-2 w-12 h-12 border-r-4 border-t-4 border-white drop-shadow-lg rounded-tr-xl bg-blue-600/20"></div>
+                      <div className="absolute -bottom-2 -left-2 w-12 h-12 border-l-4 border-b-4 border-white drop-shadow-lg rounded-bl-xl bg-blue-600/20"></div>
+                      <div className="absolute -bottom-2 -right-2 w-12 h-12 border-r-4 border-b-4 border-white drop-shadow-lg rounded-br-xl bg-blue-600/20"></div>
+                      
+                      {/* Center focus point */}
+                      <div className="absolute top-1/2 left-1/2 w-3 h-3 -translate-x-1/2 -translate-y-1/2">
+                        <div className="w-full h-full bg-white rounded-full opacity-90 animate-pulse drop-shadow-lg"></div>
+                      </div>
+                    </div>
+                  </>
                 )
               })()}
             </div>
@@ -516,11 +524,14 @@ export function QuadrilateralCropper({
         </Button>
       </div>
 
-      {/* Instructions */}
+      {/* Enhanced Instructions */}
       <div className="absolute bottom-20 left-4 right-4 text-center">
-        <p className="text-white/80 text-sm">
-          Drag the corner handles to adjust the crop area
-        </p>
+        <div className="bg-black/70 text-white px-6 py-3 rounded-full text-sm backdrop-blur-sm border border-white/20">
+          <div className="flex items-center justify-center gap-2">
+            <Move className="w-4 h-4" />
+            <span>Drag corner handles to adjust • Auto-detect available</span>
+          </div>
+        </div>
       </div>
 
       {/* Bottom controls */}
@@ -560,18 +571,30 @@ export function QuadrilateralCropper({
         </div>
       </div>
 
-      {/* Help overlay */}
+      {/* Enhanced Help overlay */}
       {cropPoints.length === 4 && (
-        <div className="absolute top-16 left-4 bg-black/70 text-white p-3 rounded-lg text-sm max-w-xs">
-          <h4 className="font-semibold mb-2 flex items-center">
-            <Move className="w-4 h-4 mr-2" />
-            Quadrilateral Crop
+        <div className="absolute top-16 left-4 bg-black/80 text-white p-4 rounded-xl text-sm max-w-xs backdrop-blur-sm border border-white/20">
+          <h4 className="font-semibold mb-3 flex items-center text-blue-300">
+            <Crop className="w-4 h-4 mr-2" />
+            Smart Crop Mode
           </h4>
-          <ul className="space-y-1 text-xs">
-            <li>• Drag corners to adjust crop area</li>
-            <li>• Auto-detect will find rectangles</li>
-            <li>• Perspective correction applies automatically</li>
-            <li>• Grid helps with alignment</li>
+          <ul className="space-y-2 text-xs text-white/90">
+            <li className="flex items-center">
+              <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+              Drag blue corners to adjust
+            </li>
+            <li className="flex items-center">
+              <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+              Auto-perspective correction
+            </li>
+            <li className="flex items-center">
+              <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+              Grid guides alignment
+            </li>
+            <li className="flex items-center">
+              <span className="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
+              Focus on key area
+            </li>
           </ul>
         </div>
       )}
