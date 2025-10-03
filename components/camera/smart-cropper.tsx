@@ -6,7 +6,7 @@ import 'react-advanced-cropper/dist/style.css';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Crop, Check, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
-import { suggestCropBox, convertCropToCropperCoords, loadOpenCV, CropBox } from '@/lib/opencv-utils';
+import { suggestCropBox, convertCropToCropperCoords, loadOpenCV, applyPerspectiveCorrection, getCropperCorners, CropBox } from '@/lib/opencv-utils';
 
 interface SmartCropperProps {
   src: string;
@@ -122,16 +122,30 @@ export function SmartCropper({ src, initialBox, onCrop, onCancel, className = ''
             aspectRatio: undefined, // Free form
             movable: true,
             resizable: true,
-            handlers: {}, // Disable default handlers for free-form
-            lines: {},
+            handlers: {
+              eastNorth: true,
+              north: true,
+              westNorth: true,
+              west: true,
+              westSouth: true,
+              south: true,
+              eastSouth: true,
+              east: true,
+            }, // Enable all corner and edge handlers
+            lines: {
+              east: true,
+              north: true,
+              west: true,
+              south: true,
+            },
             overlayClassName: 'cropper-overlay'
           }}
           backgroundProps={{
             className: 'cropper-background'
           }}
           onReady={handleCropperReady}
-          // Enable free-form cropping (quadrilateral)
-          stencilComponent="rectangle" // Can be changed to polygon for true quadrilateral
+          // Enable polygon/quadrilateral cropping like Google Lens
+          stencilComponent="polygon"
         />
 
         {/* Bottom controls */}

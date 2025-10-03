@@ -63,7 +63,7 @@ export function HeroSection() {
           {/* Left Content */}
           <div className="max-w-lg">
             <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold text-[#000080] mb-6 leading-tight">
-              Find Your Perfect{" "}
+              Find & Do More With Your Perfect{" "}
               <span className="text-[#FFFFFF]">Property</span>
             </h1>
 

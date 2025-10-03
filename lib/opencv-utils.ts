@@ -154,3 +154,98 @@ export function convertCropToCropperCoords(
     height: cropBox.height * scaleY
   };
 }
+
+/**
+ * Apply perspective transform to straighten a quadrilateral crop (like Google Lens)
+ */
+export async function applyPerspectiveCorrection(
+  imageElement: HTMLImageElement,
+  corners: { x: number; y: number }[]
+): Promise<HTMLCanvasElement | null> {
+  try {
+    await loadOpenCV();
+
+    if (corners.length !== 4) {
+      throw new Error('Perspective correction requires exactly 4 corner points');
+    }
+
+    const src = window.cv.imread(imageElement);
+    const dst = new window.cv.Mat();
+    const result = new window.cv.Mat();
+
+    // Define the destination points (rectangle)
+    const width = 800; // Output width
+    const height = 600; // Output height
+
+    const srcPoints = window.cv.matFromArray(4, 1, window.cv.CV_32FC2, [
+      corners[0].x, corners[0].y, // top-left
+      corners[1].x, corners[1].y, // top-right
+      corners[2].x, corners[2].y, // bottom-right
+      corners[3].x, corners[3].y  // bottom-left
+    ]);
+
+    const dstPoints = window.cv.matFromArray(4, 1, window.cv.CV_32FC2, [
+      0, 0,           // top-left
+      width, 0,        // top-right
+      width, height,   // bottom-right
+      0, height        // bottom-left
+    ]);
+
+    // Get perspective transform matrix
+    const M = window.cv.getPerspectiveTransform(srcPoints, dstPoints);
+
+    // Apply perspective transformation
+    window.cv.warpPerspective(src, result, M, new window.cv.Size(width, height));
+
+    // Convert to canvas for output
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    window.cv.imshow(canvas, result);
+
+    // Clean up
+    src.delete();
+    dst.delete();
+    result.delete();
+    M.delete();
+    srcPoints.delete();
+    dstPoints.delete();
+
+    return canvas;
+  } catch (error) {
+    console.error('Error applying perspective correction:', error);
+    return null;
+  }
+}
+
+/**
+ * Get corner coordinates from cropper state for perspective correction
+ */
+export function getCropperCorners(cropperRef: any): { x: number; y: number }[] | null {
+  if (!cropperRef?.current) return null;
+
+  try {
+    const state = cropperRef.current.getState();
+    if (!state?.coordinates) return null;
+
+    const { coordinates } = state;
+
+    // Convert cropper coordinates to image coordinates
+    const canvasData = cropperRef.current.getCanvasData();
+    const imageData = cropperRef.current.getImageData();
+
+    const scaleX = imageData.naturalWidth / canvasData.width;
+    const scaleY = imageData.naturalHeight / canvasData.height;
+
+    // Get the four corners of the crop area
+    return [
+      { x: coordinates.left * scaleX, y: coordinates.top * scaleY }, // top-left
+      { x: (coordinates.left + coordinates.width) * scaleX, y: coordinates.top * scaleY }, // top-right
+      { x: (coordinates.left + coordinates.width) * scaleX, y: (coordinates.top + coordinates.height) * scaleY }, // bottom-right
+      { x: coordinates.left * scaleX, y: (coordinates.top + coordinates.height) * scaleY } // bottom-left
+    ];
+  } catch (error) {
+    console.error('Error getting cropper corners:', error);
+    return null;
+  }
+}
