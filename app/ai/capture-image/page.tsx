@@ -89,6 +89,7 @@ function AICaptureImagePageContent() {
       onBack={handleBack}
       onImageCaptured={handleImageCaptured}
       fromLogin={fromLogin}
+      autoStartCamera={fromLogin} // Auto-start camera when coming from login flow
     />
   )
 }

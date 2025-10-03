@@ -23,9 +23,10 @@ interface ImageCapturePageProps {
   onBack?: () => void
   onImageCaptured: (imageFile: File, identifiedCategory?: IdentifiedCategory) => void
   fromLogin?: boolean
+  autoStartCamera?: boolean
 }
 
-export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin = false }: ImageCapturePageProps) {
+export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin = false, autoStartCamera = false }: ImageCapturePageProps) {
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [isCapturing, setIsCapturing] = useState(false)
@@ -448,6 +449,13 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
     onClose()
   }
 
+  // Auto-start camera if requested
+  useEffect(() => {
+    if (autoStartCamera && !isCapturing && !capturedImage) {
+      startCamera()
+    }
+  }, [autoStartCamera])
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-purple-50 to-pink-50 relative overflow-x-hidden">
       {/* Animated background elements */}
@@ -593,23 +601,39 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
               />
               <canvas ref={canvasRef} className="hidden" />
 
-              {/* Camera controls overlay */}
-              <div className="absolute bottom-8 left-0 right-0 flex justify-center">
-                <div className="flex gap-4">
+              {/* Camera controls overlay - Google Lens style */}
+              <div className="absolute bottom-8 left-0 right-0 flex justify-center items-center">
+                <div className="flex items-center gap-8">
+                  {/* Gallery/Select Image Button (left side) */}
+                  <Button
+                    onClick={() => fileInputRef.current?.click()}
+                    variant="ghost"
+                    size="lg"
+                    className="w-12 h-12 rounded-full bg-black/50 text-white hover:bg-black/70 border-2 border-white/30 flex items-center justify-center"
+                    title="Select from gallery"
+                  >
+                    <Upload className="h-6 w-6" />
+                  </Button>
+                  
+                  {/* Capture Button (center) */}
+                  <Button
+                    onClick={capturePhoto}
+                    size="lg"
+                    className="w-16 h-16 rounded-full bg-white text-black hover:bg-gray-200 border-4 border-white shadow-lg flex items-center justify-center"
+                    title="Take photo"
+                  >
+                    <Camera className="h-8 w-8" />
+                  </Button>
+                  
+                  {/* Close/Exit Button (right side) */}
                   <Button
                     onClick={stopCamera}
                     variant="ghost"
                     size="lg"
-                    className="w-12 h-12 rounded-full bg-black/50 text-white hover:bg-black/70 border-0"
+                    className="w-12 h-12 rounded-full bg-black/50 text-white hover:bg-black/70 border-2 border-white/30 flex items-center justify-center"
+                    title="Close camera"
                   >
                     <X className="h-6 w-6" />
-                  </Button>
-                  <Button
-                    onClick={capturePhoto}
-                    size="lg"
-                    className="w-16 h-16 rounded-full bg-white text-black hover:bg-gray-200 border-4 border-white shadow-lg"
-                  >
-                    <Camera className="h-8 w-8" />
                   </Button>
                 </div>
               </div>

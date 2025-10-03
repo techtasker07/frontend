@@ -8,107 +8,107 @@ DROP TABLE IF EXISTS public.bookings CASCADE;
 DROP TABLE IF EXISTS public.favorites CASCADE;
 
 -- Create independent marketplace_listings table with all property details
-CREATE TABLE IF NOT EXISTS public.marketplace_listings (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  
-  -- Basic Property Information
-  title TEXT NOT NULL,
-  description TEXT NOT NULL,
-  location TEXT NOT NULL,
-  
-  -- Property Type and Category
-  listing_type_id UUID REFERENCES public.listing_types(id) ON DELETE RESTRICT NOT NULL,
-  property_type_id UUID REFERENCES public.property_types(id) ON DELETE RESTRICT NOT NULL,
-  category_id UUID REFERENCES public.categories(id) ON DELETE RESTRICT NOT NULL,
-  
-  -- Pricing Information
-  price NUMERIC(12,2) NOT NULL,
-  currency TEXT DEFAULT 'NGN',
-  price_period TEXT, -- 'monthly', 'yearly', 'daily', 'per_night', null for sale
-  security_deposit NUMERIC(12,2),
-  
-  -- Property Details
-  bedrooms INTEGER,
-  bathrooms INTEGER,
-  area_sqft INTEGER,
-  area_sqm INTEGER,
-  year_of_construction INTEGER,
-  furnishing_status TEXT, -- 'furnished', 'semi-furnished', 'unfurnished'
-  parking_spaces INTEGER DEFAULT 0,
-  
-  -- Availability
-  available_from DATE,
-  available_to DATE,
-  
-  -- Features and Amenities
-  amenities JSONB DEFAULT '[]'::jsonb,
-  utilities_included BOOLEAN DEFAULT false,
-  
-  -- Listing Management
-  is_featured BOOLEAN DEFAULT false,
-  is_active BOOLEAN DEFAULT true,
-  views_count INTEGER DEFAULT 0,
-  
-  -- Contact Information
-  contact_name TEXT,
-  contact_phone TEXT,
-  contact_email TEXT,
-  contact_whatsapp TEXT,
-  
-  -- User who created the listing
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
-  
-  -- SEO and Additional Info
-  keywords TEXT[],
-  virtual_tour_url TEXT,
-  video_url TEXT,
-  
-  -- Timestamps
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
-);
+  CREATE TABLE IF NOT EXISTS public.marketplace_listings (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    
+    -- Basic Property Information
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    location TEXT NOT NULL,
+    
+    -- Property Type and Category
+    listing_type_id UUID REFERENCES public.listing_types(id) ON DELETE RESTRICT NOT NULL,
+    property_type_id UUID REFERENCES public.property_types(id) ON DELETE RESTRICT NOT NULL,
+    category_id UUID REFERENCES public.categories(id) ON DELETE RESTRICT NOT NULL,
+    
+    -- Pricing Information
+    price NUMERIC(12,2) NOT NULL,
+    currency TEXT DEFAULT 'NGN',
+    price_period TEXT, -- 'monthly', 'yearly', 'daily', 'per_night', null for sale
+    security_deposit NUMERIC(12,2),
+    
+    -- Property Details
+    bedrooms INTEGER,
+    bathrooms INTEGER,
+    area_sqft INTEGER,
+    area_sqm INTEGER,
+    year_of_construction INTEGER,
+    furnishing_status TEXT, -- 'furnished', 'semi-furnished', 'unfurnished'
+    parking_spaces INTEGER DEFAULT 0,
+    
+    -- Availability
+    available_from DATE,
+    available_to DATE,
+    
+    -- Features and Amenities
+    amenities JSONB DEFAULT '[]'::jsonb,
+    utilities_included BOOLEAN DEFAULT false,
+    
+    -- Listing Management
+    is_featured BOOLEAN DEFAULT false,
+    is_active BOOLEAN DEFAULT true,
+    views_count INTEGER DEFAULT 0,
+    
+    -- Contact Information
+    contact_name TEXT,
+    contact_phone TEXT,
+    contact_email TEXT,
+    contact_whatsapp TEXT,
+    
+    -- User who created the listing
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+    
+    -- SEO and Additional Info
+    keywords TEXT[],
+    virtual_tour_url TEXT,
+    video_url TEXT,
+    
+    -- Timestamps
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+  );
 
--- Create marketplace_images table for property images
-CREATE TABLE IF NOT EXISTS public.marketplace_images (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  marketplace_listing_id UUID REFERENCES public.marketplace_listings(id) ON DELETE CASCADE NOT NULL,
-  image_url TEXT NOT NULL,
-  is_primary BOOLEAN DEFAULT false,
-  caption TEXT,
-  display_order INTEGER DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
-);
+  -- Create marketplace_images table for property images
+  CREATE TABLE IF NOT EXISTS public.marketplace_images (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    marketplace_listing_id UUID REFERENCES public.marketplace_listings(id) ON DELETE CASCADE NOT NULL,
+    image_url TEXT NOT NULL,
+    is_primary BOOLEAN DEFAULT false,
+    caption TEXT,
+    display_order INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+  );
 
--- Recreate bookings table with correct reference
-CREATE TABLE IF NOT EXISTS public.bookings (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  marketplace_listing_id UUID REFERENCES public.marketplace_listings(id) ON DELETE CASCADE NOT NULL,
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
-  booking_type TEXT NOT NULL, -- 'inquiry', 'booking_request', 'viewing_request'
-  start_date DATE,
-  end_date DATE,
-  guest_count INTEGER,
-  message TEXT,
-  status TEXT DEFAULT 'pending', -- 'pending', 'approved', 'rejected', 'cancelled'
-  total_amount NUMERIC(12,2),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
-);
+  -- Recreate bookings table with correct reference
+  CREATE TABLE IF NOT EXISTS public.bookings (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    marketplace_listing_id UUID REFERENCES public.marketplace_listings(id) ON DELETE CASCADE NOT NULL,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+    booking_type TEXT NOT NULL, -- 'inquiry', 'booking_request', 'viewing_request'
+    start_date DATE,
+    end_date DATE,
+    guest_count INTEGER,
+    message TEXT,
+    status TEXT DEFAULT 'pending', -- 'pending', 'approved', 'rejected', 'cancelled'
+    total_amount NUMERIC(12,2),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+  );
 
--- Recreate favorites table with correct reference
-CREATE TABLE IF NOT EXISTS public.favorites (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
-  marketplace_listing_id UUID REFERENCES public.marketplace_listings(id) ON DELETE CASCADE NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-  UNIQUE(user_id, marketplace_listing_id)
-);
+  -- Recreate favorites table with correct reference
+  CREATE TABLE IF NOT EXISTS public.favorites (
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+    marketplace_listing_id UUID REFERENCES public.marketplace_listings(id) ON DELETE CASCADE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    UNIQUE(user_id, marketplace_listing_id)
+  );
 
--- Enable RLS on new tables
-ALTER TABLE public.marketplace_listings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.marketplace_images ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.favorites ENABLE ROW LEVEL SECURITY;
+  -- Enable RLS on new tables
+  ALTER TABLE public.marketplace_listings ENABLE ROW LEVEL SECURITY;
+  ALTER TABLE public.marketplace_images ENABLE ROW LEVEL SECURITY;
+  ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
+  ALTER TABLE public.favorites ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS Policies
 
@@ -262,7 +262,7 @@ INSERT INTO public.marketplace_listings (
 INSERT INTO public.marketplace_images (marketplace_listing_id, image_url, is_primary, caption, display_order)
 SELECT 
   ml.id,
-  '/api/placeholder/800/600',
+  'https://www.thenordroom.com/wp-content/uploads/2021/08/cozy-studio-apartment-sweden-nordroom.jpg',
   true,
   'Main property view',
   1
@@ -271,7 +271,7 @@ WHERE ml.title LIKE '%Victoria Island%'
 UNION ALL
 SELECT 
   ml.id,
-  '/api/placeholder/800/600',
+  'https://www.thespruce.com/thmb/ytNDZ9sHLieMBLLjyV5R7H1a1KQ=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/13-Double-Duty-Bed-Drama-5876807c5f9b584db3aa524b.jpg',
   true,
   'Front view of the house',
   1
@@ -280,7 +280,7 @@ WHERE ml.title LIKE '%Lekki%'
 UNION ALL
 SELECT 
   ml.id,
-  '/api/placeholder/800/600',
+  'https://cf.bstatic.com/xdata/images/hotel/max1024x768/353478862.jpg?k=2f1ed5cb84234f9539a1d31f7cea73338e271199c98589fec1ab774bbeae9558&o=&hp=1',
   true,
   'Villa exterior with pool',
   1

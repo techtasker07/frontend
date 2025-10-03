@@ -213,9 +213,27 @@ export default function MarketplacePage() {
                   </div>
 
                   {/* Property Details */}
-                  <div className="text-sm text-gray-600">
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    {listing.bedrooms && (
+                      <div className="flex items-center gap-1">
+                        <Bed className="h-4 w-4" />
+                        <span>{listing.bedrooms}</span>
+                      </div>
+                    )}
+                    {listing.bathrooms && (
+                      <div className="flex items-center gap-1">
+                        <Bath className="h-4 w-4" />
+                        <span>{listing.bathrooms}</span>
+                      </div>
+                    )}
+                    {listing.parking_spaces > 0 && (
+                      <div className="flex items-center gap-1">
+                        <Car className="h-4 w-4" />
+                        <span>{listing.parking_spaces}</span>
+                      </div>
+                    )}
                     {listing.year_of_construction && (
-                      <div>Built in {listing.year_of_construction}</div>
+                      <div>Built {listing.year_of_construction}</div>
                     )}
                   </div>
 
