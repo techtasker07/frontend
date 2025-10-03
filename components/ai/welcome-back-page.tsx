@@ -3,19 +3,45 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Camera, X, Home } from "lucide-react"
+import { ImageCapturePage } from "./image-capture-page"
+import { type IdentifiedCategory } from "@/lib/smartProspectGenerator"
 
 interface WelcomeBackPageProps {
   userName: string
   onStartAnalysis?: () => void
   onSkip: () => void
   onClose: () => void
+  onImageCaptured?: (imageFile: File, identifiedCategory?: IdentifiedCategory) => void
 }
 
-export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: WelcomeBackPageProps) {
-  const handleCameraOpen = () => {
-    if (onStartAnalysis) {
+export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose, onImageCaptured }: WelcomeBackPageProps) {
+  const [showCamera, setShowCamera] = useState(false)
+
+  const handleCameraCapture = (imageFile: File, identifiedCategory?: IdentifiedCategory) => {
+    if (onImageCaptured) {
+      onImageCaptured(imageFile, identifiedCategory)
+    } else if (onStartAnalysis) {
       onStartAnalysis()
     }
+  }
+
+  const handleCameraOpen = () => {
+    setShowCamera(true)
+  }
+
+  const handleCameraClose = () => {
+    setShowCamera(false)
+  }
+
+  if (showCamera) {
+    return (
+      <ImageCapturePage
+        onClose={handleCameraClose}
+        onImageCaptured={handleCameraCapture}
+        fromLogin={true}
+        autoStartCamera={true}
+      />
+    )
   }
 
   return (
@@ -59,6 +85,7 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
                 <button
                   onClick={handleCameraOpen}
                   className="relative inline-flex items-center justify-center w-32 h-32 rounded-full border-4 border-gray-100 bg-white shadow-lg hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-opacity-50 group"
+                  // Removed invalid focusRingColor property
                 >
                   <div 
                     className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
