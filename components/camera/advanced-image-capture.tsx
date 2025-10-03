@@ -628,13 +628,31 @@ export function AdvancedImageCapture({
                 </div>
               </div>
 
-              {/* Enhanced top hint */}
-              <div className="absolute top-8 left-0 right-0 flex justify-center">
-                <div className="bg-black/70 text-white px-6 py-3 rounded-full text-sm flex items-center">
-                  <Target className="w-4 h-4 mr-2" />
-                  Position property in frame • Auto-detection enabled
-                </div>
-              </div>
+          {/* Enhanced top hint */}
+          <div className="absolute top-8 left-0 right-0 flex justify-center">
+            <div className="bg-black/70 text-white px-6 py-3 rounded-full text-sm flex items-center">
+              <Target className="w-4 h-4 mr-2" />
+              Position property in frame • Auto-detection enabled
+            </div>
+          </div>
+
+          {/* Viewfinder Frame Overlay */}
+          <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+            <div className="relative w-80 h-60 max-w-[80vw] max-h-[50vh]">
+              {/* Corner frames */}
+              <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-white"></div>
+              <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-white"></div>
+              <div className="absolute bottom-0 left-0 w-8 h-8 border-l-2 border-b-2 border-white"></div>
+              <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-white"></div>
+              
+              {/* Center guidelines */}
+              <div className="absolute inset-x-0 top-1/2 h-px bg-white/50 mx-4"></div>
+              <div className="absolute inset-y-0 left-1/2 w-px bg-white/50 my-4"></div>
+              
+              {/* Focus indicator */}
+              <div className="absolute top-1/2 left-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-full opacity-75 animate-pulse"></div>
+            </div>
+          </div>
             </div>
           )}
 

@@ -67,7 +67,7 @@ export function HeroSection() {
               <span className="text-[#FFFFFF]">Property</span>
             </h1>
 
-            <p className="text-[#FFFFFF] mb-8 text-lg leading-relaxed">
+            <p className="text-[#FFFFFF] mb-8 text-md leading-relaxed">
               Participate in polls, get ideal prospects, invest and discover the best real estate
               opportunities.
             </p>

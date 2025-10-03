@@ -126,44 +126,8 @@ export function QuadrilateralCropper({
     }
   }, [loadedImage])
 
-  // Load image and setup canvas
-  useEffect(() => {
-    const image = new Image()
-    image.crossOrigin = 'anonymous'
-    
-    image.onload = () => {
-      const canvas = canvasRef.current
-      if (!canvas) return
-
-      // Calculate canvas size maintaining aspect ratio
-      const maxSize = 800
-      const aspectRatio = image.naturalWidth / image.naturalHeight
-      
-      if (aspectRatio > 1) {
-        canvas.width = Math.min(maxSize, image.naturalWidth)
-        canvas.height = canvas.width / aspectRatio
-      } else {
-        canvas.height = Math.min(maxSize, image.naturalHeight)
-        canvas.width = canvas.height * aspectRatio
-      }
-
-      setLoadedImage(image)
-      setImageLoaded(true)
-      setIsLoading(false)
-      
-      // Initialize crop points
-      setTimeout(() => {
-        initializeCropPoints()
-      }, 100)
-    }
-
-    image.onerror = () => {
-      toast.error('Failed to load image')
-      setIsLoading(false)
-    }
-
-    image.src = src
-  }, [src, initializeCropPoints])
+// We use a hidden <img> element in the DOM for more reliable mobile loading
+// The onLoad handler is attached below in JSX.
 
   // Load OpenCV on component mount
   useEffect(() => {
@@ -280,25 +244,38 @@ export function QuadrilateralCropper({
     draw()
   }, [draw])
 
-  // Handle mouse events
-  const getMousePos = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  // Handle mouse and touch events
+  const getEventPos = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
     if (!canvas) return { x: 0, y: 0 }
     
     const rect = canvas.getBoundingClientRect()
+    let clientX: number, clientY: number
+    
+    if ('touches' in e && e.touches.length > 0) {
+      clientX = e.touches[0].clientX
+      clientY = e.touches[0].clientY
+    } else if ('clientX' in e) {
+      clientX = e.clientX
+      clientY = e.clientY
+    } else {
+      return { x: 0, y: 0 }
+    }
+    
     return {
-      x: (e.clientX - rect.left) * (canvas.width / rect.width),
-      y: (e.clientY - rect.top) * (canvas.height / rect.height)
+      x: (clientX - rect.left) * (canvas.width / rect.width),
+      y: (clientY - rect.top) * (canvas.height / rect.height)
     }
   }
 
-  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const pos = getMousePos(e)
+  const handleStart = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault()
+    const pos = getEventPos(e)
     
-    // Check if clicking on a handle
+    // Check if clicking/touching on a handle
     for (let i = 0; i < cropPoints.length; i++) {
       const distance = calculateDistance(pos, cropPoints[i])
-      if (distance <= HANDLE_SIZE) {
+      if (distance <= HANDLE_SIZE * 2) { // Larger touch target
         setIsDragging(true)
         setDragIndex(i)
         return
@@ -306,10 +283,11 @@ export function QuadrilateralCropper({
     }
   }
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleMove = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     if (!isDragging || dragIndex === -1) return
     
-    const pos = getMousePos(e)
+    e.preventDefault()
+    const pos = getEventPos(e)
     const newPoints = [...cropPoints]
     
     // Constrain to canvas bounds
@@ -320,7 +298,8 @@ export function QuadrilateralCropper({
     setCropPoints(newPoints)
   }
 
-  const handleMouseUp = () => {
+  const handleEnd = (e?: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (e) e.preventDefault()
     setIsDragging(false)
     setDragIndex(-1)
   }
@@ -394,13 +373,49 @@ export function QuadrilateralCropper({
     <div className={`relative bg-black ${className}`} ref={containerRef}>
       {/* Canvas for image and crop overlay */}
       <div className="flex items-center justify-center min-h-[400px] p-4">
+        {/* Hidden image ensures reliable load events on mobile browsers */}
+        <img
+          src={src}
+          alt="source"
+          className="hidden"
+          crossOrigin={src.startsWith('http') ? 'anonymous' : undefined}
+          onLoad={(e) => {
+            const img = e.currentTarget as HTMLImageElement
+            const canvas = canvasRef.current
+            if (!canvas) return
+
+            const maxSize = 800
+            const aspectRatio = img.naturalWidth / img.naturalHeight
+            if (aspectRatio > 1) {
+              canvas.width = Math.min(maxSize, img.naturalWidth)
+              canvas.height = canvas.width / aspectRatio
+            } else {
+              canvas.height = Math.min(maxSize, img.naturalHeight)
+              canvas.width = canvas.height * aspectRatio
+            }
+
+            setLoadedImage(img)
+            setImageLoaded(true)
+            setIsLoading(false)
+            // Initialize after next paint
+            setTimeout(() => initializeCropPoints(), 50)
+          }}
+          onError={() => {
+            toast.error('Failed to load image')
+            setIsLoading(false)
+          }}
+        />
         <canvas
           ref={canvasRef}
-          className="max-w-full max-h-[70vh] cursor-crosshair"
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
+          className="max-w-full max-h-[70vh] cursor-crosshair touch-none"
+          onMouseDown={handleStart}
+          onMouseMove={handleMove}
+          onMouseUp={handleEnd}
+          onMouseLeave={handleEnd}
+          onTouchStart={handleStart}
+          onTouchMove={handleMove}
+          onTouchEnd={handleEnd}
+          onTouchCancel={handleEnd}
         />
       </div>
 
