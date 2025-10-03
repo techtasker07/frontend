@@ -62,7 +62,7 @@ export function HeroSection() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Left Content */}
           <div className="max-w-lg">
-            <h1 className="text-2xl md:text-2xl lg:text-4xl font-bold text-[#000080] mb-6 leading-tight">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#000080] mb-6 leading-tight">
               Find & Do More With Your {" "}
               <span className="text-[#FFFFFF]">Property</span>
             </h1>
