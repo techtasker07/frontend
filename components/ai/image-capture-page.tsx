@@ -524,6 +524,16 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
 
         {/* Content */}
         <div className="flex-1 p-4 pt-16 pb-6 space-y-6 max-w-2xl mx-auto w-full">
+          {/* Hidden file input - always available */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileSelect}
+            className="hidden"
+            aria-label="Select image file"
+          />
+
           {!capturedImage && !isCapturing && (
             <div className="space-y-6">
               <div className="text-center">
@@ -532,8 +542,8 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                  <Button 
-                    onClick={startCamera} 
+                  <Button
+                    onClick={startCamera}
                     className="flex flex-col items-center p-8 h-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
                   >
                     <Camera className="h-12 w-12 mb-3" />
@@ -551,15 +561,6 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                     <span className="text-sm text-purple-600">From gallery</span>
                   </Button>
                 </div>
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  aria-label="Select image file"
-                />
               </div>
 
               {fromLogin && (
@@ -612,6 +613,7 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                     className="w-12 h-16 rounded-full bg-black/50 text-white hover:bg-black/70 border-2 border-white/30 flex flex-col items-center justify-center"
                     title="Select from gallery"
                   >
+                    <Upload className="h-6 w-6 text-white" />
                     <span className="text-xs text-white mt-1">Pick</span>
                   </Button>
 
@@ -623,7 +625,6 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                     title="Take photo"
                   >
                     <Camera className="h-10 w-10 text-black" />
-                    <span className="text-xs text-black mt-1">Capture</span>
                   </Button>
                 </div>
               </div>
