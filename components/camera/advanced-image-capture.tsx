@@ -669,12 +669,12 @@ export function AdvancedImageCapture({
 
           {/* Viewfinder Frame Overlay */}
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-            <div className="relative w-80 h-60 max-w-[80vw] max-h-[50vh]">
+            <div className="relative w-80 h-60 max-w-[80vw] max-h-[70vh]">
               {/* Corner frames */}
-              <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-white rounded-tl-x2"></div>
-              <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-white rounded-tr-x2"></div>
-              <div className="absolute bottom-0 left-0 w-8 h-8 border-l-2 border-b-2 border-white rounded-bl-x2"></div>
-              <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-white rounded-br-x2"></div>
+              <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-white rounded-tl-x1"></div>
+              <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-white rounded-tr-x1"></div>
+              <div className="absolute bottom-0 left-0 w-8 h-8 border-l-2 border-b-2 border-white rounded-bl-x1"></div>
+              <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-white rounded-br-x1"></div>
 
               {/* Focus indicator */}
               <div className="absolute top-1/2 left-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-full opacity-75 animate-pulse"></div>
