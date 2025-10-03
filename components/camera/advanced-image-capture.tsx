@@ -139,8 +139,19 @@ export function AdvancedImageCapture({
         context.drawImage(video, 0, 0)
         
         try {
-          const blob = await new Promise<Blob>((resolve) => {
-            canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.9)
+          const blob = await new Promise<Blob>((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              reject(new Error('Canvas toBlob timeout'))
+            }, 5000) // 5 second timeout
+
+            canvas.toBlob((b) => {
+              clearTimeout(timeout)
+              if (b) {
+                resolve(b)
+              } else {
+                reject(new Error('Failed to create blob from canvas'))
+              }
+            }, "image/jpeg", 0.9)
           })
           
           const file = new File([blob], `prospect-${Date.now()}.jpg`, { type: "image/jpeg" })
@@ -150,6 +161,7 @@ export function AdvancedImageCapture({
           setImageFile(file)
           stopCamera()
           
+          console.log('📷 Photo captured, starting auto-detection pipeline')
           // Auto-detect subject immediately
           await performAutoDetection(imageUrl)
           
@@ -168,6 +180,7 @@ export function AdvancedImageCapture({
       setCapturedImage(imageUrl)
       setImageFile(file)
       
+      console.log('📁 File selected, starting auto-detection pipeline')
       // Auto-detect subject in uploaded file
       await performAutoDetection(imageUrl)
       
@@ -178,37 +191,55 @@ export function AdvancedImageCapture({
 
   // Perform auto-detection on captured/uploaded image
   const performAutoDetection = async (imageUrl: string) => {
+    console.log('🔍 AdvancedImageCapture: Starting auto-detection with URL:', imageUrl)
     setIsDetectingSubject(true)
     try {
       const img = new Image()
       img.crossOrigin = 'anonymous'
       
       await new Promise((resolve, reject) => {
-        img.onload = resolve
-        img.onerror = reject
+        const timeout = setTimeout(() => {
+          reject(new Error('Image loading timeout for auto-detection'))
+        }, 10000) // 10 second timeout
+
+        img.onload = () => {
+          clearTimeout(timeout)
+          console.log('📸 Image loaded for auto-detection:', img.naturalWidth, 'x', img.naturalHeight)
+          resolve(img)
+        }
+        img.onerror = (e) => {
+          clearTimeout(timeout)
+          console.error('❌ Image failed to load for auto-detection:', e)
+          reject(e)
+        }
         img.src = imageUrl
       })
 
+      console.log('🤖 Running auto-detection...')
       const detected = await autoDetectSubject(img)
       
       if (detected) {
+        console.log('✅ Auto-detection successful:', detected)
         setDetectedSubject(detected)
         toast.success(`Auto-detected ${detected.type} (${Math.round(detected.confidence * 100)}% confidence)`)
         
         // If confidence is high enough, go directly to cropping
         if (detected.confidence >= CONFIDENCE_THRESHOLDS.HIGH) {
+          console.log('🎯 High confidence, entering crop mode immediately')
           setIsCroppingMode(true)
         } else {
           // Show options for medium/low confidence
+          console.log('⚠️ Medium/low confidence, delaying crop mode')
           toast.info("Detection confidence is moderate. You can adjust the crop manually.")
           setTimeout(() => setIsCroppingMode(true), 2000)
         }
       } else {
+        console.log('❌ No subject detected')
         toast.info("No subject detected. Manual crop adjustment available.")
         setIsCroppingMode(true)
       }
     } catch (error) {
-      console.error('Auto-detection failed:', error)
+      console.error('❌ Auto-detection failed:', error)
       toast.warning("Auto-detection failed. Proceeding with manual crop.")
       setIsCroppingMode(true)
     } finally {
@@ -640,11 +671,11 @@ export function AdvancedImageCapture({
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
             <div className="relative w-80 h-60 max-w-[80vw] max-h-[50vh]">
               {/* Corner frames */}
-              <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-white rounded-tl-xl"></div>
-              <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-white rounded-tr-xl"></div>
-              <div className="absolute bottom-0 left-0 w-8 h-8 border-l-2 border-b-2 border-white rounded-bl-xl"></div>
-              <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-white rounded-br-xl"></div>
-              
+              <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-white rounded-tl-x2"></div>
+              <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-white rounded-tr-x2"></div>
+              <div className="absolute bottom-0 left-0 w-8 h-8 border-l-2 border-b-2 border-white rounded-bl-x2"></div>
+              <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-white rounded-br-x2"></div>
+
               {/* Focus indicator */}
               <div className="absolute top-1/2 left-1/2 w-2 h-2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-full opacity-75 animate-pulse"></div>
             </div>

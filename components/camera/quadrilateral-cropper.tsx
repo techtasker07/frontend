@@ -134,6 +134,19 @@ export function QuadrilateralCropper({
     loadOpenCV().catch(console.error)
   }, [])
 
+  // Add timeout for image loading to prevent infinite loading state
+  useEffect(() => {
+    if (isLoading) {
+      const timeout = setTimeout(() => {
+        console.error('❌ QuadrilateralCropper: Image loading timeout after 10 seconds')
+        setIsLoading(false)
+        toast.error('Image failed to load. Please try retaking the photo.')
+      }, 10000) // 10 second timeout
+
+      return () => clearTimeout(timeout)
+    }
+  }, [isLoading])
+
   // Draw the image and crop overlay
   const draw = useCallback(() => {
     const canvas = canvasRef.current
@@ -380,10 +393,15 @@ export function QuadrilateralCropper({
           className="hidden"
           crossOrigin={src.startsWith('http') ? 'anonymous' : undefined}
           onLoad={(e) => {
+            console.log('🖼️ QuadrilateralCropper: Image onLoad fired')
             const img = e.currentTarget as HTMLImageElement
             const canvas = canvasRef.current
-            if (!canvas) return
+            if (!canvas) {
+              console.error('❌ QuadrilateralCropper: Canvas ref is null')
+              return
+            }
 
+            console.log('📐 Image dimensions:', img.naturalWidth, 'x', img.naturalHeight)
             const maxSize = 800
             const aspectRatio = img.naturalWidth / img.naturalHeight
             if (aspectRatio > 1) {
@@ -393,14 +411,17 @@ export function QuadrilateralCropper({
               canvas.height = Math.min(maxSize, img.naturalHeight)
               canvas.width = canvas.height * aspectRatio
             }
+            console.log('🎨 Canvas size set to:', canvas.width, 'x', canvas.height)
 
             setLoadedImage(img)
             setImageLoaded(true)
             setIsLoading(false)
+            console.log('✅ QuadrilateralCropper: Loading complete, initializing crop points...')
             // Initialize after next paint
             setTimeout(() => initializeCropPoints(), 50)
           }}
-          onError={() => {
+          onError={(e) => {
+            console.error('❌ QuadrilateralCropper: Image loading failed', e)
             toast.error('Failed to load image')
             setIsLoading(false)
           }}
