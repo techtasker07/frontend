@@ -612,7 +612,7 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                     className="w-12 h-12 rounded-full bg-black/50 text-white hover:bg-black/70 border-2 border-white/30 flex items-center justify-center"
                     title="Select from gallery"
                   >
-                    <Upload className="h-6 w-6" />
+                    <Upload className="h-6 w-6 text-white" />
                   </Button>
                   
                   {/* Capture Button (center) */}
@@ -622,18 +622,7 @@ export function ImageCapturePage({ onClose, onBack, onImageCaptured, fromLogin =
                     className="w-16 h-16 rounded-full bg-white text-black hover:bg-gray-200 border-4 border-white shadow-lg flex items-center justify-center"
                     title="Take photo"
                   >
-                    <Camera className="h-8 w-8" />
-                  </Button>
-                  
-                  {/* Close/Exit Button (right side) */}
-                  <Button
-                    onClick={stopCamera}
-                    variant="ghost"
-                    size="lg"
-                    className="w-12 h-12 rounded-full bg-black/50 text-white hover:bg-black/70 border-2 border-white/30 flex items-center justify-center"
-                    title="Close camera"
-                  >
-                    <X className="h-6 w-6" />
+                    <Camera className="h-10 w-10 text-black" />
                   </Button>
                 </div>
               </div>
