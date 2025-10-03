@@ -62,13 +62,13 @@ export function HeroSection() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Left Content */}
           <div className="max-w-lg">
-            <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold text-[#000080] mb-6 leading-tight">
-              Find & Do More With Your Perfect{" "}
+            <h1 className="text-2xl md:text-2xl lg:text-4xl font-bold text-[#000080] mb-6 leading-tight">
+              Find & Do More With Your {" "}
               <span className="text-[#FFFFFF]">Property</span>
             </h1>
 
             <p className="text-[#FFFFFF] mb-8 text-lg leading-relaxed">
-              Discover, poll, and invest in the best real estate
+              Participate in polls, get ideal prospects, invest and discover the best real estate
               opportunities.
             </p>
 
