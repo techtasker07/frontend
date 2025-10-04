@@ -7,42 +7,18 @@ import { ImageCapturePage } from "./image-capture-page"
 import { type IdentifiedCategory } from "@/lib/smartProspectGenerator"
 
 interface WelcomeBackPageProps {
-  userName: string
-  onStartAnalysis?: () => void
-  onSkip: () => void
-  onClose: () => void
-  onImageCaptured?: (imageFile: File, identifiedCategory?: IdentifiedCategory) => void
-}
+   userName: string
+   onStartAnalysis?: () => void
+   onSkip: () => void
+   onClose: () => void
+ }
 
-export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose, onImageCaptured }: WelcomeBackPageProps) {
-  const [showCamera, setShowCamera] = useState(false)
-
-  const handleCameraCapture = (imageFile: File, identifiedCategory?: IdentifiedCategory) => {
-    if (onImageCaptured) {
-      onImageCaptured(imageFile, identifiedCategory)
-    } else if (onStartAnalysis) {
-      onStartAnalysis()
-    }
-  }
-
-  const handleCameraOpen = () => {
-    setShowCamera(true)
-  }
-
-  const handleCameraClose = () => {
-    setShowCamera(false)
-  }
-
-  if (showCamera) {
-    return (
-      <ImageCapturePage
-        onClose={handleCameraClose}
-        onImageCaptured={handleCameraCapture}
-        fromLogin={true}
-        autoStartCamera={true}
-      />
-    )
-  }
+export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: WelcomeBackPageProps) {
+   const handleCameraClick = () => {
+     if (onStartAnalysis) {
+       onStartAnalysis()
+     }
+   }
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-purple-50 to-pink-50 relative overflow-x-hidden">
       {/* Animated background elements */}
@@ -92,7 +68,7 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose, on
             <div className="space-y-6">
               {/* Camera Icon as a Button with Animation */}
               <button
-                onClick={handleCameraOpen}
+                onClick={handleCameraClick}
                 className="relative mx-auto w-24 h-24 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mb-8 shadow-xl focus:outline-none focus:ring-4 focus:ring-purple-300 transition transform hover:scale-105"
               >
                 <Camera className="h-10 w-10 text-purple-600" />

@@ -25,23 +25,25 @@ import {
 import { ProspectModal } from '@/components/ai/prospect-modal'
 
 // Invalid image categories that should be rejected
-const INVALID_CATEGORIES = ['human', 'material']
+const INVALID_CATEGORIES = ['human', 'material', 'office space']
 
 interface AdvancedImageCaptureProps {
-  onClose: () => void
-  onBack?: () => void
-  onImageCaptured: (imageFile: File, identifiedCategory?: IdentifiedCategory) => void
-  fromLogin?: boolean
-  autoStartCamera?: boolean
-}
+   onClose: () => void
+   onBack?: () => void
+   onBackToWelcome?: () => void
+   onImageCaptured: (imageFile: File, identifiedCategory?: IdentifiedCategory) => void
+   fromLogin?: boolean
+   autoStartCamera?: boolean
+ }
 
-export function AdvancedImageCapture({ 
-  onClose, 
-  onBack, 
-  onImageCaptured, 
-  fromLogin = false, 
-  autoStartCamera = false 
-}: AdvancedImageCaptureProps) {
+export function AdvancedImageCapture({
+   onClose,
+   onBack,
+   onBackToWelcome,
+   onImageCaptured,
+   fromLogin = false,
+   autoStartCamera = false
+ }: AdvancedImageCaptureProps) {
   const [isCapturing, setIsCapturing] = useState(false)
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
@@ -235,12 +237,10 @@ export function AdvancedImageCapture({
 
   const handleSelectProspect = (prospect: SmartProspect) => {
     console.log('🎯 Prospect selected:', prospect.title)
-    // Pass the prospect data along with the original file data
-    if (identifiedCategory) {
-      onImageCaptured(new File([], 'processed-image.jpg'), identifiedCategory)
-    }
     handleCloseModal()
     toast.success(`Selected: ${prospect.title}`)
+    // Navigate to dashboard after selection
+    onClose()
   }
 
   const handleClose = () => {
@@ -530,6 +530,7 @@ export function AdvancedImageCapture({
           onClose={handleCloseModal}
           onRetakeImage={handleRetakeImage}
           onSelectProspect={handleSelectProspect}
+          onBackToWelcome={onBackToWelcome}
           imageUrl={processedImageUrl}
           prospects={prospects}
           identifiedCategory={identifiedCategory}

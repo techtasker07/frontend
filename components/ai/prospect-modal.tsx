@@ -21,31 +21,33 @@ import type { SmartProspect, IdentifiedCategory } from "@/lib/smartProspectGener
 import { formatCompactCurrency } from "@/lib/currency"
 
 interface ProspectModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onRetakeImage: () => void
-  onSelectProspect: (prospect: SmartProspect) => void
-  imageUrl: string
-  prospects: SmartProspect[]
-  identifiedCategory: IdentifiedCategory
-  propertyDetails: {
-    title: string
-    location: string
-    estimatedWorth: number
-    yearBuilt?: number
-  }
-}
+   isOpen: boolean
+   onClose: () => void
+   onRetakeImage: () => void
+   onSelectProspect: (prospect: SmartProspect) => void
+   onBackToWelcome?: () => void
+   imageUrl: string
+   prospects: SmartProspect[]
+   identifiedCategory: IdentifiedCategory
+   propertyDetails: {
+     title: string
+     location: string
+     estimatedWorth: number
+     yearBuilt?: number
+   }
+ }
 
 export function ProspectModal({
-  isOpen,
-  onClose,
-  onRetakeImage,
-  onSelectProspect,
-  imageUrl,
-  prospects,
-  identifiedCategory,
-  propertyDetails,
-}: ProspectModalProps) {
+   isOpen,
+   onClose,
+   onRetakeImage,
+   onSelectProspect,
+   onBackToWelcome,
+   imageUrl,
+   prospects,
+   identifiedCategory,
+   propertyDetails,
+ }: ProspectModalProps) {
   const [scrollProgress, setScrollProgress] = useState(0)
   const [showCloseHint, setShowCloseHint] = useState(false)
   const modalRef = useRef<HTMLDivElement>(null)
@@ -99,18 +101,29 @@ export function ProspectModal({
                 </h1>
               </div>
               <div className="flex items-center gap-1">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                {onBackToWelcome && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onBackToWelcome}
+                    className="h-7 w-7 p-0 hover:bg-purple-100 flex-shrink-0"
+                    title="Back to Welcome"
+                  >
+                    <Home className="h-3 w-3 text-purple-600" />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={onRetakeImage}
                   className="h-7 w-7 p-0 hover:bg-blue-100 flex-shrink-0"
                   title="Retake Image"
                 >
                   <ArrowLeft className="h-3 w-3 text-blue-600" />
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={onClose}
                   className="h-7 w-7 p-0 hover:bg-red-100 flex-shrink-0"
                   title="Close"
