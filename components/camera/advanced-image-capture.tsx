@@ -452,7 +452,7 @@ export function AdvancedImageCapture({
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
             <div className="relative w-80 h-80 max-w-[85vw] max-h-[60vh]">
               {/* Semi-transparent background overlay */}
-              <div className="absolute inset-0 border-2 border-white/30 bg-transparent rounded-lg"></div>
+              <div className="absolute inset-0 border-1 border-white/5 bg-transparent rounded-lg"></div>
               
               {/* Corner frames - Enhanced visibility */}
               <div className="absolute -top-1 -left-1 w-12 h-12 border-l-4 border-t-4 border-white drop-shadow-lg rounded-tl-xl"></div>
