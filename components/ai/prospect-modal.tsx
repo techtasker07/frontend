@@ -89,11 +89,11 @@ export function ProspectModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
-      <div className="flex items-start justify-center min-h-full p-4 sm:p-6">
-        <div className="w-full max-w-sm sm:max-w-lg md:max-w-xl bg-white rounded-t-xl shadow-2xl">
+      <div className="flex items-start justify-center min-h-full p-3 sm:p-4 md:p-6">
+        <div className="w-full max-w-xs sm:max-w-sm md:max-w-lg lg:max-w-xl bg-white rounded-t-xl shadow-2xl">
           {/* Modal Header */}
           <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-purple-200 rounded-t-xl">
-            <div className="flex items-center justify-between p-2 sm:p-3">
+            <div className="flex items-center justify-between p-1 sm:p-2 md:p-3">
               <div className="flex items-center flex-1 min-w-0">
                 <Camera className="mr-2 h-4 w-4 text-purple-600 flex-shrink-0" />
                 <h1 className="text-sm sm:text-base font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent truncate">
@@ -106,7 +106,7 @@ export function ProspectModal({
                     variant="ghost"
                     size="sm"
                     onClick={onBackToWelcome}
-                    className="h-7 w-7 p-0 hover:bg-purple-100 flex-shrink-0"
+                    className="h-6 w-6 sm:h-7 sm:w-7 p-0 hover:bg-purple-100 flex-shrink-0"
                     title="Back to Welcome"
                   >
                     <Home className="h-3 w-3 text-purple-600" />
@@ -116,7 +116,7 @@ export function ProspectModal({
                   variant="ghost"
                   size="sm"
                   onClick={onRetakeImage}
-                  className="h-7 w-7 p-0 hover:bg-blue-100 flex-shrink-0"
+                  className="h-6 w-6 sm:h-7 sm:w-7 p-0 hover:bg-blue-100 flex-shrink-0"
                   title="Retake Image"
                 >
                   <ArrowLeft className="h-3 w-3 text-blue-600" />
@@ -125,7 +125,7 @@ export function ProspectModal({
                   variant="ghost"
                   size="sm"
                   onClick={onClose}
-                  className="h-7 w-7 p-0 hover:bg-red-100 flex-shrink-0"
+                  className="h-6 w-6 sm:h-7 sm:w-7 p-0 hover:bg-red-100 flex-shrink-0"
                   title="Close"
                 >
                   <X className="h-3 w-3 text-red-600" />
@@ -145,16 +145,16 @@ export function ProspectModal({
           {/* Scrollable Content */}
           <div
             ref={modalRef}
-            className="max-h-[70vh] sm:max-h-[80vh] overflow-y-auto overscroll-contain"
+            className="max-h-[60vh] sm:max-h-[70vh] md:max-h-[80vh] overflow-y-auto overscroll-contain"
             onScroll={handleScroll}
           >
-            <div ref={contentRef} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+            <div ref={contentRef} className="p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4 md:space-y-6">
               {/* Property Image with Category Badge */}
               <div className="relative">
                 <img
                   src={imageUrl || "/placeholder.svg"}
                   alt="Property preview"
-                  className="w-full h-32 sm:h-40 md:h-48 object-cover rounded-lg shadow-lg"
+                  className="w-full h-24 sm:h-32 md:h-40 lg:h-48 object-cover rounded-lg shadow-lg"
                 />
                 <div className="absolute bottom-3 left-3">
                   <Badge className="bg-green-500 text-white border-0 shadow-lg flex items-center">
@@ -213,7 +213,7 @@ export function ProspectModal({
                     >
                       <div className="flex w-full">
                         {/* Prospect Image */}
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0">
                           <img
                             src={prospect.imageUrl || '/placeholder.svg'}
                             alt={prospect.title}
@@ -221,7 +221,7 @@ export function ProspectModal({
                           />
                         </div>
                         {/* Content */}
-                        <div className="flex-1 flex justify-between items-center p-3 sm:p-4 min-w-0">
+                        <div className="flex-1 flex justify-between items-center p-2 sm:p-3 md:p-4 min-w-0">
                           <div className="flex-1 min-w-0 mr-3">
                             <div className="font-semibold text-sm sm:text-base mb-1 text-purple-800 group-hover:text-purple-900">
                               {prospect.title}
@@ -288,11 +288,11 @@ export function ProspectModal({
               )}
 
               {/* Action Buttons at Bottom */}
-              <div className="flex gap-2 sm:gap-3 pt-4 sm:pt-6 border-t border-purple-200">
+              <div className="flex gap-1 sm:gap-2 md:gap-3 pt-3 sm:pt-4 md:pt-6 border-t border-purple-200">
                 <Button
                   onClick={onRetakeImage}
                   variant="outline"
-                  className="border-purple-200 text-purple-600 hover:bg-purple-50 py-2 sm:py-3 text-sm"
+                  className="border-purple-200 text-purple-600 hover:bg-purple-50 py-1 sm:py-2 md:py-3 text-sm"
                 >
                   <ArrowLeft className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                   Retake Image
@@ -300,7 +300,7 @@ export function ProspectModal({
                 <Button
                   onClick={onClose}
                   variant="outline"
-                  className="border-gray-300 text-gray-600 hover:bg-gray-50 py-2 sm:py-3 text-sm"
+                  className="border-gray-300 text-gray-600 hover:bg-gray-50 py-1 sm:py-2 md:py-3 text-sm"
                 >
                   <Home className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                   Dashboard
