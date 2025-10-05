@@ -80,7 +80,7 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
                   </h3>
 
                   {/* Chat bubble tail */}
-                  <div className="absolute bottom-[-6px] right-8 w-3 h-3 bg-gradient-to-r from-purple-500 to-pink-500 rotate-45"></div>
+                  <div className="absolute bottom-[-6px] right-12 w-3 h-3 bg-gradient-to-r from-purple-500 to-pink-500 rotate-45"></div>
                 </div>
 
                 {/* Pulse rings */}

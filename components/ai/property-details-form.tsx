@@ -23,12 +23,13 @@ interface PropertyDetails {
 
 interface PropertyDetailsFormProps {
   imageUrl: string
-  identifiedCategory: IdentifiedCategory
-  propertyDetails: any
-  prospects: SmartProspect[]
+  identifiedCategory?: IdentifiedCategory
+  propertyDetails?: any
+  prospects?: SmartProspect[]
   userId: string
   onSeeProspects: (details: PropertyDetails) => void
   onBack: () => void
+  isLoading?: boolean
 }
 
 const AMENITIES_OPTIONS = [
@@ -66,7 +67,8 @@ export function PropertyDetailsForm({
   prospects,
   userId,
   onSeeProspects,
-  onBack
+  onBack,
+  isLoading = false
 }: PropertyDetailsFormProps) {
   const [formData, setFormData] = useState<PropertyDetails>({
     size: "",
@@ -123,7 +125,7 @@ export function PropertyDetailsForm({
     }
   }
 
-  const isFormValid = formData.size && formData.location && formData.usage
+  const isFormValid = formData.size && formData.location && formData.usage && !isLoading && prospects && prospects.length > 0
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-purple-50 to-pink-50 relative overflow-x-hidden">
@@ -166,14 +168,26 @@ export function PropertyDetailsForm({
                   className="w-full h-48 object-cover rounded-lg shadow-lg"
                 />
                 <div className="absolute bottom-3 left-3">
-                  <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                    {identifiedCategory.name.toUpperCase()}
-                  </span>
+                  {isLoading ? (
+                    <span className="bg-gray-500 text-white px-3 py-1 rounded-full text-sm font-medium animate-pulse">
+                      ANALYZING...
+                    </span>
+                  ) : identifiedCategory ? (
+                    <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                      {identifiedCategory.name.toUpperCase()}
+                    </span>
+                  ) : null}
                 </div>
                 <div className="absolute bottom-3 right-3">
-                  <span className="bg-purple-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                    {prospects.length} Prospects Ready
-                  </span>
+                  {isLoading ? (
+                    <span className="bg-gray-500 text-white px-3 py-1 rounded-full text-sm font-medium animate-pulse">
+                      GENERATING...
+                    </span>
+                  ) : prospects ? (
+                    <span className="bg-purple-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                      {prospects.length} Prospects Ready
+                    </span>
+                  ) : null}
                 </div>
               </div>
             </CardContent>
@@ -321,10 +335,19 @@ export function PropertyDetailsForm({
               <Button
                 type="submit"
                 disabled={!isFormValid}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-3 text-lg font-semibold"
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-3 text-lg font-semibold disabled:opacity-50"
               >
-                <Eye className="mr-2 h-5 w-5" />
-                See Prospects
+                {isLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Analyzing Property...
+                  </>
+                ) : (
+                  <>
+                    <Eye className="mr-2 h-5 w-5" />
+                    See Prospects
+                  </>
+                )}
               </Button>
             </div>
           </form>
