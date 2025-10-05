@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Get initial session
     const getInitialSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
-      
+
       if (error) {
         console.error('Error getting session:', error);
         setLoading(false);
@@ -105,7 +105,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    return () => subscription.unsubscribe();
+    // Auto-refresh session every 50 minutes (3000000 ms) to prevent expiration
+    const refreshInterval = setInterval(async () => {
+      if (user && token) {
+        try {
+          console.log('Auto-refreshing session...');
+          const { data, error } = await supabase.auth.refreshSession();
+          if (error) {
+            console.error('Error refreshing session:', error);
+          } else if (data.session) {
+            console.log('Session refreshed successfully');
+            setToken(data.session.access_token);
+          }
+        } catch (error) {
+          console.error('Failed to refresh session:', error);
+        }
+      }
+    }, 3000000); // 50 minutes
+
+    return () => {
+      subscription.unsubscribe();
+      clearInterval(refreshInterval);
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
