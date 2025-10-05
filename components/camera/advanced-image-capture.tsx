@@ -3,24 +3,25 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { 
-  Camera, 
-  Upload, 
-  X, 
-  ArrowLeft, 
-  Home, 
+import {
+  Camera,
+  Upload,
+  X,
+  ArrowLeft,
+  Home,
   Target
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { 
+import { useAuth } from '@/lib/auth'
+import {
   captureFromCamera,
   compressImage
 } from '@/lib/advanced-image-processing'
-import { 
-  identifyImageCategory, 
-  type IdentifiedCategory, 
-  performSmartAnalysis, 
-  type SmartProspect 
+import {
+  identifyImageCategory,
+  type IdentifiedCategory,
+  performSmartAnalysis,
+  type SmartProspect
 } from '@/lib/smartProspectGenerator'
 import { ProspectModal } from '@/components/ai/prospect-modal'
 import { PropertyDetailsForm } from '@/components/ai/property-details-form'
@@ -38,22 +39,23 @@ interface AdvancedImageCaptureProps {
  }
 
 export function AdvancedImageCapture({
-   onClose,
-   onBack,
-   onBackToWelcome,
-   onImageCaptured,
-   fromLogin = false,
-   autoStartCamera = false
- }: AdvancedImageCaptureProps) {
-  const [isCapturing, setIsCapturing] = useState(false)
-  const [stream, setStream] = useState<MediaStream | null>(null)
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [showPropertyForm, setShowPropertyForm] = useState(false)
-  const [showProspectModal, setShowProspectModal] = useState(false)
-  const [prospects, setProspects] = useState<SmartProspect[]>([])
-  const [identifiedCategory, setIdentifiedCategory] = useState<IdentifiedCategory | null>(null)
-  const [propertyDetails, setPropertyDetails] = useState<any>(null)
-  const [processedImageUrl, setProcessedImageUrl] = useState<string>('')
+    onClose,
+    onBack,
+    onBackToWelcome,
+    onImageCaptured,
+    fromLogin = false,
+    autoStartCamera = false
+  }: AdvancedImageCaptureProps) {
+   const { user } = useAuth()
+   const [isCapturing, setIsCapturing] = useState(false)
+   const [stream, setStream] = useState<MediaStream | null>(null)
+   const [isProcessing, setIsProcessing] = useState(false)
+   const [showPropertyForm, setShowPropertyForm] = useState(false)
+   const [showProspectModal, setShowProspectModal] = useState(false)
+   const [prospects, setProspects] = useState<SmartProspect[]>([])
+   const [identifiedCategory, setIdentifiedCategory] = useState<IdentifiedCategory | null>(null)
+   const [propertyDetails, setPropertyDetails] = useState<any>(null)
+   const [processedImageUrl, setProcessedImageUrl] = useState<string>('')
   
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -541,12 +543,13 @@ export function AdvancedImageCapture({
       `}</style>
 
       {/* Property Details Form - Shows after image processing */}
-      {showPropertyForm && identifiedCategory && propertyDetails && (
+      {showPropertyForm && identifiedCategory && propertyDetails && user && (
         <PropertyDetailsForm
           imageUrl={processedImageUrl}
           identifiedCategory={identifiedCategory}
           propertyDetails={propertyDetails}
           prospects={prospects}
+          userId={user.id}
           onSeeProspects={handleSeeProspects}
           onBack={handleBackToCapture}
         />

@@ -26,6 +26,7 @@ interface PropertyDetailsFormProps {
   identifiedCategory: IdentifiedCategory
   propertyDetails: any
   prospects: SmartProspect[]
+  userId: string
   onSeeProspects: (details: PropertyDetails) => void
   onBack: () => void
 }
@@ -63,6 +64,7 @@ export function PropertyDetailsForm({
   identifiedCategory,
   propertyDetails,
   prospects,
+  userId,
   onSeeProspects,
   onBack
 }: PropertyDetailsFormProps) {
@@ -85,9 +87,40 @@ export function PropertyDetailsForm({
     }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    onSeeProspects(formData)
+
+    try {
+      // Save to API first
+      const response = await fetch('/api/prospect-analyses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: userId,
+          propertyImageUrl: imageUrl,
+          propertyData: formData,
+          valuation: {}, // Will be filled by AI analysis
+          prospects: prospects,
+          identifiedCategory: identifiedCategory
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to save prospect analysis')
+      }
+
+      const result = await response.json()
+      console.log('Prospect analysis saved:', result)
+
+      // Then call the callback
+      onSeeProspects(formData)
+    } catch (error) {
+      console.error('Error saving prospect analysis:', error)
+      // Still proceed to show prospects even if save fails
+      onSeeProspects(formData)
+    }
   }
 
   const isFormValid = formData.size && formData.location && formData.usage

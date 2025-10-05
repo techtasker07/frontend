@@ -1,20 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase'
-import { auth } from '@/lib/auth'
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 export async function POST(request: NextRequest) {
   try {
-    // Get the current user
-    const user = await auth.getUser()
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
     const body = await request.json()
     const {
+      userId,
       propertyImageUrl,
       propertyData,
       valuation,
@@ -23,21 +17,26 @@ export async function POST(request: NextRequest) {
     } = body
 
     // Validate required fields
-    if (!propertyData || !prospects || !identifiedCategory) {
+    if (!userId || !propertyData || !prospects || !identifiedCategory) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       )
     }
 
-    // Create Supabase client
-    const supabase = createClient()
+    // Create Supabase client with service role for server-side operations
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
 
     // Insert the prospect analysis
     const { data, error } = await supabase
       .from('prospect_analyses')
       .insert({
-        user_id: user.id,
+        user_id: userId,
         property_image_url: propertyImageUrl,
         property_data: propertyData,
         valuation: valuation || {},
@@ -72,22 +71,29 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    // Get the current user
-    const user = await auth.getUser()
-    if (!user) {
+    const searchParams = request.nextUrl.searchParams
+    const userId = searchParams.get('userId')
+
+    if (!userId) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: 'User ID required' },
+        { status: 400 }
       )
     }
 
-    const supabase = createClient()
+    // Create Supabase client with service role
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
 
     // Get user's prospect analyses
     const { data, error } = await supabase
       .from('prospect_analyses')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
     if (error) {
