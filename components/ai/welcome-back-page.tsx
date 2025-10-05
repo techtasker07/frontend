@@ -74,9 +74,13 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
                 <Camera className="h-10 w-10 text-purple-600" />
                 
                 {/* Sparkle animation */}
-                <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-bounce">
-                  <h3 className="text-xl font-bold">Click here to get prospects</h3>
-                  <Sparkles className="h-3 w-3 text-white" />
+                <div className="absolute -top-10 right-0 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-2 rounded-lg rounded-tr-none shadow-lg animate-bounce">
+                  <h3 className="text-xs font-semibold whitespace-nowrap">
+                    💬 Click here to get prospects
+                  </h3>
+
+                  {/* Chat bubble tail */}
+                  <div className="absolute bottom-[-6px] right-3 w-3 h-3 bg-gradient-to-r from-purple-500 to-pink-500 rotate-45"></div>
                 </div>
 
                 {/* Pulse rings */}
@@ -86,15 +90,6 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
 
               {/* Feature Description */}
               <div className="space-y-4">
-                
-                <Button
-                  onClick={onSkip}
-                  variant="outline"
-                  className="border-gray-300 text-gray-600 hover:bg-gray-50 py-4 px-6"
-                >
-                  <Home className="mr-2 h-5 w-5" />
-                  Skip
-                </Button>
               </div>
             </div>
           </div>
