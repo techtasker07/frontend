@@ -359,6 +359,7 @@ export function AdvancedImageCapture({
                     className="flex flex-col items-center p-8 h-auto border-purple-300 hover:bg-purple-50 hover:border-purple-400"
                   >
                     <Upload className="h-12 w-12 mb-3 text-purple-600" />
+                    <p className="text-sm font-bold">Upload</p>
                     <span className="text-lg font-semibold text-purple-800">Select & Process</span>
                     <span className="text-sm text-purple-600">Instant analysis</span>
                   </Button>
