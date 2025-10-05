@@ -112,7 +112,14 @@ export default function AITestPage() {
   const renderView = () => {
     switch (currentView) {
       case 'welcome':
-        return <WelcomeBackPage onCameraClick={() => setCurrentView('flow')} />
+        return (
+          <WelcomeBackPage 
+            userName="Test User"
+            onStartAnalysis={() => setCurrentView('flow')}
+            onSkip={() => setCurrentView('menu')}
+            onClose={() => setCurrentView('menu')}
+          />
+        )
       
       case 'flow':
         return (
