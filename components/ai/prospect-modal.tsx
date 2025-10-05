@@ -89,8 +89,8 @@ export function ProspectModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
-      <div className="flex items-start justify-center min-h-full p-3 sm:p-4 md:p-6">
-        <div className="w-full max-w-xs sm:max-w-sm md:max-w-lg lg:max-w-xl bg-white rounded-t-xl shadow-2xl">
+      <div className="flex items-end justify-center min-h-full p-3 sm:p-4 md:p-6">
+        <div className="w-full max-w-xs sm:max-w-sm md:max-w-lg lg:max-w-xl bg-white rounded-t-xl shadow-2xl transform transition-transform duration-300 ease-out">
           {/* Modal Header */}
           <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-purple-200 rounded-t-xl">
             <div className="flex items-center justify-between p-1 sm:p-2 md:p-3">
