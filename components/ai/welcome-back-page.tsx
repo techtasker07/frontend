@@ -75,6 +75,7 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
                 
                 {/* Sparkle animation */}
                 <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center animate-bounce">
+                  <h3 className="text-xl font-bold">Click here to get prospects</h3>
                   <Sparkles className="h-3 w-3 text-white" />
                 </div>
 
@@ -85,12 +86,7 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
 
               {/* Feature Description */}
               <div className="space-y-4">
-                <h3 className="text-xl font-bold bg-gradient-to-r from-purple-700 to-pink-700 bg-clip-text text-transparent">
-                  Smart Property Analysis
-                </h3>
-                <p className="text-slate-600 leading-relaxed text-md">
-                  Analyze properties with AI
-                </p>
+                
                 <Button
                   onClick={onSkip}
                   variant="outline"
