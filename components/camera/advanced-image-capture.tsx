@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import {
@@ -8,8 +9,7 @@ import {
   Upload,
   X,
   ArrowLeft,
-  Home,
-  Target
+  Home
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '@/lib/auth'
@@ -23,8 +23,6 @@ import {
   performSmartAnalysis,
   type SmartProspect
 } from '@/lib/smartProspectGenerator'
-import { ProspectModal } from '@/components/ai/prospect-modal'
-import { PropertyDetailsForm } from '@/components/ai/property-details-form'
 
 // Invalid image categories that should be rejected - DISABLED: Allow all images
 const INVALID_CATEGORIES = []
@@ -39,50 +37,42 @@ interface AdvancedImageCaptureProps {
  }
 
 export function AdvancedImageCapture({
-    onClose,
-    onBack,
-    onBackToWelcome,
-    onImageCaptured,
-    fromLogin = false,
-    autoStartCamera = false
-  }: AdvancedImageCaptureProps) {
-   const { user } = useAuth()
-   const [isCapturing, setIsCapturing] = useState(false)
-   const [stream, setStream] = useState<MediaStream | null>(null)
-   const [isProcessing, setIsProcessing] = useState(false)
-   const [showPropertyForm, setShowPropertyForm] = useState(false)
-   const [showProspectModal, setShowProspectModal] = useState(false)
-   const [prospects, setProspects] = useState<SmartProspect[]>([])
-   const [identifiedCategory, setIdentifiedCategory] = useState<IdentifiedCategory | null>(null)
-   const [propertyDetails, setPropertyDetails] = useState<any>(null)
-   const [processedImageUrl, setProcessedImageUrl] = useState<string>('')
-  
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+     onClose,
+     onBack,
+     onBackToWelcome,
+     onImageCaptured,
+     fromLogin = false,
+     autoStartCamera = false
+   }: AdvancedImageCaptureProps) {
+    const { user } = useAuth()
+    const router = useRouter()
+    const [isCapturing, setIsCapturing] = useState(false)
+    const [stream, setStream] = useState<MediaStream | null>(null)
+    const [isProcessing, setIsProcessing] = useState(false)
+
+   const videoRef = useRef<HTMLVideoElement>(null)
+   const canvasRef = useRef<HTMLCanvasElement>(null)
+   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Simplified camera startup
-  const startCamera = async () => {
-    try {
-      setIsCapturing(true)
-      const mediaStream = await captureFromCamera({
-        facingMode: 'environment',
-        width: 1920,
-        height: 1080
-      })
-      
-      setStream(mediaStream)
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream
-      }
-      
-      toast.success('Camera ready!')
-    } catch (error) {
-      console.error('Camera access failed:', error)
-      toast.error("Unable to access camera. Please check permissions.")
-      setIsCapturing(false)
-    }
-  }
+   const startCamera = async () => {
+     try {
+       setIsCapturing(true)
+       const mediaStream = await captureFromCamera({
+         facingMode: 'environment',
+         width: 1920,
+         height: 1080
+       })
+
+       setStream(mediaStream)
+       if (videoRef.current) {
+         videoRef.current.srcObject = mediaStream
+       }
+     } catch (error) {
+       console.error('Camera access failed:', error)
+       setIsCapturing(false)
+     }
+   }
 
   const stopCamera = () => {
     if (stream) {
@@ -131,139 +121,73 @@ export function AdvancedImageCapture({
           
         } catch (error) {
           console.error('Photo capture failed:', error)
-          toast.error('Failed to capture photo')
         }
       }
     }
   }
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file && file.type.startsWith("image/")) {
-      console.log('📁 File selected, processing instantly...')
-      
-      // Process uploaded image instantly
-      await processImageInstantly(file)
-    } else {
-      toast.error("Please select a valid image file.")
-    }
-  }
+     const file = event.target.files?.[0]
+     if (file && file.type.startsWith("image/")) {
+       console.log('📁 File selected, processing instantly...')
+
+       // Process uploaded image instantly
+       await processImageInstantly(file)
+     }
+   }
 
   // Instant image processing function with complete smart analysis
-  const processImageInstantly = async (file: File) => {
-    setIsProcessing(true)
-    
-    try {
-      console.log('🚀 Starting instant processing for:', file.name)
-      
-      // Compress image if needed
-      let processedFile = file
-      if (file.size > 2 * 1024 * 1024) {
-        console.log('🗜️ Compressing large image...')
-        toast.info('Optimizing image...')
-        processedFile = await compressImage(file, { 
-          maxSizeMB: 1.5,
-          maxWidthOrHeight: 2048,
-          quality: 0.85
-        })
-      }
-      
-      // Create image URL for display
-      const imageUrl = URL.createObjectURL(processedFile)
-      setProcessedImageUrl(imageUrl)
-      
-      // Perform complete smart analysis
-      console.log('🔍 Performing complete smart analysis...')
-      toast.info('Generating smart prospects...')
-      
-      const analysisResult = await performSmartAnalysis(processedFile)
-      console.log('✅ Analysis complete:', analysisResult)
-      
-      // Check if this is a human image - DISABLED: Allow all images
-      // if (analysisResult.identifiedCategory.name === 'human') {
-      //   console.log('❌ Human image detected')
-      //   toast.error('HUMAN image detected. Please capture a property image instead.', {
-      //     duration: 5000
-      //   })
-      //   URL.revokeObjectURL(imageUrl)
-      //   return
-      // }
-      
-      // Check if image category is material - DISABLED: Allow material images for now
-      // if (analysisResult.identifiedCategory.name === 'material') {
-      //   console.log('❌ Material image detected')
-      //   toast.error('MATERIAL image detected. Please capture a property image instead.', {
-      //     duration: 5000
-      //   })
-      //   URL.revokeObjectURL(imageUrl)
-      //   return
-      // }
-      
-      // Valid property image - set up form data
-      setIdentifiedCategory(analysisResult.identifiedCategory)
-      setPropertyDetails(analysisResult.propertyDetails)
-      setProspects(analysisResult.smartProspects || [])
+   const processImageInstantly = async (file: File) => {
+     setIsProcessing(true)
 
-      console.log('✅ Valid property image, showing property details form...')
-      toast.success(`Image processed! Please fill in property details.`)
+     try {
+       console.log('🚀 Starting instant processing for:', file.name)
 
-      // Show property details form
-      setShowPropertyForm(true)
-      
-    } catch (error) {
-      console.error('💥 Instant processing failed:', error)
-      toast.error('Failed to process image. Please try again.')
-      if (processedImageUrl) {
-        URL.revokeObjectURL(processedImageUrl)
-      }
-    } finally {
-      setIsProcessing(false)
-    }
-  }
+       // Compress image if needed
+       let processedFile = file
+       if (file.size > 2 * 1024 * 1024) {
+         console.log('🗜️ Compressing large image...')
+         processedFile = await compressImage(file, {
+           maxSizeMB: 1.5,
+           maxWidthOrHeight: 2048,
+           quality: 0.85
+         })
+       }
+
+       // Create image URL for display
+       const imageUrl = URL.createObjectURL(processedFile)
+
+       // Perform complete smart analysis
+       console.log('🔍 Performing complete smart analysis...')
+
+       const analysisResult = await performSmartAnalysis(processedFile)
+       console.log('✅ Analysis complete:', analysisResult)
+
+       // Valid property image - navigate to property details page
+       console.log('✅ Valid property image, navigating to property details form...')
+
+       // Navigate to property details page with data
+       const params = new URLSearchParams({
+         imageUrl: encodeURIComponent(imageUrl),
+         identifiedCategory: encodeURIComponent(JSON.stringify(analysisResult.identifiedCategory)),
+         propertyDetails: encodeURIComponent(JSON.stringify(analysisResult.propertyDetails)),
+         prospects: encodeURIComponent(JSON.stringify(analysisResult.smartProspects || [])),
+         userId: user?.id || ''
+       })
+
+       router.push(`/ai/property-details?${params.toString()}`)
+
+     } catch (error) {
+       console.error('💥 Instant processing failed:', error)
+     } finally {
+       setIsProcessing(false)
+     }
+   }
 
 
-  // Modal handlers
-  const handleCloseModal = () => {
-    setShowProspectModal(false)
-    if (processedImageUrl) {
-      URL.revokeObjectURL(processedImageUrl)
-      setProcessedImageUrl('')
-    }
-  }
-
-  const handleRetakeImage = () => {
-    handleCloseModal()
-    // Reset all state
-    setProspects([])
-    setIdentifiedCategory(null)
-    setPropertyDetails(null)
-  }
-
-  const handleSelectProspect = (prospect: SmartProspect) => {
-    console.log('🎯 Prospect selected:', prospect.title)
-    handleCloseModal()
-    toast.success(`Selected: ${prospect.title}`)
-    // Navigate to dashboard after selection
-    onClose()
-  }
-
-  const handleSeeProspects = (propertyFormData: any) => {
-    console.log('📋 Property details submitted:', propertyFormData)
-    setShowPropertyForm(false)
-    setShowProspectModal(true)
-  }
-
-  const handleBackToCapture = () => {
-    setShowPropertyForm(false)
-    // Reset all state
-    setProspects([])
-    setIdentifiedCategory(null)
-    setPropertyDetails(null)
-  }
 
   const handleClose = () => {
     stopCamera()
-    handleCloseModal()
     onClose()
   }
 
@@ -298,7 +222,7 @@ export function AdvancedImageCapture({
                   <ArrowLeft className="h-5 w-5 text-blue-600" />
                 </Button>
               )}
-              <Target className="mr-3 h-6 w-6 text-purple-600 flex-shrink-0" />
+              <Camera className="mr-3 h-6 w-6 text-purple-600 flex-shrink-0" />
               <h1 className={`text-lg sm:text-xl font-bold truncate ${fromLogin ? 'bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent' : 'text-gray-800'}`}>
                 Smart Property Capture
               </h1>
@@ -387,13 +311,13 @@ export function AdvancedImageCapture({
               {fromLogin && (
                 <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-xl border border-purple-200 shadow-sm">
                   <h4 className="font-semibold text-purple-800 mb-3 flex items-center">
-                    <Target className="mr-2 h-4 w-4" />
+                    <Camera className="mr-2 h-4 w-4" />
                     Smart Features:
                   </h4>
                   <ul className="text-sm text-purple-700 space-y-2">
                     <li className="flex items-center">
                       <span className="w-2 h-2 bg-purple-500 rounded-full mr-3"></span>
-                      Instant category detection
+                      Simple image capture
                     </li>
                     <li className="flex items-center">
                       <span className="w-2 h-2 bg-pink-500 rounded-full mr-3"></span>
@@ -405,7 +329,7 @@ export function AdvancedImageCapture({
                     </li>
                     <li className="flex items-center">
                       <span className="w-2 h-2 bg-pink-500 rounded-full mr-3"></span>
-                      Direct prospect generation
+                      Direct form navigation
                     </li>
                   </ul>
                 </div>
@@ -441,7 +365,7 @@ export function AdvancedImageCapture({
                     onClick={capturePhoto}
                     size="lg"
                     className="w-20 h-20 rounded-full bg-white text-black hover:bg-gray-100 border-4 border-white shadow-2xl flex items-center justify-center relative overflow-hidden"
-                    title="Capture with auto-detection"
+                    title="Capture photo"
                   >
                     <div className="absolute inset-2 rounded-full border-2 border-black/20"></div>
                     <Camera className="h-8 w-8 text-black" />
@@ -459,33 +383,7 @@ export function AdvancedImageCapture({
                 </div>
               </div>
 
-          {/* Enhanced top hint with better positioning */}
-          <div className="absolute top-8 left-0 right-0 flex justify-center z-20">
-            <div className="bg-black/80 text-white px-6 py-3 rounded-full text-sm flex items-center backdrop-blur-sm border border-white/20">
-              <Target className="w-4 h-4 mr-2 animate-pulse" />
-              Position property within frame • AI detection active
-            </div>
-          </div>
 
-          {/* Viewfinder Frame Overlay */}
-          <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
-            <div className="relative w-80 h-80 max-w-[85vw] max-h-[60vh]">
-              {/* Semi-transparent background overlay */}
-              <div className="absolute inset-0 border-1 border-white/5 bg-transparent rounded-lg"></div>
-              
-              {/* Corner frames - Enhanced visibility */}
-              <div className="absolute -top-1 -left-1 w-12 h-12 border-l-4 border-t-4 border-white drop-shadow-lg rounded-tl-xl"></div>
-              <div className="absolute -top-1 -right-1 w-12 h-12 border-r-4 border-t-4 border-white drop-shadow-lg rounded-tr-xl"></div>
-              <div className="absolute -bottom-1 -left-1 w-12 h-12 border-l-4 border-b-4 border-white drop-shadow-lg rounded-bl-xl"></div>
-              <div className="absolute -bottom-1 -right-1 w-12 h-12 border-r-4 border-b-4 border-white drop-shadow-lg rounded-br-xl"></div>
-
-              {/* Focus indicator - Enhanced */}
-              <div className="absolute top-1/2 left-1/2 w-3 h-3 -translate-x-1/2 -translate-y-1/2">
-                <div className="w-full h-full bg-white rounded-full opacity-90 animate-pulse drop-shadow-lg"></div>
-                <div className="absolute inset-0 bg-white/50 rounded-full animate-ping"></div>
-              </div>
-            </div>
-          </div>
             </div>
           )}
 
@@ -494,14 +392,14 @@ export function AdvancedImageCapture({
             <div className="space-y-6">
               <div className="flex flex-col items-center justify-center py-12">
                 <div className="w-16 h-16 mb-4">
-                  <Target className="w-full h-full text-purple-600 animate-pulse" />
-                </div>
+                   <Camera className="w-full h-full text-purple-600 animate-pulse" />
+                 </div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">
                   Processing Image...
                 </h3>
                 <p className="text-sm text-gray-600 mb-4 text-center">
-                  Analyzing image category and optimizing for AI processing
-                </p>
+                   Processing image and preparing form
+                 </p>
                 <div className="w-full max-w-xs">
                   <Progress value={75} className="h-2 bg-purple-100" />
                 </div>
@@ -542,33 +440,6 @@ export function AdvancedImageCapture({
         }
       `}</style>
 
-      {/* Property Details Form - Shows after image processing */}
-      {showPropertyForm && identifiedCategory && propertyDetails && user && (
-        <PropertyDetailsForm
-          imageUrl={processedImageUrl}
-          identifiedCategory={identifiedCategory}
-          propertyDetails={propertyDetails}
-          prospects={prospects}
-          userId={user.id}
-          onSeeProspects={handleSeeProspects}
-          onBack={handleBackToCapture}
-        />
-      )}
-
-      {/* Prospect Modal - Displays from bottom when form is submitted */}
-      {showProspectModal && identifiedCategory && propertyDetails && (
-        <ProspectModal
-          isOpen={showProspectModal}
-          onClose={handleCloseModal}
-          onRetakeImage={handleRetakeImage}
-          onSelectProspect={handleSelectProspect}
-          onBackToWelcome={onBackToWelcome}
-          imageUrl={processedImageUrl}
-          prospects={prospects}
-          identifiedCategory={identifiedCategory}
-          propertyDetails={propertyDetails}
-        />
-      )}
     </div>
   )
 }
