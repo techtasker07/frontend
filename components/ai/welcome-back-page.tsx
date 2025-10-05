@@ -3,8 +3,6 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Camera, Sparkles, X, Home } from "lucide-react"
-import { ImageCapturePage } from "./image-capture-page"
-import { type IdentifiedCategory } from "@/lib/smartProspectGenerator"
 
 interface WelcomeBackPageProps {
    userName: string

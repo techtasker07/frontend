@@ -1,358 +1,476 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { MapPin, Ruler, Building, DoorOpen, Home, Eye } from "lucide-react"
-import type { SmartProspect, IdentifiedCategory } from "@/lib/smartProspectGenerator"
-
-interface PropertyDetails {
-  size: string
-  stories: string
-  rooms: string
-  averageRoomSize: string
-  amenities: string[]
-  usage: string
-  location: string
-}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { 
+  X, 
+  MapPin, 
+  Home, 
+  DollarSign, 
+  Calendar,
+  Ruler,
+  Sparkles,
+  ArrowRight,
+  ChevronDown,
+  ChevronUp
+} from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { toast } from "sonner"
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer"
 
 interface PropertyDetailsFormProps {
-  imageUrl: string
-  identifiedCategory?: IdentifiedCategory
-  propertyDetails?: any
-  prospects?: SmartProspect[]
-  userId: string
-  onSeeProspects: (details: PropertyDetails) => void
-  onBack: () => void
-  isLoading?: boolean
+  isOpen: boolean
+  onClose: () => void
+  imageData: string
+  visionAnalysis?: any
+  onSubmit: (details: PropertyDetails) => void
 }
 
-const AMENITIES_OPTIONS = [
-  "Parking Space",
-  "Garden",
-  "Swimming Pool",
-  "Gym/Fitness Center",
-  "Security System",
-  "Elevator",
-  "Air Conditioning",
-  "Heating System",
-  "Internet/WiFi",
-  "Water Supply",
-  "Electricity Backup",
-  "Fire Safety",
-  "Playground",
-  "Laundry Facilities",
-  "Storage Room"
-]
+interface PropertyDetails {
+  address: string
+  propertyType: string
+  squareFootage: string
+  bedrooms: string
+  bathrooms: string
+  yearBuilt: string
+  currentUse: string
+  ownershipStatus: string
+  budget: string
+  timeline: string
+  goals: string
+  additionalInfo: string
+  marketValue: string
+  location: {
+    city: string
+    state: string
+    zipCode: string
+  }
+}
 
-const USAGE_OPTIONS = [
-  "Residential",
-  "Commercial",
-  "Industrial",
-  "Mixed Use",
-  "Vacant Land",
-  "Agricultural",
-  "Institutional"
-]
-
-export function PropertyDetailsForm({
-  imageUrl,
-  identifiedCategory,
-  propertyDetails,
-  prospects,
-  userId,
-  onSeeProspects,
-  onBack,
-  isLoading = false
+export function PropertyDetailsForm({ 
+  isOpen, 
+  onClose, 
+  imageData, 
+  visionAnalysis,
+  onSubmit 
 }: PropertyDetailsFormProps) {
+  const router = useRouter()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showAdvanced, setShowAdvanced] = useState(false)
+  
+  // Form state
   const [formData, setFormData] = useState<PropertyDetails>({
-    size: "",
-    stories: "",
-    rooms: "",
-    averageRoomSize: "",
-    amenities: [],
-    usage: "",
-    location: ""
+    address: "",
+    propertyType: visionAnalysis?.propertyType || "",
+    squareFootage: "",
+    bedrooms: "",
+    bathrooms: "",
+    yearBuilt: "",
+    currentUse: "",
+    ownershipStatus: "",
+    budget: "",
+    timeline: "",
+    goals: "",
+    additionalInfo: "",
+    marketValue: "",
+    location: {
+      city: "",
+      state: "",
+      zipCode: ""
+    }
   })
 
-  const handleAmenityChange = (amenity: string, checked: boolean) => {
+  const handleInputChange = (field: keyof Omit<PropertyDetails, 'location'>, value: string) => {
     setFormData(prev => ({
       ...prev,
-      amenities: checked
-        ? [...prev.amenities, amenity]
-        : prev.amenities.filter(a => a !== amenity)
+      [field]: value
+    }))
+  }
+
+  const handleLocationChange = (field: keyof PropertyDetails['location'], value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      location: {
+        ...prev.location,
+        [field]: value
+      }
     }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsSubmitting(true)
 
     try {
-      // Save to API first
-      const response = await fetch('/api/prospect-analyses', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: userId,
-          propertyImageUrl: imageUrl,
-          propertyData: formData,
-          valuation: {}, // Will be filled by AI analysis
-          prospects: prospects,
-          identifiedCategory: identifiedCategory
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to save prospect analysis')
+      // Basic validation
+      if (!formData.address || !formData.propertyType) {
+        toast.error("Please fill in the required fields")
+        return
       }
 
-      const result = await response.json()
-      console.log('Prospect analysis saved:', result)
-
-      // Then call the callback
-      onSeeProspects(formData)
+      toast.success("Property details saved! Generating prospects...")
+      onSubmit(formData)
+      
     } catch (error) {
-      console.error('Error saving prospect analysis:', error)
-      // Still proceed to show prospects even if save fails
-      onSeeProspects(formData)
+      console.error("Error submitting form:", error)
+      toast.error("Failed to save property details")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-  const isFormValid = formData.size && formData.location && formData.usage && !isLoading && prospects && prospects.length > 0
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-purple-50 to-pink-50 relative overflow-x-hidden">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-0 -left-4 w-24 h-24 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-        <div className="absolute bottom-0 -right-4 w-32 h-32 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
-      </div>
+    <Drawer open={isOpen} onOpenChange={onClose}>
+      <DrawerContent className="max-h-[85vh] bg-white">
+        <div className="mx-auto w-full max-w-2xl">
+          <DrawerHeader className="text-center pb-2">
+            <DrawerTitle className="flex items-center justify-center gap-2 text-xl font-semibold">
+              <Home className="w-5 h-5 text-blue-600" />
+              Property Details
+            </DrawerTitle>
+            <DrawerDescription>
+              Add details about your property to get better AI-powered suggestions
+            </DrawerDescription>
+          </DrawerHeader>
 
-      <div className="relative z-10 flex flex-col min-h-screen">
-        {/* Header */}
-        <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-purple-200">
-          <div className="flex items-center justify-between p-4">
-            <div className="flex items-center flex-1 min-w-0">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onBack}
-                className="h-9 w-9 p-0 hover:bg-blue-100 mr-3 flex-shrink-0"
-                title="Back to capture"
-              >
-                <MapPin className="h-5 w-5 text-blue-600" />
-              </Button>
-              <h1 className="text-lg font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent truncate">
-                Property Details
-              </h1>
-            </div>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 p-4 pb-6 space-y-6 max-w-2xl mx-auto w-full">
-          {/* Image Preview */}
-          <Card className="border-2 border-purple-200">
-            <CardContent className="p-4">
-              <div className="relative">
-                <img
-                  src={imageUrl}
-                  alt="Property preview"
-                  className="w-full h-48 object-cover rounded-lg shadow-lg"
-                />
-                <div className="absolute bottom-3 left-3">
-                  {isLoading ? (
-                    <span className="bg-gray-500 text-white px-3 py-1 rounded-full text-sm font-medium animate-pulse">
-                      ANALYZING...
-                    </span>
-                  ) : identifiedCategory ? (
-                    <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                      {identifiedCategory.name.toUpperCase()}
-                    </span>
-                  ) : null}
-                </div>
-                <div className="absolute bottom-3 right-3">
-                  {isLoading ? (
-                    <span className="bg-gray-500 text-white px-3 py-1 rounded-full text-sm font-medium animate-pulse">
-                      GENERATING...
-                    </span>
-                  ) : prospects ? (
-                    <span className="bg-purple-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                      {prospects.length} Prospects Ready
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Basic Property Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Home className="h-5 w-5 text-purple-600" />
-                  Property Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="size" className="flex items-center gap-2">
-                      <Ruler className="h-4 w-4" />
-                      Size (sq meters) *
-                    </Label>
-                    <Input
-                      id="size"
-                      type="number"
-                      placeholder="e.g. 120"
-                      value={formData.size}
-                      onChange={(e) => setFormData(prev => ({ ...prev, size: e.target.value }))}
-                      required
-                    />
+          <div className="px-4 pb-6 max-h-[60vh] overflow-y-auto">
+            {/* Vision Analysis Results */}
+            {visionAnalysis && (
+              <Card className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 border-0">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Sparkles className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-900">AI Analysis Results</span>
                   </div>
-
-                  <div>
-                    <Label htmlFor="stories" className="flex items-center gap-2">
-                      <Building className="h-4 w-4" />
-                      Number of Stories
-                    </Label>
-                    <Input
-                      id="stories"
-                      type="number"
-                      placeholder="e.g. 2"
-                      value={formData.stories}
-                      onChange={(e) => setFormData(prev => ({ ...prev, stories: e.target.value }))}
-                    />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="text-center">
+                      <div className="text-xs text-gray-600">Property Type</div>
+                      <Badge variant="secondary" className="mt-1">
+                        {visionAnalysis.propertyType}
+                      </Badge>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs text-gray-600">Confidence</div>
+                      <Badge variant="outline" className="mt-1">
+                        {Math.round(visionAnalysis.confidence * 100)}%
+                      </Badge>
+                    </div>
                   </div>
+                  {visionAnalysis.features && visionAnalysis.features.length > 0 && (
+                    <div className="mt-3">
+                      <div className="text-xs text-gray-600 mb-2">Detected Features</div>
+                      <div className="flex flex-wrap gap-1">
+                        {visionAnalysis.features.slice(0, 4).map((feature: string, index: number) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {feature}
+                          </Badge>
+                        ))}
+                        {visionAnalysis.features.length > 4 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{visionAnalysis.features.length - 4} more
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
-                  <div>
-                    <Label htmlFor="rooms" className="flex items-center gap-2">
-                      <DoorOpen className="h-4 w-4" />
-                      Number of Rooms/Outlets
-                    </Label>
-                    <Input
-                      id="rooms"
-                      type="number"
-                      placeholder="e.g. 4"
-                      value={formData.rooms}
-                      onChange={(e) => setFormData(prev => ({ ...prev, rooms: e.target.value }))}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="averageRoomSize" className="flex items-center gap-2">
-                      <Ruler className="h-4 w-4" />
-                      Average Room Size (sq meters)
-                    </Label>
-                    <Input
-                      id="averageRoomSize"
-                      type="number"
-                      placeholder="e.g. 25"
-                      value={formData.averageRoomSize}
-                      onChange={(e) => setFormData(prev => ({ ...prev, averageRoomSize: e.target.value }))}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      To get the best measurement, you can use an AI tool such as{" "}
-                      <a
-                        href="https://iscanner.com/web/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-purple-600 underline hover:text-purple-800"
-                      >
-                        IScanner
-                      </a>
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="usage">Current Usage *</Label>
-                  <Select value={formData.usage} onValueChange={(value) => setFormData(prev => ({ ...prev, usage: value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select property usage" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {USAGE_OPTIONS.map((usage) => (
-                        <SelectItem key={usage} value={usage}>
-                          {usage}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="location" className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    Location *
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Basic Information
+                </h3>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="address" className="text-sm font-medium">
+                    Property Address *
                   </Label>
-                  <Textarea
-                    id="location"
-                    placeholder="Enter property location/address"
-                    value={formData.location}
-                    onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                  <Input
+                    id="address"
+                    placeholder="123 Main St, City, State, ZIP"
+                    value={formData.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
                     required
+                    className="w-full"
                   />
                 </div>
-              </CardContent>
-            </Card>
-            
-            {/* Amenities */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Available Amenities</CardTitle>
-                <p className="text-sm text-gray-600">Select all that apply</p>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {AMENITIES_OPTIONS.map((amenity) => (
-                    <div key={amenity} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={amenity}
-                        checked={formData.amenities.includes(amenity)}
-                        onCheckedChange={(checked) => handleAmenityChange(amenity, checked as boolean)}
-                      />
-                      <Label htmlFor={amenity} className="text-sm">
-                        {amenity}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Submit Button */}
-            <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-purple-200 p-4 -mx-4">
-              <Button
-                type="submit"
-                disabled={!isFormValid}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-3 text-lg font-semibold disabled:opacity-50"
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="propertyType" className="text-sm font-medium">
+                      Property Type *
+                    </Label>
+                    <Select 
+                      value={formData.propertyType}
+                      onValueChange={(value) => handleInputChange('propertyType', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="house">Single Family House</SelectItem>
+                        <SelectItem value="apartment">Apartment/Condo</SelectItem>
+                        <SelectItem value="townhouse">Townhouse</SelectItem>
+                        <SelectItem value="office">Office Space</SelectItem>
+                        <SelectItem value="warehouse">Warehouse</SelectItem>
+                        <SelectItem value="retail">Retail Space</SelectItem>
+                        <SelectItem value="land">Vacant Land</SelectItem>
+                        <SelectItem value="mixed-use">Mixed Use</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="currentUse" className="text-sm font-medium">
+                      Current Use
+                    </Label>
+                    <Input
+                      id="currentUse"
+                      placeholder="e.g., Residential"
+                      value={formData.currentUse}
+                      onChange={(e) => handleInputChange('currentUse', e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Property Specifications */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <Ruler className="w-4 h-4" />
+                  Property Specifications
+                </h3>
+                
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="squareFootage" className="text-sm font-medium">
+                      Square Feet
+                    </Label>
+                    <Input
+                      id="squareFootage"
+                      placeholder="e.g., 2000"
+                      value={formData.squareFootage}
+                      onChange={(e) => handleInputChange('squareFootage', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="bedrooms" className="text-sm font-medium">
+                      Bedrooms
+                    </Label>
+                    <Input
+                      id="bedrooms"
+                      placeholder="e.g., 3"
+                      value={formData.bedrooms}
+                      onChange={(e) => handleInputChange('bedrooms', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="bathrooms" className="text-sm font-medium">
+                      Bathrooms
+                    </Label>
+                    <Input
+                      id="bathrooms"
+                      placeholder="e.g., 2.5"
+                      value={formData.bathrooms}
+                      onChange={(e) => handleInputChange('bathrooms', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="yearBuilt" className="text-sm font-medium">
+                      Year Built
+                    </Label>
+                    <Input
+                      id="yearBuilt"
+                      placeholder="e.g., 1995"
+                      value={formData.yearBuilt}
+                      onChange={(e) => handleInputChange('yearBuilt', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="marketValue" className="text-sm font-medium">
+                      Market Value ($)
+                    </Label>
+                    <Input
+                      id="marketValue"
+                      placeholder="e.g., 350000"
+                      value={formData.marketValue}
+                      onChange={(e) => handleInputChange('marketValue', e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Project Goals */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <DollarSign className="w-4 h-4" />
+                  Project Goals
+                </h3>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="goals" className="text-sm font-medium">
+                    What are you looking to achieve?
+                  </Label>
+                  <Textarea
+                    id="goals"
+                    placeholder="e.g., Increase rental income, find alternative uses, maximize property value..."
+                    value={formData.goals}
+                    onChange={(e) => handleInputChange('goals', e.target.value)}
+                    rows={3}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="budget" className="text-sm font-medium">
+                      Investment Budget
+                    </Label>
+                    <Select 
+                      value={formData.budget}
+                      onValueChange={(value) => handleInputChange('budget', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select range" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="under-10k">Under $10,000</SelectItem>
+                        <SelectItem value="10k-50k">$10,000 - $50,000</SelectItem>
+                        <SelectItem value="50k-100k">$50,000 - $100,000</SelectItem>
+                        <SelectItem value="100k-250k">$100,000 - $250,000</SelectItem>
+                        <SelectItem value="250k-500k">$250,000 - $500,000</SelectItem>
+                        <SelectItem value="over-500k">Over $500,000</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="timeline" className="text-sm font-medium">
+                      Timeline
+                    </Label>
+                    <Select 
+                      value={formData.timeline}
+                      onValueChange={(value) => handleInputChange('timeline', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select timeline" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="immediate">Immediate (0-3 months)</SelectItem>
+                        <SelectItem value="short-term">Short-term (3-6 months)</SelectItem>
+                        <SelectItem value="medium-term">Medium-term (6-12 months)</SelectItem>
+                        <SelectItem value="long-term">Long-term (1+ years)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Advanced Options Toggle */}
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="flex items-center justify-center gap-2 w-full text-sm text-blue-600 hover:text-blue-800 transition-colors py-2"
               >
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    Analyzing Property...
-                  </>
-                ) : (
-                  <>
-                    <Eye className="mr-2 h-5 w-5" />
-                    See Prospects
-                  </>
+                Advanced Options
+                {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+
+              {/* Advanced Options */}
+              <AnimatePresence>
+                {showAdvanced && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-4"
+                  >
+                    <div className="space-y-2">
+                      <Label htmlFor="ownershipStatus" className="text-sm font-medium">
+                        Ownership Status
+                      </Label>
+                      <Select 
+                        value={formData.ownershipStatus}
+                        onValueChange={(value) => handleInputChange('ownershipStatus', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="owner">Owner</SelectItem>
+                          <SelectItem value="investor">Real Estate Investor</SelectItem>
+                          <SelectItem value="agent">Real Estate Agent</SelectItem>
+                          <SelectItem value="developer">Developer</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="additionalInfo" className="text-sm font-medium">
+                        Additional Information
+                      </Label>
+                      <Textarea
+                        id="additionalInfo"
+                        placeholder="Any additional details about the property, constraints, or special considerations..."
+                        value={formData.additionalInfo}
+                        onChange={(e) => handleInputChange('additionalInfo', e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+                  </motion.div>
                 )}
-              </Button>
-            </div>
-          </form>
+              </AnimatePresence>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onClose}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                >
+                  {isSubmitting ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Generating...
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4" />
+                      Generate AI Prospects
+                      <ArrowRight className="w-4 h-4" />
+                    </div>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
-    </div>
+      </DrawerContent>
+    </Drawer>
   )
 }

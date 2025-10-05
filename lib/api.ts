@@ -5,8 +5,6 @@ export type {
   ApiResponse,
   User,
   Property,
-  ProspectProperty,
-  PropertyProspect,
   PropertyImage,
   Vote,
   VoteOption,

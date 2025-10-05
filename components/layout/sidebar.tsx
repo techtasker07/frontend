@@ -6,7 +6,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth"
 import { PropertyTypeDialog } from "@/components/PropertyTypeDialog"
-import { Home, Building, Lightbulb, Plus, User, LogOut, UserPlus, LogIn, BarChart3, ShoppingBag, FileText } from "lucide-react"
+import { Home, Building, Plus, User, LogOut, UserPlus, LogIn, BarChart3, ShoppingBag, FileText } from "lucide-react"
 
 interface SidebarProps {
   onClose?: () => void
@@ -29,15 +29,14 @@ const publicNavigation: NavigationItem[] = [
 ]
 
 const authenticatedNavigation: NavigationItem[] = [
-  { name: "Home", href: "/", icon: Home },
-  { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
-  { name: "Marketplace", href: "/marketplace", icon: ShoppingBag },
-  { name: "Properties", href: "/properties", icon: Building },
-  { name: "My Smart Prospects", href: "/prospectProperties", icon: Lightbulb },
-  { name: "Add Property", href: "/add-property", icon: Plus },
-  { name: "Privacy Policy", href: "/privacy", icon: FileText },
-  { name: "Terms of Service", href: "/terms", icon: FileText },
-]
+   { name: "Home", href: "/", icon: Home },
+   { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
+   { name: "Marketplace", href: "/marketplace", icon: ShoppingBag },
+   { name: "Properties", href: "/properties", icon: Building },
+   { name: "Add Property", href: "/add-property", icon: Plus },
+   { name: "Privacy Policy", href: "/privacy", icon: FileText },
+   { name: "Terms of Service", href: "/terms", icon: FileText },
+ ]
 
 export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname()

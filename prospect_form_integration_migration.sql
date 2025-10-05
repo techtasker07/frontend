@@ -31,7 +31,7 @@
 -- VERIFICATION
 -- ============================================================================
 
--- Verify the prospect_analyses table exists and has the correct structure 'kindly understand and implement this prompt duly: Make sure that when '
+-- Verify the prospect_analyses table exists and has the correct structure:
 
 
 DO $$

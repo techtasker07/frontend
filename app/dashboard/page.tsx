@@ -38,13 +38,6 @@ interface PollItem {
   statusColor: string;
 }
 
-interface ProspectItem {
-  id: string;
-  title: string;
-  location: string;
-  aiScore: number;
-  tags: string[];
-}
 
 interface ActivityItem {
   id: string;
@@ -66,14 +59,12 @@ const Dashboard: React.FC = () => {
     { id: 'dashboard', label: 'Dashboard', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', active: true },
     { id: 'marketplace', label: 'Marketplace', icon: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z', active: false },
     { id: 'properties', label: 'Properties', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', active: false },
-    { id: 'prospects', label: 'My Smart Prospects', icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z', active: false },
     { id: 'add-property', label: 'Add Property', icon: 'M12 4v16m8-8H4', active: false },
     { id: 'profile', label: 'Profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', active: false }
   ]);
 
   const [statItems, setStatItems] = useState<StatItem[]>([]);
   const [pollItems, setPollItems] = useState<PollItem[]>([]);
-  const [prospectItems, setProspectItems] = useState<ProspectItem[]>([]);
   const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -108,14 +99,6 @@ const Dashboard: React.FC = () => {
             color: 'indigo'
           },
           {
-            id: 'smart-prospects',
-            label: 'Smart Prospects',
-            value: stats.smartProspects.toString(),
-            trend: '2 high priority',
-            icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z',
-            color: 'blue'
-          },
-          {
             id: 'community-votes',
             label: 'Community Votes',
             value: stats.communityVotes.toString(),
@@ -140,11 +123,6 @@ const Dashboard: React.FC = () => {
         setPollItems(pollsResponse.data);
       }
 
-      // Fetch dashboard prospects
-      const prospectsResponse = await supabaseApi.getDashboardProspects(10);
-      if (prospectsResponse.success) {
-        setProspectItems(prospectsResponse.data);
-      }
 
       // Fetch dashboard activities
       const activitiesResponse = await supabaseApi.getDashboardActivities(10);
@@ -169,7 +147,6 @@ const Dashboard: React.FC = () => {
       'dashboard': '/dashboard',
       'marketplace': '/marketplace',
       'properties': '/properties',
-      'prospects': '/prospectProperties',
       'add-property': '/add-property',
       'profile': '/profile'
     };
@@ -193,9 +170,6 @@ const Dashboard: React.FC = () => {
     alert(`Property poll details and voting interface would open for poll: ${pollId}`);
   };
 
-  const handleProspectClick = (prospectId: string) => {
-    alert(`Smart prospect detailed analysis and recommendation would open for prospect: ${prospectId}`);
-  };
 
   const handleViewAll = () => {
     alert('Full list view would open here with filtering and sorting options.');
@@ -385,45 +359,8 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Smart Prospects */}
+            {/* Marketplace Properties Update */}
             <div>
-              <div className="bg-white rounded-xl p-6 mb-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900">Smart Prospects</h3>
-                  <button
-                    onClick={handleViewAll}
-                    className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
-                  >
-                    View All
-                  </button>
-                </div>
-                <div className="space-y-3">
-                  {prospectItems.map(prospect => (
-                    <div
-                      key={prospect.id}
-                      className="border border-gray-200 rounded-lg p-3 hover:border-green-300 transition-colors cursor-pointer"
-                      onClick={() => handleProspectClick(prospect.id)}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-gray-900 text-sm">{prospect.title}</h4>
-                        <div className="ai-score text-white text-xs px-2 py-1 rounded-full bg-green-500">
-                          AI: {prospect.aiScore}
-                        </div>
-                      </div>
-                      <p className="text-xs text-gray-600">{prospect.location}</p>
-                      <div className="flex items-center mt-2 space-x-2">
-                        {prospect.tags.map((tag, index) => (
-                          <span key={index} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Marketplace Properties Update */}
               <div className="bg-white rounded-xl p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-semibold text-gray-900">Marketplace Properties</h3>

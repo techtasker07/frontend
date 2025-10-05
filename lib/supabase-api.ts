@@ -47,31 +47,6 @@ export interface Property {
   pollPercentage?: number;
 }
 
-export interface ProspectProperty {
-  id: string;
-  title: string;
-  description: string;
-  location: string;
-  category_id: string;
-  estimated_worth?: number;
-  year_of_construction?: number;
-  image_url?: string;
-  created_at: string;
-  updated_at: string;
-  category_name?: string;
-  prospects?: PropertyProspect[];
-}
-
-export interface PropertyProspect {
-  id: string;
-  prospect_property_id: string;
-  title: string;
-  description: string;
-  estimated_cost: number;
-  total_cost: number;
-  created_at: string;
-  updated_at: string;
-}
 
 export interface PropertyImage {
   id: string;
@@ -836,181 +811,6 @@ class SupabaseApiClient {
     }
   }
 
-  // Prospect Properties methods
-  async getProspectProperties(params?: {
-    category?: string;
-    limit?: number;
-    offset?: number;
-  }): Promise<ApiResponse<ProspectProperty[]>> {
-    try {
-      let query = supabase
-        .from('prospect_properties')
-        .select(`
-          *,
-          categories!prospect_properties_category_id_fkey (
-            name
-          ),
-          property_prospects (
-            id,
-            title,
-            description,
-            estimated_cost,
-            total_cost
-          )
-        `);
-
-      if (params?.category) {
-        query = query.eq('categories.name', params.category);
-      }
-      if (params?.limit) {
-        query = query.limit(params.limit);
-      }
-      if (params?.offset) {
-        query = query.range(params.offset, params.offset + (params.limit || 10) - 1);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      const transformedData = data?.map(item => ({
-        ...item,
-        category_name: item.categories?.name,
-        prospects: item.property_prospects || []
-      })) || [];
-
-      return {
-        success: true,
-        data: transformedData as ProspectProperty[]
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        data: [],
-        error: error.message
-      };
-    }
-  }
-
-  async getProspectProperty(id: string): Promise<ApiResponse<ProspectProperty>> {
-    try {
-      const { data, error } = await supabase
-        .from('prospect_properties')
-        .select(`
-          *,
-          categories!prospect_properties_category_id_fkey (
-            name
-          ),
-          property_prospects (
-            id,
-            title,
-            description,
-            estimated_cost,
-            total_cost
-          )
-        `)
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
-
-      const transformedData = {
-        ...data,
-        category_name: data.categories?.name,
-        prospects: data.property_prospects || []
-      };
-
-      return {
-        success: true,
-        data: transformedData as ProspectProperty
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        data: {} as ProspectProperty,
-        error: error.message
-      };
-    }
-  }
-
-  async createProspectProperty(propertyData: {
-    title: string;
-    description: string;
-    location: string;
-    category_id: string;
-    estimated_worth?: number;
-    year_of_construction?: number;
-    image_url?: string;
-  }): Promise<ApiResponse<ProspectProperty>> {
-    try {
-      const { data, error } = await supabase
-        .from('prospect_properties')
-        .insert(propertyData)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      return {
-        success: true,
-        data: data as ProspectProperty
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        data: {} as ProspectProperty,
-        error: error.message
-      };
-    }
-  }
-
-  async updateProspectProperty(id: string, propertyData: Partial<ProspectProperty>): Promise<ApiResponse<ProspectProperty>> {
-    try {
-      const { data, error } = await supabase
-        .from('prospect_properties')
-        .update(propertyData)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      return {
-        success: true,
-        data: data as ProspectProperty
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        data: {} as ProspectProperty,
-        error: error.message
-      };
-    }
-  }
-
-  async deleteProspectProperty(id: string): Promise<ApiResponse<ProspectProperty>> {
-    try {
-      const { data, error } = await supabase
-        .from('prospect_properties')
-        .delete()
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      return {
-        success: true,
-        data: data as ProspectProperty
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        data: {} as ProspectProperty,
-        error: error.message
-      };
-    }
-  }
 
   async getPropertiesByBudget(budget: number): Promise<ApiResponse<Property[]>> {
     try {
@@ -1224,14 +1024,12 @@ class SupabaseApiClient {
   // Dashboard-specific methods
   async getDashboardStats(): Promise<ApiResponse<{
     activePolls: number;
-    smartProspects: number;
     communityVotes: number;
     portfolioValue: number;
   }>> {
     try {
-      const [propertiesResult, prospectsResult, votesResult] = await Promise.all([
+      const [propertiesResult, votesResult] = await Promise.all([
         supabase.from('properties').select('current_worth', { count: 'exact' }),
-        supabase.from('prospect_properties').select('id', { count: 'exact', head: true }),
         supabase.from('votes').select('id', { count: 'exact', head: true })
       ]);
 
@@ -1244,7 +1042,6 @@ class SupabaseApiClient {
         success: true,
         data: {
           activePolls: propertiesResult.count || 0,
-          smartProspects: prospectsResult.count || 0,
           communityVotes: votesResult.count || 0,
           portfolioValue
         }
@@ -1254,7 +1051,6 @@ class SupabaseApiClient {
         success: false,
         data: {
           activePolls: 0,
-          smartProspects: 0,
           communityVotes: 0,
           portfolioValue: 0
         },
@@ -1331,55 +1127,6 @@ class SupabaseApiClient {
     }
   }
 
-  async getDashboardProspects(limit: number = 10): Promise<ApiResponse<any[]>> {
-    try {
-      const { data, error } = await supabase
-        .from('prospect_properties')
-        .select(`
-          id,
-          title,
-          location,
-          estimated_worth,
-          categories (
-            name
-          )
-        `)
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
-      if (error) throw error;
-
-      // Transform data to match expected format
-      const transformedData = data?.map((prospect, index) => {
-        const aiScore = Math.floor(Math.random() * 40) + 60; // Random score between 60-100
-        const tagOptions = [
-          ['High ROI', 'Prime Location'],
-          ['Growing Area', 'Good Value'],
-          ['Investment Grade', 'Rental Potential'],
-          ['Development Zone', 'Infrastructure']
-        ];
-        
-        return {
-          id: prospect.id,
-          title: prospect.title,
-          location: prospect.location,
-          aiScore,
-          tags: tagOptions[index % tagOptions.length]
-        };
-      }) || [];
-
-      return {
-        success: true,
-        data: transformedData
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        data: [],
-        error: error.message
-      };
-    }
-  }
 
   async getDashboardActivities(limit: number = 10): Promise<ApiResponse<any[]>> {
     try {

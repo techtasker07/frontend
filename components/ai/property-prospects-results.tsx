@@ -1,0 +1,555 @@
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Separator } from "@/components/ui/separator"
+import { 
+  ArrowRight,
+  TrendingUp,
+  Clock,
+  DollarSign,
+  AlertTriangle,
+  CheckCircle2,
+  Star,
+  BarChart3,
+  Lightbulb,
+  Target,
+  Calendar,
+  Users,
+  Building,
+  Home,
+  Briefcase,
+  Zap,
+  Download,
+  Share2,
+  BookmarkPlus
+} from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { toast } from "sonner"
+import type { ProspectGenerationResult, PropertyProspect } from "@/lib/vertex-ai-service"
+
+interface PropertyProspectsResultsProps {
+  results: ProspectGenerationResult
+  imageData?: string
+  onClose?: () => void
+  onSaveProspects?: (prospects: PropertyProspect[]) => void
+}
+
+const categoryIcons = {
+  residential: Home,
+  commercial: Building,
+  'mixed-use': Briefcase,
+  investment: TrendingUp,
+  development: Target
+}
+
+const complexityColors = {
+  simple: 'bg-green-100 text-green-800',
+  moderate: 'bg-yellow-100 text-yellow-800',
+  complex: 'bg-red-100 text-red-800'
+}
+
+const demandColors = {
+  low: 'bg-gray-100 text-gray-800',
+  medium: 'bg-blue-100 text-blue-800',
+  high: 'bg-emerald-100 text-emerald-800'
+}
+
+export function PropertyProspectsResults({ 
+  results, 
+  imageData, 
+  onClose,
+  onSaveProspects 
+}: PropertyProspectsResultsProps) {
+  const router = useRouter()
+  const [selectedProspect, setSelectedProspect] = useState<PropertyProspect | null>(null)
+  const [activeTab, setActiveTab] = useState("overview")
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0
+    }).format(amount)
+  }
+
+  const handleSaveProspects = () => {
+    if (onSaveProspects) {
+      onSaveProspects(results.prospects)
+      toast.success("Prospects saved successfully!")
+    }
+  }
+
+  const handleShareResults = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Property Prospect Analysis',
+          text: `Found ${results.prospects.length} property prospects with an average feasibility score of ${results.summary.averageFeasibility}%`,
+          url: window.location.href
+        })
+      } else {
+        // Fallback to copying to clipboard
+        const shareText = `Property Prospect Analysis: ${results.prospects.length} prospects found!`
+        await navigator.clipboard.writeText(shareText)
+        toast.success("Results copied to clipboard!")
+      }
+    } catch (error) {
+      console.error("Error sharing:", error)
+      toast.error("Failed to share results")
+    }
+  }
+
+  const ProspectCard = ({ prospect, isSelected, onClick }: { 
+    prospect: PropertyProspect
+    isSelected: boolean
+    onClick: () => void 
+  }) => {
+    const CategoryIcon = categoryIcons[prospect.category] || Building
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileHover={{ y: -2 }}
+        className={`cursor-pointer transition-all ${
+          isSelected ? 'ring-2 ring-blue-500' : ''
+        }`}
+        onClick={onClick}
+      >
+        <Card className="h-full hover:shadow-md transition-shadow">
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-2">
+                <CategoryIcon className="w-5 h-5 text-blue-600" />
+                <Badge variant="outline" className="text-xs">
+                  {prospect.category}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-1">
+                <Star className="w-4 h-4 text-yellow-500" />
+                <span className="text-sm font-medium">{prospect.feasibilityScore}%</span>
+              </div>
+            </div>
+            <CardTitle className="text-lg leading-tight">
+              {prospect.title}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-gray-600 line-clamp-3">
+              {prospect.description.split('.')[0]}.
+            </p>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Revenue Potential</span>
+                <span className="font-medium">
+                  {formatCurrency(prospect.estimatedRevenue.min)} - {formatCurrency(prospect.estimatedRevenue.max)}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Timeline</span>
+                <span className="font-medium">{prospect.timeline.total}</span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-1">
+              <Badge className={complexityColors[prospect.complexity]}>
+                {prospect.complexity}
+              </Badge>
+              <Badge className={demandColors[prospect.marketDemand]}>
+                {prospect.marketDemand} demand
+              </Badge>
+            </div>
+
+            <Progress value={prospect.feasibilityScore} className="h-2" />
+          </CardContent>
+        </Card>
+      </motion.div>
+    )
+  }
+
+  const ProspectDetails = ({ prospect }: { prospect: PropertyProspect }) => (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-xl font-semibold mb-2">{prospect.title}</h3>
+        <p className="text-gray-600 leading-relaxed whitespace-pre-line">
+          {prospect.description}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <DollarSign className="w-5 h-5" />
+              Financial Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <div className="text-sm text-gray-500 mb-1">Revenue Potential</div>
+              <div className="font-semibold text-green-600">
+                {formatCurrency(prospect.estimatedRevenue.min)} - {formatCurrency(prospect.estimatedRevenue.max)}
+              </div>
+              <div className="text-xs text-gray-500">{prospect.estimatedRevenue.timeframe}</div>
+            </div>
+            <Separator />
+            <div>
+              <div className="text-sm text-gray-500 mb-1">Investment Required</div>
+              <div className="font-semibold text-orange-600">
+                {formatCurrency(prospect.estimatedCost.min)} - {formatCurrency(prospect.estimatedCost.max)}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500 mb-2">Cost Breakdown</div>
+              <ul className="space-y-1">
+                {prospect.estimatedCost.breakdown.map((item, index) => (
+                  <li key={index} className="text-xs text-gray-600 flex items-center gap-1">
+                    <div className="w-1 h-1 bg-gray-400 rounded-full" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Clock className="w-5 h-5" />
+              Timeline & Complexity
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <div className="text-sm text-gray-500 mb-1">Planning Phase</div>
+              <div className="font-medium">{prospect.timeline.planning}</div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500 mb-1">Execution Phase</div>
+              <div className="font-medium">{prospect.timeline.execution}</div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500 mb-1">Total Duration</div>
+              <div className="font-semibold text-blue-600">{prospect.timeline.total}</div>
+            </div>
+            <Separator />
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-500">Complexity</span>
+              <Badge className={complexityColors[prospect.complexity]}>
+                {prospect.complexity}
+              </Badge>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-500">Market Demand</span>
+              <Badge className={demandColors[prospect.marketDemand]}>
+                {prospect.marketDemand}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h4 className="font-semibold mb-3 flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-green-600" />
+            Benefits
+          </h4>
+          <ul className="space-y-2">
+            {prospect.benefits.map((benefit, index) => (
+              <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
+                <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-1.5 flex-shrink-0" />
+                {benefit}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="font-semibold mb-3 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-amber-600" />
+            Risk Factors
+          </h4>
+          <ul className="space-y-2">
+            {prospect.risks.map((risk, index) => (
+              <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
+                <div className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-1.5 flex-shrink-0" />
+                {risk}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h4 className="font-semibold mb-3 flex items-center gap-2">
+            <Target className="w-5 h-5 text-blue-600" />
+            Requirements
+          </h4>
+          <ul className="space-y-2">
+            {prospect.requirements.map((req, index) => (
+              <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-1.5 flex-shrink-0" />
+                {req}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="font-semibold mb-3 flex items-center gap-2">
+            <ArrowRight className="w-5 h-5 text-purple-600" />
+            Next Steps
+          </h4>
+          <ol className="space-y-2">
+            {prospect.nextSteps.map((step, index) => (
+              <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
+                <span className="bg-purple-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs flex-shrink-0 mt-0.5">
+                  {index + 1}
+                </span>
+                {step}
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+
+      <div>
+        <h4 className="font-semibold mb-3">Tags</h4>
+        <div className="flex flex-wrap gap-2">
+          {prospect.tags.map((tag, index) => (
+            <Badge key={index} variant="secondary" className="text-xs">
+              {tag}
+            </Badge>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="container mx-auto px-4 py-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <Zap className="w-6 h-6 text-blue-600" />
+              Property Prospects Analysis
+            </h1>
+            <p className="text-gray-600 mt-1">
+              AI-generated alternative uses and optimization strategies for your property
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleShareResults}
+            >
+              <Share2 className="w-4 h-4 mr-2" />
+              Share
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSaveProspects}
+            >
+              <BookmarkPlus className="w-4 h-4 mr-2" />
+              Save
+            </Button>
+          </div>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid grid-cols-3 w-full max-w-md">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="prospects">Prospects</TabsTrigger>
+            <TabsTrigger value="insights">Insights</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {results.summary.totalProspects}
+                  </div>
+                  <div className="text-sm text-gray-600">Total Prospects</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {results.summary.averageFeasibility}%
+                  </div>
+                  <div className="text-sm text-gray-600">Avg Feasibility</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <div className="text-lg font-bold text-purple-600">
+                    {formatCurrency(results.summary.potentialRevenueRange.min)}
+                  </div>
+                  <div className="text-sm text-gray-600">Min Revenue</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <div className="text-lg font-bold text-purple-600">
+                    {formatCurrency(results.summary.potentialRevenueRange.max)}
+                  </div>
+                  <div className="text-sm text-gray-600">Max Revenue</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Top Recommendation */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Star className="w-5 h-5 text-yellow-500" />
+                  Top Recommendation
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ProspectDetails prospect={results.summary.topRecommendation} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="prospects" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Prospects List */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold">All Prospects</h2>
+                {results.prospects.map((prospect) => (
+                  <ProspectCard
+                    key={prospect.id}
+                    prospect={prospect}
+                    isSelected={selectedProspect?.id === prospect.id}
+                    onClick={() => setSelectedProspect(prospect)}
+                  />
+                ))}
+              </div>
+
+              {/* Selected Prospect Details */}
+              <div className="sticky top-6">
+                {selectedProspect ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Prospect Details</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ScrollArea className="h-[600px] pr-4">
+                        <ProspectDetails prospect={selectedProspect} />
+                      </ScrollArea>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardContent className="p-12 text-center">
+                      <Lightbulb className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">
+                        Select a prospect to view detailed information
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="insights" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-green-600" />
+                    Property Strengths
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2">
+                    {results.analysisInsights.propertyStrengths.map((strength, index) => (
+                      <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                        {strength}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-blue-600" />
+                    Market Opportunities
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2">
+                    {results.analysisInsights.marketOpportunities.map((opportunity, index) => (
+                      <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
+                        <TrendingUp className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                        {opportunity}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-amber-600" />
+                    Considerations
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2">
+                    {results.analysisInsights.considerations.map((consideration, index) => (
+                      <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
+                        <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                        {consideration}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        {/* Action Buttons */}
+        <div className="flex justify-center gap-4 mt-8">
+          <Button
+            variant="outline"
+            onClick={onClose || (() => router.push('/dashboard'))}
+          >
+            Back to Dashboard
+          </Button>
+          <Button
+            onClick={() => router.push('/add-property')}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+          >
+            Add Property
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}

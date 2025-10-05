@@ -130,6 +130,14 @@
     display: none;
   }
 
+  /* Line clamp utility */
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
   /* Safe area insets for iOS */
   .safe-top {
     padding-top: env(safe-area-inset-top);
