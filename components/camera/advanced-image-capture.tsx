@@ -23,6 +23,7 @@ import {
   type SmartProspect 
 } from '@/lib/smartProspectGenerator'
 import { ProspectModal } from '@/components/ai/prospect-modal'
+import { PropertyDetailsForm } from '@/components/ai/property-details-form'
 
 // Invalid image categories that should be rejected
 const INVALID_CATEGORIES = ['human', 'material', 'office space']
@@ -47,6 +48,7 @@ export function AdvancedImageCapture({
   const [isCapturing, setIsCapturing] = useState(false)
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [showPropertyForm, setShowPropertyForm] = useState(false)
   const [showProspectModal, setShowProspectModal] = useState(false)
   const [prospects, setProspects] = useState<SmartProspect[]>([])
   const [identifiedCategory, setIdentifiedCategory] = useState<IdentifiedCategory | null>(null)
@@ -195,16 +197,16 @@ export function AdvancedImageCapture({
         return
       }
       
-      // Valid property image - set up modal data
+      // Valid property image - set up form data
       setIdentifiedCategory(analysisResult.identifiedCategory)
       setPropertyDetails(analysisResult.propertyDetails)
       setProspects(analysisResult.smartProspects || [])
-      
-      console.log('✅ Valid property image, showing prospects modal...')
-      toast.success(`Smart prospects generated for ${analysisResult.identifiedCategory.name.toUpperCase()}!`)
-      
-      // Show prospects modal instantly
-      setShowProspectModal(true)
+
+      console.log('✅ Valid property image, showing property details form...')
+      toast.success(`Image processed! Please fill in property details.`)
+
+      // Show property details form
+      setShowPropertyForm(true)
       
     } catch (error) {
       console.error('💥 Instant processing failed:', error)
@@ -241,6 +243,20 @@ export function AdvancedImageCapture({
     toast.success(`Selected: ${prospect.title}`)
     // Navigate to dashboard after selection
     onClose()
+  }
+
+  const handleSeeProspects = (propertyFormData: any) => {
+    console.log('📋 Property details submitted:', propertyFormData)
+    setShowPropertyForm(false)
+    setShowProspectModal(true)
+  }
+
+  const handleBackToCapture = () => {
+    setShowPropertyForm(false)
+    // Reset all state
+    setProspects([])
+    setIdentifiedCategory(null)
+    setPropertyDetails(null)
   }
 
   const handleClose = () => {
@@ -524,7 +540,19 @@ export function AdvancedImageCapture({
         }
       `}</style>
 
-      {/* Prospect Modal - Displays instantly when processing is complete */}
+      {/* Property Details Form - Shows after image processing */}
+      {showPropertyForm && identifiedCategory && propertyDetails && (
+        <PropertyDetailsForm
+          imageUrl={processedImageUrl}
+          identifiedCategory={identifiedCategory}
+          propertyDetails={propertyDetails}
+          prospects={prospects}
+          onSeeProspects={handleSeeProspects}
+          onBack={handleBackToCapture}
+        />
+      )}
+
+      {/* Prospect Modal - Displays from bottom when form is submitted */}
       {showProspectModal && identifiedCategory && propertyDetails && (
         <ProspectModal
           isOpen={showProspectModal}
