@@ -247,7 +247,15 @@ export function PropertyDetailsForm({
                       onChange={(e) => setFormData(prev => ({ ...prev, averageRoomSize: e.target.value }))}
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      Or <button type="button" className="text-purple-600 underline">click here</button> to get coordinates
+                      To get the best measurement, you can use an AI tool such as{" "}
+                      <a
+                        href="https://play.google.com/store/apps/details?id=com.bpmobile.iscanner.free&hl=en"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-purple-600 underline hover:text-purple-800"
+                      >
+                        IScanner
+                      </a>
                     </p>
                   </div>
                 </div>

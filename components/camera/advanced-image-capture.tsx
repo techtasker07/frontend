@@ -26,8 +26,8 @@ import {
 import { ProspectModal } from '@/components/ai/prospect-modal'
 import { PropertyDetailsForm } from '@/components/ai/property-details-form'
 
-// Invalid image categories that should be rejected
-const INVALID_CATEGORIES = ['human', 'material', 'office space']
+// Invalid image categories that should be rejected - DISABLED: Allow all images
+const INVALID_CATEGORIES = []
 
 interface AdvancedImageCaptureProps {
    onClose: () => void
@@ -179,25 +179,25 @@ export function AdvancedImageCapture({
       const analysisResult = await performSmartAnalysis(processedFile)
       console.log('✅ Analysis complete:', analysisResult)
       
-      // Check if this is a human image
-      if (analysisResult.identifiedCategory.name === 'human') {
-        console.log('❌ Human image detected')
-        toast.error('HUMAN image detected. Please capture a property image instead.', {
-          duration: 5000
-        })
-        URL.revokeObjectURL(imageUrl)
-        return
-      }
+      // Check if this is a human image - DISABLED: Allow all images
+      // if (analysisResult.identifiedCategory.name === 'human') {
+      //   console.log('❌ Human image detected')
+      //   toast.error('HUMAN image detected. Please capture a property image instead.', {
+      //     duration: 5000
+      //   })
+      //   URL.revokeObjectURL(imageUrl)
+      //   return
+      // }
       
-      // Check if image category is material
-      if (analysisResult.identifiedCategory.name === 'material') {
-        console.log('❌ Material image detected')
-        toast.error('MATERIAL image detected. Please capture a property image instead.', {
-          duration: 5000
-        })
-        URL.revokeObjectURL(imageUrl)
-        return
-      }
+      // Check if image category is material - DISABLED: Allow material images for now
+      // if (analysisResult.identifiedCategory.name === 'material') {
+      //   console.log('❌ Material image detected')
+      //   toast.error('MATERIAL image detected. Please capture a property image instead.', {
+      //     duration: 5000
+      //   })
+      //   URL.revokeObjectURL(imageUrl)
+      //   return
+      // }
       
       // Valid property image - set up form data
       setIdentifiedCategory(analysisResult.identifiedCategory)
@@ -401,7 +401,7 @@ export function AdvancedImageCapture({
                     </li>
                     <li className="flex items-center">
                       <span className="w-2 h-2 bg-purple-500 rounded-full mr-3"></span>
-                      Human/material image filtering
+                      Universal image processing
                     </li>
                     <li className="flex items-center">
                       <span className="w-2 h-2 bg-pink-500 rounded-full mr-3"></span>
