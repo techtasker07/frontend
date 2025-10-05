@@ -14,7 +14,6 @@ import {
   CheckCircle2,
   AlertCircle
 } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 
 interface SmartCameraCaptureProps {
@@ -26,7 +25,7 @@ export function SmartCamerCapture({ onImageCapture, onClose }: SmartCameraCaptur
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [isCapturing, setIsCapturing] = useState(false)
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
-  const [showUpload, setShowUpload] = useState(false)
+  const [showUpload, setShowUpload] = useState(true)
   const [dragActive, setDragActive] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisComplete, setAnalysisComplete] = useState(false)
@@ -39,17 +38,18 @@ export function SmartCamerCapture({ onImageCapture, onClose }: SmartCameraCaptur
   // Initialize camera
   const initializeCamera = useCallback(async () => {
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: {
           facingMode: 'environment',
           width: { ideal: 1920 },
           height: { ideal: 1080 }
-        } 
+        }
       })
       setStream(mediaStream)
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream
       }
+      setShowUpload(false) // Hide upload if camera is available
     } catch (error) {
       console.error("Error accessing camera:", error)
       toast.error("Unable to access camera. Please check permissions.")
@@ -232,13 +232,11 @@ export function SmartCamerCapture({ onImageCapture, onClose }: SmartCameraCaptur
                   
                   {/* Center Focus Indicator */}
                   <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                    <motion.div
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                      className="w-16 h-16 border-2 border-white rounded-full flex items-center justify-center"
+                    <div
+                      className="w-16 h-16 border-2 border-white rounded-full flex items-center justify-center animate-pulse"
                     >
                       <Focus className="w-6 h-6 text-white" />
-                    </motion.div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -252,42 +250,35 @@ export function SmartCamerCapture({ onImageCapture, onClose }: SmartCameraCaptur
             </div>
 
             {/* Upload Overlay */}
-            <AnimatePresence>
-              {showUpload && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="absolute inset-0 bg-black/80 flex items-center justify-center p-4"
-                >
-                  <Card className="w-full max-w-md p-6 bg-white/90 backdrop-blur-sm">
-                    <div
-                      onDragEnter={handleDrag}
-                      onDragLeave={handleDrag}
-                      onDragOver={handleDrag}
-                      onDrop={handleDrop}
-                      className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                        dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
-                      }`}
+            {showUpload && (
+              <div className="absolute inset-0 bg-black/80 flex items-center justify-center p-4">
+                <Card className="w-full max-w-md p-6 bg-white/90 backdrop-blur-sm">
+                  <div
+                    onDragEnter={handleDrag}
+                    onDragLeave={handleDrag}
+                    onDragOver={handleDrag}
+                    onDrop={handleDrop}
+                    className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                      dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+                    }`}
+                  >
+                    <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      Upload Property Image
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      Drag and drop or click to select
+                    </p>
+                    <Button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full"
                     >
-                      <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                        Upload Property Image
-                      </h3>
-                      <p className="text-gray-600 mb-4">
-                        Drag and drop or click to select
-                      </p>
-                      <Button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="w-full"
-                      >
-                        Choose Image
-                      </Button>
-                    </div>
-                  </Card>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                      Choose Image
+                    </Button>
+                  </div>
+                </Card>
+              </div>
+            )}
           </>
         ) : (
           /* Captured Image Preview */
@@ -299,49 +290,35 @@ export function SmartCamerCapture({ onImageCapture, onClose }: SmartCameraCaptur
             />
             
             {/* Analysis Overlay */}
-            <AnimatePresence>
-              {isAnalyzing && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="absolute inset-0 bg-black/70 flex items-center justify-center"
-                >
-                  <div className="text-center">
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                    >
-                      <Zap className="w-16 h-16 text-blue-400 mx-auto mb-4" />
-                    </motion.div>
-                    <h3 className="text-white text-xl font-semibold mb-2">
-                      Analyzing Property...
-                    </h3>
-                    <p className="text-white/80">
-                      Our AI is examining your property for potential uses
-                    </p>
+            {isAnalyzing && (
+              <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="animate-spin">
+                    <Zap className="w-16 h-16 text-blue-400 mx-auto mb-4" />
                   </div>
-                </motion.div>
-              )}
-              
-              {analysisComplete && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="absolute inset-0 bg-black/70 flex items-center justify-center"
-                >
-                  <div className="text-center">
-                    <CheckCircle2 className="w-16 h-16 text-green-400 mx-auto mb-4" />
-                    <h3 className="text-white text-xl font-semibold mb-2">
-                      Analysis Complete!
-                    </h3>
-                    <p className="text-white/80 mb-4">
-                      Ready to generate property prospects
-                    </p>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  <h3 className="text-white text-xl font-semibold mb-2">
+                    Analyzing Property...
+                  </h3>
+                  <p className="text-white/80">
+                    Our AI is examining your property for potential uses
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {analysisComplete && (
+              <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                <div className="text-center">
+                  <CheckCircle2 className="w-16 h-16 text-green-400 mx-auto mb-4" />
+                  <h3 className="text-white text-xl font-semibold mb-2">
+                    Analysis Complete!
+                  </h3>
+                  <p className="text-white/80 mb-4">
+                    Ready to generate property prospects
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -351,17 +328,13 @@ export function SmartCamerCapture({ onImageCapture, onClose }: SmartCameraCaptur
         <div className="flex items-center justify-center space-x-6">
           {!capturedImage ? (
             /* Capture Button */
-            <motion.div
-              whileTap={{ scale: 0.9 }}
+            <Button
+              onClick={captureImage}
+              disabled={isCapturing}
+              className="w-20 h-20 rounded-full bg-white hover:bg-gray-100 text-black p-0 active:scale-90 transition-transform"
             >
-              <Button
-                onClick={captureImage}
-                disabled={isCapturing}
-                className="w-20 h-20 rounded-full bg-white hover:bg-gray-100 text-black p-0"
-              >
-                <Camera className="w-8 h-8" />
-              </Button>
-            </motion.div>
+              <Camera className="w-8 h-8" />
+            </Button>
           ) : (
             /* Retake/Continue Controls */
             <div className="flex items-center space-x-4">
