@@ -74,13 +74,13 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
                 <Camera className="h-10 w-10 text-purple-600" />
                 
                 {/* Sparkle animation */}
-                <div className="absolute -top-10 right-0 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-2 rounded-lg rounded-tr-none shadow-lg animate-bounce">
+                <div className="absolute -top-10 right-8 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-2 rounded-lg rounded-tr-none shadow-lg animate-bounce">
                   <h3 className="text-xs font-semibold whitespace-nowrap">
-                    💬 Click here to get prospects
+                    Click here to get prospects
                   </h3>
 
                   {/* Chat bubble tail */}
-                  <div className="absolute bottom-[-6px] right-3 w-3 h-3 bg-gradient-to-r from-purple-500 to-pink-500 rotate-45"></div>
+                  <div className="absolute bottom-[-6px] right-16 w-3 h-3 bg-gradient-to-r from-purple-500 to-pink-500 rotate-45"></div>
                 </div>
 
                 {/* Pulse rings */}
