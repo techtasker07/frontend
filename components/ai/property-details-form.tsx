@@ -13,13 +13,13 @@ import {
   X, 
   MapPin, 
   Home, 
-  DollarSign, 
   Calendar,
   Ruler,
   Sparkles,
   ArrowRight,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  ExternalLink
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
@@ -36,17 +36,14 @@ interface PropertyDetailsFormProps {
 interface PropertyDetails {
   address: string
   propertyType: string
-  squareFootage: string
+  squareMeters: string
   bedrooms: string
   bathrooms: string
-  yearBuilt: string
   currentUse: string
   ownershipStatus: string
   budget: string
   timeline: string
-  goals: string
   additionalInfo: string
-  marketValue: string
   location: {
     city: string
     state: string
@@ -69,17 +66,14 @@ export function PropertyDetailsForm({
   const [formData, setFormData] = useState<PropertyDetails>({
     address: "",
     propertyType: visionAnalysis?.propertyType || "",
-    squareFootage: "",
+    squareMeters: "",
     bedrooms: "",
     bathrooms: "",
-    yearBuilt: "",
     currentUse: "",
     ownershipStatus: "",
     budget: "",
     timeline: "",
-    goals: "",
     additionalInfo: "",
-    marketValue: "",
     location: {
       city: "",
       state: "",
@@ -141,45 +135,21 @@ export function PropertyDetailsForm({
           </DrawerHeader>
 
           <div className="px-4 pb-6 max-h-[60vh] overflow-y-auto">
-            {/* Vision Analysis Results */}
-            {visionAnalysis && (
+            {/* Captured/Uploaded Image Display */}
+            {imageData && (
               <Card className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 border-0">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <Sparkles className="w-4 h-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-900">AI Analysis Results</span>
+                    <Home className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-900">Property Image</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="text-center">
-                      <div className="text-xs text-gray-600">Property Type</div>
-                      <Badge variant="secondary" className="mt-1">
-                        {visionAnalysis.propertyType}
-                      </Badge>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-xs text-gray-600">Confidence</div>
-                      <Badge variant="outline" className="mt-1">
-                        {Math.round(visionAnalysis.confidence * 100)}%
-                      </Badge>
-                    </div>
+                  <div className="relative w-full h-48 rounded-lg overflow-hidden bg-gray-100">
+                    <img
+                      src={imageData}
+                      alt="Property"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
-                  {visionAnalysis.features && visionAnalysis.features.length > 0 && (
-                    <div className="mt-3">
-                      <div className="text-xs text-gray-600 mb-2">Detected Features</div>
-                      <div className="flex flex-wrap gap-1">
-                        {visionAnalysis.features.slice(0, 4).map((feature: string, index: number) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {feature}
-                          </Badge>
-                        ))}
-                        {visionAnalysis.features.length > 4 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{visionAnalysis.features.length - 4} more
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             )}
@@ -219,14 +189,10 @@ export function PropertyDetailsForm({
                         <SelectValue placeholder="Select type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="house">Single Family House</SelectItem>
-                        <SelectItem value="apartment">Apartment/Condo</SelectItem>
-                        <SelectItem value="townhouse">Townhouse</SelectItem>
-                        <SelectItem value="office">Office Space</SelectItem>
-                        <SelectItem value="warehouse">Warehouse</SelectItem>
-                        <SelectItem value="retail">Retail Space</SelectItem>
-                        <SelectItem value="land">Vacant Land</SelectItem>
-                        <SelectItem value="mixed-use">Mixed Use</SelectItem>
+                        <SelectItem value="building">Building</SelectItem>
+                        <SelectItem value="apartment">Apartment</SelectItem>
+                        <SelectItem value="space">Space</SelectItem>
+                        <SelectItem value="land">Land</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -252,90 +218,66 @@ export function PropertyDetailsForm({
                   Property Specifications
                 </h3>
                 
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="squareFootage" className="text-sm font-medium">
-                      Square Feet
-                    </Label>
-                    <Input
-                      id="squareFootage"
-                      placeholder="e.g., 2000"
-                      value={formData.squareFootage}
-                      onChange={(e) => handleInputChange('squareFootage', e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="bedrooms" className="text-sm font-medium">
-                      Bedrooms
-                    </Label>
-                    <Input
-                      id="bedrooms"
-                      placeholder="e.g., 3"
-                      value={formData.bedrooms}
-                      onChange={(e) => handleInputChange('bedrooms', e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="bathrooms" className="text-sm font-medium">
-                      Bathrooms
-                    </Label>
-                    <Input
-                      id="bathrooms"
-                      placeholder="e.g., 2.5"
-                      value={formData.bathrooms}
-                      onChange={(e) => handleInputChange('bathrooms', e.target.value)}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="squareMeters" className="text-sm font-medium">
+                    Property Size (Square Meters)
+                  </Label>
+                  <Input
+                    id="squareMeters"
+                    placeholder="e.g., 185"
+                    value={formData.squareMeters}
+                    onChange={(e) => handleInputChange('squareMeters', e.target.value)}
+                  />
+                  <p className="text-xs text-gray-500 flex items-center gap-1">
+                    To get an accurate measurement of space, you can use AI tools like{' '}
+                    <a 
+                      href="https://iscanner.com/web/" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
+                    >
+                      IScanner
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="yearBuilt" className="text-sm font-medium">
-                      Year Built
-                    </Label>
-                    <Input
-                      id="yearBuilt"
-                      placeholder="e.g., 1995"
-                      value={formData.yearBuilt}
-                      onChange={(e) => handleInputChange('yearBuilt', e.target.value)}
-                    />
+                {/* Conditional Bedrooms/Bathrooms - only show for Building or Apartment */}
+                {(formData.propertyType === 'building' || formData.propertyType === 'apartment') && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="bedrooms" className="text-sm font-medium">
+                        Bedrooms
+                      </Label>
+                      <Input
+                        id="bedrooms"
+                        placeholder="e.g., 3"
+                        value={formData.bedrooms}
+                        onChange={(e) => handleInputChange('bedrooms', e.target.value)}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="bathrooms" className="text-sm font-medium">
+                        Bathrooms
+                      </Label>
+                      <Input
+                        id="bathrooms"
+                        placeholder="e.g., 2.5"
+                        value={formData.bathrooms}
+                        onChange={(e) => handleInputChange('bathrooms', e.target.value)}
+                      />
+                    </div>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="marketValue" className="text-sm font-medium">
-                      Market Value ($)
-                    </Label>
-                    <Input
-                      id="marketValue"
-                      placeholder="e.g., 350000"
-                      value={formData.marketValue}
-                      onChange={(e) => handleInputChange('marketValue', e.target.value)}
-                    />
-                  </div>
-                </div>
+                )}
               </div>
 
-              {/* Project Goals */}
+              {/* Investment Details */}
               <div className="space-y-4">
                 <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                  <DollarSign className="w-4 h-4" />
-                  Project Goals
+                  <Sparkles className="w-4 h-4" />
+                  Investment Details
                 </h3>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="goals" className="text-sm font-medium">
-                    What are you looking to achieve?
-                  </Label>
-                  <Textarea
-                    id="goals"
-                    placeholder="e.g., Increase rental income, find alternative uses, maximize property value..."
-                    value={formData.goals}
-                    onChange={(e) => handleInputChange('goals', e.target.value)}
-                    rows={3}
-                  />
-                </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
@@ -350,12 +292,12 @@ export function PropertyDetailsForm({
                         <SelectValue placeholder="Select range" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="under-10k">Under $10,000</SelectItem>
-                        <SelectItem value="10k-50k">$10,000 - $50,000</SelectItem>
-                        <SelectItem value="50k-100k">$50,000 - $100,000</SelectItem>
-                        <SelectItem value="100k-250k">$100,000 - $250,000</SelectItem>
-                        <SelectItem value="250k-500k">$250,000 - $500,000</SelectItem>
-                        <SelectItem value="over-500k">Over $500,000</SelectItem>
+                        <SelectItem value="under-5m">Under ₦5,000,000</SelectItem>
+                        <SelectItem value="5m-20m">₦5,000,000 - ₦20,000,000</SelectItem>
+                        <SelectItem value="20m-50m">₦20,000,000 - ₦50,000,000</SelectItem>
+                        <SelectItem value="50m-100m">₦50,000,000 - ₦100,000,000</SelectItem>
+                        <SelectItem value="100m-250m">₦100,000,000 - ₦250,000,000</SelectItem>
+                        <SelectItem value="over-250m">Over ₦250,000,000</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -461,7 +403,7 @@ export function PropertyDetailsForm({
                   ) : (
                     <div className="flex items-center gap-2">
                       <Sparkles className="w-4 h-4" />
-                      Generate AI Prospects
+                      Generate Prospects
                       <ArrowRight className="w-4 h-4" />
                     </div>
                   )}

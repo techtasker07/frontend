@@ -54,17 +54,14 @@ interface ProspectGenerationResult {
 interface PropertyFormData {
   address: string
   propertyType: string
-  squareFootage: string
+  squareMeters: string
   bedrooms: string
   bathrooms: string
-  yearBuilt: string
   currentUse: string
   ownershipStatus: string
   budget: string
   timeline: string
-  goals: string
   additionalInfo: string
-  marketValue: string
   location: {
     city: string
     state: string
@@ -108,14 +105,14 @@ class VertexAIService {
         category: 'residential',
         feasibilityScore: 88,
         estimatedRevenue: {
-          min: 45000,
-          max: 75000,
+          min: 18000000,
+          max: 30000000,
           timeframe: 'annually'
         },
         estimatedCost: {
-          min: 15000,
-          max: 25000,
-          breakdown: ['Furnishing: $8-12K', 'Marketing setup: $2-3K', 'Permits & licenses: $1-2K', 'Professional photography: $1-2K', 'Initial supplies: $3-6K']
+          min: 6000000,
+          max: 10000000,
+          breakdown: ['Furnishing: ₦3-5M', 'Marketing setup: ₦800K-1.2M', 'Permits & licenses: ₦400-800K', 'Professional photography: ₦400-800K', 'Initial supplies: ₦1.2-2.4M']
         },
         timeline: {
           planning: '2-3 weeks',
@@ -137,14 +134,14 @@ class VertexAIService {
         category: 'commercial',
         feasibilityScore: 75,
         estimatedRevenue: {
-          min: 18000,
-          max: 36000,
+          min: 7200000,
+          max: 14400000,
           timeframe: 'annually'
         },
         estimatedCost: {
-          min: 8000,
-          max: 18000,
-          breakdown: ['Office furniture: $4-8K', 'Tech infrastructure: $2-4K', 'Renovation: $2-6K']
+          min: 3200000,
+          max: 7200000,
+          breakdown: ['Office furniture: ₦1.6-3.2M', 'Tech infrastructure: ₦800K-1.6M', 'Renovation: ₦800K-2.4M']
         },
         timeline: {
           planning: '1-2 weeks',
@@ -166,14 +163,14 @@ class VertexAIService {
         category: 'investment',
         feasibilityScore: 82,
         estimatedRevenue: {
-          min: 35000,
-          max: 65000,
+          min: 14000000,
+          max: 26000000,
           timeframe: 'one-time gain'
         },
         estimatedCost: {
-          min: 12000,
-          max: 28000,
-          breakdown: ['Kitchen updates: $5-12K', 'Bathroom refresh: $3-8K', 'Curb appeal: $2-4K', 'Paint & flooring: $2-4K']
+          min: 4800000,
+          max: 11200000,
+          breakdown: ['Kitchen updates: ₦2-4.8M', 'Bathroom refresh: ₦1.2-3.2M', 'Curb appeal: ₦800K-1.6M', 'Paint & flooring: ₦800K-1.6M']
         },
         timeline: {
           planning: '2-4 weeks',
@@ -259,18 +256,16 @@ PROPERTY VISION ANALYSIS:
 PROPERTY DETAILS:
 - Address: ${formData.address}
 - Property Type: ${formData.propertyType}
-- Square Footage: ${formData.squareFootage}
+- Square Meters: ${formData.squareMeters}
 - Bedrooms: ${formData.bedrooms}
 - Bathrooms: ${formData.bathrooms}
-- Year Built: ${formData.yearBuilt}
 - Current Use: ${formData.currentUse}
-- Market Value: $${formData.marketValue}
 - Ownership Status: ${formData.ownershipStatus}
 
 PROJECT PARAMETERS:
 - Investment Budget: ${formData.budget}
 - Timeline: ${formData.timeline}
-- Goals: ${formData.goals}
+- Project Goal: Results to maximize property value and alternative uses
 - Additional Info: ${formData.additionalInfo}
 
 TASK:
@@ -412,14 +407,14 @@ Focus on practical, actionable prospects that align with the owner's budget and 
       category: 'investment',
       feasibilityScore: 75,
       estimatedRevenue: {
-        min: 20000,
-        max: 50000,
+        min: 8000000,
+        max: 20000000,
         timeframe: 'annually'
       },
       estimatedCost: {
-        min: 10000,
-        max: 25000,
-        breakdown: ['Renovations: $8-15K', 'Professional Services: $2-5K', 'Marketing: $1-3K']
+        min: 4000000,
+        max: 10000000,
+        breakdown: ['Renovations: ₦3.2-6M', 'Professional Services: ₦800K-2M', 'Marketing: ₦400-1.2M']
       },
       timeline: {
         planning: '2-3 weeks',
@@ -442,8 +437,8 @@ Focus on practical, actionable prospects that align with the owner's budget and 
         topRecommendation: fallbackProspect,
         averageFeasibility: 75,
         potentialRevenueRange: {
-          min: 20000,
-          max: 50000
+          min: 8000000,
+          max: 20000000
         }
       },
       analysisInsights: {
