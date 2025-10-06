@@ -331,39 +331,7 @@ export function SmartCamerCapture({ onImageCapture, onClose }: SmartCameraCaptur
       {/* Bottom Controls */}
       <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
         <div className="flex flex-col items-center space-y-4">
-          {/* Mode Chips */}
-          {!capturedImage && (
-            <div className="flex space-x-2">
-              <Button
-                variant={selectedMode === 'photo' ? 'default' : 'secondary'}
-                size="sm"
-                onClick={() => setSelectedMode('photo')}
-                className="rounded-full px-4 py-2 text-xs"
-              >
-                <Camera className="w-3 h-3 mr-1" />
-                Photo
-              </Button>
-              <Button
-                variant={selectedMode === 'video' ? 'default' : 'secondary'}
-                size="sm"
-                onClick={() => setSelectedMode('video')}
-                className="rounded-full px-4 py-2 text-xs"
-              >
-                <Video className="w-3 h-3 mr-1" />
-                Video
-              </Button>
-              <Button
-                variant={selectedMode === 'ai' ? 'default' : 'secondary'}
-                size="sm"
-                onClick={() => setSelectedMode('ai')}
-                className="rounded-full px-4 py-2 text-xs"
-              >
-                <Sparkles className="w-3 h-3 mr-1" />
-                AI Scan
-              </Button>
-            </div>
-          )}
-          
+                    
           {/* Main Controls */}
           <div className="flex items-center justify-center space-x-8">
             {!capturedImage ? (
