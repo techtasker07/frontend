@@ -213,22 +213,22 @@ export function SmartCamerCapture({ onImageCapture, onClose }: SmartCameraCaptur
                 <div className="relative w-full h-full">
                   {/* Top Left Corner */}
                   <div className="absolute top-20 left-6">
-                    <div className="w-8 h-8 border-l-4 border-t-4 border-white rounded-tl-lg opacity-80"></div>
+                    <div className="w-8 h-8 border-l-4 border-t-4 border-white rounded-tl-full opacity-80"></div>
                   </div>
                   
                   {/* Top Right Corner */}
                   <div className="absolute top-20 right-6">
-                    <div className="w-8 h-8 border-r-4 border-t-4 border-white rounded-tr-lg opacity-80"></div>
+                    <div className="w-8 h-8 border-r-4 border-t-4 border-white rounded-tr-full opacity-80"></div>
                   </div>
                   
                   {/* Bottom Left Corner */}
-                  <div className="absolute bottom-64 left-6">
-                    <div className="w-8 h-8 border-l-4 border-b-4 border-white rounded-bl-lg opacity-80"></div>
+                  <div className="absolute bottom-48 left-6">
+                    <div className="w-8 h-8 border-l-4 border-b-4 border-white rounded-bl-full opacity-80"></div>
                   </div>
                   
                   {/* Bottom Right Corner */}
-                  <div className="absolute bottom-64 right-6">
-                    <div className="w-8 h-8 border-r-4 border-b-4 border-white rounded-br-lg opacity-80"></div>
+                  <div className="absolute bottom-48 right-6">
+                    <div className="w-8 h-8 border-r-4 border-b-4 border-white rounded-br-full opacity-80"></div>
                   </div>
                   
                   {/* Center Focus Indicator */}
