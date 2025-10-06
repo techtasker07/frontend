@@ -222,12 +222,12 @@ export function SmartCamerCapture({ onImageCapture, onClose }: SmartCameraCaptur
                   </div>
                   
                   {/* Bottom Left Corner */}
-                  <div className="absolute bottom-24 left-6">
+                  <div className="absolute bottom-64 left-6">
                     <div className="w-8 h-8 border-l-4 border-b-4 border-white rounded-bl-lg opacity-80"></div>
                   </div>
                   
                   {/* Bottom Right Corner */}
-                  <div className="absolute bottom-24 right-6">
+                  <div className="absolute bottom-64 right-6">
                     <div className="w-8 h-8 border-r-4 border-b-4 border-white rounded-br-lg opacity-80"></div>
                   </div>
                   
