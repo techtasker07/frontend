@@ -12,7 +12,10 @@ import {
   Zap, 
   Focus,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Image,
+  Video,
+  Sparkles
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -25,10 +28,12 @@ export function SmartCamerCapture({ onImageCapture, onClose }: SmartCameraCaptur
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [isCapturing, setIsCapturing] = useState(false)
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
-  const [showUpload, setShowUpload] = useState(true)
+  const [showUpload, setShowUpload] = useState(false)
   const [dragActive, setDragActive] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisComplete, setAnalysisComplete] = useState(false)
+  const [showInstructions, setShowInstructions] = useState(true)
+  const [selectedMode, setSelectedMode] = useState<'photo' | 'video' | 'ai'>('photo')
   
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -65,7 +70,16 @@ export function SmartCamerCapture({ onImageCapture, onClose }: SmartCameraCaptur
         stream.getTracks().forEach(track => track.stop())
       }
     }
-  }, [initializeCamera, stream])
+  }, [initializeCamera])
+
+  // Fade out instructions after 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowInstructions(false)
+    }, 5000)
+
+    return () => clearTimeout(timer)
+  }, [])
 
   const captureImage = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return
@@ -170,28 +184,15 @@ export function SmartCamerCapture({ onImageCapture, onClose }: SmartCameraCaptur
 
   return (
     <div className="fixed inset-0 bg-black z-50">
-      {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 bg-black/50 backdrop-blur-sm">
-        <div className="flex items-center justify-between p-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleClose}
-            className="text-white hover:bg-white/20"
-          >
-            <X className="w-6 h-6" />
-          </Button>
-          <h1 className="text-white font-semibold">Smart Property Capture</h1>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowUpload(!showUpload)}
-            className="text-white hover:bg-white/20"
-          >
-            <Upload className="w-6 h-6" />
-          </Button>
-        </div>
-      </div>
+      {/* Close button - minimal */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={handleClose}
+        className="absolute top-4 right-4 z-20 text-white hover:bg-white/20"
+      >
+        <X className="w-6 h-6" />
+      </Button>
 
       {/* Main Content */}
       <div className="relative w-full h-full flex items-center justify-center">
@@ -241,8 +242,12 @@ export function SmartCamerCapture({ onImageCapture, onClose }: SmartCameraCaptur
                 </div>
               </div>
 
-              {/* Instructions */}
-              <div className="absolute bottom-40 left-0 right-0 text-center">
+              {/* Instructions - fade out after 5 seconds */}
+              <div 
+                className={`absolute bottom-40 left-0 right-0 text-center transition-opacity duration-1000 ${
+                  showInstructions ? 'opacity-100' : 'opacity-0'
+                }`}
+              >
                 <p className="text-white text-lg font-medium bg-black/50 rounded-lg px-4 py-2 mx-4">
                   Position your property within the frame
                 </p>
@@ -324,45 +329,96 @@ export function SmartCamerCapture({ onImageCapture, onClose }: SmartCameraCaptur
       </div>
 
       {/* Bottom Controls */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 bg-black/50 backdrop-blur-sm">
-        <div className="flex items-center justify-center space-x-6">
-          {!capturedImage ? (
-            /* Capture Button */
-            <Button
-              onClick={captureImage}
-              disabled={isCapturing}
-              className="w-20 h-20 rounded-full bg-white hover:bg-gray-100 text-black p-0 active:scale-90 transition-transform"
-            >
-              <Camera className="w-8 h-8" />
-            </Button>
-          ) : (
-            /* Retake/Continue Controls */
-            <div className="flex items-center space-x-4">
+      <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+        <div className="flex flex-col items-center space-y-4">
+          {/* Mode Chips */}
+          {!capturedImage && (
+            <div className="flex space-x-2">
               <Button
-                onClick={retakePhoto}
-                variant="outline"
-                className="bg-white/20 border-white/30 text-white hover:bg-white/30"
+                variant={selectedMode === 'photo' ? 'default' : 'secondary'}
+                size="sm"
+                onClick={() => setSelectedMode('photo')}
+                className="rounded-full px-4 py-2 text-xs"
               >
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Retake
+                <Camera className="w-3 h-3 mr-1" />
+                Photo
               </Button>
-              
-              {analysisComplete && (
-                <Button
-                  onClick={() => {
-                    if (onImageCapture) {
-                      onImageCapture(capturedImage)
-                    } else {
-                      router.push(`/ai/property-details?image=${encodeURIComponent(capturedImage)}`)
-                    }
-                  }}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  Continue
-                </Button>
-              )}
+              <Button
+                variant={selectedMode === 'video' ? 'default' : 'secondary'}
+                size="sm"
+                onClick={() => setSelectedMode('video')}
+                className="rounded-full px-4 py-2 text-xs"
+              >
+                <Video className="w-3 h-3 mr-1" />
+                Video
+              </Button>
+              <Button
+                variant={selectedMode === 'ai' ? 'default' : 'secondary'}
+                size="sm"
+                onClick={() => setSelectedMode('ai')}
+                className="rounded-full px-4 py-2 text-xs"
+              >
+                <Sparkles className="w-3 h-3 mr-1" />
+                AI Scan
+              </Button>
             </div>
           )}
+          
+          {/* Main Controls */}
+          <div className="flex items-center justify-center space-x-8">
+            {!capturedImage ? (
+              <>
+                {/* Gallery/Upload Button */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm"
+                >
+                  <Image className="w-6 h-6" />
+                </Button>
+                
+                {/* Main Capture Button */}
+                <Button
+                  onClick={captureImage}
+                  disabled={isCapturing}
+                  className="w-20 h-20 rounded-full bg-white hover:bg-gray-100 text-black p-0 active:scale-90 transition-transform shadow-lg"
+                >
+                  <Camera className="w-8 h-8" />
+                </Button>
+                
+                {/* Empty space for symmetry */}
+                <div className="w-12 h-12" />
+              </>
+            ) : (
+              /* Retake/Continue Controls */
+              <div className="flex items-center space-x-4">
+                <Button
+                  onClick={retakePhoto}
+                  variant="outline"
+                  className="bg-white/20 border-white/30 text-white hover:bg-white/30 backdrop-blur-sm"
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Retake
+                </Button>
+                
+                {analysisComplete && (
+                  <Button
+                    onClick={() => {
+                      if (onImageCapture) {
+                        onImageCapture(capturedImage)
+                      } else {
+                        router.push(`/ai/property-details?image=${encodeURIComponent(capturedImage)}`)
+                      }
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    Continue
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
