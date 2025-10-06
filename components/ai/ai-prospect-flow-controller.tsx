@@ -6,6 +6,7 @@ import { SmartCamerCapture } from "./smart-camera-capture"
 import { PropertyDetailsForm } from "./property-details-form"
 import { PropertyProspectsResults } from "./property-prospects-results"
 import { toast } from "sonner"
+import { supabaseApi } from "@/lib/supabase-api"
 import type { PropertyAnalysis } from "@/lib/google-vision-service"
 import type { ProspectGenerationResult, PropertyFormData } from "@/lib/vertex-ai-service"
 
@@ -29,6 +30,7 @@ export function AIProspectFlowController({
   const [prospectResults, setProspectResults] = useState<ProspectGenerationResult | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isGeneratingProspects, setIsGeneratingProspects] = useState(false)
+  const [analysisId, setAnalysisId] = useState<string | null>(null)
 
   const handleImageCapture = useCallback(async (capturedImageData: string) => {
     setImageData(capturedImageData)
@@ -92,9 +94,34 @@ export function AIProspectFlowController({
       }
 
       const { prospects } = await response.json()
-      setProspectResults(prospects)
       
-      toast.success("Prospects generated successfully!")
+      // Save to Supabase
+      const saveResult = await supabaseApi.savePropertyAnalysis({
+        property_address: formData.address,
+        property_type: formData.propertyType,
+        square_meters: formData.squareMeters ? parseFloat(formData.squareMeters) : undefined,
+        bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : undefined,
+        bathrooms: formData.bathrooms ? parseFloat(formData.bathrooms) : undefined,
+        current_use: formData.currentUse,
+        budget_range: formData.budget,
+        timeline: formData.timeline,
+        ownership_status: formData.ownershipStatus,
+        additional_info: formData.additionalInfo,
+        property_image_url: imageData,
+        vision_analysis: visionAnalysis,
+        prospects: prospects.prospects,
+        insights: prospects.analysisInsights
+      })
+
+      if (saveResult.success) {
+        setAnalysisId(saveResult.data.analysisId)
+        toast.success("Prospects generated and saved successfully!")
+      } else {
+        console.warn('Failed to save to database:', saveResult.error)
+        toast.success("Prospects generated successfully!")
+      }
+      
+      setProspectResults(prospects)
       
       // Move to results step
       setCurrentStep('results')
@@ -109,7 +136,7 @@ export function AIProspectFlowController({
     } finally {
       setIsGeneratingProspects(false)
     }
-  }, [visionAnalysis, onComplete])
+  }, [visionAnalysis, onComplete, imageData])
 
   const handleClose = useCallback(() => {
     if (onCancel) {
@@ -121,13 +148,17 @@ export function AIProspectFlowController({
 
   const handleSaveProspects = useCallback(async (prospects: any[]) => {
     try {
-      // Save prospects to user's saved prospects
-      toast.success("Prospects saved to your dashboard!")
+      // Prospects are already saved to Supabase during generation
+      if (analysisId) {
+        toast.success("Prospects are already saved to your dashboard!")
+      } else {
+        toast.info("Prospects will be saved after generation")
+      }
     } catch (error) {
-      console.error('Error saving prospects:', error)
-      toast.error("Failed to save prospects")
+      console.error('Error with prospects save:', error)
+      toast.error("Failed to access saved prospects")
     }
-  }, [])
+  }, [analysisId])
 
   // Render appropriate step
   switch (currentStep) {

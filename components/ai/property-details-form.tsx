@@ -37,7 +37,7 @@ interface PropertyDetails {
   address: string
   propertyType: string
   squareMeters: string
-  No_of_rooms: string
+  bedrooms: string
   bathrooms: string
   currentUse: string
   ownershipStatus: string
@@ -50,6 +50,9 @@ interface PropertyDetails {
     zipCode: string
   }
 }
+
+// Type alias to ensure compatibility with PropertyFormData
+type PropertyFormData = PropertyDetails
 
 export function PropertyDetailsForm({ 
   isOpen, 
@@ -67,7 +70,7 @@ export function PropertyDetailsForm({
     address: "",
     propertyType: visionAnalysis?.propertyType || "",
     squareMeters: "",
-    No_of_rooms: "",
+    bedrooms: "",
     bathrooms: "",
     currentUse: "",
     ownershipStatus: "",
@@ -246,14 +249,14 @@ export function PropertyDetailsForm({
                 {(formData.propertyType === 'building' || formData.propertyType === 'apartment') && (
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <Label htmlFor="No_of_rooms" className="text-sm font-medium">
-                        No of Rooms
+                      <Label htmlFor="bedrooms" className="text-sm font-medium">
+                        Bedrooms
                       </Label>
                       <Input
-                        id="No_of_rooms"
+                        id="bedrooms"
                         placeholder="e.g., 3"
-                        value={formData.No_of_rooms}
-                        onChange={(e) => handleInputChange('No_of_rooms', e.target.value)}
+                        value={formData.bedrooms}
+                        onChange={(e) => handleInputChange('bedrooms', e.target.value)}
                       />
                     </div>
                     
@@ -279,7 +282,7 @@ export function PropertyDetailsForm({
                   Investment Details
                 </h3>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="budget" className="text-sm font-medium">
                       Investment Budget

@@ -1226,6 +1226,252 @@ class SupabaseApiClient {
     }
   }
 
+  // Property Analysis Methods
+  async savePropertyAnalysis(analysisData: {
+    property_address: string
+    property_type: string
+    square_meters?: number
+    bedrooms?: number
+    bathrooms?: number
+    current_use?: string
+    budget_range?: string
+    timeline?: string
+    ownership_status?: string
+    additional_info?: string
+    property_image_url?: string
+    vision_analysis?: any
+    prospects: any[]
+    insights: any
+  }): Promise<ApiResponse<{ analysisId: string }>> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('User not authenticated')
+
+      // Start a transaction-like approach
+      // 1. Create property analysis record
+      const { data: analysis, error: analysisError } = await supabase
+        .from('property_analyses')
+        .insert({
+          user_id: user.id,
+          property_address: analysisData.property_address,
+          property_type: analysisData.property_type,
+          square_meters: analysisData.square_meters,
+          bedrooms: analysisData.bedrooms,
+          bathrooms: analysisData.bathrooms,
+          current_use: analysisData.current_use,
+          budget_range: analysisData.budget_range,
+          timeline: analysisData.timeline,
+          ownership_status: analysisData.ownership_status,
+          additional_info: analysisData.additional_info,
+          property_image_url: analysisData.property_image_url,
+          vision_analysis: analysisData.vision_analysis
+        })
+        .select()
+        .single()
+
+      if (analysisError) throw analysisError
+
+      const analysisId = analysis.id
+
+      // 2. Save prospects
+      if (analysisData.prospects && analysisData.prospects.length > 0) {
+        const prospectsToInsert = analysisData.prospects.map((prospect: any) => ({
+          analysis_id: analysisId,
+          title: prospect.title,
+          description: prospect.description,
+          category: prospect.category,
+          feasibility_score: prospect.feasibilityScore,
+          estimated_revenue_min: prospect.estimatedRevenue.min,
+          estimated_revenue_max: prospect.estimatedRevenue.max,
+          revenue_timeframe: prospect.estimatedRevenue.timeframe,
+          estimated_cost_min: prospect.estimatedCost.min,
+          estimated_cost_max: prospect.estimatedCost.max,
+          cost_breakdown: prospect.estimatedCost.breakdown,
+          planning_duration: prospect.timeline.planning,
+          execution_duration: prospect.timeline.execution,
+          total_duration: prospect.timeline.total,
+          requirements: prospect.requirements,
+          benefits: prospect.benefits,
+          risks: prospect.risks,
+          next_steps: prospect.nextSteps,
+          tags: prospect.tags,
+          market_demand: prospect.marketDemand,
+          complexity: prospect.complexity
+        }))
+
+        const { error: prospectsError } = await supabase
+          .from('property_prospects')
+          .insert(prospectsToInsert)
+
+        if (prospectsError) throw prospectsError
+      }
+
+      // 3. Save insights
+      if (analysisData.insights) {
+        const { error: insightsError } = await supabase
+          .from('property_analysis_insights')
+          .insert({
+            analysis_id: analysisId,
+            property_strengths: analysisData.insights.propertyStrengths,
+            market_opportunities: analysisData.insights.marketOpportunities,
+            considerations: analysisData.insights.considerations,
+            total_prospects: analysisData.prospects.length,
+            average_feasibility: analysisData.insights.averageFeasibility,
+            potential_revenue_min: analysisData.insights.potentialRevenueRange?.min,
+            potential_revenue_max: analysisData.insights.potentialRevenueRange?.max
+          })
+
+        if (insightsError) throw insightsError
+      }
+
+      return {
+        success: true,
+        data: { analysisId }
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        data: { analysisId: '' },
+        error: error.message
+      }
+    }
+  }
+
+  async getPropertyAnalysis(analysisId: string): Promise<ApiResponse<any>> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('User not authenticated')
+
+      // Get analysis with all related data
+      const { data: analysis, error: analysisError } = await supabase
+        .from('property_analyses')
+        .select('*')
+        .eq('id', analysisId)
+        .eq('user_id', user.id)
+        .single()
+
+      if (analysisError) throw analysisError
+
+      // Get prospects
+      const { data: prospects, error: prospectsError } = await supabase
+        .from('property_prospects')
+        .select('*')
+        .eq('analysis_id', analysisId)
+        .order('feasibility_score', { ascending: false })
+
+      if (prospectsError) throw prospectsError
+
+      // Get insights
+      const { data: insights, error: insightsError } = await supabase
+        .from('property_analysis_insights')
+        .select('*')
+        .eq('analysis_id', analysisId)
+        .single()
+
+      if (insightsError) throw insightsError
+
+      // Transform data back to expected format
+      const transformedProspects = prospects.map((prospect: any) => ({
+        id: prospect.id,
+        title: prospect.title,
+        description: prospect.description,
+        category: prospect.category,
+        feasibilityScore: prospect.feasibility_score,
+        estimatedRevenue: {
+          min: prospect.estimated_revenue_min,
+          max: prospect.estimated_revenue_max,
+          timeframe: prospect.revenue_timeframe
+        },
+        estimatedCost: {
+          min: prospect.estimated_cost_min,
+          max: prospect.estimated_cost_max,
+          breakdown: prospect.cost_breakdown
+        },
+        timeline: {
+          planning: prospect.planning_duration,
+          execution: prospect.execution_duration,
+          total: prospect.total_duration
+        },
+        requirements: prospect.requirements,
+        benefits: prospect.benefits,
+        risks: prospect.risks,
+        nextSteps: prospect.next_steps,
+        tags: prospect.tags,
+        marketDemand: prospect.market_demand,
+        complexity: prospect.complexity
+      }))
+
+      const topRecommendation = transformedProspects[0] || null
+
+      const result = {
+        prospects: transformedProspects,
+        summary: {
+          totalProspects: insights.total_prospects,
+          topRecommendation,
+          averageFeasibility: insights.average_feasibility,
+          potentialRevenueRange: {
+            min: insights.potential_revenue_min,
+            max: insights.potential_revenue_max
+          }
+        },
+        analysisInsights: {
+          propertyStrengths: insights.property_strengths,
+          marketOpportunities: insights.market_opportunities,
+          considerations: insights.considerations
+        },
+        generatedAt: analysis.created_at,
+        imageData: analysis.property_image_url
+      }
+
+      return {
+        success: true,
+        data: result
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        data: null,
+        error: error.message
+      }
+    }
+  }
+
+  async getUserPropertyAnalyses(limit: number = 10): Promise<ApiResponse<any[]>> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('User not authenticated')
+
+      const { data: analyses, error } = await supabase
+        .from('property_analyses')
+        .select(`
+          id,
+          property_address,
+          property_type,
+          created_at,
+          property_analysis_insights (
+            total_prospects,
+            average_feasibility
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(limit)
+
+      if (error) throw error
+
+      return {
+        success: true,
+        data: analyses || []
+      }
+    } catch (error: any) {
+      return {
+        success: false,
+        data: [],
+        error: error.message
+      }
+    }
+  }
+
   // Upload method (using Supabase Storage)
   async uploadFile(file: File): Promise<ApiResponse<{ url: string }>> {
     try {

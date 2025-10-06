@@ -72,9 +72,9 @@ export function PropertyProspectsResults({
   const [activeTab, setActiveTab] = useState("overview")
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-NG', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'NGN',
       minimumFractionDigits: 0
     }).format(amount)
   }
@@ -337,80 +337,97 @@ export function PropertyProspectsResults({
     </div>
   )
 
+  if (!results || !results.prospects || results.prospects.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="text-center p-8">
+          <Lightbulb className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">No Results Available</h2>
+          <p className="text-gray-600 mb-4">Unable to load property prospects. Please try generating them again.</p>
+          <Button onClick={onClose || (() => router.push('/dashboard'))}>
+            Back to Dashboard
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Zap className="w-6 h-6 text-blue-600" />
-              Property Prospects Analysis
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0" />
+              <span className="truncate">Property Prospects Analysis</span>
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-sm sm:text-base text-gray-600 mt-1">
               AI-generated alternative uses and optimization strategies for your property
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             <Button
               variant="outline"
               size="sm"
               onClick={handleShareResults}
+              className="text-xs sm:text-sm"
             >
-              <Share2 className="w-4 h-4 mr-2" />
-              Share
+              <Share2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Share</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={handleSaveProspects}
+              className="text-xs sm:text-sm"
             >
-              <BookmarkPlus className="w-4 h-4 mr-2" />
-              Save
+              <BookmarkPlus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Save</span>
             </Button>
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
           <TabsList className="grid grid-cols-3 w-full max-w-md">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="prospects">Prospects</TabsTrigger>
-            <TabsTrigger value="insights">Insights</TabsTrigger>
+            <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+            <TabsTrigger value="prospects" className="text-xs sm:text-sm">Prospects</TabsTrigger>
+            <TabsTrigger value="insights" className="text-xs sm:text-sm">Insights</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <Card>
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold text-blue-600">
+                <CardContent className="p-3 sm:p-4 text-center">
+                  <div className="text-xl sm:text-2xl font-bold text-blue-600">
                     {results.summary.totalProspects}
                   </div>
-                  <div className="text-sm text-gray-600">Total Prospects</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Total Prospects</div>
                 </CardContent>
               </Card>
               <Card>
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold text-green-600">
+                <CardContent className="p-3 sm:p-4 text-center">
+                  <div className="text-xl sm:text-2xl font-bold text-green-600">
                     {results.summary.averageFeasibility}%
                   </div>
-                  <div className="text-sm text-gray-600">Avg Feasibility</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Avg Feasibility</div>
                 </CardContent>
               </Card>
               <Card>
-                <CardContent className="p-4 text-center">
-                  <div className="text-lg font-bold text-purple-600">
+                <CardContent className="p-3 sm:p-4 text-center">
+                  <div className="text-sm sm:text-lg font-bold text-purple-600">
                     {formatCurrency(results.summary.potentialRevenueRange.min)}
                   </div>
-                  <div className="text-sm text-gray-600">Min Revenue</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Min Revenue</div>
                 </CardContent>
               </Card>
               <Card>
-                <CardContent className="p-4 text-center">
-                  <div className="text-lg font-bold text-purple-600">
+                <CardContent className="p-3 sm:p-4 text-center">
+                  <div className="text-sm sm:text-lg font-bold text-purple-600">
                     {formatCurrency(results.summary.potentialRevenueRange.max)}
                   </div>
-                  <div className="text-sm text-gray-600">Max Revenue</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Max Revenue</div>
                 </CardContent>
               </Card>
             </div>
@@ -429,11 +446,11 @@ export function PropertyProspectsResults({
             </Card>
           </TabsContent>
 
-          <TabsContent value="prospects" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <TabsContent value="prospects" className="space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {/* Prospects List */}
-              <div className="space-y-4">
-                <h2 className="text-lg font-semibold">All Prospects</h2>
+              <div className="space-y-3 sm:space-y-4">
+                <h2 className="text-base sm:text-lg font-semibold">All Prospects</h2>
                 {results.prospects.map((prospect) => (
                   <ProspectCard
                     key={prospect.id}
@@ -445,23 +462,23 @@ export function PropertyProspectsResults({
               </div>
 
               {/* Selected Prospect Details */}
-              <div className="sticky top-6">
+              <div className="lg:sticky lg:top-6">
                 {selectedProspect ? (
                   <Card>
                     <CardHeader>
-                      <CardTitle>Prospect Details</CardTitle>
+                      <CardTitle className="text-base sm:text-lg">Prospect Details</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <ScrollArea className="h-[600px] pr-4">
+                      <ScrollArea className="h-[400px] sm:h-[500px] lg:h-[600px] pr-2 sm:pr-4">
                         <ProspectDetails prospect={selectedProspect} />
                       </ScrollArea>
                     </CardContent>
                   </Card>
                 ) : (
                   <Card>
-                    <CardContent className="p-12 text-center">
-                      <Lightbulb className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500">
+                    <CardContent className="p-8 sm:p-12 text-center">
+                      <Lightbulb className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-sm sm:text-base text-gray-500">
                         Select a prospect to view detailed information
                       </p>
                     </CardContent>
@@ -471,8 +488,8 @@ export function PropertyProspectsResults({
             </div>
           </TabsContent>
 
-          <TabsContent value="insights" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <TabsContent value="insights" className="space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -534,16 +551,17 @@ export function PropertyProspectsResults({
         </Tabs>
 
         {/* Action Buttons */}
-        <div className="flex justify-center gap-4 mt-8">
+        <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-6 sm:mt-8">
           <Button
             variant="outline"
             onClick={onClose || (() => router.push('/dashboard'))}
+            className="w-full sm:w-auto"
           >
             Back to Dashboard
           </Button>
           <Button
             onClick={() => router.push('/add-property')}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
           >
             Add Property
             <ArrowRight className="w-4 h-4 ml-2" />
