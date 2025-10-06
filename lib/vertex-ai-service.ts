@@ -71,18 +71,20 @@ interface PropertyFormData {
 }
 
 class VertexAIService {
-  private vertexAI: VertexAI
-  private model: any
+  private vertexAI: VertexAI | null = null
+  private model: any = null
 
-  constructor() {
-    // Initialize Vertex AI client
-    this.vertexAI = new VertexAI({
-      project: process.env.GOOGLE_CLOUD_PROJECT!,
-      location: process.env.GOOGLE_CLOUD_LOCATION || 'us-central1',
-    })
-    this.model = this.vertexAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
-    })
+  private initializeClient() {
+    if (!this.vertexAI) {
+      // Initialize Vertex AI client
+      this.vertexAI = new VertexAI({
+        project: process.env.GOOGLE_CLOUD_PROJECT!,
+        location: process.env.GOOGLE_CLOUD_LOCATION || 'us-central1',
+      })
+      this.model = this.vertexAI.getGenerativeModel({
+        model: 'gemini-1.5-flash',
+      })
+    }
   }
 
   /**
@@ -94,9 +96,10 @@ class VertexAIService {
     userId?: string
   ): Promise<ProspectGenerationResult> {
     try {
+      this.initializeClient()
       const prompt = this.buildProspectPrompt(visionAnalysis, formData)
 
-      const result = await this.model.generateContent(prompt)
+      const result = await this.model!.generateContent(prompt)
       const response = await result.response
       const text = response.text()
 
