@@ -25,12 +25,12 @@ export default function AIWelcomeBackPage() {
   }
   
   const handleAIFlowComplete = (results: any) => {
-    toast.success("Property analysis completed! Check your dashboard for results.")
-    router.push('/dashboard')
+    toast.success("Property analysis completed! Review your results below.")
+    // Don't navigate away - let user close results page themselves
   }
   
   const handleAIFlowCancel = () => {
-    setShowAIFlow(false)
+    router.push('/dashboard')
   }
   
   // Show AI flow if user clicked camera

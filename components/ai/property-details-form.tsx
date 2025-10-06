@@ -124,7 +124,7 @@ export function PropertyDetailsForm({
   }
 
   return (
-    <Drawer open={isOpen} onOpenChange={onClose}>
+    <Drawer open={isOpen} onOpenChange={() => {}}>
       <DrawerContent className="max-h-[85vh] bg-white">
         <div className="mx-auto w-full max-w-2xl">
           <DrawerHeader className="text-center pb-2">
