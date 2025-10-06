@@ -95,27 +95,51 @@ class VertexAIService {
     formData: PropertyFormData,
     userId?: string
   ): Promise<ProspectGenerationResult> {
-    try {
-      this.initializeClient()
-      const prompt = this.buildProspectPrompt(visionAnalysis, formData)
+    console.log('[VERTEX AI] Starting prospect generation:', {
+      propertyType: visionAnalysis.propertyType,
+      userId: userId || 'anonymous',
+      formDataKeys: Object.keys(formData)
+    })
 
+    try {
+      console.log('[VERTEX AI] Initializing client')
+      this.initializeClient()
+
+      console.log('[VERTEX AI] Building prompt')
+      const prompt = this.buildProspectPrompt(visionAnalysis, formData)
+      console.log('[VERTEX AI] Prompt built, length:', prompt.length)
+
+      console.log('[VERTEX AI] Calling generateContent')
       const result = await this.model!.generateContent(prompt)
       const response = await result.response
       const text = response.text()
+      console.log('[VERTEX AI] AI response received, length:', text.length)
 
+      console.log('[VERTEX AI] Parsing response')
       const prospectData = this.parseProspectResponse(text)
+      console.log('[VERTEX AI] Response parsed successfully:', {
+        prospectsCount: prospectData.prospects?.length || 0,
+        hasSummary: !!prospectData.summary
+      })
 
       // Store prospects in Supabase if userId provided
       if (userId) {
+        console.log('[VERTEX AI] Storing prospects in database for user:', userId)
         await this.storeProspectsInDatabase(prospectData.prospects, visionAnalysis, formData, userId)
+        console.log('[VERTEX AI] Prospects stored successfully')
+      } else {
+        console.log('[VERTEX AI] Skipping database storage (no userId)')
       }
 
-      return {
+      const finalResult = {
         ...prospectData,
         generatedAt: new Date().toISOString()
       }
+      console.log('[VERTEX AI] Prospect generation completed successfully')
+
+      return finalResult
     } catch (error) {
-      console.error('Vertex AI generation error:', error)
+      console.error('[VERTEX AI] Generation failed, falling back to mock data:', error)
       // Fallback to mock data if AI fails
       const mockProspects = this.generateFallbackProspects()
       return {

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import WelcomeBackPageProps from "@/components/ai/welcome-back-page"
 import { AIProspectFlowController } from "@/components/ai/ai-prospect-flow-controller"
 import { PropertyProspectsResults } from "@/components/ai/property-prospects-results"
+import { ProtectedRoute } from "@/components/auth/protected-route"
 import type { ProspectGenerationResult } from "@/lib/vertex-ai-service"
 
 // Mock data for testing
@@ -123,13 +124,15 @@ export default function AITestPage() {
       
       case 'flow':
         return (
-          <AIProspectFlowController 
-            onComplete={(results) => {
-              console.log('Flow completed:', results)
-              setCurrentView('results')
-            }}
-            onCancel={() => setCurrentView('menu')}
-          />
+          <ProtectedRoute>
+            <AIProspectFlowController
+              onComplete={(results) => {
+                console.log('Flow completed:', results)
+                setCurrentView('results')
+              }}
+              onCancel={() => setCurrentView('menu')}
+            />
+          </ProtectedRoute>
         )
       
       case 'results':

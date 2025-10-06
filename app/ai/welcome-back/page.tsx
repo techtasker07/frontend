@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import WelcomeBackPageProps from "@/components/ai/welcome-back-page"
 import { AIProspectFlowController } from "@/components/ai/ai-prospect-flow-controller"
+import { ProtectedRoute } from "@/components/auth/protected-route"
 import { useAuth } from "@/lib/auth"
 import { toast } from "sonner"
 
@@ -36,12 +37,14 @@ export default function AIWelcomeBackPage() {
   // Show AI flow if user clicked camera
   if (showAIFlow) {
     return (
-      <AIProspectFlowController
-        key="ai-flow"
-        initialStep="camera"
-        onComplete={handleAIFlowComplete}
-        onCancel={handleAIFlowCancel}
-      />
+      <ProtectedRoute>
+        <AIProspectFlowController
+          key="ai-flow"
+          initialStep="camera"
+          onComplete={handleAIFlowComplete}
+          onCancel={handleAIFlowCancel}
+        />
+      </ProtectedRoute>
     )
   }
   
