@@ -188,7 +188,7 @@ export function PropertyProspectsResults({
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <DollarSign className="w-5 h-5" />
+              <span className="text-xl font-bold">₦</span>
               Financial Overview
             </CardTitle>
           </CardHeader>
@@ -447,8 +447,7 @@ export function PropertyProspectsResults({
           </TabsContent>
 
           <TabsContent value="prospects" className="space-y-4 sm:space-y-6">
-            {/* Desktop Layout */}
-            <div className="hidden lg:grid lg:grid-cols-2 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {/* Prospects List */}
               <div className="space-y-3 sm:space-y-4">
                 <h2 className="text-base sm:text-lg font-semibold">All Prospects</h2>
@@ -486,40 +485,6 @@ export function PropertyProspectsResults({
                   </Card>
                 )}
               </div>
-            </div>
-
-            {/* Mobile Layout */}
-            <div className="lg:hidden space-y-4">
-              <h2 className="text-base sm:text-lg font-semibold">All Prospects</h2>
-              {results.prospects.map((prospect) => (
-                <div key={prospect.id} className="space-y-4">
-                  <ProspectCard
-                    prospect={prospect}
-                    isSelected={selectedProspect?.id === prospect.id}
-                    onClick={() => setSelectedProspect(selectedProspect?.id === prospect.id ? null : prospect)}
-                  />
-                  {/* Show details below selected prospect on mobile */}
-                  {selectedProspect?.id === prospect.id && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="ml-4"
-                    >
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-base">Prospect Details</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <ScrollArea className="h-[400px] pr-4">
-                            <ProspectDetails prospect={selectedProspect} />
-                          </ScrollArea>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  )}
-                </div>
-              ))}
             </div>
           </TabsContent>
 

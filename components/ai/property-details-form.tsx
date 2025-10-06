@@ -234,7 +234,7 @@ export function PropertyDetailsForm({
                   <p className="text-xs text-gray-500 flex items-center gap-1">
                     To get an accurate measurement of space, you can use AI tools like{' '}
                     <a 
-                      href="https://iscanner.com/web/" 
+                      href="https://iscanner.com/web/"
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:text-blue-800 underline flex items-center gap-1"

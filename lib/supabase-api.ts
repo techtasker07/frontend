@@ -2017,6 +2017,39 @@ class SupabaseApiClient {
     }
   }
 
+  async getAmenities(): Promise<ApiResponse<Record<string, any[]>>> {
+    try {
+      const { data, error } = await supabase
+        .from('amenities')
+        .select('*')
+        .eq('is_active', true)
+        .order('category', { ascending: true })
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+
+      // Group amenities by category
+      const groupedAmenities = data.reduce((acc, amenity) => {
+        if (!acc[amenity.category]) {
+          acc[amenity.category] = [];
+        }
+        acc[amenity.category].push(amenity);
+        return acc;
+      }, {} as Record<string, any[]>);
+
+      return {
+        success: true,
+        data: groupedAmenities
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: {},
+        error: error.message
+      };
+    }
+  }
+
   // Bookings methods
   async createBooking(bookingData: {
     marketplace_listing_id: string;

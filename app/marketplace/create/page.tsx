@@ -149,6 +149,8 @@ export default function CreateMarketplacePropertyPage() {
   const [step, setStep] = useState(1);
   const [newTag, setNewTag] = useState('');
   const [virtualTourData, setVirtualTourData] = useState<VirtualTourUploadData | null>(null);
+  const [amenities, setAmenities] = useState<Record<string, any[]>>({});
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
 
   const { isAuthenticated } = useAuth();
   const router = useRouter();
@@ -163,15 +165,17 @@ export default function CreateMarketplacePropertyPage() {
 
   const fetchInitialData = async () => {
     try {
-      const [categoriesRes, propertyTypesRes, listingTypesRes] = await Promise.all([
+      const [categoriesRes, propertyTypesRes, listingTypesRes, amenitiesRes] = await Promise.all([
         supabaseApi.getCategories(),
         supabaseApi.getPropertyTypes(),
-        supabaseApi.getListingTypes()
+        supabaseApi.getListingTypes(),
+        supabaseApi.getAmenities()
       ]);
 
       if (categoriesRes.success) setCategories(categoriesRes.data);
       if (propertyTypesRes.success) setPropertyTypes(propertyTypesRes.data);
       if (listingTypesRes.success) setListingTypes(listingTypesRes.data);
+      if (amenitiesRes.success) setAmenities(amenitiesRes.data);
     } catch (error) {
       console.error('Error fetching initial data:', error);
     }
@@ -179,6 +183,18 @@ export default function CreateMarketplacePropertyPage() {
 
   const handleInputChange = (field: keyof FormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleAmenityToggle = (amenityName: string) => {
+    setSelectedAmenities(prev => {
+      const newSelected = prev.includes(amenityName)
+        ? prev.filter(name => name !== amenityName)
+        : [...prev, amenityName];
+
+      // Update form data
+      setFormData(prev => ({ ...prev, amenities: newSelected }));
+      return newSelected;
+    });
   };
 
   const addTag = (field: keyof FormData, value: string) => {
@@ -642,47 +658,78 @@ export default function CreateMarketplacePropertyPage() {
                 {/* Amenities */}
                 <div className="space-y-4">
                   <Label>Amenities & Features</Label>
-                  <div className="flex gap-2 mb-2">
-                    <Input
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      placeholder="Add amenity (e.g., Swimming Pool)"
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
+                  <div className="space-y-4">
+                    {Object.entries(amenities).map(([category, categoryAmenities]) => (
+                      <div key={category} className="space-y-2">
+                        <h4 className="text-sm font-medium text-gray-700 capitalize">
+                          {category.replace('_', ' ')}
+                        </h4>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                          {categoryAmenities.map((amenity: any) => (
+                            <div key={amenity.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`amenity-${amenity.id}`}
+                                checked={selectedAmenities.includes(amenity.name)}
+                                onCheckedChange={() => handleAmenityToggle(amenity.name)}
+                              />
+                              <Label
+                                htmlFor={`amenity-${amenity.id}`}
+                                className="text-sm font-normal cursor-pointer"
+                              >
+                                {amenity.name}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Custom amenities section */}
+                  <div className="space-y-2 pt-4 border-t">
+                    <Label className="text-sm font-medium">Additional Amenities</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={newTag}
+                        onChange={(e) => setNewTag(e.target.value)}
+                        placeholder="Add custom amenity"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (newTag.trim()) {
+                              addTag('amenities', newTag);
+                              setNewTag('');
+                            }
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
                           if (newTag.trim()) {
                             addTag('amenities', newTag);
                             setNewTag('');
                           }
-                        }
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        if (newTag.trim()) {
-                          addTag('amenities', newTag);
-                          setNewTag('');
-                        }
-                      }}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  {formData.amenities.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {formData.amenities.map((amenity, index) => (
-                        <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                          {amenity}
-                          <X
-                            className="h-3 w-3 cursor-pointer"
-                            onClick={() => removeTag('amenities', index)}
-                          />
-                        </Badge>
-                      ))}
+                        }}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
                     </div>
-                  )}
+                    {formData.amenities.filter(amenity => !Object.values(amenities).flat().some((a: any) => a.name === amenity)).length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {formData.amenities.filter(amenity => !Object.values(amenities).flat().some((a: any) => a.name === amenity)).map((amenity, index) => (
+                          <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                            {amenity}
+                            <X
+                              className="h-3 w-3 cursor-pointer"
+                              onClick={() => removeTag('amenities', index)}
+                            />
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

@@ -1,6 +1,7 @@
-// Mock implementation for build compatibility
-// In production, this would use actual Vertex AI
+// Vertex AI service for property prospect generation
+import { VertexAI } from '@google-cloud/vertexai'
 import type { PropertyAnalysis } from './google-vision-service'
+import { supabase } from './supabase'
 
 interface PropertyProspect {
   id: string
@@ -70,171 +71,57 @@ interface PropertyFormData {
 }
 
 class VertexAIService {
+  private vertexAI: VertexAI
+  private model: any
+
   constructor() {
-    // Mock initialization - no actual AI service needed for build
+    // Initialize Vertex AI client
+    this.vertexAI = new VertexAI({
+      project: process.env.GOOGLE_CLOUD_PROJECT!,
+      location: process.env.GOOGLE_CLOUD_LOCATION || 'us-central1',
+    })
+    this.model = this.vertexAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+    })
   }
 
   /**
-   * Generate property prospects - Mock implementation
+   * Generate property prospects using Vertex AI
    */
   async generatePropertyProspects(
     visionAnalysis: PropertyAnalysis,
-    formData: PropertyFormData
+    formData: PropertyFormData,
+    userId?: string
   ): Promise<ProspectGenerationResult> {
-    // Simulate AI processing delay
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    try {
+      const prompt = this.buildProspectPrompt(visionAnalysis, formData)
 
-    // Generate mock prospects based on property type and data
-    const mockProspects = this.generateMockProspects(visionAnalysis, formData)
-    
-    return {
-      ...mockProspects,
-      generatedAt: new Date().toISOString()
-    }
-  }
+      const result = await this.model.generateContent(prompt)
+      const response = await result.response
+      const text = response.text()
 
-  /**
-   * Generate mock prospects for demonstration
-   */
-  private generateMockProspects(visionAnalysis: PropertyAnalysis, formData: PropertyFormData): Omit<ProspectGenerationResult, 'generatedAt'> {
-    const baseProspects: PropertyProspect[] = [
-      {
-        id: 'prospect-1',
-        title: 'Short-Term Rental Conversion',
-        description: `Transform this ${visionAnalysis.propertyType} into a high-yield vacation rental. The ${visionAnalysis.features.join(', ')} make it ideal for tourists and business travelers seeking a comfortable stay.\n\nWith the current market demand for unique accommodations, this property could generate substantial rental income while maintaining its residential charm. The ${visionAnalysis.architecturalStyle} style adds character that guests will appreciate.`,
-        category: 'residential',
-        feasibilityScore: 88,
-        estimatedRevenue: {
-          min: 18000000,
-          max: 30000000,
-          timeframe: 'annually'
-        },
-        estimatedCost: {
-          min: 6000000,
-          max: 10000000,
-          breakdown: ['Furnishing: ₦3-5M', 'Marketing setup: ₦800K-1.2M', 'Permits & licenses: ₦400-800K', 'Professional photography: ₦400-800K', 'Initial supplies: ₦1.2-2.4M']
-        },
-        timeline: {
-          planning: '2-3 weeks',
-          execution: '4-6 weeks',
-          total: '1.5-2 months'
-        },
-        requirements: ['Property management system', 'Quality furnishing', 'Local permits', 'Insurance coverage', 'Cleaning service'],
-        benefits: ['High rental yield', 'Flexible income', 'Property appreciation', 'Tax advantages', 'Market demand'],
-        risks: ['Market volatility', 'Seasonal fluctuations', 'Maintenance costs', 'Regulatory changes', 'Competition'],
-        nextSteps: ['Research local regulations', 'Analyze competition', 'Get permits', 'Design interior', 'Set up booking channels'],
-        marketDemand: 'high',
-        complexity: 'moderate',
-        tags: ['airbnb', 'vacation rental', 'hospitality', 'tourism']
-      },
-      {
-        id: 'prospect-2',
-        title: 'Home Office & Co-working Space',
-        description: `Convert unused areas into a professional home office or small co-working space. With remote work trends, there's growing demand for well-designed work environments.\n\nThe property's ${visionAnalysis.condition} condition and ${visionAnalysis.features.join(', ')} provide excellent potential for creating inspiring workspaces that professionals will value.`,
-        category: 'commercial',
-        feasibilityScore: 75,
-        estimatedRevenue: {
-          min: 7200000,
-          max: 14400000,
-          timeframe: 'annually'
-        },
-        estimatedCost: {
-          min: 3200000,
-          max: 7200000,
-          breakdown: ['Office furniture: ₦1.6-3.2M', 'Tech infrastructure: ₦800K-1.6M', 'Renovation: ₦800K-2.4M']
-        },
-        timeline: {
-          planning: '1-2 weeks',
-          execution: '3-4 weeks',
-          total: '1-1.5 months'
-        },
-        requirements: ['High-speed internet', 'Professional lighting', 'Sound insulation', 'Ergonomic furniture', 'Meeting space'],
-        benefits: ['Steady income', 'Low maintenance', 'Professional network', 'Flexible hours', 'Growing market'],
-        risks: ['Market saturation', 'Technology changes', 'Economic downturn', 'Competition from large operators'],
-        nextSteps: ['Assess space potential', 'Plan layout design', 'Upgrade internet', 'Source furniture', 'Market to professionals'],
-        marketDemand: 'medium',
-        complexity: 'simple',
-        tags: ['coworking', 'office', 'remote work', 'productivity']
-      },
-      {
-        id: 'prospect-3',
-        title: 'Property Value Enhancement',
-        description: `Focus on strategic improvements to maximize the property's market value. Based on the ${visionAnalysis.architecturalStyle} style and current ${visionAnalysis.condition} condition, targeted renovations could significantly boost property worth.\n\nThis approach involves enhancing key features while preserving the property's character, ensuring the best return on investment for future sale or refinancing opportunities.`,
-        category: 'investment',
-        feasibilityScore: 82,
-        estimatedRevenue: {
-          min: 14000000,
-          max: 26000000,
-          timeframe: 'one-time gain'
-        },
-        estimatedCost: {
-          min: 4800000,
-          max: 11200000,
-          breakdown: ['Kitchen updates: ₦2-4.8M', 'Bathroom refresh: ₦1.2-3.2M', 'Curb appeal: ₦800K-1.6M', 'Paint & flooring: ₦800K-1.6M']
-        },
-        timeline: {
-          planning: '2-4 weeks',
-          execution: '6-10 weeks',
-          total: '2-3.5 months'
-        },
-        requirements: ['Market analysis', 'Contractor quotes', 'Permit approval', 'Design planning', 'Quality materials'],
-        benefits: ['Increased equity', 'Better marketability', 'Higher rent potential', 'Modernized systems', 'Enhanced appeal'],
-        risks: ['Over-improvement', 'Market timing', 'Construction delays', 'Cost overruns', 'Quality issues'],
-        nextSteps: ['Get property appraisal', 'Research comparable sales', 'Plan renovations', 'Hire contractors', 'Start improvements'],
-        marketDemand: 'high',
-        complexity: 'moderate',
-        tags: ['renovation', 'value-add', 'improvement', 'equity']
+      const prospectData = this.parseProspectResponse(text)
+
+      // Store prospects in Supabase if userId provided
+      if (userId) {
+        await this.storeProspectsInDatabase(prospectData.prospects, visionAnalysis, formData, userId)
       }
-    ]
 
-    // Filter prospects based on property type and features
-    const filteredProspects = baseProspects.filter(prospect => {
-      if (formData.propertyType === 'land') {
-        return prospect.category === 'development'
+      return {
+        ...prospectData,
+        generatedAt: new Date().toISOString()
       }
-      return true
-    })
-
-    const topRecommendation = filteredProspects[0]
-    const avgFeasibility = Math.round(
-      filteredProspects.reduce((sum, p) => sum + p.feasibilityScore, 0) / filteredProspects.length
-    )
-    const minRevenue = Math.min(...filteredProspects.map(p => p.estimatedRevenue.min))
-    const maxRevenue = Math.max(...filteredProspects.map(p => p.estimatedRevenue.max))
-
-    return {
-      prospects: filteredProspects,
-      summary: {
-        totalProspects: filteredProspects.length,
-        topRecommendation,
-        averageFeasibility: avgFeasibility,
-        potentialRevenueRange: {
-          min: minRevenue,
-          max: maxRevenue
-        }
-      },
-      analysisInsights: {
-        propertyStrengths: [
-          `${visionAnalysis.architecturalStyle} architectural style`,
-          `Good ${visionAnalysis.condition} condition`,
-          `Key features: ${visionAnalysis.features.join(', ')}`,
-          `Strategic location in ${visionAnalysis.surroundingContext.join(', ')} area`
-        ],
-        marketOpportunities: [
-          'Growing demand for alternative property uses',
-          'Remote work trends creating new opportunities',
-          'Tourism and short-term rental market expansion',
-          'Property value appreciation potential'
-        ],
-        considerations: [
-          'Local zoning regulations and permits',
-          'Market competition and saturation',
-          'Investment timeline and budget constraints',
-          'Property maintenance and management requirements'
-        ]
+    } catch (error) {
+      console.error('Vertex AI generation error:', error)
+      // Fallback to mock data if AI fails
+      const mockProspects = this.generateFallbackProspects()
+      return {
+        ...mockProspects,
+        generatedAt: new Date().toISOString()
       }
     }
   }
+
 
   /**
    * Build the prompt for Vertex AI
@@ -392,6 +279,84 @@ Focus on practical, actionable prospects that align with the owner's budget and 
       // Return fallback data if parsing fails
       return this.generateFallbackProspects()
     }
+  }
+
+  /**
+   * Store generated prospects in Supabase database
+   */
+  private async storeProspectsInDatabase(
+    prospects: PropertyProspect[],
+    visionAnalysis: PropertyAnalysis,
+    formData: PropertyFormData,
+    userId: string
+  ): Promise<void> {
+    try {
+      // First, create or get prospect property record
+      const { data: prospectProperty, error: propertyError } = await supabase
+        .from('prospect_properties')
+        .insert({
+          title: `${formData.propertyType} at ${formData.address}`,
+          description: `Property analysis for ${formData.propertyType} with ${visionAnalysis.features.join(', ')}`,
+          location: formData.address,
+          category_id: await this.getCategoryId(formData.propertyType),
+          estimated_worth: parseFloat(formData.budget.replace(/[^\d]/g, '')) || null,
+          image_url: null // Could be added later
+        })
+        .select()
+        .single()
+
+      if (propertyError) {
+        console.error('Error creating prospect property:', propertyError)
+        return
+      }
+
+      // Insert each prospect
+      for (const prospect of prospects) {
+        const { error: prospectError } = await supabase
+          .from('property_prospects')
+          .insert({
+            prospect_property_id: prospectProperty.id,
+            title: prospect.title,
+            description: prospect.description,
+            estimated_cost: prospect.estimatedCost.min,
+            total_cost: prospect.estimatedCost.max,
+            category: prospect.category,
+            feasibility_score: prospect.feasibilityScore,
+            estimated_revenue: prospect.estimatedRevenue,
+            estimated_cost_breakdown: prospect.estimatedCost.breakdown,
+            timeline: prospect.timeline,
+            requirements: prospect.requirements,
+            benefits: prospect.benefits,
+            risks: prospect.risks,
+            next_steps: prospect.nextSteps,
+            market_demand: prospect.marketDemand,
+            complexity: prospect.complexity,
+            tags: prospect.tags
+          })
+
+        if (prospectError) {
+          console.error('Error inserting prospect:', prospectError)
+        }
+      }
+    } catch (error) {
+      console.error('Error storing prospects in database:', error)
+    }
+  }
+
+  /**
+   * Get category ID from category name
+   */
+  private async getCategoryId(categoryName: string): Promise<string> {
+    const categoryMap: { [key: string]: string } = {
+      'residential': '550e8400-e29b-41d4-a716-446655440001',
+      'commercial': '550e8400-e29b-41d4-a716-446655440002',
+      'land': '550e8400-e29b-41d4-a716-446655440003',
+      'industrial': '550e8400-e29b-41d4-a716-446655440004',
+      'materials': '550e8400-e29b-41d4-a716-446655440005',
+      'mixed-use': '550e8400-e29b-41d4-a716-446655440006'
+    }
+
+    return categoryMap[categoryName.toLowerCase()] || categoryMap['residential']
   }
 
   /**

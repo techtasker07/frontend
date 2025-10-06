@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { vertexAIService } from '@/lib/vertex-ai-service'
 import type { PropertyAnalysis } from '@/lib/google-vision-service'
 import type { PropertyFormData } from '@/lib/vertex-ai-service'
+import { createServerSupabaseClient } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,19 +15,31 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Get user from session
+    const supabase = createServerSupabaseClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
     // Generate property prospects using Vertex AI
     const prospects = await vertexAIService.generatePropertyProspects(
       visionAnalysis as PropertyAnalysis,
-      formData as PropertyFormData
+      formData as PropertyFormData,
+      user.id
     )
 
     return NextResponse.json({ prospects })
 
   } catch (error) {
     console.error('Prospect generation error:', error)
-    
+
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to generate prospects',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
