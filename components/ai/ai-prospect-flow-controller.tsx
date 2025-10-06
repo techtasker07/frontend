@@ -160,38 +160,63 @@ export function AIProspectFlowController({
     }
   }, [analysisId])
 
-  // Render appropriate step
-  switch (currentStep) {
-    case 'camera':
-      return (
-        <SmartCamerCapture
-          onImageCapture={handleImageCapture}
-          onClose={handleClose}
-        />
-      )
+  return (
+    <>
+      {/* Loading Overlay */}
+      {isGeneratingProspects && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 shadow-xl max-w-sm w-full mx-4">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-8 h-8 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin" />
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Generating Prospects
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Analyzing your property and generating AI-powered investment prospects...
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-    case 'form':
-      return (
-        <PropertyDetailsForm
-          isOpen={true}
-          onClose={handleClose}
-          imageData={imageData || ''}
-          visionAnalysis={visionAnalysis}
-          onSubmit={handleFormSubmit}
-        />
-      )
+      {/* Render appropriate step */}
+      {(() => {
+        switch (currentStep) {
+          case 'camera':
+            return (
+              <SmartCamerCapture
+                onImageCapture={handleImageCapture}
+                onClose={handleClose}
+              />
+            )
 
-    case 'results':
-      return prospectResults ? (
-        <PropertyProspectsResults
-          results={prospectResults}
-          imageData={imageData || undefined}
-          onClose={handleClose}
-          onSaveProspects={handleSaveProspects}
-        />
-      ) : null
+          case 'form':
+            return (
+              <PropertyDetailsForm
+                isOpen={true}
+                onClose={handleClose}
+                imageData={imageData || ''}
+                visionAnalysis={visionAnalysis}
+                onSubmit={handleFormSubmit}
+              />
+            )
 
-    default:
-      return null
-  }
+          case 'results':
+            return prospectResults ? (
+              <PropertyProspectsResults
+                results={prospectResults}
+                imageData={imageData || undefined}
+                onClose={handleClose}
+                onSaveProspects={handleSaveProspects}
+              />
+            ) : null
+
+          default:
+            return null
+        }
+      })()}
+    </>
+  )
 }
