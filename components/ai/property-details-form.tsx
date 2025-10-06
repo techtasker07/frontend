@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { 
@@ -34,36 +35,39 @@ interface PropertyDetailsFormProps {
 }
 
 interface PropertyDetails {
-  address: string
-  propertyType: string
-  squareMeters: string
-  No_of_rooms: string
-  bathrooms: string
-  currentUse: string
-  ownershipStatus: string
-  budget: string
-  timeline: string
-  additionalInfo: string
-  location: {
-    city: string
-    state: string
-    zipCode: string
-  }
-}
+   address: string
+   propertyType: string
+   squareMeters: string
+   No_of_rooms: string
+   bathrooms: string
+   currentUse: string
+   ownershipStatus: string
+   budget: string
+   timeline: string
+   additionalInfo: string
+   amenities: string[]
+   location: {
+     city: string
+     state: string
+     zipCode: string
+   }
+ }
 
 // Type alias to ensure compatibility with PropertyFormData
 type PropertyFormData = PropertyDetails
 
-export function PropertyDetailsForm({ 
-  isOpen, 
-  onClose, 
-  imageData, 
-  visionAnalysis,
-  onSubmit 
-}: PropertyDetailsFormProps) {
-  const router = useRouter()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showAdvanced, setShowAdvanced] = useState(false)
+export function PropertyDetailsForm({
+   isOpen,
+   onClose,
+   imageData,
+   visionAnalysis,
+   onSubmit
+ }: PropertyDetailsFormProps) {
+   const router = useRouter()
+   const [isSubmitting, setIsSubmitting] = useState(false)
+   const [showAdvanced, setShowAdvanced] = useState(false)
+   const [amenities, setAmenities] = useState<Record<string, any[]>>({})
+   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
   
   // Form state
   const [formData, setFormData] = useState<PropertyDetails>({
@@ -77,6 +81,7 @@ export function PropertyDetailsForm({
     budget: "",
     timeline: "",
     additionalInfo: "",
+    amenities: [],
     location: {
       city: "",
       state: "",
@@ -100,6 +105,37 @@ export function PropertyDetailsForm({
       }
     }))
   }
+
+  const handleAmenityToggle = (amenityName: string) => {
+    setSelectedAmenities(prev => {
+      const newSelected = prev.includes(amenityName)
+        ? prev.filter(name => name !== amenityName)
+        : [...prev, amenityName];
+
+      // Update form data
+      setFormData(prev => ({ ...prev, amenities: newSelected }));
+      return newSelected;
+    });
+  }
+
+  // Fetch amenities on component mount
+  useEffect(() => {
+    const fetchAmenities = async () => {
+      try {
+        const response = await fetch('/api/amenities');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setAmenities(data.data);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching amenities:', error);
+      }
+    };
+
+    fetchAmenities();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -273,6 +309,41 @@ export function PropertyDetailsForm({
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Amenities Section */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  Amenities & Features
+                </h3>
+
+                <div className="space-y-4">
+                  {Object.entries(amenities).map(([category, categoryAmenities]) => (
+                    <div key={category} className="space-y-2">
+                      <h4 className="text-sm font-medium text-gray-700 capitalize">
+                        {category.replace('_', ' ')}
+                      </h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        {categoryAmenities.map((amenity: any) => (
+                          <div key={amenity.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`amenity-${amenity.id}`}
+                              checked={selectedAmenities.includes(amenity.name)}
+                              onCheckedChange={() => handleAmenityToggle(amenity.name)}
+                            />
+                            <Label
+                              htmlFor={`amenity-${amenity.id}`}
+                              className="text-sm font-normal cursor-pointer"
+                            >
+                              {amenity.name}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Investment Details */}
