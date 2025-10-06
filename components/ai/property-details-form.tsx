@@ -37,7 +37,7 @@ interface PropertyDetails {
   address: string
   propertyType: string
   squareMeters: string
-  bedrooms: string
+  No_of_rooms: string
   bathrooms: string
   currentUse: string
   ownershipStatus: string
@@ -67,7 +67,7 @@ export function PropertyDetailsForm({
     address: "",
     propertyType: visionAnalysis?.propertyType || "",
     squareMeters: "",
-    bedrooms: "",
+    No_of_rooms: "",
     bathrooms: "",
     currentUse: "",
     ownershipStatus: "",
@@ -242,18 +242,18 @@ export function PropertyDetailsForm({
                   </p>
                 </div>
 
-                {/* Conditional Bedrooms/Bathrooms - only show for Building or Apartment */}
+                {/* Conditional rooms/Bathrooms - only show for Building or Apartment */}
                 {(formData.propertyType === 'building' || formData.propertyType === 'apartment') && (
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <Label htmlFor="bedrooms" className="text-sm font-medium">
-                        Bedrooms
+                      <Label htmlFor="No_of_rooms" className="text-sm font-medium">
+                        No of Rooms
                       </Label>
                       <Input
-                        id="bedrooms"
+                        id="No_of_rooms"
                         placeholder="e.g., 3"
-                        value={formData.bedrooms}
-                        onChange={(e) => handleInputChange('bedrooms', e.target.value)}
+                        value={formData.No_of_rooms}
+                        onChange={(e) => handleInputChange('No_of_rooms', e.target.value)}
                       />
                     </div>
                     
@@ -293,11 +293,11 @@ export function PropertyDetailsForm({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="under-5m">Under ₦5,000,000</SelectItem>
-                        <SelectItem value="5m-20m">₦5,000,000 - ₦20,000,000</SelectItem>
-                        <SelectItem value="20m-50m">₦20,000,000 - ₦50,000,000</SelectItem>
-                        <SelectItem value="50m-100m">₦50,000,000 - ₦100,000,000</SelectItem>
-                        <SelectItem value="100m-250m">₦100,000,000 - ₦250,000,000</SelectItem>
-                        <SelectItem value="over-250m">Over ₦250,000,000</SelectItem>
+                        <SelectItem value="5m-20m">₦5,000,000 - ₦50,000,000</SelectItem>
+                        <SelectItem value="20m-50m">₦50,000,000 - ₦100,000,000</SelectItem>
+                        <SelectItem value="50m-100m">₦100,000,000 - ₦500,000,000</SelectItem>
+                        <SelectItem value="100m-250m">₦500,000,000 - ₦1,000,000,000</SelectItem>
+                        <SelectItem value="over-250m">Over ₦1,000,000,000</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -402,9 +402,7 @@ export function PropertyDetailsForm({
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4" />
                       Generate Prospects
-                      <ArrowRight className="w-4 h-4" />
                     </div>
                   )}
                 </Button>

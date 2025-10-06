@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { WelcomeBackPage } from "@/components/ai/welcome-back-page"
+import WelcomeBackPageProps from "@/components/ai/welcome-back-page"
 import { AIProspectFlowController } from "@/components/ai/ai-prospect-flow-controller"
 import { useAuth } from "@/lib/auth"
 import { toast } from "sonner"
@@ -46,7 +46,7 @@ export default function AIWelcomeBackPage() {
   }
   
   return (
-    <WelcomeBackPage
+    <WelcomeBackPageProps
       userName={user?.first_name || user?.email?.split('@')[0] || "Guest"}
       onStartAnalysis={handleStartAnalysis}
       onSkip={handleSkip}

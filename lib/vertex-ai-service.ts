@@ -55,7 +55,7 @@ interface PropertyFormData {
   address: string
   propertyType: string
   squareMeters: string
-  bedrooms: string
+  No_of_rooms: string
   bathrooms: string
   currentUse: string
   ownershipStatus: string
@@ -257,7 +257,7 @@ PROPERTY DETAILS:
 - Address: ${formData.address}
 - Property Type: ${formData.propertyType}
 - Square Meters: ${formData.squareMeters}
-- Bedrooms: ${formData.bedrooms}
+- No of Rooms: ${formData.No_of_rooms}
 - Bathrooms: ${formData.bathrooms}
 - Current Use: ${formData.currentUse}
 - Ownership Status: ${formData.ownershipStatus}

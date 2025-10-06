@@ -5,24 +5,51 @@ import { Button } from "@/components/ui/button"
 import { Camera, Sparkles, X, Home } from "lucide-react"
 
 interface WelcomeBackPageProps {
-   userName: string
-   onStartAnalysis?: () => void
-   onSkip: () => void
-   onClose: () => void
- }
+  userName?: string
+  onStartAnalysis?: () => void
+  onSkip?: () => void
+  onClose?: () => void
+}
 
-export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: WelcomeBackPageProps) {
-   const handleCameraClick = () => {
-     if (onStartAnalysis) {
-       onStartAnalysis()
-     }
-   }
+export default function WelcomeBackPage({ 
+  userName = "John", 
+  onStartAnalysis, 
+  onSkip, 
+  onClose 
+}: WelcomeBackPageProps) {
+  const handleCameraClick = () => {
+    if (onStartAnalysis) {
+      onStartAnalysis()
+    } else {
+      alert("Camera capture started!")
+    }
+  }
+
+  const handleClose = () => {
+    if (onClose) {
+      onClose()
+    } else {
+      alert("Closing and returning to dashboard")
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-purple-50 to-pink-50 relative overflow-x-hidden">
-      {/* Animated background elements */}
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-100 relative overflow-x-hidden">
+      {/* Animated background elements with scattered icons */}
       <div className="absolute inset-0 overflow-hidden">
+        {/* Gradient blobs */}
         <div className="absolute top-0 -left-4 w-24 h-24 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-        <div className="absolute bottom-0 -right-4 w-32 h-32 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
+        <div className="absolute bottom-0 -right-4 w-32 h-32 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse" style={{ animationDelay: '2s' }}></div>
+        
+        {/* Scattered decorative icons */}
+        <Home className="absolute top-20 left-10 w-16 h-16 text-purple-300 opacity-20 animate-float" style={{ animationDelay: '0s' }} />
+        <Sparkles className="absolute top-40 right-20 w-12 h-12 text-pink-300 opacity-25 animate-float" style={{ animationDelay: '1s' }} />
+        <Camera className="absolute bottom-32 left-16 w-14 h-14 text-cyan-300 opacity-20 animate-float" style={{ animationDelay: '2s' }} />
+        <Home className="absolute top-1/3 right-12 w-20 h-20 text-purple-200 opacity-15 animate-float" style={{ animationDelay: '1.5s' }} />
+        <Sparkles className="absolute bottom-48 right-32 w-10 h-10 text-pink-200 opacity-20 animate-float" style={{ animationDelay: '0.5s' }} />
+        <Camera className="absolute top-1/4 left-1/4 w-12 h-12 text-blue-300 opacity-15 animate-float" style={{ animationDelay: '2.5s' }} />
+        <Home className="absolute bottom-20 right-1/4 w-16 h-16 text-purple-300 opacity-20 animate-float" style={{ animationDelay: '3s' }} />
+        <Sparkles className="absolute top-1/2 left-20 w-14 h-14 text-pink-300 opacity-15 animate-float" style={{ animationDelay: '1.8s' }} />
       </div>
 
       <div className="relative z-10 flex flex-col min-h-screen">
@@ -38,7 +65,7 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={onClose}
+              onClick={handleClose}
               className="h-9 w-9 p-0 hover:bg-red-100 flex-shrink-0"
               title="Close and go to Dashboard"
             >
@@ -52,7 +79,7 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={onClose}
+            onClick={handleClose}
             className="h-10 w-10 p-0 bg-white/90 hover:bg-red-100 rounded-full shadow-lg"
             title="Close and go to Dashboard"
           >
@@ -67,23 +94,23 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
               {/* Camera Icon as a Button with Animation */}
               <button
                 onClick={handleCameraClick}
-                className="relative mx-auto w-24 h-24 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mb-8 shadow-xl focus:outline-none focus:ring-4 focus:ring-purple-300 transition transform hover:scale-105"
+                className="relative mx-auto w-28 h-28 bg-gradient-to-br from-purple-500 via-pink-500 to-purple-600 rounded-full flex items-center justify-center mb-8 shadow-2xl focus:outline-none focus:ring-4 focus:ring-purple-400 transition-all transform hover:scale-110 hover:rotate-6 group"
               >
-                <Camera className="h-10 w-10 text-purple-600" />
+                <Camera className="h-12 w-12 text-white drop-shadow-lg group-hover:scale-110 transition-transform" />
                 
                 {/* Sparkle animation */}
-                <div className="absolute -top-10 right-0 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-2 rounded-lg rounded-tr-none shadow-lg animate-bounce">
-                  <h3 className="text-xs font-semibold whitespace-nowrap">
-                    Click here to capture property image
+                <div className="absolute -top-12 right-0 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2.5 rounded-xl shadow-2xl animate-bounce">
+                  <h3 className="text-sm font-semibold whitespace-nowrap">
+                    Click to capture
                   </h3>
 
                   {/* Chat bubble tail */}
-                  <div className="absolute bottom-[-6px] right-12 w-3 h-3 bg-gradient-to-r from-purple-500 to-pink-500 rotate-45"></div>
+                  <div className="absolute bottom-[-6px] right-16 w-3 h-3 bg-gradient-to-br from-purple-600 to-pink-600 rotate-45"></div>
                 </div>
 
                 {/* Pulse rings */}
-                <div className="absolute inset-0 rounded-full border-4 border-purple-300 animate-ping opacity-30"></div>
-                <div className="absolute inset-2 rounded-full border-2 border-purple-400 animate-pulse opacity-40"></div>
+                <div className="absolute inset-0 rounded-full border-4 border-purple-400 animate-ping opacity-40"></div>
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 opacity-20 animate-pulse"></div>
               </button>
 
               {/* Feature Description */}
@@ -96,23 +123,23 @@ export function WelcomeBackPage({ userName, onStartAnalysis, onSkip, onClose }: 
 
       {/* Custom CSS for animations */}
       <style jsx global>{`
-        .animation-delay-2000 {
-          animation-delay: 2s;
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px) rotate(0deg);
+          }
+          25% {
+            transform: translateY(-20px) rotate(5deg);
+          }
+          50% {
+            transform: translateY(-10px) rotate(-5deg);
+          }
+          75% {
+            transform: translateY(-15px) rotate(3deg);
+          }
         }
 
-        @keyframes fadeInScale {
-          from {
-            opacity: 0;
-            transform: scale(0.9);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-
-        .animate-fade-in-scale {
-          animation: fadeInScale 0.5s ease-out;
+        .animate-float {
+          animation: float 8s ease-in-out infinite;
         }
       `}</style>
     </div>

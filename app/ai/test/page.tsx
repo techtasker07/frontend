@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { WelcomeBackPage } from "@/components/ai/welcome-back-page"
+import WelcomeBackPageProps from "@/components/ai/welcome-back-page"
 import { AIProspectFlowController } from "@/components/ai/ai-prospect-flow-controller"
 import { PropertyProspectsResults } from "@/components/ai/property-prospects-results"
 import type { ProspectGenerationResult } from "@/lib/vertex-ai-service"
@@ -113,7 +113,7 @@ export default function AITestPage() {
     switch (currentView) {
       case 'welcome':
         return (
-          <WelcomeBackPage 
+          <WelcomeBackPageProps 
             userName="Test User"
             onStartAnalysis={() => setCurrentView('flow')}
             onSkip={() => setCurrentView('menu')}
