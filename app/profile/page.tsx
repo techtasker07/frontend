@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabaseApi } from '../../lib/supabase-api';
 import { supabase } from '../../lib/supabase';
@@ -13,8 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Camera, Star, Mail, Phone, Calendar, Home, Heart, Activity, Settings, User } from 'lucide-react';
-import { toast } from "sonner";
+import { Star, Mail, Phone, Calendar, Home, Heart, Activity, Settings, User } from 'lucide-react';
 
 // Define interfaces for our data structures
 interface User {
@@ -28,7 +27,6 @@ interface User {
   gradient: string;
   rating: number;
   profileCompletion: number;
-  profilePicture?: string;
   membership: Membership;
   stats: UserStats;
   preferences: UserPreferences;
@@ -124,7 +122,6 @@ class UserProfile {
         gradient: 'from-indigo-400 to-purple-500', // Default gradient
         rating: 4.5, // Default rating
         profileCompletion: this.calculateProfileCompletion(profile),
-        profilePicture: profile.profile_picture || undefined,
         membership: {
           type: 'Free',
           expiryDate: 'N/A'
@@ -161,10 +158,9 @@ class UserProfile {
 
   private calculateProfileCompletion(profile: any): number {
     let completion = 0;
-    if (profile.first_name) completion += 25;
-    if (profile.last_name) completion += 25;
-    if (profile.phone_number) completion += 25;
-    if (profile.profile_picture) completion += 25;
+    if (profile.first_name) completion += 33;
+    if (profile.last_name) completion += 33;
+    if (profile.phone_number) completion += 34;
     return completion;
   }
 
@@ -534,89 +530,6 @@ class UserProfile {
     `;
   }
 
-  public async uploadPhoto(): Promise<void> {
-    if (!this.currentUser) return;
-
-    // Create file input if it doesn't exist
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';
-    fileInput.style.display = 'none';
-
-    fileInput.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-
-      try {
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-          alert('Please select a valid image file.');
-          return;
-        }
-
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          alert('File size must be less than 5MB.');
-          return;
-        }
-
-        // Upload to Supabase storage
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${this.currentUser!.id}/profile-${Date.now()}.${fileExt}`;
-        const filePath = `profiles/${fileName}`;
-
-        const { data, error } = await supabase.storage
-          .from('property-images')
-          .upload(filePath, file);
-
-        if (error) {
-          console.error('Error uploading file:', error);
-          alert('Failed to upload image. Please try again.');
-          return;
-        }
-
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('property-images')
-          .getPublicUrl(filePath);
-
-        // Update profile in database
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ profile_picture: publicUrl })
-          .eq('id', this.currentUser!.id);
-
-        if (updateError) {
-          console.error('Error updating profile:', updateError);
-          alert('Failed to update profile. Please try again.');
-          return;
-        }
-
-        // Update local state
-        if (this.currentUser) {
-          this.currentUser.profilePicture = publicUrl;
-          this.currentUser.profileCompletion = this.calculateProfileCompletion({
-            first_name: this.currentUser.firstName,
-            last_name: this.currentUser.lastName,
-            phone_number: this.currentUser.phone,
-            profile_picture: publicUrl
-          });
-        }
-
-        this.onUpdate();
-        alert('Profile photo updated successfully! ✅');
-
-      } catch (error) {
-        console.error('Error uploading photo:', error);
-        alert('Failed to upload photo. Please try again.');
-      }
-    };
-
-    // Trigger file selection
-    document.body.appendChild(fileInput);
-    fileInput.click();
-    document.body.removeChild(fileInput);
-  }
 
   public editProfile(): void {
     alert('Profile editing form would open here with fields for:\n• Personal information\n• Bio/description\n• Contact preferences\n• Professional details');
@@ -659,8 +572,7 @@ class UserProfile {
         this.currentUser.profileCompletion = this.calculateProfileCompletion({
           first_name: firstName,
           last_name: lastName,
-          phone_number: phone,
-          profile_picture: null // Would need to handle profile picture separately
+          phone_number: phone
         });
 
         this.onUpdate();
@@ -711,19 +623,6 @@ class UserProfile {
     }
   }
 
-  public updateProfilePicture(profilePictureUrl: string): void {
-    if (!this.currentUser) return;
-
-    this.currentUser.profilePicture = profilePictureUrl;
-    this.currentUser.profileCompletion = this.calculateProfileCompletion({
-      first_name: this.currentUser.firstName,
-      last_name: this.currentUser.lastName,
-      phone_number: this.currentUser.phone,
-      profile_picture: profilePictureUrl
-    });
-
-    this.onUpdate();
-  }
 
   // Getter for current user
   public getCurrentUser(): User | null {
@@ -748,10 +647,8 @@ class UserProfile {
 const ProfilePage: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const { isAuthenticated } = useAuth();
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -787,72 +684,6 @@ const ProfilePage: React.FC = () => {
     }
   }, [userProfile]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !userProfile || !user) return;
-
-    setUploadingPhoto(true);
-
-    try {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please select a valid image file.');
-        return;
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('File size must be less than 5MB.');
-        return;
-      }
-
-      // Upload to Supabase storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/profile-${Date.now()}.${fileExt}`;
-      const filePath = `profiles/${fileName}`;
-
-      const { data, error } = await supabase.storage
-        .from('property-images')
-        .upload(filePath, file);
-
-      if (error) {
-        console.error('Error uploading file:', error);
-        toast.error('Failed to upload image. Please try again.');
-        return;
-      }
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('property-images')
-        .getPublicUrl(filePath);
-
-      // Update profile in database
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ profile_picture: publicUrl })
-        .eq('id', user.id);
-
-      if (updateError) {
-        console.error('Error updating profile:', updateError);
-        toast.error('Failed to update profile. Please try again.');
-        return;
-      }
-
-      // Update local state
-      userProfile.updateProfilePicture(publicUrl);
-      toast.success('Profile photo updated successfully!');
-
-    } catch (error) {
-      console.error('Error uploading photo:', error);
-      toast.error('Failed to upload photo. Please try again.');
-    } finally {
-      setUploadingPhoto(false);
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  };
 
   if (loading) {
     return (
@@ -878,16 +709,6 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleFileChange}
-        aria-label="Upload profile picture"
-        title="Upload profile picture"
-      />
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-white/20 shadow-lg">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
@@ -914,27 +735,15 @@ const ProfilePage: React.FC = () => {
             }} />
 
             <CardContent className="relative p-4 sm:p-6 lg:p-8">
-              <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-4 sm:space-y-6 lg:space-y-0 lg:space-x-8">
+              <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-4 sm:space-y-6 lg:space-y-0 lg:space-x-8 text-center lg:text-left">
                 {/* Avatar Section */}
-                <div className="relative self-center lg:self-start cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
-                  <Avatar className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 ring-4 ring-white/50 shadow-2xl group-hover:ring-indigo-300 transition-all">
-                    {user.profilePicture ? (
-                      <img
-                        src={user.profilePicture}
-                        alt={`${user.firstName} ${user.lastName}`}
-                        className="w-full h-full object-cover rounded-full"
-                      />
-                    ) : (
-                      <div className={`w-full h-full bg-gradient-to-br ${user.gradient} flex items-center justify-center text-white text-2xl sm:text-3xl lg:text-4xl font-bold`}>
-                        {user.initials}
-                      </div>
-                    )}
+                <div className="relative">
+                  <Avatar className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 ring-4 ring-white/50 shadow-2xl">
+                    <div className={`w-full h-full bg-gradient-to-br ${user.gradient} flex items-center justify-center text-white text-2xl sm:text-3xl lg:text-4xl font-bold`}>
+                      {user.initials}
+                    </div>
                     <AvatarFallback className="text-2xl sm:text-3xl lg:text-4xl font-bold">{user.initials}</AvatarFallback>
                   </Avatar>
-                  {/* Camera overlay */}
-                  <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Camera className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                  </div>
                   <div className="absolute -bottom-2 -right-2 bg-green-500 w-6 h-6 sm:w-8 sm:h-8 rounded-full border-4 border-white flex items-center justify-center">
                     <div className="w-2 h-2 sm:w-3 sm:h-3 bg-white rounded-full" />
                   </div>
@@ -947,8 +756,8 @@ const ProfilePage: React.FC = () => {
                       <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
                         {user.firstName} {user.lastName}
                       </h2>
-                      <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                        <Badge variant="secondary" className="px-2 sm:px-3 py-1 self-start">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-center lg:justify-start space-y-2 sm:space-y-0 sm:space-x-4">
+                        <Badge variant="secondary" className="px-2 sm:px-3 py-1">
                           <User className="w-3 h-3 mr-1" />
                           {user.role}
                         </Badge>
