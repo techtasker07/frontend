@@ -427,41 +427,41 @@ export default function ProspectDetailPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3 sm:gap-4">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <Button variant="ghost" size="sm" asChild>
+          <div className="flex items-center gap-2 sm:gap-3 mb-2">
+            <Button variant="ghost" size="sm" asChild className="text-xs sm:text-sm">
               <Link href="/prospects">
-                <ArrowLeft className="h-4 w-4 mr-2" />
+                <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 Back to Prospects
               </Link>
             </Button>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0" />
+          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Zap className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-600 flex-shrink-0" />
             <span className="truncate">Prospect Analysis Details</span>
           </h1>
-          <p className="text-sm sm:text-base text-gray-600 mt-1">
+          <p className="text-xs sm:text-sm lg:text-base text-gray-600 mt-1">
             Generated on {new Date(analysis.generatedAt).toLocaleDateString()}
           </p>
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 sm:space-y-4 lg:space-y-6">
         <TabsList className="grid grid-cols-3 w-full max-w-md">
           <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
           <TabsTrigger value="prospects" className="text-xs sm:text-sm">Prospects</TabsTrigger>
           <TabsTrigger value="insights" className="text-xs sm:text-sm">Insights</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="overview" className="space-y-4 sm:space-y-6">
           {/* Summary Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <Card>
               <CardContent className="p-3 sm:p-4 text-center">
-                <div className="text-xl sm:text-2xl font-bold text-blue-600">
+                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-600">
                   {analysis.summary.totalProspects}
                 </div>
                 <div className="text-xs sm:text-sm text-gray-600">Total Prospects</div>
@@ -469,7 +469,7 @@ export default function ProspectDetailPage() {
             </Card>
             <Card>
               <CardContent className="p-3 sm:p-4 text-center">
-                <div className="text-xl sm:text-2xl font-bold text-green-600">
+                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-green-600">
                   {analysis.summary.averageFeasibility}%
                 </div>
                 <div className="text-xs sm:text-sm text-gray-600">Avg Feasibility</div>
@@ -477,7 +477,7 @@ export default function ProspectDetailPage() {
             </Card>
             <Card>
               <CardContent className="p-3 sm:p-4 text-center">
-                <div className="text-sm sm:text-lg font-bold text-purple-600">
+                <div className="text-sm sm:text-base lg:text-lg font-bold text-purple-600">
                   {formatCurrency(analysis.summary.potentialRevenueRange.min)}
                 </div>
                 <div className="text-xs sm:text-sm text-gray-600">Min Revenue</div>
@@ -485,7 +485,7 @@ export default function ProspectDetailPage() {
             </Card>
             <Card>
               <CardContent className="p-3 sm:p-4 text-center">
-                <div className="text-sm sm:text-lg font-bold text-purple-600">
+                <div className="text-sm sm:text-base lg:text-lg font-bold text-purple-600">
                   {formatCurrency(analysis.summary.potentialRevenueRange.max)}
                 </div>
                 <div className="text-xs sm:text-sm text-gray-600">Max Revenue</div>
@@ -507,11 +507,11 @@ export default function ProspectDetailPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="prospects" className="space-y-4 sm:space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <TabsContent value="prospects" className="space-y-3 sm:space-y-4 lg:space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
             {/* Prospects List */}
-            <div className="space-y-3 sm:space-y-4">
-              <h2 className="text-base sm:text-lg font-semibold">
+            <div className="space-y-2 sm:space-y-3 lg:space-y-4">
+              <h2 className="text-sm sm:text-base lg:text-lg font-semibold">
                 All Generated Prospects ({analysis.prospects.length})
               </h2>
               {analysis.prospects.map((prospect) => (
@@ -528,20 +528,20 @@ export default function ProspectDetailPage() {
             <div className="lg:sticky lg:top-6">
               {selectedProspect ? (
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base sm:text-lg">Prospect Details</CardTitle>
+                  <CardHeader className="pb-3 sm:pb-4">
+                    <CardTitle className="text-sm sm:text-base lg:text-lg">Prospect Details</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <ScrollArea className="h-[400px] sm:h-[500px] lg:h-[600px] pr-2 sm:pr-4">
+                  <CardContent className="p-4 sm:p-6">
+                    <ScrollArea className="h-[300px] sm:h-[400px] lg:h-[500px] xl:h-[600px] pr-2 sm:pr-4">
                       <ProspectDetails prospect={selectedProspect} />
                     </ScrollArea>
                   </CardContent>
                 </Card>
               ) : (
                 <Card>
-                  <CardContent className="p-8 sm:p-12 text-center">
-                    <Lightbulb className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-sm sm:text-base text-gray-500">
+                  <CardContent className="p-6 sm:p-8 lg:p-12 text-center">
+                    <Lightbulb className="w-6 h-6 sm:w-8 sm:h-8 lg:w-12 lg:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                    <p className="text-xs sm:text-sm lg:text-base text-gray-500">
                       Select a prospect to view detailed information
                     </p>
                   </CardContent>
@@ -551,8 +551,8 @@ export default function ProspectDetailPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="insights" className="space-y-4 sm:space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+        <TabsContent value="insights" className="space-y-3 sm:space-y-4 lg:space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

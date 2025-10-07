@@ -714,33 +714,35 @@ const ProfilePage: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-white/20 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-8">
-            <div className="flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="py-4 sm:py-6 lg:py-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
               <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                   My Profile
                 </h1>
-                <p className="text-gray-600 mt-2">Manage your account and preferences</p>
+                <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">Manage your account and preferences</p>
               </div>
-              <div className="flex items-center space-x-3">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
                 <Button
                   onClick={() => userProfile?.uploadPhoto()}
                   variant="gradient"
-                  size="lg"
-                  className="shadow-lg"
+                  size="sm"
+                  className="shadow-lg text-xs sm:text-sm"
                 >
-                  <Camera className="w-4 h-4 mr-2" />
-                  Upload Photo
+                  <Camera className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden xs:inline">Upload Photo</span>
+                  <span className="xs:hidden">Photo</span>
                 </Button>
                 <Button
                   onClick={() => userProfile?.editProfile()}
                   variant="outline"
-                  size="lg"
-                  className="shadow-lg bg-white/50 backdrop-blur-sm hover:bg-white/80"
+                  size="sm"
+                  className="shadow-lg bg-white/50 backdrop-blur-sm hover:bg-white/80 text-xs sm:text-sm"
                 >
-                  <Edit3 className="w-4 h-4 mr-2" />
-                  Edit Profile
+                  <Edit3 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden xs:inline">Edit Profile</span>
+                  <span className="xs:hidden">Edit</span>
                 </Button>
               </div>
             </div>
@@ -748,9 +750,9 @@ const ProfilePage: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
         {/* Profile Hero Card */}
-        <Card className="mb-8 overflow-hidden shadow-xl bg-white/80 backdrop-blur-sm border-white/20">
+        <Card className="mb-6 sm:mb-8 overflow-hidden shadow-xl bg-white/80 backdrop-blur-sm border-white/20">
           <div className="relative">
             {/* Background Pattern */}
             <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10" />
@@ -758,73 +760,73 @@ const ProfilePage: React.FC = () => {
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23a855f7' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
               backgroundRepeat: 'repeat'
             }} />
-            
-            <CardContent className="relative p-8">
-              <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-6 lg:space-y-0 lg:space-x-8">
+
+            <CardContent className="relative p-4 sm:p-6 lg:p-8">
+              <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-4 sm:space-y-6 lg:space-y-0 lg:space-x-8">
                 {/* Avatar Section */}
-                <div className="relative">
-                  <Avatar className="w-32 h-32 ring-4 ring-white/50 shadow-2xl">
-                    <div className={`w-full h-full bg-gradient-to-br ${user.gradient} flex items-center justify-center text-white text-4xl font-bold`}>
+                <div className="relative self-center lg:self-start">
+                  <Avatar className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 ring-4 ring-white/50 shadow-2xl">
+                    <div className={`w-full h-full bg-gradient-to-br ${user.gradient} flex items-center justify-center text-white text-2xl sm:text-3xl lg:text-4xl font-bold`}>
                       {user.initials}
                     </div>
-                    <AvatarFallback className="text-4xl font-bold">{user.initials}</AvatarFallback>
+                    <AvatarFallback className="text-2xl sm:text-3xl lg:text-4xl font-bold">{user.initials}</AvatarFallback>
                   </Avatar>
-                  <div className="absolute -bottom-2 -right-2 bg-green-500 w-8 h-8 rounded-full border-4 border-white flex items-center justify-center">
-                    <div className="w-3 h-3 bg-white rounded-full" />
+                  <div className="absolute -bottom-2 -right-2 bg-green-500 w-6 h-6 sm:w-8 sm:h-8 rounded-full border-4 border-white flex items-center justify-center">
+                    <div className="w-2 h-2 sm:w-3 sm:h-3 bg-white rounded-full" />
                   </div>
                 </div>
 
                 {/* Profile Info */}
-                <div className="flex-1 space-y-6">
-                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                <div className="flex-1 space-y-4 sm:space-y-6">
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-3 sm:space-y-4 lg:space-y-0">
                     <div>
-                      <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                      <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
                         {user.firstName} {user.lastName}
                       </h2>
-                      <div className="flex items-center space-x-4">
-                        <Badge variant="secondary" className="px-3 py-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                        <Badge variant="secondary" className="px-2 sm:px-3 py-1 self-start">
                           <User className="w-3 h-3 mr-1" />
                           {user.role}
                         </Badge>
                         <div className="flex items-center text-yellow-500">
-                          <Star className="w-5 h-5 mr-1 fill-current" />
-                          <span className="font-semibold">{user.rating}</span>
-                          <span className="text-gray-500 ml-1">(4.5/5.0)</span>
+                          <Star className="w-4 h-4 sm:w-5 sm:h-5 mr-1 fill-current" />
+                          <span className="font-semibold text-sm sm:text-base">{user.rating}</span>
+                          <span className="text-gray-500 ml-1 text-sm">(4.5/5.0)</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Progress Section */}
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700">Profile Completion</span>
-                      <span className="text-sm font-bold text-indigo-600">{user.profileCompletion}%</span>
+                      <span className="text-xs sm:text-sm font-medium text-gray-700">Profile Completion</span>
+                      <span className="text-xs sm:text-sm font-bold text-indigo-600">{user.profileCompletion}%</span>
                     </div>
-                    <Progress value={user.profileCompletion} className="h-3 bg-gray-200" />
+                    <Progress value={user.profileCompletion} className="h-2 sm:h-3 bg-gray-200" />
                   </div>
 
                   {/* Contact Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="flex items-center space-x-3 p-3 rounded-lg bg-white/50">
-                      <Mail className="w-5 h-5 text-indigo-500" />
-                      <div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+                    <div className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg bg-white/50">
+                      <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-500 flex-shrink-0" />
+                      <div className="min-w-0">
                         <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Email</p>
-                        <p className="text-sm font-semibold text-gray-900 truncate">{user.email}</p>
+                        <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{user.email}</p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-3 p-3 rounded-lg bg-white/50">
-                      <Phone className="w-5 h-5 text-green-500" />
-                      <div>
+                    <div className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg bg-white/50">
+                      <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 flex-shrink-0" />
+                      <div className="min-w-0">
                         <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Phone</p>
-                        <p className="text-sm font-semibold text-gray-900">{user.phone || 'Not provided'}</p>
+                        <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{user.phone || 'Not provided'}</p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-3 p-3 rounded-lg bg-white/50">
-                      <Calendar className="w-5 h-5 text-purple-500" />
-                      <div>
+                    <div className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg bg-white/50 col-span-1 sm:col-span-2 lg:col-span-1">
+                      <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500 flex-shrink-0" />
+                      <div className="min-w-0">
                         <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Member Since</p>
-                        <p className="text-sm font-semibold text-gray-900">{new Date().getFullYear()}</p>
+                        <p className="text-xs sm:text-sm font-semibold text-gray-900">{new Date().getFullYear()}</p>
                       </div>
                     </div>
                   </div>
@@ -837,32 +839,32 @@ const ProfilePage: React.FC = () => {
         {/* Modern Tabs Section */}
         <Card className="shadow-xl bg-white/80 backdrop-blur-sm border-white/20">
           <Tabs defaultValue="overview" className="w-full">
-            <CardHeader className="pb-4">
-              <TabsList className="grid w-full grid-cols-5 bg-gray-100/80">
-                <TabsTrigger value="overview" className="flex items-center space-x-2">
-                  <User className="w-4 h-4" />
+            <CardHeader className="pb-3 sm:pb-4">
+              <TabsList className="grid w-full grid-cols-5 bg-gray-100/80 h-auto p-1">
+                <TabsTrigger value="overview" className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 py-2 px-1 sm:px-3 text-xs">
+                  <User className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Overview</span>
                 </TabsTrigger>
-                <TabsTrigger value="properties" className="flex items-center space-x-2">
-                  <Home className="w-4 h-4" />
+                <TabsTrigger value="properties" className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 py-2 px-1 sm:px-3 text-xs">
+                  <Home className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Properties</span>
                 </TabsTrigger>
-                <TabsTrigger value="favorites" className="flex items-center space-x-2">
-                  <Heart className="w-4 h-4" />
+                <TabsTrigger value="favorites" className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 py-2 px-1 sm:px-3 text-xs">
+                  <Heart className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Favorites</span>
                 </TabsTrigger>
-                <TabsTrigger value="activity" className="flex items-center space-x-2">
-                  <Activity className="w-4 h-4" />
+                <TabsTrigger value="activity" className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 py-2 px-1 sm:px-3 text-xs">
+                  <Activity className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Activity</span>
                 </TabsTrigger>
-                <TabsTrigger value="settings" className="flex items-center space-x-2">
-                  <Settings className="w-4 h-4" />
+                <TabsTrigger value="settings" className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 py-2 px-1 sm:px-3 text-xs">
+                  <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">Settings</span>
                 </TabsTrigger>
               </TabsList>
             </CardHeader>
 
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <OverviewTab user={user} userProfile={userProfile} />
               <PropertiesTab userProfile={userProfile} />
               <FavoritesTab />

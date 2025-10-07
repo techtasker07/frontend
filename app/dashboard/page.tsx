@@ -248,15 +248,15 @@ const Dashboard: React.FC = () => {
       <div className="md:ml-16 pb-20 md:pb-0">
         {/* Header */}
         <header className="bg-white shadow-sm border-b border-gray-200">
-          <div className="px-4 md:px-6 py-4">
+          <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl md:text-2xl font-bold text-gray-900">Smart Dashboard</h2>
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">Smart Dashboard</h2>
               <div className="flex items-center space-x-2 md:space-x-4">
                 <div className="relative hidden sm:block">
                   <input
                     type="text"
                     placeholder="Search properties..."
-                    className="w-48 md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className="w-40 sm:w-48 md:w-64 px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
                     onKeyPress={(e) => {
                       if (e.key === 'Enter') {
                         handleSearch((e.target as HTMLInputElement).value);
@@ -266,7 +266,7 @@ const Dashboard: React.FC = () => {
                 </div>
                 <button
                   onClick={handleCreatePoll}
-                  className="bg-indigo-600 text-white px-3 md:px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm md:text-base"
+                  className="bg-indigo-600 text-white px-2 sm:px-3 md:px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-xs sm:text-sm md:text-base"
                 >
                   <span className="hidden sm:inline">Create New Poll</span>
                   <span className="sm:hidden">Create</span>
@@ -277,9 +277,9 @@ const Dashboard: React.FC = () => {
         </header>
 
         {/* Dashboard content */}
-        <main className="p-4 md:p-6">
+        <main className="p-3 sm:p-4 md:p-6">
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8">
             {statItems.map(stat => (
               <div key={stat.id} className="bg-white rounded-xl p-6 card-hover">
                 <div className="flex items-center justify-between">
@@ -299,55 +299,55 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Main content grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Active Polls */}
             <div className="lg:col-span-2">
-              <div className="bg-white rounded-xl p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900">Active Property Polls</h3>
+              <div className="bg-white rounded-xl p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Active Property Polls</h3>
                   <button
                     onClick={handleViewAll}
-                    className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                    className="text-indigo-600 hover:text-indigo-800 text-xs sm:text-sm font-medium"
                   >
                     View All
                   </button>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {pollItems.map(poll => (
                     <div
                       key={poll.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition-colors cursor-pointer"
+                      className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:border-indigo-300 transition-colors cursor-pointer"
                       onClick={() => handlePollClick(poll.id)}
                     >
-                      <div className="flex items-start space-x-4">
+                      <div className="flex flex-col sm:flex-row sm:items-start space-y-3 sm:space-y-0 sm:space-x-4">
                         <img
                           src={poll.image}
                           alt={poll.title}
-                          className="w-16 h-16 rounded-lg object-cover"
+                          className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg object-cover flex-shrink-0"
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display = 'none';
                           }}
                         />
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900">{poll.title}</h4>
-                          <p className="text-sm text-gray-600">{poll.price} • {poll.details}</p>
-                          <div className="flex items-center mt-2 space-x-4">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-gray-900 text-sm sm:text-base">{poll.title}</h4>
+                          <p className="text-xs sm:text-sm text-gray-600">{poll.price} • {poll.details}</p>
+                          <div className="flex flex-col sm:flex-row sm:items-center mt-2 space-y-2 sm:space-y-0 sm:space-x-4">
                             <div className="flex items-center space-x-2">
-                              <div className="w-32 bg-gray-200 rounded-full h-2">
+                              <div className="w-24 sm:w-32 bg-gray-200 rounded-full h-2">
                                 <div
                                   className="poll-progress h-2 rounded-full bg-indigo-600"
                                   style={{ width: `${poll.progress}%` }}
                                 ></div>
                               </div>
-                              <span className="text-sm font-medium text-gray-700">{poll.progress}% positive</span>
+                              <span className="text-xs sm:text-sm font-medium text-gray-700">{poll.progress}% positive</span>
                             </div>
-                            <span className="text-sm text-gray-500">{poll.votes} votes</span>
+                            <span className="text-xs sm:text-sm text-gray-500">{poll.votes} votes</span>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <span className="text-sm text-gray-500">{poll.timeLeft}</span>
+                        <div className="flex sm:flex-col items-center sm:items-end justify-between sm:text-right">
+                          <span className="text-xs sm:text-sm text-gray-500">{poll.timeLeft}</span>
                           <div className="mt-1">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-${poll.statusColor}-100 text-${poll.statusColor}-800`}>
+                            <span className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs font-medium bg-${poll.statusColor}-100 text-${poll.statusColor}-800`}>
                               {poll.status}
                             </span>
                           </div>
@@ -361,10 +361,10 @@ const Dashboard: React.FC = () => {
 
             {/* Marketplace Properties Update */}
             <div>
-              <div className="bg-white rounded-xl p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900">Marketplace Properties</h3>
-                  <Link href="/marketplace" className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+              <div className="bg-white rounded-xl p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Marketplace Properties</h3>
+                  <Link href="/marketplace" className="text-indigo-600 hover:text-indigo-800 text-xs sm:text-sm font-medium">
                     View All
                   </Link>
                 </div>
