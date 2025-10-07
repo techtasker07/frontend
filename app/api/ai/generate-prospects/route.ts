@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { vertexAIService } from '@/lib/vertex-ai-service'
+import { prospectEngineService } from '@/lib/prospect-engine-service'
 import type { PropertyAnalysis } from '@/lib/google-vision-service'
-import type { PropertyFormData } from '@/lib/vertex-ai-service'
+import type { PropertyFormData } from '@/lib/prospect-engine-service'
 import { createServerClient } from '@supabase/ssr'
 
 export async function POST(request: NextRequest) {
@@ -48,9 +48,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[PROSPECTS API] User authenticated, calling vertexAIService.generatePropertyProspects for user:', user.id)
-    // Generate property prospects using Vertex AI
-    const prospects = await vertexAIService.generatePropertyProspects(
+    console.log('[PROSPECTS API] User authenticated, calling prospectEngineService.generatePropertyProspects for user:', user.id)
+    // Generate property prospects using in-app engine
+    const prospects = await prospectEngineService.generatePropertyProspects(
       visionAnalysis as PropertyAnalysis,
       formData as PropertyFormData,
       user.id

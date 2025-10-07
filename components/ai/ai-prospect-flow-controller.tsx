@@ -8,7 +8,7 @@ import { PropertyProspectsResults } from "./property-prospects-results"
 import { toast } from "sonner"
 import { supabaseApi } from "@/lib/supabase-api"
 import type { PropertyAnalysis } from "@/lib/google-vision-service"
-import type { ProspectGenerationResult, PropertyFormData } from "@/lib/vertex-ai-service"
+import type { ProspectGenerationResult, PropertyFormData } from "@/lib/prospect-engine-service"
 
 type FlowStep = 'camera' | 'form' | 'results'
 
@@ -77,7 +77,7 @@ export function AIProspectFlowController({
     setIsGeneratingProspects(true)
 
     try {
-      // Generate prospects using Vertex AI
+      // Generate prospects using in-app engine
       const response = await fetch('/api/ai/generate-prospects', {
         method: 'POST',
         headers: {

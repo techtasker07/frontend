@@ -32,7 +32,7 @@ import {
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
-import type { ProspectGenerationResult, PropertyProspect } from "@/lib/vertex-ai-service"
+import type { ProspectGenerationResult, PropertyProspect } from "@/lib/prospect-engine-service"
 
 interface PropertyProspectsResultsProps {
   results: ProspectGenerationResult
@@ -70,6 +70,7 @@ export function PropertyProspectsResults({
   const router = useRouter()
   const [selectedProspect, setSelectedProspect] = useState<PropertyProspect | null>(null)
   const [activeTab, setActiveTab] = useState("overview")
+  const [activeSector, setActiveSector] = useState<'valueMaximization' | 'alternativeUses'>('valueMaximization')
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-NG', {
@@ -447,11 +448,41 @@ export function PropertyProspectsResults({
           </TabsContent>
 
           <TabsContent value="prospects" className="space-y-4 sm:space-y-6">
+            {/* Sector Toggle */}
+            {results.sectors && (
+              <div className="flex justify-center mb-6">
+                <div className="bg-gray-100 p-1 rounded-lg inline-flex">
+                  <button
+                    onClick={() => setActiveSector('valueMaximization')}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      activeSector === 'valueMaximization'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Value Maximization ({results.sectors.valueMaximization.length})
+                  </button>
+                  <button
+                    onClick={() => setActiveSector('alternativeUses')}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      activeSector === 'alternativeUses'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Alternative Uses ({results.sectors.alternativeUses.length})
+                  </button>
+                </div>
+              </div>
+            )}
+            
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {/* Prospects List */}
               <div className="space-y-3 sm:space-y-4">
-                <h2 className="text-base sm:text-lg font-semibold">All Prospects</h2>
-                {results.prospects.map((prospect) => (
+                <h2 className="text-base sm:text-lg font-semibold">
+                  {activeSector === 'valueMaximization' ? 'Value Maximization Prospects' : 'Alternative Uses Prospects'}
+                </h2>
+                {(results.sectors && results.sectors[activeSector] ? results.sectors[activeSector] : results.prospects).map((prospect) => (
                   <ProspectCard
                     key={prospect.id}
                     prospect={prospect}
