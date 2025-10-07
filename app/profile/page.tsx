@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Camera, Edit3, Star, Mail, Phone, Calendar, Home, Heart, Activity, Settings, User } from 'lucide-react';
+import { Camera, Star, Mail, Phone, Calendar, Home, Heart, Activity, Settings, User } from 'lucide-react';
 
 // Define interfaces for our data structures
 interface User {
@@ -716,35 +716,11 @@ const ProfilePage: React.FC = () => {
       <div className="bg-white/80 backdrop-blur-sm border-b border-white/20 shadow-lg">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
           <div className="py-4 sm:py-6 lg:py-8">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-              <div>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                  My Profile
-                </h1>
-                <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">Manage your account and preferences</p>
-              </div>
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
-                <Button
-                  onClick={() => userProfile?.uploadPhoto()}
-                  variant="gradient"
-                  size="sm"
-                  className="shadow-lg text-xs sm:text-sm"
-                >
-                  <Camera className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                  <span className="hidden xs:inline">Upload Photo</span>
-                  <span className="xs:hidden">Photo</span>
-                </Button>
-                <Button
-                  onClick={() => userProfile?.editProfile()}
-                  variant="outline"
-                  size="sm"
-                  className="shadow-lg bg-white/50 backdrop-blur-sm hover:bg-white/80 text-xs sm:text-sm"
-                >
-                  <Edit3 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                  <span className="hidden xs:inline">Edit Profile</span>
-                  <span className="xs:hidden">Edit</span>
-                </Button>
-              </div>
+            <div className="text-center">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                My Profile
+              </h1>
+              <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">Manage your account and preferences</p>
             </div>
           </div>
         </div>
@@ -764,13 +740,17 @@ const ProfilePage: React.FC = () => {
             <CardContent className="relative p-4 sm:p-6 lg:p-8">
               <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-4 sm:space-y-6 lg:space-y-0 lg:space-x-8">
                 {/* Avatar Section */}
-                <div className="relative self-center lg:self-start">
-                  <Avatar className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 ring-4 ring-white/50 shadow-2xl">
+                <div className="relative self-center lg:self-start cursor-pointer group" onClick={() => userProfile?.uploadPhoto()}>
+                  <Avatar className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 ring-4 ring-white/50 shadow-2xl group-hover:ring-indigo-300 transition-all">
                     <div className={`w-full h-full bg-gradient-to-br ${user.gradient} flex items-center justify-center text-white text-2xl sm:text-3xl lg:text-4xl font-bold`}>
                       {user.initials}
                     </div>
                     <AvatarFallback className="text-2xl sm:text-3xl lg:text-4xl font-bold">{user.initials}</AvatarFallback>
                   </Avatar>
+                  {/* Camera overlay */}
+                  <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Camera className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                  </div>
                   <div className="absolute -bottom-2 -right-2 bg-green-500 w-6 h-6 sm:w-8 sm:h-8 rounded-full border-4 border-white flex items-center justify-center">
                     <div className="w-2 h-2 sm:w-3 sm:h-3 bg-white rounded-full" />
                   </div>
