@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabaseApi } from '../../lib/supabase-api';
 import { supabase } from '../../lib/supabase';
@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Camera, Star, Mail, Phone, Calendar, Home, Heart, Activity, Settings, User } from 'lucide-react';
+import { toast } from "sonner";
 
 // Define interfaces for our data structures
 interface User {
@@ -27,6 +28,7 @@ interface User {
   gradient: string;
   rating: number;
   profileCompletion: number;
+  profilePicture?: string;
   membership: Membership;
   stats: UserStats;
   preferences: UserPreferences;
@@ -122,6 +124,7 @@ class UserProfile {
         gradient: 'from-indigo-400 to-purple-500', // Default gradient
         rating: 4.5, // Default rating
         profileCompletion: this.calculateProfileCompletion(profile),
+        profilePicture: profile.profile_picture || undefined,
         membership: {
           type: 'Free',
           expiryDate: 'N/A'
@@ -531,8 +534,88 @@ class UserProfile {
     `;
   }
 
-  public uploadPhoto(): void {
-    alert('Photo upload dialog would open here. Users could select a new profile picture from their device.');
+  public async uploadPhoto(): Promise<void> {
+    if (!this.currentUser) return;
+
+    // Create file input if it doesn't exist
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.style.display = 'none';
+
+    fileInput.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      try {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          alert('Please select a valid image file.');
+          return;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          alert('File size must be less than 5MB.');
+          return;
+        }
+
+        // Upload to Supabase storage
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${this.currentUser!.id}/profile-${Date.now()}.${fileExt}`;
+        const filePath = `profiles/${fileName}`;
+
+        const { data, error } = await supabase.storage
+          .from('property-images')
+          .upload(filePath, file);
+
+        if (error) {
+          console.error('Error uploading file:', error);
+          alert('Failed to upload image. Please try again.');
+          return;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('property-images')
+          .getPublicUrl(filePath);
+
+        // Update profile in database
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ profile_picture: publicUrl })
+          .eq('id', this.currentUser!.id);
+
+        if (updateError) {
+          console.error('Error updating profile:', updateError);
+          alert('Failed to update profile. Please try again.');
+          return;
+        }
+
+        // Update local state
+        if (this.currentUser) {
+          this.currentUser.profilePicture = publicUrl;
+          this.currentUser.profileCompletion = this.calculateProfileCompletion({
+            first_name: this.currentUser.firstName,
+            last_name: this.currentUser.lastName,
+            phone_number: this.currentUser.phone,
+            profile_picture: publicUrl
+          });
+        }
+
+        this.onUpdate();
+        alert('Profile photo updated successfully! ✅');
+
+      } catch (error) {
+        console.error('Error uploading photo:', error);
+        alert('Failed to upload photo. Please try again.');
+      }
+    };
+
+    // Trigger file selection
+    document.body.appendChild(fileInput);
+    fileInput.click();
+    document.body.removeChild(fileInput);
   }
 
   public editProfile(): void {
@@ -628,6 +711,20 @@ class UserProfile {
     }
   }
 
+  public updateProfilePicture(profilePictureUrl: string): void {
+    if (!this.currentUser) return;
+
+    this.currentUser.profilePicture = profilePictureUrl;
+    this.currentUser.profileCompletion = this.calculateProfileCompletion({
+      first_name: this.currentUser.firstName,
+      last_name: this.currentUser.lastName,
+      phone_number: this.currentUser.phone,
+      profile_picture: profilePictureUrl
+    });
+
+    this.onUpdate();
+  }
+
   // Getter for current user
   public getCurrentUser(): User | null {
     return this.currentUser;
@@ -651,8 +748,10 @@ class UserProfile {
 const ProfilePage: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const { isAuthenticated } = useAuth();
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -688,6 +787,73 @@ const ProfilePage: React.FC = () => {
     }
   }, [userProfile]);
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !userProfile || !user) return;
+
+    setUploadingPhoto(true);
+
+    try {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select a valid image file.');
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size must be less than 5MB.');
+        return;
+      }
+
+      // Upload to Supabase storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/profile-${Date.now()}.${fileExt}`;
+      const filePath = `profiles/${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from('property-images')
+        .upload(filePath, file);
+
+      if (error) {
+        console.error('Error uploading file:', error);
+        toast.error('Failed to upload image. Please try again.');
+        return;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('property-images')
+        .getPublicUrl(filePath);
+
+      // Update profile in database
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ profile_picture: publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) {
+        console.error('Error updating profile:', updateError);
+        toast.error('Failed to update profile. Please try again.');
+        return;
+      }
+
+      // Update local state
+      userProfile.updateProfilePicture(publicUrl);
+      toast.success('Profile photo updated successfully!');
+
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      toast.error('Failed to upload photo. Please try again.');
+    } finally {
+      setUploadingPhoto(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -712,6 +878,16 @@ const ProfilePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+        aria-label="Upload profile picture"
+        title="Upload profile picture"
+      />
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-white/20 shadow-lg">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
@@ -740,11 +916,19 @@ const ProfilePage: React.FC = () => {
             <CardContent className="relative p-4 sm:p-6 lg:p-8">
               <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-4 sm:space-y-6 lg:space-y-0 lg:space-x-8">
                 {/* Avatar Section */}
-                <div className="relative self-center lg:self-start cursor-pointer group" onClick={() => userProfile?.uploadPhoto()}>
+                <div className="relative self-center lg:self-start cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
                   <Avatar className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 ring-4 ring-white/50 shadow-2xl group-hover:ring-indigo-300 transition-all">
-                    <div className={`w-full h-full bg-gradient-to-br ${user.gradient} flex items-center justify-center text-white text-2xl sm:text-3xl lg:text-4xl font-bold`}>
-                      {user.initials}
-                    </div>
+                    {user.profilePicture ? (
+                      <img
+                        src={user.profilePicture}
+                        alt={`${user.firstName} ${user.lastName}`}
+                        className="w-full h-full object-cover rounded-full"
+                      />
+                    ) : (
+                      <div className={`w-full h-full bg-gradient-to-br ${user.gradient} flex items-center justify-center text-white text-2xl sm:text-3xl lg:text-4xl font-bold`}>
+                        {user.initials}
+                      </div>
+                    )}
                     <AvatarFallback className="text-2xl sm:text-3xl lg:text-4xl font-bold">{user.initials}</AvatarFallback>
                   </Avatar>
                   {/* Camera overlay */}
@@ -771,46 +955,68 @@ const ProfilePage: React.FC = () => {
                         <div className="flex items-center text-yellow-500">
                           <Star className="w-4 h-4 sm:w-5 sm:h-5 mr-1 fill-current" />
                           <span className="font-semibold text-sm sm:text-base">{user.rating}</span>
-                          <span className="text-gray-500 ml-1 text-sm">(4.5/5.0)</span>
+                          <span className="text-gray-500 ml-1 text-sm">(3.5/5.0)</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Progress Section */}
-                  <div className="space-y-2 sm:space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs sm:text-sm font-medium text-gray-700">Profile Completion</span>
-                      <span className="text-xs sm:text-sm font-bold text-indigo-600">{user.profileCompletion}%</span>
-                    </div>
-                    <Progress value={user.profileCompletion} className="h-2 sm:h-3 bg-gray-200" />
-                  </div>
+                  {/* Profile Info */}
+                    <div className="w-full max-w-full space-y-4 sm:space-y-6">
+                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-3 sm:space-y-4 lg:space-y-0">
+                        <div>
+                          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
+                            {user.firstName} {user.lastName}
+                          </h2>
+                          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                            <Badge variant="secondary" className="px-3 py-1 self-start">
+                              <User className="w-3 h-3 mr-1" />
+                              {user.role}
+                            </Badge>
+                            <div className="flex items-center text-yellow-500">
+                              <Star className="w-5 h-5 mr-1 fill-current" />
+                              <span className="font-semibold text-base">{user.rating}</span>
+                              <span className="text-gray-500 ml-1 text-sm">(4.5/5.0)</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
 
-                  {/* Contact Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-                    <div className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg bg-white/50">
-                      <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-500 flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Email</p>
-                        <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{user.email}</p>
+                      {/* Progress */}
+                      <div className="space-y-2 sm:space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-700">Profile Completion</span>
+                          <span className="text-sm font-bold text-indigo-600">{user.profileCompletion}%</span>
+                        </div>
+                        <Progress value={user.profileCompletion} className="h-2 sm:h-3 bg-gray-200" />
                       </div>
-                    </div>
-                    <div className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg bg-white/50">
-                      <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Phone</p>
-                        <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{user.phone || 'Not provided'}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg bg-white/50 col-span-1 sm:col-span-2 lg:col-span-1">
-                      <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500 flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Member Since</p>
-                        <p className="text-xs sm:text-sm font-semibold text-gray-900">{new Date().getFullYear()}</p>
+
+                      {/* Contact Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+                        <div className="flex items-center space-x-3 p-3 rounded-lg bg-white/60 w-full">
+                          <Mail className="w-5 h-5 text-indigo-500 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Email</p>
+                            <p className="text-sm font-semibold text-gray-900 truncate">{user.email}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3 p-3 rounded-lg bg-white/60 w-full">
+                          <Phone className="w-5 h-5 text-green-500 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Phone</p>
+                            <p className="text-sm font-semibold text-gray-900 truncate">{user.phone || 'Not provided'}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3 p-3 rounded-lg bg-white/60 w-full">
+                          <Calendar className="w-5 h-5 text-purple-500 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Member Since</p>
+                            <p className="text-sm font-semibold text-gray-900">{new Date().getFullYear()}</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
               </div>
             </CardContent>
           </div>
