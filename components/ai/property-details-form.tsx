@@ -299,7 +299,7 @@ export function PropertyDetailsForm({
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
                       <Label htmlFor="No_of_rooms" className="text-sm font-medium">
-                        Bedrooms
+                        No of rooms
                       </Label>
                       <Input
                         id="No_of_rooms"
@@ -311,7 +311,7 @@ export function PropertyDetailsForm({
                     
                     <div className="space-y-2">
                       <Label htmlFor="bathrooms" className="text-sm font-medium">
-                        Bathrooms
+                        No of storys
                       </Label>
                       <Input
                         id="bathrooms"
