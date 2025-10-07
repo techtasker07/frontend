@@ -1,111 +1,129 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import WelcomeBackPageProps from "@/components/ai/welcome-back-page"
 import { AIProspectFlowController } from "@/components/ai/ai-prospect-flow-controller"
 import { PropertyProspectsResults } from "@/components/ai/property-prospects-results"
-import { ProtectedRoute } from "@/components/auth/protected-route"
-import type { ProspectGenerationResult } from "@/lib/vertex-ai-service"
+import type { ProspectGenerationResult } from "@/lib/prospect-engine-service"
 
-// Mock data for testing
-const mockProspectResults: ProspectGenerationResult = {
-  prospects: [
-    {
-      id: "test-1",
-      title: "Short-Term Rental Conversion",
-      description: "Transform this property into a high-yield vacation rental. The location and layout make it ideal for tourists and business travelers seeking a comfortable stay.",
-      category: "residential" as const,
-      feasibilityScore: 88,
-      estimatedRevenue: {
-        min: 45000,
-        max: 75000,
-        timeframe: "annually"
-      },
-      estimatedCost: {
-        min: 15000,
-        max: 25000,
-        breakdown: ["Furnishing: $8-12K", "Marketing setup: $2-3K", "Permits & licenses: $1-2K", "Professional photography: $1-2K", "Initial supplies: $3-6K"]
-      },
-      timeline: {
-        planning: "2-3 weeks",
-        execution: "4-6 weeks",
-        total: "1.5-2 months"
-      },
-      requirements: ["Property management system", "Quality furnishing", "Local permits", "Insurance coverage", "Cleaning service"],
-      benefits: ["High rental yield", "Flexible income", "Property appreciation", "Tax advantages", "Market demand"],
-      risks: ["Market volatility", "Seasonal fluctuations", "Maintenance costs", "Regulatory changes", "Competition"],
-      nextSteps: ["Research local regulations", "Analyze competition", "Get permits", "Design interior", "Set up booking channels"],
-      marketDemand: "high" as const,
-      complexity: "moderate" as const,
-      tags: ["airbnb", "vacation rental", "hospitality", "tourism"]
-    },
-    {
-      id: "test-2", 
-      title: "Home Office & Co-working Space",
-      description: "Convert unused areas into a professional home office or small co-working space. With remote work trends, there's growing demand for well-designed work environments.",
-      category: "commercial" as const,
-      feasibilityScore: 75,
-      estimatedRevenue: {
-        min: 18000,
-        max: 36000,
-        timeframe: "annually"
-      },
-      estimatedCost: {
-        min: 8000,
-        max: 18000,
-        breakdown: ["Office furniture: $4-8K", "Tech infrastructure: $2-4K", "Renovation: $2-6K"]
-      },
-      timeline: {
-        planning: "1-2 weeks",
-        execution: "3-4 weeks", 
-        total: "1-1.5 months"
-      },
-      requirements: ["High-speed internet", "Professional lighting", "Sound insulation", "Ergonomic furniture", "Meeting space"],
-      benefits: ["Steady income", "Low maintenance", "Professional network", "Flexible hours", "Growing market"],
-      risks: ["Market saturation", "Technology changes", "Economic downturn", "Competition from large operators"],
-      nextSteps: ["Assess space potential", "Plan layout design", "Upgrade internet", "Source furniture", "Market to professionals"],
-      marketDemand: "medium" as const,
-      complexity: "simple" as const,
-      tags: ["coworking", "office", "remote work", "productivity"]
-    }
-  ],
-  summary: {
-    totalProspects: 2,
-    topRecommendation: {
-      id: "test-1",
-      title: "Short-Term Rental Conversion",
-      description: "Transform this property into a high-yield vacation rental.",
-      category: "residential" as const,
-      feasibilityScore: 88,
-      estimatedRevenue: { min: 45000, max: 75000, timeframe: "annually" },
-      estimatedCost: { min: 15000, max: 25000, breakdown: ["Furnishing: $8-12K"] },
-      timeline: { planning: "2-3 weeks", execution: "4-6 weeks", total: "1.5-2 months" },
-      requirements: ["Property management system"],
-      benefits: ["High rental yield"],
-      risks: ["Market volatility"],
-      nextSteps: ["Research local regulations"],
-      marketDemand: "high" as const,
-      complexity: "moderate" as const,
-      tags: ["airbnb", "vacation rental"]
-    },
-    averageFeasibility: 82,
-    potentialRevenueRange: {
-      min: 18000,
-      max: 75000
-    }
-  },
-  analysisInsights: {
-    propertyStrengths: ["Great location", "Good condition", "Attractive layout"],
-    marketOpportunities: ["Tourism growth", "Remote work trend", "Rental demand"],
-    considerations: ["Local regulations", "Market competition", "Seasonal factors"]
-  },
-  generatedAt: new Date().toISOString()
-}
+// Test data will be fetched from the API
 
 type TestView = 'menu' | 'welcome' | 'flow' | 'results'
+
+// Component to test real API data fetching
+function TestResultsPage({ onClose }: { onClose: () => void }) {
+  const [results, setResults] = useState<ProspectGenerationResult | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchTestData = async () => {
+      try {
+        setLoading(true)
+        // Use sample data for testing the API
+        const testVisionAnalysis = {
+          propertyType: "house",
+          features: ["windows", "door", "walls"],
+          confidence: 0.85,
+          condition: "good",
+          architecturalStyle: "modern"
+        }
+
+        const testFormData = {
+          address: "123 Test Street, Lagos",
+          propertyType: "house",
+          squareMeters: "150",
+          No_of_rooms: "3",
+          bathrooms: "2",
+          currentUse: "residential",
+          ownershipStatus: "owned",
+          budget: "5000000-10000000",
+          timeline: "6-12 months",
+          additionalInfo: "Test property for prospect generation",
+          location: {
+            city: "Lagos",
+            state: "Lagos",
+            zipCode: "100001"
+          }
+        }
+
+        const response = await fetch('/api/ai/generate-prospects', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            visionAnalysis: testVisionAnalysis,
+            formData: testFormData
+          })
+        })
+
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`)
+        }
+
+        const data = await response.json()
+        setResults(data.prospects)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch prospects')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTestData()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <Card className="max-w-md mx-auto">
+          <CardContent className="p-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Fetching prospects from database...</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <Card className="max-w-md mx-auto">
+          <CardContent className="p-8 text-center">
+            <p className="text-red-600 mb-4">Error: {error}</p>
+            <Button onClick={onClose} variant="outline">Back to Menu</Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (!results) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <Card className="max-w-md mx-auto">
+          <CardContent className="p-8 text-center">
+            <p className="text-gray-600 mb-4">No prospects generated</p>
+            <Button onClick={onClose} variant="outline">Back to Menu</Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  return (
+    <PropertyProspectsResults
+      results={results}
+      onClose={onClose}
+      onSaveProspects={(prospects) => console.log('Saving:', prospects)}
+    />
+  )
+}
 
 export default function AITestPage() {
   const [currentView, setCurrentView] = useState<TestView>('menu')
@@ -124,23 +142,19 @@ export default function AITestPage() {
       
       case 'flow':
         return (
-          <ProtectedRoute>
-            <AIProspectFlowController
-              onComplete={(results) => {
-                console.log('Flow completed:', results)
-                setCurrentView('results')
-              }}
-              onCancel={() => setCurrentView('menu')}
-            />
-          </ProtectedRoute>
+          <AIProspectFlowController
+            onComplete={(results) => {
+              console.log('Flow completed:', results)
+              setCurrentView('results')
+            }}
+            onCancel={() => setCurrentView('menu')}
+          />
         )
       
       case 'results':
         return (
-          <PropertyProspectsResults 
-            results={mockProspectResults}
+          <TestResultsPage
             onClose={() => setCurrentView('menu')}
-            onSaveProspects={(prospects) => console.log('Saving:', prospects)}
           />
         )
       
@@ -176,13 +190,13 @@ export default function AITestPage() {
                       Test Full AI Flow
                     </Button>
                     
-                    <Button 
-                      onClick={() => setCurrentView('results')}
-                      className="w-full"
-                      variant="outline"
-                    >
-                      Test Results Page (Mock Data)
-                    </Button>
+                    <Button
+                       onClick={() => setCurrentView('results')}
+                       className="w-full"
+                       variant="outline"
+                     >
+                       Test Results Page (Database Data)
+                     </Button>
                   </div>
 
                   <div className="pt-4 border-t">

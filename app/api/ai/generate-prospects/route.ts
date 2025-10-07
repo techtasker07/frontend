@@ -24,32 +24,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('[PROSPECTS API] Authenticating user')
-    // Get user from session
-    const cookieStore = cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          }
-        }
-      }
-    )
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-    // TEMPORARY: Allow testing without authentication
-    const testUserId = user?.id || 'test-user-123'
-    console.log('[PROSPECTS API] Using user ID for testing:', testUserId)
-
-    console.log('[PROSPECTS API] Calling prospectEngineService.generatePropertyProspects for user:', testUserId)
-    // Generate property prospects using in-app engine
+    console.log('[PROSPECTS API] Generating prospects without authentication (in-app engine)')
+    // Generate property prospects using in-app engine (no auth required)
     const prospects = await prospectEngineService.generatePropertyProspects(
       visionAnalysis as PropertyAnalysis,
-      formData as PropertyFormData,
-      testUserId
+      formData as PropertyFormData
     )
 
     console.log('[PROSPECTS API] Prospects generated successfully:', {
