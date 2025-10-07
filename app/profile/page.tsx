@@ -961,62 +961,40 @@ const ProfilePage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Profile Info */}
-                    <div className="w-full max-w-full space-y-4 sm:space-y-6">
-                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-3 sm:space-y-4 lg:space-y-0">
-                        <div>
-                          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
-                            {user.firstName} {user.lastName}
-                          </h2>
-                          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                            <Badge variant="secondary" className="px-3 py-1 self-start">
-                              <User className="w-3 h-3 mr-1" />
-                              {user.role}
-                            </Badge>
-                            <div className="flex items-center text-yellow-500">
-                              <Star className="w-5 h-5 mr-1 fill-current" />
-                              <span className="font-semibold text-base">{user.rating}</span>
-                              <span className="text-gray-500 ml-1 text-sm">(4.5/5.0)</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                  {/* Progress Section */}
+                  <div className="space-y-2 sm:space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs sm:text-sm font-medium text-gray-700">Profile Completion</span>
+                      <span className="text-xs sm:text-sm font-bold text-indigo-600">{user.profileCompletion}%</span>
+                    </div>
+                    <Progress value={user.profileCompletion} className="h-2 sm:h-3 bg-gray-200" />
+                  </div>
 
-                      {/* Progress */}
-                      <div className="space-y-2 sm:space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-700">Profile Completion</span>
-                          <span className="text-sm font-bold text-indigo-600">{user.profileCompletion}%</span>
-                        </div>
-                        <Progress value={user.profileCompletion} className="h-2 sm:h-3 bg-gray-200" />
+                  {/* Contact Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+                    <div className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg bg-white/50">
+                      <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-500 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Email</p>
+                        <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{user.email}</p>
                       </div>
-
-                      {/* Contact Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-                        <div className="flex items-center space-x-3 p-3 rounded-lg bg-white/60 w-full">
-                          <Mail className="w-5 h-5 text-indigo-500 flex-shrink-0" />
-                          <div className="min-w-0">
-                            <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Email</p>
-                            <p className="text-sm font-semibold text-gray-900 truncate">{user.email}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-3 p-3 rounded-lg bg-white/60 w-full">
-                          <Phone className="w-5 h-5 text-green-500 flex-shrink-0" />
-                          <div className="min-w-0">
-                            <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Phone</p>
-                            <p className="text-sm font-semibold text-gray-900 truncate">{user.phone || 'Not provided'}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-3 p-3 rounded-lg bg-white/60 w-full">
-                          <Calendar className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                          <div className="min-w-0">
-                            <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Member Since</p>
-                            <p className="text-sm font-semibold text-gray-900">{new Date().getFullYear()}</p>
-                          </div>
-                        </div>
+                    </div>
+                    <div className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg bg-white/50">
+                      <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Phone</p>
+                        <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{user.phone || 'Not provided'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg bg-white/50 col-span-1 sm:col-span-2 lg:col-span-1">
+                      <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Member Since</p>
+                        <p className="text-xs sm:text-sm font-semibold text-gray-900">{new Date().getFullYear()}</p>
                       </div>
                     </div>
                   </div>
+                </div>
               </div>
             </CardContent>
           </div>
