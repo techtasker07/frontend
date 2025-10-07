@@ -380,11 +380,11 @@ export function PropertyProspectsResults({
             <Button
               variant="outline"
               size="sm"
-              onClick={handleSaveProspects}
+              onClick={() => router.push('/prospects')}
               className="text-xs sm:text-sm"
             >
               <BookmarkPlus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Save</span>
+              <span className="hidden sm:inline">View Prospects</span>
             </Button>
           </div>
         </div>

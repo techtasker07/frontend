@@ -65,9 +65,10 @@ export function PropertyDetailsForm({
  }: PropertyDetailsFormProps) {
    const router = useRouter()
    const [isSubmitting, setIsSubmitting] = useState(false)
-   const [showAdvanced, setShowAdvanced] = useState(false)
-   const [amenities, setAmenities] = useState<Record<string, any[]>>({})
-   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
+     const [showAdvanced, setShowAdvanced] = useState(false)
+     const [amenities, setAmenities] = useState<Record<string, any[]>>({})
+     const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
+     const [isExpanded, setIsExpanded] = useState(false)
   
   // Form state
   const [formData, setFormData] = useState<PropertyDetails>({
@@ -119,23 +120,28 @@ export function PropertyDetailsForm({
   }
 
   // Fetch amenities on component mount
-  useEffect(() => {
-    const fetchAmenities = async () => {
-      try {
-        const response = await fetch('/api/amenities');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success) {
-            setAmenities(data.data);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching amenities:', error);
-      }
-    };
+   useEffect(() => {
+     const fetchAmenities = async () => {
+       try {
+         const response = await fetch('/api/amenities');
+         if (response.ok) {
+           const data = await response.json();
+           if (data.success) {
+             setAmenities(data.data);
+           }
+         }
+       } catch (error) {
+         console.error('Error fetching amenities:', error);
+       }
+     };
 
-    fetchAmenities();
-  }, []);
+     fetchAmenities();
+   }, []);
+
+   // Handle touch/interaction to expand drawer
+   const handleDrawerInteraction = () => {
+     setIsExpanded(true);
+   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -161,8 +167,12 @@ export function PropertyDetailsForm({
 
   return (
     <Drawer open={isOpen} onOpenChange={() => {}}>
-      <DrawerContent className="max-h-[85vh] bg-white">
-        <div className="mx-auto w-full max-w-2xl">
+      <DrawerContent
+        className="bg-white"
+        style={{ maxHeight: isExpanded ? '100vh' : '30vh' }}
+        onClick={handleDrawerInteraction}
+      >
+        <div className="mx-auto w-full max-w-2xl lg:max-w-7xl">
           <DrawerHeader className="text-center pb-2">
             <DrawerTitle className="flex items-center justify-center gap-2 text-xl font-semibold">
               <Home className="w-5 h-5 text-blue-600" />
@@ -173,7 +183,10 @@ export function PropertyDetailsForm({
             </DrawerDescription>
           </DrawerHeader>
 
-          <div className="px-4 pb-6 max-h-[60vh] overflow-y-auto">
+          <div
+            className="px-4 pb-6 overflow-y-auto grid grid-cols-1 lg:grid-cols-2 gap-6"
+            style={{ maxHeight: isExpanded ? '90vh' : '20vh' }}
+          >
             {/* Captured/Uploaded Image Display */}
             {imageData && (
               <Card className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 border-0">
@@ -182,7 +195,7 @@ export function PropertyDetailsForm({
                     <Home className="w-4 h-4 text-blue-600" />
                     <span className="text-sm font-medium text-blue-900">Property Image</span>
                   </div>
-                  <div className="relative w-full h-48 rounded-lg overflow-hidden bg-gray-100">
+                  <div className="relative w-full h-48 lg:h-full rounded-lg overflow-hidden bg-gray-100">
                     <img
                       src={imageData}
                       alt="Property"
