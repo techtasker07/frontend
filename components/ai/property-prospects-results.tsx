@@ -87,6 +87,44 @@ export function PropertyProspectsResults({
     }
   }
 
+  const handleAddToProspects = async () => {
+    try {
+      // Import supabaseApi here to save prospects
+      const { supabaseApi } = await import("@/lib/supabase-api")
+
+      // Save the prospect analysis results
+      const saveResult = await supabaseApi.savePropertyAnalysis({
+        property_address: "AI Generated Property Analysis", // Generic address since we don't have specific property details
+        property_type: "analysis",
+        square_meters: undefined,
+        bedrooms: undefined,
+        bathrooms: undefined,
+        current_use: "analysis",
+        budget_range: undefined,
+        timeline: undefined,
+        ownership_status: undefined,
+        additional_info: "Generated via AI prospect analysis",
+        property_image_url: imageData || undefined,
+        vision_analysis: undefined, // No vision analysis in this context
+        prospects: results.prospects,
+        insights: results.analysisInsights
+      })
+
+      if (saveResult.success) {
+        toast.success("Prospect analysis saved to your personal collection!")
+        // Optionally navigate to prospects page
+        setTimeout(() => {
+          router.push('/prospects')
+        }, 1500)
+      } else {
+        toast.error("Failed to save prospect analysis")
+      }
+    } catch (error) {
+      console.error("Error saving prospects:", error)
+      toast.error("Failed to save prospect analysis")
+    }
+  }
+
   const handleShareResults = async () => {
     try {
       if (navigator.share) {
@@ -591,11 +629,11 @@ export function PropertyProspectsResults({
             Back to Dashboard
           </Button>
           <Button
-            onClick={() => router.push('/add-property')}
+            onClick={handleAddToProspects}
             className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
           >
-            Add Property
-            <ArrowRight className="w-4 h-4 ml-2" />
+            Save to My Prospects
+            <BookmarkPlus className="w-4 h-4 ml-2" />
           </Button>
         </div>
       </div>

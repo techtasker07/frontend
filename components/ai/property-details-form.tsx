@@ -73,7 +73,7 @@ export function PropertyDetailsForm({
   // Form state
   const [formData, setFormData] = useState<PropertyDetails>({
     address: "",
-    propertyType: visionAnalysis?.propertyType || "",
+    propertyType: visionAnalysis?.propertyType || "building",
     squareMeters: "",
     No_of_rooms: "",
     bathrooms: "",
@@ -332,30 +332,24 @@ export function PropertyDetailsForm({
                 </h3>
 
                 <div className="space-y-4">
-                  {Object.entries(amenities).map(([category, categoryAmenities]) => (
-                    <div key={category} className="space-y-2">
-                      <h4 className="text-sm font-medium text-gray-700 capitalize">
-                        {category.replace('_', ' ')}
-                      </h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        {categoryAmenities.map((amenity: any) => (
-                          <div key={amenity.id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`amenity-${amenity.id}`}
-                              checked={selectedAmenities.includes(amenity.name)}
-                              onCheckedChange={() => handleAmenityToggle(amenity.name)}
-                            />
-                            <Label
-                              htmlFor={`amenity-${amenity.id}`}
-                              className="text-sm font-normal cursor-pointer"
-                            >
-                              {amenity.name}
-                            </Label>
-                          </div>
-                        ))}
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.values(amenities).flat().map((amenity: any) => (
+                      <div key={amenity.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`amenity-${amenity.id}`}
+                          checked={selectedAmenities.includes(amenity.name)}
+                          onCheckedChange={() => handleAmenityToggle(amenity.name)}
+                          className="border-2 border-gray-300 rounded"
+                        />
+                        <Label
+                          htmlFor={`amenity-${amenity.id}`}
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          {amenity.name}
+                        </Label>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
 
