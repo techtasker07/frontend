@@ -532,7 +532,7 @@ export default function CreateMarketplacePropertyPage() {
               <SelectValue placeholder="Select period" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">One-time (Sale)</SelectItem>
+              <SelectItem value="one-time">One-time (Sale)</SelectItem>
               <SelectItem value="month">Monthly</SelectItem>
               <SelectItem value="year">Yearly</SelectItem>
               <SelectItem value="day">Daily</SelectItem>
