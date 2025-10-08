@@ -172,6 +172,7 @@ export default function CreateMarketplacePropertyPage() {
         supabaseApi.getAmenities()
       ]);
 
+
       if (categoriesRes.success) setCategories(categoriesRes.data);
       if (propertyTypesRes.success) setPropertyTypes(propertyTypesRes.data);
       if (listingTypesRes.success) setListingTypes(listingTypesRes.data);
@@ -182,7 +183,16 @@ export default function CreateMarketplacePropertyPage() {
   };
 
   const handleInputChange = (field: keyof FormData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+
+      // Clear property type when category changes
+      if (field === 'category_id' && value !== prev.category_id) {
+        newData.property_type_id = '';
+      }
+
+      return newData;
+    });
   };
 
   const handleAmenityToggle = (amenityName: string) => {
@@ -290,7 +300,33 @@ export default function CreateMarketplacePropertyPage() {
 
   const selectedCategory = categories.find(cat => cat.id === formData.category_id);
   const selectedListingType = listingTypes.find(type => type.id === formData.listing_type_id);
+
+  // Fallback property types for when database is not populated
+  const fallbackPropertyTypes: { [key: string]: PropertyType[] } = {
+    'Residential': [
+      { id: 'res-apartment', name: 'Apartment', category_id: '' },
+      { id: 'res-house', name: 'House', category_id: '' },
+      { id: 'res-villa', name: 'Villa', category_id: '' },
+      { id: 'res-duplex', name: 'Duplex', category_id: '' },
+      { id: 'res-studio', name: 'Studio', category_id: '' }
+    ],
+    'Commercial': [
+      { id: 'com-office', name: 'Office Space', category_id: '' },
+      { id: 'com-retail', name: 'Retail Shop', category_id: '' },
+      { id: 'com-restaurant', name: 'Restaurant', category_id: '' },
+      { id: 'com-warehouse', name: 'Warehouse', category_id: '' }
+    ],
+    'Land': [
+      { id: 'land-residential', name: 'Residential Land', category_id: '' },
+      { id: 'land-commercial', name: 'Commercial Land', category_id: '' },
+      { id: 'land-agricultural', name: 'Agricultural Land', category_id: '' }
+    ]
+  };
+
   const filteredPropertyTypes = propertyTypes.filter(type => type.category_id === formData.category_id);
+  const fallbackTypes = selectedCategory ? fallbackPropertyTypes[selectedCategory.name] || [] : [];
+  const displayPropertyTypes = filteredPropertyTypes.length > 0 ? filteredPropertyTypes : fallbackTypes;
+
 
   const renderBasicInfo = () => (
     <div className="space-y-6">
@@ -378,18 +414,38 @@ export default function CreateMarketplacePropertyPage() {
         
         <div className="space-y-2">
           <Label>Property Type *</Label>
-          <Select value={formData.property_type_id} onValueChange={(value) => handleInputChange('property_type_id', value)}>
+          <Select
+            value={formData.property_type_id}
+            onValueChange={(value) => handleInputChange('property_type_id', value)}
+            disabled={!formData.category_id}
+          >
             <SelectTrigger>
-              <SelectValue placeholder="Select property type" />
+              <SelectValue placeholder={formData.category_id ? "Select property type" : "Select a category first"} />
             </SelectTrigger>
             <SelectContent>
-              {filteredPropertyTypes.map(type => (
-                <SelectItem key={type.id} value={type.id}>
-                  {type.name}
+              {displayPropertyTypes.length > 0 ? (
+                displayPropertyTypes.map(type => (
+                  <SelectItem key={type.id} value={type.id}>
+                    {type.name}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="" disabled>
+                  {formData.category_id ? "No property types available for this category" : "Please select a category first"}
                 </SelectItem>
-              ))}
+              )}
             </SelectContent>
           </Select>
+          {formData.category_id && filteredPropertyTypes.length === 0 && displayPropertyTypes.length > 0 && (
+            <p className="text-sm text-muted-foreground">
+              Using default property types. Database may not be fully configured.
+            </p>
+          )}
+          {formData.category_id && displayPropertyTypes.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              No property types are available for the selected category. Please contact support.
+            </p>
+          )}
         </div>
         
         <div className="space-y-2">
