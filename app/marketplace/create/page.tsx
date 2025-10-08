@@ -172,13 +172,31 @@ export default function CreateMarketplacePropertyPage() {
         supabaseApi.getAmenities()
       ]);
 
-
       if (categoriesRes.success) setCategories(categoriesRes.data);
       if (propertyTypesRes.success) setPropertyTypes(propertyTypesRes.data);
       if (listingTypesRes.success) setListingTypes(listingTypesRes.data);
       if (amenitiesRes.success) setAmenities(amenitiesRes.data);
     } catch (error) {
       console.error('Error fetching initial data:', error);
+      // Provide fallback data if database tables don't exist
+      setCategories([
+        { id: 'residential', name: 'Residential' },
+        { id: 'commercial', name: 'Commercial' },
+        { id: 'land', name: 'Land' }
+      ]);
+      setListingTypes([
+        { id: 'sale', name: 'For Sale' },
+        { id: 'rent', name: 'For Rent' },
+        { id: 'lease', name: 'For Lease' },
+        { id: 'booking', name: 'For Booking' }
+      ]);
+      setAmenities({
+        'General': [
+          { id: 'wifi', name: 'WiFi', category: 'General' },
+          { id: 'security', name: 'Security', category: 'General' },
+          { id: 'generator', name: 'Generator', category: 'General' }
+        ]
+      });
     }
   };
 
@@ -289,10 +307,20 @@ export default function CreateMarketplacePropertyPage() {
         toast.success('Property listed successfully!');
         router.push(`/marketplace/${response.data.id}`);
       } else {
-        setError(response.error || 'Failed to create listing');
+        // Check if it's a database table error
+        if (response.error?.includes('marketplace_listings') && response.error?.includes('does not exist')) {
+          setError('Marketplace functionality is not available. Database tables need to be set up. Please contact support or run the database setup scripts.');
+        } else {
+          setError(response.error || 'Failed to create listing');
+        }
       }
     } catch (error: any) {
-      setError(error.message || 'Failed to create listing');
+      // Check if it's a database table error
+      if (error.message?.includes('marketplace_listings') && error.message?.includes('does not exist')) {
+        setError('Marketplace functionality is not available. Database tables need to be set up. Please contact support or run the database setup scripts.');
+      } else {
+        setError(error.message || 'Failed to create listing');
+      }
     } finally {
       setLoading(false);
     }
@@ -430,7 +458,7 @@ export default function CreateMarketplacePropertyPage() {
                   </SelectItem>
                 ))
               ) : (
-                <SelectItem value="" disabled>
+                <SelectItem value="no-options" disabled>
                   {formData.category_id ? "No property types available for this category" : "Please select a category first"}
                 </SelectItem>
               )}
