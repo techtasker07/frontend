@@ -393,10 +393,10 @@ export default function CreateMarketplacePropertyPage() {
         </div>
         
         <div className="space-y-2">
-          <Label>Listing Type *</Label>
+          <Label>Function *</Label>
           <Select value={formData.listing_type_id} onValueChange={(value) => handleInputChange('listing_type_id', value)}>
             <SelectTrigger>
-              <SelectValue placeholder="Select listing type" />
+              <SelectValue placeholder="Select Function" />
             </SelectTrigger>
             <SelectContent>
               {listingTypes.map(type => (

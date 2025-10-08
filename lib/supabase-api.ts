@@ -1946,6 +1946,11 @@ class SupabaseApiClient {
 
       if (error) {
         console.error('❌ Insert error:', error);
+        // Check if the table doesn't exist
+        if (error.message?.includes('relation "marketplace_listings" does not exist')) {
+          console.warn('⚠️ Marketplace listings table does not exist. Please run database setup scripts.');
+          throw new Error('Marketplace functionality is not available. Database tables need to be set up. Please contact support.');
+        }
         throw error;
       }
 
@@ -1981,7 +1986,18 @@ class SupabaseApiClient {
       }
 
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        // Check if the table doesn't exist
+        if (error.message?.includes('relation "property_types" does not exist')) {
+          console.warn('⚠️ Property types table does not exist. Please run database setup scripts.');
+          return {
+            success: false,
+            data: [],
+            error: 'Marketplace functionality is not available. Database tables need to be set up. Please contact support.'
+          };
+        }
+        throw error;
+      }
 
       return {
         success: true,
@@ -2002,7 +2018,18 @@ class SupabaseApiClient {
         .from('listing_types')
         .select('*');
 
-      if (error) throw error;
+      if (error) {
+        // Check if the table doesn't exist
+        if (error.message?.includes('relation "listing_types" does not exist')) {
+          console.warn('⚠️ Listing types table does not exist. Please run database setup scripts.');
+          return {
+            success: false,
+            data: [],
+            error: 'Marketplace functionality is not available. Database tables need to be set up. Please contact support.'
+          };
+        }
+        throw error;
+      }
 
       return {
         success: true,
