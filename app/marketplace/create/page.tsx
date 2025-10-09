@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/lib/supabase';
+import { supabaseServer } from '@/lib/db';
 import { useAuth } from '@/lib/auth';
 import { ArrowLeft, Loader2, Upload, X, ImageIcon } from 'lucide-react';
 import Link from 'next/link';
@@ -209,6 +210,14 @@ export default function CreateMarketplacePropertyPage() {
     setUploadingImages(true);
     try {
       console.log(`Starting upload of ${selectedImages.length} images for listing ${marketplaceListingId}`);
+
+      // First, ensure we have a valid session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        throw new Error('Authentication session expired. Please refresh and try again.');
+      }
+      console.log('Auth session verified:', session.user.id);
+
       const imageInserts = [];
 
       // Try to create the bucket if it doesn't exist
@@ -260,20 +269,27 @@ export default function CreateMarketplacePropertyPage() {
         console.log(`Prepared image record ${i + 1} with URL: ${publicUrl}`);
       }
 
-      console.log('Inserting image records into database:', imageInserts);
+      console.log('Sending image records to server API:', imageInserts);
 
-      // Insert image records into marketplace_images table
-      const { data: insertData, error: insertError } = await supabase
-        .from('marketplace_images')
-        .insert(imageInserts)
-        .select();
+      // Send image data to server API for database insertion
+      const response = await fetch('/api/marketplace/upload-images', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          marketplaceListingId,
+          images: imageInserts.map(img => ({ url: img.image_url }))
+        })
+      });
 
-      if (insertError) {
-        console.error('Image insert error:', insertError);
-        throw new Error(`Failed to save image records: ${insertError.message}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Server error: ${response.status}`);
       }
 
-      console.log('Successfully inserted image records:', insertData);
+      const result = await response.json();
+      console.log('Server response:', result);
       toast.success(`Uploaded ${selectedImages.length} image(s) successfully!`);
 
     } catch (error: any) {
