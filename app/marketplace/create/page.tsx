@@ -272,19 +272,32 @@ export default function CreateMarketplacePropertyPage() {
       console.log('Sending image records to server API:', imageInserts);
 
       // Send image data to server API for database insertion
+      const requestData = {
+        marketplaceListingId,
+        images: imageInserts.map(img => ({ url: img.image_url }))
+      };
+      console.log('API request data:', requestData);
+
       const response = await fetch('/api/marketplace/upload-images', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          marketplaceListingId,
-          images: imageInserts.map(img => ({ url: img.image_url }))
-        })
+        body: JSON.stringify(requestData)
       });
 
+      console.log('API response status:', response.status);
+      console.log('API response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorText = await response.text();
+        console.error('API error response:', errorText);
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          errorData = { error: errorText };
+        }
         throw new Error(errorData.error || `Server error: ${response.status}`);
       }
 
