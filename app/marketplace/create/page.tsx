@@ -152,16 +152,18 @@ export default function CreateMarketplacePropertyPage() {
   const [amenities, setAmenities] = useState<Record<string, any[]>>({});
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading: authLoading, user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!authLoading && !isAuthenticated) {
       router.push('/login');
       return;
     }
-    fetchInitialData();
-  }, [isAuthenticated]);
+    if (!authLoading && isAuthenticated) {
+      fetchInitialData();
+    }
+  }, [isAuthenticated, authLoading, router]);
 
   const fetchInitialData = async () => {
     try {
@@ -274,7 +276,8 @@ export default function CreateMarketplacePropertyPage() {
 
     setLoading(true);
     try {
-      const submissionData = {
+      // Create a clean submission data object, excluding empty strings for date/time fields
+      const submissionData: any = {
         ...formData,
         price: parseFloat(formData.price),
         area_sqft: formData.area_sqft ? parseInt(formData.area_sqft) : undefined,
@@ -301,23 +304,53 @@ export default function CreateMarketplacePropertyPage() {
         caution_fee: formData.caution_fee ? parseFloat(formData.caution_fee) : undefined,
       };
 
+      // Only include date/time fields if they have actual values
+      if (formData.available_from) submissionData.available_from = formData.available_from;
+      if (formData.available_to) submissionData.available_to = formData.available_to;
+      if (formData.check_in_time) submissionData.check_in_time = formData.check_in_time;
+      if (formData.check_out_time) submissionData.check_out_time = formData.check_out_time;
+
+      console.log('Submitting marketplace listing with data:', submissionData);
+
       const response = await supabaseApi.createMarketplaceListing(submissionData);
 
       if (response.success) {
         toast.success('Property listed successfully!');
         router.push(`/marketplace/${response.data.id}`);
       } else {
+        console.error('Marketplace listing creation failed:', response.error);
         // Check if it's a database table error
         if (response.error?.includes('marketplace_listings') && response.error?.includes('does not exist')) {
           setError('Marketplace functionality is not available. Database tables need to be set up. Please contact support or run the database setup scripts.');
+        } else if (response.error?.includes('invalid input syntax for type')) {
+          // Extract the specific field causing the type error
+          const typeMatch = response.error.match(/invalid input syntax for type (\w+): "([^"]*)"/);
+          if (typeMatch) {
+            const fieldType = typeMatch[1];
+            const fieldValue = typeMatch[2];
+            setError(`Invalid ${fieldType} value: "${fieldValue}". Please check your input or leave the field empty if not required.`);
+          } else {
+            setError(`Database type error: ${response.error}`);
+          }
         } else {
           setError(response.error || 'Failed to create listing');
         }
       }
     } catch (error: any) {
+      console.error('Marketplace listing creation error:', error);
       // Check if it's a database table error
       if (error.message?.includes('marketplace_listings') && error.message?.includes('does not exist')) {
         setError('Marketplace functionality is not available. Database tables need to be set up. Please contact support or run the database setup scripts.');
+      } else if (error.message?.includes('invalid input syntax for type')) {
+        // Extract the specific field causing the type error
+        const typeMatch = error.message.match(/invalid input syntax for type (\w+): "([^"]*)"/);
+        if (typeMatch) {
+          const fieldType = typeMatch[1];
+          const fieldValue = typeMatch[2];
+          setError(`Invalid ${fieldType} value: "${fieldValue}". Please check your input or leave the field empty if not required.`);
+        } else {
+          setError(`Database type error: ${error.message}`);
+        }
       } else {
         setError(error.message || 'Failed to create listing');
       }
@@ -606,14 +639,45 @@ export default function CreateMarketplacePropertyPage() {
     </div>
   );
 
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Verifying authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground mb-4">You must be logged in to create a marketplace listing.</p>
+          <Button onClick={() => router.push('/login')}>
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <Button variant="ghost" asChild className="mb-6">
-        <Link href="/marketplace">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Marketplace
-        </Link>
-      </Button>
+      <div className="mb-6 flex items-center justify-between">
+        <Button variant="ghost" asChild>
+          <Link href="/marketplace">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Marketplace
+          </Link>
+        </Button>
+        <div className="text-sm text-muted-foreground">
+          Logged in as: {user?.first_name} {user?.last_name}
+        </div>
+      </div>
 
       <Card>
         <CardHeader>
