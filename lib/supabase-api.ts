@@ -565,10 +565,13 @@ class SupabaseApiClient {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
+      // Separate image_urls from property data since it's not a column in properties table
+      const { image_urls, ...propertyDataToInsert } = propertyData;
+
       const { data, error } = await supabase
         .from('properties')
         .insert({
-          ...propertyData,
+          ...propertyDataToInsert,
           user_id: user.id
         })
         .select()
@@ -577,8 +580,8 @@ class SupabaseApiClient {
       if (error) throw error;
 
       // If image URLs provided, insert them
-      if (propertyData.image_urls && propertyData.image_urls.length > 0) {
-        const imageInserts = propertyData.image_urls.map((url, index) => ({
+      if (image_urls && image_urls.length > 0) {
+        const imageInserts = image_urls.map((url, index) => ({
           property_id: data.id,
           image_url: url,
           is_primary: index === 0

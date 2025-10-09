@@ -31,6 +31,12 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'chotdmrutqiznkiwaaiy.supabase.co', // Supabase Storage
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
   // Disable font optimization that causes lightningcss issues
