@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Upload, X, ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -83,6 +83,9 @@ export default function CreateMarketplacePropertyPage() {
   const [error, setError] = useState('');
   const [newAmenity, setNewAmenity] = useState('');
   const [newKeyword, setNewKeyword] = useState('');
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   const { isAuthenticated, loading: authLoading, user } = useAuth();
   const router = useRouter();
@@ -162,6 +165,100 @@ export default function CreateMarketplacePropertyPage() {
     handleInputChange('keywords', newKeywords);
   };
 
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    const newFiles: File[] = [];
+    const newPreviews: string[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error(`${file.name} is not a valid image file`);
+        continue;
+      }
+
+      // Validate file size (max 5MB per image)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`${file.name} is too large. Maximum size is 5MB`);
+        continue;
+      }
+
+      newFiles.push(file);
+      newPreviews.push(URL.createObjectURL(file));
+    }
+
+    setSelectedImages(prev => [...prev, ...newFiles]);
+    setImagePreviews(prev => [...prev, ...newPreviews]);
+  };
+
+  const removeImage = (index: number) => {
+    // Revoke the object URL to free memory
+    URL.revokeObjectURL(imagePreviews[index]);
+
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadImages = async (marketplaceListingId: string): Promise<void> => {
+    if (selectedImages.length === 0) return;
+
+    setUploadingImages(true);
+    try {
+      const imageInserts = [];
+
+      for (let i = 0; i < selectedImages.length; i++) {
+        const file = selectedImages[i];
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${marketplaceListingId}_${i}_${Date.now()}.${fileExt}`;
+        const filePath = `marketplace-images/${fileName}`;
+
+        // Upload to Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('marketplace-images')
+          .upload(filePath, file);
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          throw uploadError;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('marketplace-images')
+          .getPublicUrl(filePath);
+
+        imageInserts.push({
+          marketplace_listing_id: marketplaceListingId,
+          image_url: publicUrl,
+          is_primary: i === 0, // First image is primary
+          display_order: i
+        });
+      }
+
+      // Insert image records into marketplace_images table
+      const { error: insertError } = await supabase
+        .from('marketplace_images')
+        .insert(imageInserts);
+
+      if (insertError) {
+        console.error('Image insert error:', insertError);
+        throw insertError;
+      }
+
+      toast.success(`Uploaded ${selectedImages.length} image(s) successfully!`);
+
+    } catch (error: any) {
+      console.error('Image upload error:', error);
+      toast.error('Failed to upload images: ' + error.message);
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
   const validateForm = (): boolean => {
     return !!(
       formData.title &&
@@ -214,6 +311,11 @@ export default function CreateMarketplacePropertyPage() {
       if (insertError) {
         console.error('Insert error:', insertError);
         throw insertError;
+      }
+
+      // Upload images if any were selected
+      if (selectedImages.length > 0) {
+        await uploadImages(data.id);
       }
 
       toast.success('Property listed successfully!');
@@ -535,6 +637,74 @@ export default function CreateMarketplacePropertyPage() {
                   placeholder="e.g., 111"
                 />
               </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Property Images */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Property Images</h3>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Upload Property Images</Label>
+                <div className="flex items-center justify-center w-full">
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <Upload className="w-8 h-8 mb-4 text-gray-500" />
+                      <p className="mb-2 text-sm text-gray-500">
+                        <span className="font-semibold">Click to upload</span> or drag and drop
+                      </p>
+                      <p className="text-xs text-gray-500">PNG, JPG, JPEG (MAX. 5MB each)</p>
+                    </div>
+                    <input
+                      type="file"
+                      className="hidden"
+                      multiple
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                      disabled={uploadingImages}
+                    />
+                  </label>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Upload high-quality photos of your property. The first image will be the primary image.
+                </p>
+              </div>
+
+              {/* Image Previews */}
+              {imagePreviews.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Selected Images ({imagePreviews.length})</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {imagePreviews.map((preview, index) => (
+                      <div key={index} className="relative group">
+                        <div className="aspect-square rounded-lg overflow-hidden border">
+                          <img
+                            src={preview}
+                            alt={`Property image ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                          {index === 0 && (
+                            <div className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
+                              Primary
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          disabled={uploadingImages}
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
