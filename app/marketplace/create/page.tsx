@@ -180,6 +180,11 @@ export default function CreateMarketplacePropertyPage() {
       return;
     }
 
+    if (!user) {
+      setError('You must be logged in to create a listing');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -187,6 +192,7 @@ export default function CreateMarketplacePropertyPage() {
       // Prepare submission data
       const submissionData: any = {
         ...formData,
+        user_id: user.id, // Use user from auth context
         price: parseFloat(formData.price),
         area_sqft: formData.area_sqft ? parseInt(formData.area_sqft) : null,
         area_sqm: formData.area_sqm ? parseInt(formData.area_sqm) : null,
