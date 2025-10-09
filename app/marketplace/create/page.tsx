@@ -208,7 +208,20 @@ export default function CreateMarketplacePropertyPage() {
 
     setUploadingImages(true);
     try {
+      console.log(`Starting upload of ${selectedImages.length} images for listing ${marketplaceListingId}`);
       const imageInserts = [];
+
+      // Try to create the bucket if it doesn't exist
+      try {
+        await supabase.storage.createBucket('marketplace-images', {
+          public: true,
+          allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+          fileSizeLimit: 5242880 // 5MB
+        });
+        console.log('Created marketplace-images bucket');
+      } catch (bucketError: any) {
+        console.log('Bucket creation failed or already exists:', bucketError?.message || 'Unknown error');
+      }
 
       for (let i = 0; i < selectedImages.length; i++) {
         const file = selectedImages[i];
@@ -216,15 +229,21 @@ export default function CreateMarketplacePropertyPage() {
         const fileName = `${marketplaceListingId}_${i}_${Date.now()}.${fileExt}`;
         const filePath = `marketplace-images/${fileName}`;
 
+        console.log(`Uploading image ${i + 1}: ${fileName}`);
+
         // Upload to Supabase Storage
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('marketplace-images')
-          .upload(filePath, file);
+          .upload(filePath, file, {
+            upsert: false
+          });
 
         if (uploadError) {
-          console.error('Upload error:', uploadError);
-          throw uploadError;
+          console.error('Upload error for image', i + 1, ':', uploadError);
+          throw new Error(`Failed to upload image ${i + 1}: ${uploadError.message}`);
         }
+
+        console.log(`Successfully uploaded image ${i + 1}`);
 
         // Get public URL
         const { data: { publicUrl } } = supabase.storage
@@ -237,23 +256,30 @@ export default function CreateMarketplacePropertyPage() {
           is_primary: i === 0, // First image is primary
           display_order: i
         });
+
+        console.log(`Prepared image record ${i + 1} with URL: ${publicUrl}`);
       }
 
+      console.log('Inserting image records into database:', imageInserts);
+
       // Insert image records into marketplace_images table
-      const { error: insertError } = await supabase
+      const { data: insertData, error: insertError } = await supabase
         .from('marketplace_images')
-        .insert(imageInserts);
+        .insert(imageInserts)
+        .select();
 
       if (insertError) {
         console.error('Image insert error:', insertError);
-        throw insertError;
+        throw new Error(`Failed to save image records: ${insertError.message}`);
       }
 
+      console.log('Successfully inserted image records:', insertData);
       toast.success(`Uploaded ${selectedImages.length} image(s) successfully!`);
 
     } catch (error: any) {
       console.error('Image upload error:', error);
       toast.error('Failed to upload images: ' + error.message);
+      throw error; // Re-throw to prevent form submission success
     } finally {
       setUploadingImages(false);
     }
@@ -314,11 +340,21 @@ export default function CreateMarketplacePropertyPage() {
       }
 
       // Upload images if any were selected
+      let imagesUploaded = false;
       if (selectedImages.length > 0) {
-        await uploadImages(data.id);
+        try {
+          await uploadImages(data.id);
+          imagesUploaded = true;
+        } catch (imageError) {
+          console.error('Image upload failed, but listing was created:', imageError);
+          // Don't throw here - listing was created successfully, just images failed
+          toast.warning('Property listed successfully, but image upload failed. You can add images later.');
+        }
       }
 
-      toast.success('Property listed successfully!');
+      if (imagesUploaded || selectedImages.length === 0) {
+        toast.success('Property listed successfully!');
+      }
       router.push(`/marketplace/${data.id}`);
 
     } catch (error: any) {
