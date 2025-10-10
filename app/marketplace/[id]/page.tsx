@@ -392,7 +392,7 @@ export default function MarketPropertyDetailsPage() {
           {/* Virtual Tour Tile */}
           {virtualTourData && (
             <div
-              className="relative h-[94px] bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg overflow-hidden cursor-pointer group"
+              className="relative h-[150px] bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg overflow-hidden cursor-pointer group"
               onClick={() => setShowVirtualTour(true)}
             >
               <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
@@ -411,7 +411,7 @@ export default function MarketPropertyDetailsPage() {
           {/* Virtual Tour Scene Images */}
           {virtualTourData && virtualTourData.scenes && virtualTourData.scenes.length > 0 && (
             <div
-              className="relative h-[194px] overflow-hidden rounded-lg cursor-pointer group"
+              className="relative h-[250px] overflow-hidden rounded-lg cursor-pointer group"
               onClick={() => setShowVirtualTourImages(true)}
             >
               <Image
