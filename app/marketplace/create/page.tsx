@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/lib/supabase';
 import { supabaseServer } from '@/lib/db';
 import { useAuth } from '@/lib/auth';
+import { api } from '@/lib/api';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -172,21 +173,12 @@ export default function CreateMarketplacePropertyPage() {
   };
 
   const uploadMarketplaceImage = async (file: File): Promise<string> => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}.${fileExt}`;
-    const filePath = `uploads/${fileName}`;
-
-    const { data, error } = await supabase.storage
-      .from('marketplace-images')
-      .upload(filePath, file);
-
-    if (error) throw error;
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('marketplace-images')
-      .getPublicUrl(filePath);
-
-    return publicUrl;
+    // Use the same upload function as poll properties for now
+    const uploadResponse = await api.uploadFile(file);
+    if (!uploadResponse.success) {
+      throw new Error(uploadResponse.error || 'Upload failed');
+    }
+    return uploadResponse.data.url;
   };
 
 

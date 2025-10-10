@@ -168,18 +168,18 @@ export function PropertyDetailsForm({
   return (
     <Drawer open={isOpen} onOpenChange={() => {}}>
       <DrawerContent
-        className="bg-white"
-        style={{ maxHeight: isExpanded ? '100vh' : '30vh' }}
+        className="bg-gray-50"
+        style={{ maxHeight: isExpanded ? '100vh' : '50vh' }}
         onClick={handleDrawerInteraction}
       >
         <div className="mx-auto w-full max-w-2xl lg:max-w-7xl">
-          <DrawerHeader className="text-center pb-2">
-            <DrawerTitle className="flex items-center justify-center gap-2 text-xl font-semibold">
-              <Home className="w-5 h-5 text-blue-600" />
+          <DrawerHeader className="text-center pb-4">
+            <DrawerTitle className="flex items-center justify-center gap-2 text-xl font-semibold text-gray-900">
+              <Home className="w-5 h-5 text-gray-600" />
               Property Details
             </DrawerTitle>
-            <DrawerDescription>
-              Add details about your property to get better AI-powered suggestions
+            <DrawerDescription className="text-gray-600">
+              Provide comprehensive property information for accurate AI prospect analysis
             </DrawerDescription>
           </DrawerHeader>
 
@@ -189,11 +189,11 @@ export function PropertyDetailsForm({
           >
             {/* Captured/Uploaded Image Display */}
             {imageData && (
-              <Card className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 border-0">
+              <Card className="mb-6 bg-white border border-gray-200 shadow-sm">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <Home className="w-4 h-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-900">Property Image</span>
+                    <Home className="w-4 h-4 text-gray-600" />
+                    <span className="text-sm font-medium text-gray-900">Property Image</span>
                   </div>
                   <div className="relative w-full h-48 lg:h-full rounded-lg overflow-hidden bg-gray-100">
                     <img
@@ -206,13 +206,16 @@ export function PropertyDetailsForm({
               </Card>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Basic Information */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  Basic Information
-                </h3>
+              <Card className="bg-white border border-gray-200 shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-gray-600" />
+                    Basic Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                 
                 <div className="space-y-2">
                   <Label htmlFor="address" className="text-sm font-medium">
@@ -261,14 +264,18 @@ export function PropertyDetailsForm({
                     />
                   </div>
                 </div>
-              </div>
+               </CardContent>
+             </Card>
 
-              {/* Property Specifications */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                  <Ruler className="w-4 h-4" />
-                  Property Specifications
-                </h3>
+             {/* Property Specifications */}
+             <Card className="bg-white border border-gray-200 shadow-sm">
+               <CardHeader className="pb-3">
+                 <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                   <Ruler className="w-5 h-5 text-gray-600" />
+                   Property Specifications
+                 </CardTitle>
+               </CardHeader>
+               <CardContent className="space-y-4">
                 
                 <div className="space-y-2">
                   <Label htmlFor="squareMeters" className="text-sm font-medium">
@@ -322,14 +329,18 @@ export function PropertyDetailsForm({
                     </div>
                   </div>
                 )}
-              </div>
+               </CardContent>
+             </Card>
 
-              {/* Amenities Section */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4" />
-                  Amenities & Features
-                </h3>
+             {/* Amenities Section */}
+             <Card className="bg-white border border-gray-200 shadow-sm">
+               <CardHeader className="pb-3">
+                 <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                   <Sparkles className="w-5 h-5 text-gray-600" />
+                   Amenities & Features
+                 </CardTitle>
+               </CardHeader>
+               <CardContent className="space-y-4">
 
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-2">
@@ -351,14 +362,18 @@ export function PropertyDetailsForm({
                     ))}
                   </div>
                 </div>
-              </div>
+               </CardContent>
+             </Card>
 
-              {/* Investment Details */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4" />
-                  Investment Details
-                </h3>
+             {/* Investment Details */}
+             <Card className="bg-white border border-gray-200 shadow-sm">
+               <CardHeader className="pb-3">
+                 <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                   <Sparkles className="w-5 h-5 text-gray-600" />
+                   Investment Details
+                 </CardTitle>
+               </CardHeader>
+               <CardContent className="space-y-4">
 
                 <div className="space-y-6">
                   <div className="space-y-2">
@@ -403,17 +418,18 @@ export function PropertyDetailsForm({
                     </Select>
                   </div>
                 </div>
-              </div>
+               </CardContent>
+             </Card>
 
-              {/* Advanced Options Toggle */}
-              <button
-                type="button"
-                onClick={() => setShowAdvanced(!showAdvanced)}
-                className="flex items-center justify-center gap-2 w-full text-sm text-blue-600 hover:text-blue-800 transition-colors py-2"
-              >
-                Advanced Options
-                {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
+             {/* Advanced Options Toggle */}
+             <button
+               type="button"
+               onClick={() => setShowAdvanced(!showAdvanced)}
+               className="flex items-center justify-center gap-2 w-full text-sm text-gray-700 hover:text-gray-900 transition-colors py-3 border border-gray-200 rounded-md bg-white hover:bg-gray-50"
+             >
+               Advanced Options
+               {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+             </button>
 
               {/* Advanced Options */}
               <AnimatePresence>
@@ -462,19 +478,19 @@ export function PropertyDetailsForm({
               </AnimatePresence>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-6">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={onClose}
-                  className="flex-1"
+                  className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  className="flex-1 bg-gray-800 hover:bg-gray-900 text-white"
                 >
                   {isSubmitting ? (
                     <div className="flex items-center gap-2">

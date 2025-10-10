@@ -30,7 +30,6 @@ import {
   Share2,
   BookmarkPlus
 } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 import type { ProspectGenerationResult, PropertyProspect } from "@/lib/prospect-engine-service"
 
@@ -50,15 +49,15 @@ const categoryIcons = {
 }
 
 const complexityColors = {
-  simple: 'bg-green-100 text-green-800',
-  moderate: 'bg-yellow-100 text-yellow-800',
-  complex: 'bg-red-100 text-red-800'
+  simple: 'bg-slate-100 text-slate-700',
+  moderate: 'bg-amber-100 text-amber-700',
+  complex: 'bg-red-100 text-red-700'
 }
 
 const demandColors = {
-  low: 'bg-gray-100 text-gray-800',
-  medium: 'bg-blue-100 text-blue-800',
-  high: 'bg-emerald-100 text-emerald-800'
+  low: 'bg-gray-100 text-gray-700',
+  medium: 'bg-blue-100 text-blue-700',
+  high: 'bg-emerald-100 text-emerald-700'
 }
 
 export function PropertyProspectsResults({ 
@@ -153,16 +152,13 @@ export function PropertyProspectsResults({
     const CategoryIcon = categoryIcons[prospect.category] || Building
 
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        whileHover={{ y: -2 }}
+      <div
         className={`cursor-pointer transition-all ${
           isSelected ? 'ring-2 ring-blue-500' : ''
         }`}
         onClick={onClick}
       >
-        <Card className="h-full hover:shadow-md transition-shadow">
+        <Card className="h-full">
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
@@ -210,7 +206,7 @@ export function PropertyProspectsResults({
             <Progress value={prospect.feasibilityScore} className="h-2" />
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
     )
   }
 
@@ -378,7 +374,7 @@ export function PropertyProspectsResults({
 
   if (!results || !results.prospects || results.prospects.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center p-8">
           <Lightbulb className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">No Results Available</h2>
@@ -392,16 +388,16 @@ export function PropertyProspectsResults({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+    <div className="min-h-screen bg-white">
+      <div className="container mx-auto px-6 sm:px-8 lg:px-12 py-6 sm:py-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
           <div className="min-w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <BarChart3 className="w-6 h-6 sm:w-7 sm:h-7 text-blue-600 flex-shrink-0" />
               <span className="truncate">Property Prospects Analysis</span>
             </h1>
-            <p className="text-sm sm:text-base text-gray-600 mt-1">
+            <p className="text-base sm:text-lg text-gray-600 mt-2">
               AI-generated alternative uses and optimization strategies for your property
             </p>
           </div>
@@ -427,7 +423,7 @@ export function PropertyProspectsResults({
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 sm:space-y-8">
           <TabsList className="grid grid-cols-3 w-full max-w-md">
             <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
             <TabsTrigger value="prospects" className="text-xs sm:text-sm">Prospects</TabsTrigger>
@@ -439,7 +435,7 @@ export function PropertyProspectsResults({
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <Card>
                 <CardContent className="p-3 sm:p-4 text-center">
-                  <div className="text-xl sm:text-2xl font-bold text-blue-600">
+                  <div className="text-xl sm:text-2xl font-bold text-slate-700">
                     {results.summary.totalProspects}
                   </div>
                   <div className="text-xs sm:text-sm text-gray-600">Total Prospects</div>
@@ -447,7 +443,7 @@ export function PropertyProspectsResults({
               </Card>
               <Card>
                 <CardContent className="p-3 sm:p-4 text-center">
-                  <div className="text-xl sm:text-2xl font-bold text-green-600">
+                  <div className="text-xl sm:text-2xl font-bold text-slate-700">
                     {results.summary.averageFeasibility}%
                   </div>
                   <div className="text-xs sm:text-sm text-gray-600">Avg Feasibility</div>
@@ -455,7 +451,7 @@ export function PropertyProspectsResults({
               </Card>
               <Card>
                 <CardContent className="p-3 sm:p-4 text-center">
-                  <div className="text-sm sm:text-lg font-bold text-purple-600">
+                  <div className="text-sm sm:text-lg font-bold text-slate-700">
                     {formatCurrency(results.summary.potentialRevenueRange.min)}
                   </div>
                   <div className="text-xs sm:text-sm text-gray-600">Min Revenue</div>
@@ -463,7 +459,7 @@ export function PropertyProspectsResults({
               </Card>
               <Card>
                 <CardContent className="p-3 sm:p-4 text-center">
-                  <div className="text-sm sm:text-lg font-bold text-purple-600">
+                  <div className="text-sm sm:text-lg font-bold text-slate-700">
                     {formatCurrency(results.summary.potentialRevenueRange.max)}
                   </div>
                   <div className="text-xs sm:text-sm text-gray-600">Max Revenue</div>
@@ -620,7 +616,7 @@ export function PropertyProspectsResults({
         </Tabs>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-6 sm:mt-8">
+        <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 mt-8 sm:mt-10">
           <Button
             variant="outline"
             onClick={onClose || (() => router.push('/dashboard'))}
@@ -630,7 +626,7 @@ export function PropertyProspectsResults({
           </Button>
           <Button
             onClick={handleAddToProspects}
-            className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
           >
             Save to My Prospects
             <BookmarkPlus className="w-4 h-4 ml-2" />
