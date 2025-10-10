@@ -411,7 +411,7 @@ export default function MarketPropertyDetailsPage() {
           {/* Virtual Tour Scene Images */}
           {virtualTourData && virtualTourData.scenes && virtualTourData.scenes.length > 0 && (
             <div
-              className="relative h-[94px] overflow-hidden rounded-lg cursor-pointer group"
+              className="relative h-[194px] overflow-hidden rounded-lg cursor-pointer group"
               onClick={() => setShowVirtualTourImages(true)}
             >
               <Image
