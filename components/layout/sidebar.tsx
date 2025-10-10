@@ -6,7 +6,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth"
 import { PropertyTypeDialog } from "@/components/PropertyTypeDialog"
-import { Home, Building, Plus, User, LogOut, UserPlus, LogIn, BarChart3, ShoppingBag, FileText, Zap } from "lucide-react"
+import { Home, Building, Plus, User, LogOut, UserPlus, LogIn, BarChart3, ShoppingBag, FileText, Zap, Grid3X3 } from "lucide-react"
 
 interface SidebarProps {
   onClose?: () => void
@@ -33,6 +33,7 @@ const authenticatedNavigation: NavigationItem[] = [
    { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
    { name: "Marketplace", href: "/marketplace", icon: ShoppingBag },
    { name: "Properties", href: "/properties", icon: Building },
+   { name: "Gallery", href: "/gallery", icon: Grid3X3 },
    { name: "Prospects", href: "/prospects", icon: Zap },
    { name: "Add Property", href: "/add-property", icon: Plus },
    { name: "Privacy Policy", href: "/privacy", icon: FileText },
