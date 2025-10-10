@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,7 +9,8 @@ import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-import { 
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
   ArrowRight,
   TrendingUp,
   Clock,
@@ -28,7 +29,8 @@ import {
   Zap,
   Download,
   Share2,
-  BookmarkPlus
+  BookmarkPlus,
+  X
 } from "lucide-react"
 import { toast } from "sonner"
 import type { ProspectGenerationResult, PropertyProspect } from "@/lib/prospect-engine-service"
@@ -70,6 +72,19 @@ export function PropertyProspectsResults({
   const [selectedProspect, setSelectedProspect] = useState<PropertyProspect | null>(null)
   const [activeTab, setActiveTab] = useState("overview")
   const [activeSector, setActiveSector] = useState<'valueMaximization' | 'alternativeUses'>('valueMaximization')
+  const [isMobile, setIsMobile] = useState(false)
+  const [isMobileDetailsOpen, setIsMobileDetailsOpen] = useState(false)
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 1024) // lg breakpoint
+    }
+
+    checkIsMobile()
+    window.addEventListener('resize', checkIsMobile)
+
+    return () => window.removeEventListener('resize', checkIsMobile)
+  }, [])
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-NG', {
@@ -521,13 +536,18 @@ export function PropertyProspectsResults({
                     key={prospect.id}
                     prospect={prospect}
                     isSelected={selectedProspect?.id === prospect.id}
-                    onClick={() => setSelectedProspect(prospect)}
+                    onClick={() => {
+                      setSelectedProspect(prospect)
+                      if (isMobile) {
+                        setIsMobileDetailsOpen(true)
+                      }
+                    }}
                   />
                 ))}
               </div>
 
               {/* Selected Prospect Details */}
-              <div className="lg:sticky lg:top-6">
+              <div className="hidden lg:block lg:sticky lg:top-6">
                 {selectedProspect ? (
                   <Card>
                     <CardHeader>
@@ -550,6 +570,28 @@ export function PropertyProspectsResults({
                   </Card>
                 )}
               </div>
+
+              {/* Mobile Details Dialog */}
+              <Dialog open={isMobileDetailsOpen} onOpenChange={setIsMobileDetailsOpen}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center justify-between">
+                      <span>Prospect Details</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsMobileDetailsOpen(false)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </DialogTitle>
+                  </DialogHeader>
+                  <ScrollArea className="max-h-[70vh] pr-4">
+                    {selectedProspect && <ProspectDetails prospect={selectedProspect} />}
+                  </ScrollArea>
+                </DialogContent>
+              </Dialog>
             </div>
           </TabsContent>
 

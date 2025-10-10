@@ -25,6 +25,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from "@/components/ui/drawer"
+import { Footer } from "@/components/layout/footer"
 
 interface PropertyDetailsFormProps {
   isOpen: boolean
@@ -505,6 +506,13 @@ export function PropertyDetailsForm({
                 </Button>
               </div>
             </form>
+
+            {/* Footer */}
+            <div className="mt-8 border-t border-gray-200 pt-6">
+              <div className="scale-75 transform origin-top">
+                <Footer />
+              </div>
+            </div>
           </div>
         </div>
       </DrawerContent>
