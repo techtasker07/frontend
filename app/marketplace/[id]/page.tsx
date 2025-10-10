@@ -239,8 +239,119 @@ export default function MarketPropertyDetailsPage() {
         </Link>
       </Button>
 
-      {/* Image Gallery Grid */}
-      <div className="grid grid-cols-4 gap-2 h-96">
+      {/* Mobile Image Gallery */}
+      <div className="block md:hidden space-y-4">
+        {/* Main Image */}
+        <div className="relative h-64 overflow-hidden rounded-lg bg-gray-100">
+          <Image
+            src={images[currentImageIndex] || '/api/placeholder/800/600'}
+            alt={listing.title || 'Property'}
+            fill
+            className="object-cover"
+          />
+
+          {/* Action Buttons */}
+          <div className="absolute top-4 right-4 flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="bg-white/80 hover:bg-white"
+              onClick={toggleFavorite}
+            >
+              <Heart className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
+            </Button>
+            <Button size="sm" variant="outline" className="bg-white/80 hover:bg-white">
+              <Share2 className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Property Badges */}
+          <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+            <Badge variant="secondary" className="bg-white/90 text-gray-800 text-xs">
+              {listing.category?.name}
+            </Badge>
+            <Badge variant="outline" className="bg-white/90 text-gray-800 border-gray-300 text-xs">
+              {listing.listing_type?.name || 'For Sale'}
+            </Badge>
+          </div>
+        </div>
+
+        {/* Virtual Tour Button */}
+        {virtualTourData && (
+          <div
+            className="relative h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg overflow-hidden cursor-pointer group"
+            onClick={() => setShowVirtualTour(true)}
+          >
+            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
+            <div className="absolute inset-0 flex items-center justify-center text-white">
+              <Eye className="h-5 w-5 mr-2" />
+              <span className="text-sm font-medium">Virtual Tour</span>
+              {loadingVirtualTour && (
+                <div className="ml-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border border-white border-t-transparent"></div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Virtual Tour Scene Images */}
+        {virtualTourData && virtualTourData.scenes && virtualTourData.scenes.length > 0 && (
+          <div
+            className="relative h-32 overflow-hidden rounded-lg cursor-pointer group"
+            onClick={() => setShowVirtualTourImages(true)}
+          >
+            <Image
+              src={virtualTourData.scenes[0].image_url}
+              alt="Virtual tour scene"
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-200"
+            />
+            {virtualTourData.scenes.length > 1 && (
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                <span className="text-white text-xl font-bold">+{virtualTourData.scenes.length - 1}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Property Images Grid */}
+        <div className="grid grid-cols-3 gap-2">
+          {images.slice(1, 7).map((imageUrl, index) => (
+            <div
+              key={index + 1}
+              className="relative aspect-square overflow-hidden rounded-lg cursor-pointer group"
+              onClick={() => setCurrentImageIndex(index + 1)}
+            >
+              <Image
+                src={imageUrl}
+                alt={`Property image ${index + 2}`}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-200"
+              />
+              {currentImageIndex === index + 1 && (
+                <div className="absolute inset-0 ring-2 ring-blue-500 bg-blue-500/10" />
+              )}
+            </div>
+          ))}
+
+          {/* More Images Indicator */}
+          {images.length > 7 && (
+            <div
+              className="relative aspect-square bg-gray-900/80 rounded-lg overflow-hidden cursor-pointer group flex items-center justify-center"
+              onClick={() => setShowImageTour(true)}
+            >
+              <div className="text-center text-white">
+                <div className="text-lg font-bold">{images.length - 7}+</div>
+                <div className="text-xs">More</div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Desktop Image Gallery */}
+      <div className="hidden md:grid grid-cols-4 gap-2 h-96">
         {/* Main Large Image */}
         <div className="col-span-3 relative overflow-hidden rounded-lg bg-gray-100">
           <Image
@@ -249,7 +360,7 @@ export default function MarketPropertyDetailsPage() {
             fill
             className="object-cover"
           />
-          
+
           {/* Action Buttons */}
           <div className="absolute top-4 right-4 flex gap-2">
             <Button
@@ -275,7 +386,7 @@ export default function MarketPropertyDetailsPage() {
             </Badge>
           </div>
         </div>
-        
+
         {/* Right Side Grid */}
         <div className="flex flex-col gap-2">
           {/* Virtual Tour Tile */}
@@ -356,17 +467,17 @@ export default function MarketPropertyDetailsPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Property Header */}
           <div className="space-y-4">
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div className="space-y-2">
-                <h1 className="text-3xl font-bold">{listing.title}</h1>
+                <h1 className="text-2xl md:text-3xl font-bold">{listing.title}</h1>
                 <div className="flex items-center text-gray-600">
                   <MapPin className="h-4 w-4 mr-1" />
                   <span>{listing.location}</span>
                 </div>
               </div>
-              
-              <div className="text-right">
-                <div className="text-3xl font-bold text-primary">
+
+              <div className="text-left md:text-right">
+                <div className="text-2xl md:text-3xl font-bold text-primary">
                   {getPropertyPrice(listing)}
                 </div>
                 <div className="text-sm text-gray-500">
@@ -376,7 +487,7 @@ export default function MarketPropertyDetailsPage() {
             </div>
 
             {/* Property Stats */}
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4 md:gap-6">
               {listing.year_of_construction && (
                 <div className="flex items-center gap-2">
                   <Calendar className="h-5 w-5 text-gray-500" />
@@ -388,7 +499,7 @@ export default function MarketPropertyDetailsPage() {
 
           {/* Tabs */}
           <div className="border-b">
-            <nav className="flex space-x-8">
+            <nav className="flex space-x-4 md:space-x-8 overflow-x-auto">
               {[
                 { id: 'overview', label: 'Overview' },
                 { id: 'details', label: 'Details' },
@@ -398,7 +509,7 @@ export default function MarketPropertyDetailsPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`py-2 border-b-2 font-medium text-sm ${
+                  className={`py-3 md:py-2 border-b-2 font-medium text-sm whitespace-nowrap ${
                     activeTab === tab.id
                       ? 'border-primary text-primary'
                       : 'border-transparent text-gray-500 hover:text-gray-700'
