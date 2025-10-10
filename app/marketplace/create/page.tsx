@@ -14,7 +14,8 @@ import { supabase } from '@/lib/supabase';
 import { supabaseServer } from '@/lib/db';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { VirtualTourService } from '@/lib/virtual-tour';
+import { ArrowLeft, Loader2, X } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -87,6 +88,8 @@ export default function CreateMarketplacePropertyPage() {
   const [newAmenity, setNewAmenity] = useState('');
   const [newKeyword, setNewKeyword] = useState('');
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [virtualTourImages, setVirtualTourImages] = useState<File[]>([]);
+  const [virtualTourSceneNames, setVirtualTourSceneNames] = useState<string[]>([]);
 
   const { isAuthenticated, loading: authLoading, user } = useAuth();
   const router = useRouter();
@@ -170,6 +173,28 @@ export default function CreateMarketplacePropertyPage() {
     if (e.target.files) {
       setSelectedImages(Array.from(e.target.files));
     }
+  };
+
+  const handleVirtualTourImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      setVirtualTourImages(files);
+      // Initialize scene names
+      setVirtualTourSceneNames(files.map((_, index) => `Room ${index + 1}`));
+    }
+  };
+
+  const updateVirtualTourSceneName = (index: number, name: string) => {
+    const newNames = [...virtualTourSceneNames];
+    newNames[index] = name;
+    setVirtualTourSceneNames(newNames);
+  };
+
+  const removeVirtualTourImage = (index: number) => {
+    const newImages = virtualTourImages.filter((_, i) => i !== index);
+    const newNames = virtualTourSceneNames.filter((_, i) => i !== index);
+    setVirtualTourImages(newImages);
+    setVirtualTourSceneNames(newNames);
   };
 
   const uploadMarketplaceImage = async (file: File): Promise<string> => {
@@ -284,6 +309,96 @@ export default function CreateMarketplacePropertyPage() {
         } catch (imageApiError) {
           console.error('Image API error:', imageApiError);
           toast.warning('Property listed successfully, but there was an issue saving images.');
+        }
+      }
+
+      // Handle virtual tour images if provided
+      if (virtualTourImages.length > 0) {
+        try {
+          setUploadProgress("Creating virtual tour...");
+
+          // Upload virtual tour images
+          const virtualTourUrls: string[] = [];
+          for (let i = 0; i < virtualTourImages.length; i++) {
+            const file = virtualTourImages[i];
+            setUploadProgress(`Uploading virtual tour image ${i + 1} of ${virtualTourImages.length}...`);
+
+            try {
+              // Optimize image first
+              const optimizedFile = await VirtualTourService.optimizeImage(file);
+
+              // Upload optimized image
+              const response = await fetch('/api/virtual-tour/upload-images', {
+                method: 'POST',
+                body: JSON.stringify({
+                  files: [optimizedFile],
+                  propertyId: data.id
+                }),
+                headers: {
+                  'Content-Type': 'application/json'
+                }
+              });
+
+              if (!response.ok) {
+                throw new Error(`Upload failed: ${response.statusText}`);
+              }
+
+              const result = await response.json();
+              if (result.success && result.data?.urls?.length > 0) {
+                virtualTourUrls.push(result.data.urls[0]);
+              } else {
+                throw new Error(result.error || 'Upload failed');
+              }
+            } catch (uploadError: any) {
+              toast.error(`Failed to upload virtual tour image ${file.name}: ${uploadError.message}`);
+              setError(`Failed to upload virtual tour image ${file.name}: ${uploadError.message}`);
+              setLoading(false);
+              setUploadProgress("");
+              return;
+            }
+          }
+
+          // Create virtual tour data structure
+          const processedScenes: any[] = virtualTourUrls.map((url, index) => ({
+            scene_id: `scene_${Date.now()}_${index}`,
+            name: virtualTourSceneNames[index] || `Room ${index + 1}`,
+            image_url: url,
+            description: '',
+            hotspots: []
+          }));
+
+          const tourData = {
+            property_id: data.id,
+            title: `${formData.title} - Virtual Tour`,
+            scenes: processedScenes,
+            default_scene_id: processedScenes[0]?.scene_id,
+            settings: {
+              auto_rotate: false,
+              zoom_enabled: true,
+              navigation_enabled: true,
+              controls_visible: true,
+              transition_duration: 800
+            }
+          };
+
+          // Save tour to database
+          const tourResponse = await fetch('/api/virtual-tour', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(tourData)
+          });
+
+          if (!tourResponse.ok) {
+            console.error('Failed to create virtual tour');
+            toast.warning('Property listed successfully, but there was an issue creating the virtual tour.');
+          } else {
+            console.log('Virtual tour created successfully');
+          }
+        } catch (tourError) {
+          console.error('Error creating virtual tour:', tourError);
+          toast.warning('Property listed successfully, but there was an issue creating the virtual tour.');
         }
       }
 
@@ -633,6 +748,64 @@ export default function CreateMarketplacePropertyPage() {
               {selectedImages.length > 0 && (
                 <div className="text-sm text-muted-foreground">
                   Selected: {selectedImages.map((file) => file.name).join(", ")}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Virtual Tour Images */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Virtual Tour Images (Optional)</h3>
+            <p className="text-sm text-muted-foreground">
+              Upload 360° panoramic images to create an immersive virtual tour of your property.
+              These images will allow potential buyers to explore your property virtually.
+            </p>
+
+            <div className="space-y-2">
+              <Label htmlFor="virtual-tour-images">360° Virtual Tour Images</Label>
+              <Input
+                id="virtual-tour-images"
+                name="virtual-tour-images"
+                type="file"
+                multiple
+                onChange={handleVirtualTourImageSelect}
+                disabled={loading}
+                accept="image/*"
+              />
+              <p className="text-xs text-muted-foreground">
+                Select multiple 360° panoramic images. Each image represents a different room/area.
+              </p>
+              {virtualTourImages.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-sm text-muted-foreground">
+                    Selected: {virtualTourImages.length} virtual tour image(s)
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {virtualTourImages.map((file, index) => (
+                      <div key={index} className="flex items-center gap-2 p-2 border rounded">
+                        <span className="text-sm flex-1 truncate">{file.name}</span>
+                        <Input
+                          placeholder={`Room ${index + 1}`}
+                          value={virtualTourSceneNames[index] || ''}
+                          onChange={(e) => updateVirtualTourSceneName(index, e.target.value)}
+                          className="h-8 text-xs"
+                          disabled={loading}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeVirtualTourImage(index)}
+                          disabled={loading}
+                          className="h-8 w-8 p-0"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

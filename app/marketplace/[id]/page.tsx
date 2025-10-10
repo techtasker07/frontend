@@ -47,6 +47,8 @@ export default function MarketPropertyDetailsPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'details' | 'location' | 'reviews'>('overview');
   const [showVirtualTour, setShowVirtualTour] = useState(false);
   const [showImageTour, setShowImageTour] = useState(false);
+  const [virtualTourData, setVirtualTourData] = useState<any>(null);
+  const [loadingVirtualTour, setLoadingVirtualTour] = useState(false);
 
   // Engagement form state
   const [engagementForm, setEngagementForm] = useState({
@@ -86,11 +88,32 @@ export default function MarketPropertyDetailsPage() {
           const filtered = relatedResponse.data.filter(item => item.id !== response.data.id);
           setRelatedListings(filtered.slice(0, 3));
         }
+
+        // Fetch virtual tour data
+        await fetchVirtualTourData(response.data.id);
       }
     } catch (error) {
       console.error('Error fetching listing details:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchVirtualTourData = async (propertyId: string) => {
+    try {
+      setLoadingVirtualTour(true);
+      const response = await fetch(`/api/virtual-tour?propertyId=${propertyId}`);
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          setVirtualTourData(result.data);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching virtual tour data:', error);
+    } finally {
+      setLoadingVirtualTour(false);
     }
   };
 
@@ -198,22 +221,6 @@ export default function MarketPropertyDetailsPage() {
 
   const images = getImages();
 
-  // Mock virtual tour data - in real implementation, this would come from the API
-  const virtualTourData = listing.virtual_tour_url ? {
-    id: listing.id,
-    title: `${listing.title} - Virtual Tour`,
-    scenes: [
-      {
-        id: 'main-view',
-        name: 'Main View',
-        image_url: images[0] || '/api/placeholder/800/600',
-        description: 'Main property view',
-        hotspots: []
-      }
-    ],
-    default_scene_id: 'main-view'
-  } : null;
-
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
       {/* Breadcrumb */}
@@ -271,8 +278,8 @@ export default function MarketPropertyDetailsPage() {
         {/* Right Side Grid */}
         <div className="flex flex-col gap-2">
           {/* Virtual Tour Tile */}
-          {(virtualTourData || listing.virtual_tour_url) && (
-            <div 
+          {virtualTourData && (
+            <div
               className="relative h-[94px] bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg overflow-hidden cursor-pointer group"
               onClick={() => setShowVirtualTour(true)}
             >
@@ -280,6 +287,11 @@ export default function MarketPropertyDetailsPage() {
               <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
                 <Eye className="h-6 w-6 mb-1" />
                 <span className="text-xs font-medium">Virtual Tour</span>
+                {loadingVirtualTour && (
+                  <div className="mt-1">
+                    <div className="animate-spin rounded-full h-3 w-3 border border-white border-t-transparent"></div>
+                  </div>
+                )}
               </div>
             </div>
           )}
