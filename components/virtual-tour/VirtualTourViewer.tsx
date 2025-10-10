@@ -78,7 +78,7 @@ export function VirtualTourViewer({ tourData, isOpen, onClose, className }: Virt
           panorama: currentScene.image_url,
           caption: currentScene.name,
           loadingImg: '/loading-tour.gif', // You can add a loading gif
-          defaultZoomLvl: 50,
+          defaultZoomLvl: 0,
           minFov: 30,
           maxFov: 90,
           mousewheel: true,
@@ -123,6 +123,8 @@ export function VirtualTourViewer({ tourData, isOpen, onClose, className }: Virt
         })
 
         setViewer(newViewer)
+        // Start autorotate for Google Street View-like experience
+        newViewer.startAutorotate()
         setIsLoading(false)
       } catch (error) {
         console.error('Error initializing virtual tour viewer:', error)

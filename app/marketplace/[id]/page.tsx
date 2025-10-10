@@ -47,6 +47,7 @@ export default function MarketPropertyDetailsPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'details' | 'location' | 'reviews'>('overview');
   const [showVirtualTour, setShowVirtualTour] = useState(false);
   const [showImageTour, setShowImageTour] = useState(false);
+  const [showVirtualTourImages, setShowVirtualTourImages] = useState(false);
   const [virtualTourData, setVirtualTourData] = useState<any>(null);
   const [loadingVirtualTour, setLoadingVirtualTour] = useState(false);
 
@@ -295,10 +296,30 @@ export default function MarketPropertyDetailsPage() {
               </div>
             </div>
           )}
-          
-          {/* Additional Images */}
-          {images.slice(1, virtualTourData ? 4 : 5).map((imageUrl, index) => (
-            <div 
+
+          {/* Virtual Tour Scene Images */}
+          {virtualTourData && virtualTourData.scenes && virtualTourData.scenes.length > 0 && (
+            <div
+              className="relative h-[94px] overflow-hidden rounded-lg cursor-pointer group"
+              onClick={() => setShowVirtualTourImages(true)}
+            >
+              <Image
+                src={virtualTourData.scenes[0].image_url}
+                alt="Virtual tour scene"
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-200"
+              />
+              {virtualTourData.scenes.length > 1 && (
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                  <span className="text-white text-lg font-bold">+{virtualTourData.scenes.length - 1}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Additional Property Images */}
+          {images.slice(1, virtualTourData ? (virtualTourData.scenes?.length > 0 ? 3 : 4) : 5).map((imageUrl, index) => (
+            <div
               key={index + 1}
               className="relative h-[94px] overflow-hidden rounded-lg cursor-pointer group"
               onClick={() => setCurrentImageIndex(index + 1)}
@@ -314,15 +335,15 @@ export default function MarketPropertyDetailsPage() {
               )}
             </div>
           ))}
-          
+
           {/* More Images Indicator */}
-          {images.length > (virtualTourData ? 4 : 5) && (
-            <div 
+          {images.length > (virtualTourData ? (virtualTourData.scenes?.length > 0 ? 3 : 4) : 5) && (
+            <div
               className="relative h-[94px] bg-gray-900/80 rounded-lg overflow-hidden cursor-pointer group flex items-center justify-center"
               onClick={() => setShowImageTour(true)}
             >
               <div className="text-center text-white">
-                <div className="text-lg font-bold">{images.length - (virtualTourData ? 4 : 5)}+</div>
+                <div className="text-lg font-bold">{images.length - (virtualTourData ? (virtualTourData.scenes?.length > 0 ? 3 : 4) : 5)}+</div>
                 <div className="text-xs">More Photos</div>
               </div>
             </div>
@@ -1196,7 +1217,14 @@ export default function MarketPropertyDetailsPage() {
         isOpen={showVirtualTour}
         onClose={() => setShowVirtualTour(false)}
       />
-      
+
+      {/* Virtual Tour Images Viewer */}
+      <ImageTourViewer
+        images={virtualTourData?.scenes?.map((scene: any) => scene.image_url) || []}
+        isOpen={showVirtualTourImages}
+        onClose={() => setShowVirtualTourImages(false)}
+      />
+
       {/* Image Tour Viewer */}
       <ImageTourViewer
         images={images}
