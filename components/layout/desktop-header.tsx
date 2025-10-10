@@ -49,7 +49,7 @@ export function DesktopHeader({ onMenuClick }: DesktopHeaderProps) {
             Home
           </Link>
           <Link href="/properties" className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
-            Properties
+            Poll Properties
           </Link>
           <Link href="/marketplace" className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
             Marketplace
