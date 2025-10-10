@@ -13,6 +13,8 @@
     "@google-cloud/vertexai": "^1.10.0",
     "@google-cloud/vision": "^5.3.3",
     "@hookform/resolvers": "^3.10.0",
+    "@photo-sphere-viewer/gyroscope-plugin": "^5.14.0",
+    "@photo-sphere-viewer/markers-plugin": "^5.14.0",
     "@radix-ui/react-accordion": "^1.2.2",
     "@radix-ui/react-alert-dialog": "1.1.4",
     "@radix-ui/react-aspect-ratio": "1.1.1",

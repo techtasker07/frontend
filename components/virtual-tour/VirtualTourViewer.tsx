@@ -64,84 +64,147 @@ export function VirtualTourViewer({ tourData, isOpen, onClose, className }: Virt
 
     setIsLoading(true)
 
-    // Destroy existing viewer if any
+    // ensure container has a stable explicit height so the viewer can compute layout
+    viewerRef.current.style.height = '100%'
+
+    // destroy existing viewer (but prefer destroying the local instance we create)
     if (viewer) {
-      viewer.destroy()
+      try { viewer.destroy() } catch (e) { /* noop */ }
       setViewer(null)
     }
 
-    // Dynamically import PhotoSphere viewer to avoid SSR issues
-    import('photo-sphere-viewer').then(({ Viewer }) => {
+    // keep local reference so cleanup destroys exactly what we created
+    let localViewer: any = null
+
+    const loadViewerModules = async () => {
+      const candidates = [
+        // common possibilities depending on installed version
+        { viewer: 'photo-sphere-viewer', markers: '@photo-sphere-viewer/markers-plugin', gyro: '@photo-sphere-viewer/gyroscope-plugin' },
+        { viewer: '@photo-sphere-viewer/core', markers: '@photo-sphere-viewer/markers-plugin', gyro: '@photo-sphere-viewer/gyroscope-plugin' }
+      ]
+
+      for (const c of candidates) {
+        try {
+          const [vMod, mMod, gMod] = await Promise.all([
+            import(/* webpackChunkName: "psv-core" */ c.viewer),
+            import(/* webpackChunkName: "psv-markers" */ c.markers),
+            import(/* webpackChunkName: "psv-gyro" */ c.gyro)
+          ])
+
+          console.debug('VirtualTour: loaded module keys', {
+            viewer: Object.keys(vMod || {}),
+            markers: Object.keys(mMod || {}),
+            gyro: Object.keys(gMod || {})
+          })
+
+          const ViewerCtor = (vMod as any).Viewer || (vMod as any).default || (vMod as any).PhotoSphereViewer || (vMod as any)
+          const MarkersPluginCtor = (mMod as any).MarkersPlugin || (mMod as any).default || (mMod as any)
+          const GyroPluginCtor = (gMod as any).GyroscopePlugin || (gMod as any).default || (gMod as any)
+
+          if (ViewerCtor) return { Viewer: ViewerCtor, MarkersPlugin: MarkersPluginCtor, GyroscopePlugin: GyroPluginCtor }
+        } catch (err) {
+          console.warn('VirtualTour: module candidate failed to import', c.viewer, err)
+          // continue to next candidate
+        }
+      }
+
+      throw new Error('Could not load PhotoSphere viewer modules — check package installation/version')
+    }
+
+    loadViewerModules().then(async ({ Viewer, MarkersPlugin, GyroscopePlugin }: any) => {
       try {
-        const newViewer = new Viewer({
+        const imgUrl = currentScene.image_url
+        if (!imgUrl) throw new Error('Scene image_url is missing')
+
+        // best-effort check that the image is reachable (HEAD)
+        try {
+          const head = await fetch(imgUrl, { method: 'HEAD' })
+          if (!head.ok) console.warn('VirtualTour: image HEAD returned non-OK', head.status, imgUrl)
+        } catch (e) {
+          console.warn('VirtualTour: image HEAD check failed (network/CORS?)', e, imgUrl)
+        }
+
+        // create viewer
+        localViewer = new Viewer({
           container: viewerRef.current!,
-          panorama: currentScene.image_url,
+          panorama: imgUrl,
           caption: currentScene.name,
-          loadingImg: '/loading-tour.gif', // You can add a loading gif
-          defaultZoomLvl: 0,
+          loadingImg: '/loading-tour.gif',
+          defaultLat: 0,
+          defaultLong: 0,
+          defaultZoomLvl: 50,
           minFov: 30,
           maxFov: 90,
           mousewheel: true,
           mousemove: true,
-          keyboard: {
-            'ArrowUp': 'rotateLatUp',
-            'ArrowDown': 'rotateLatDown',
-            'ArrowRight': 'rotateLongRight',
-            'ArrowLeft': 'rotateLongLeft',
-            'PageUp': 'zoomIn',
-            'PageDown': 'zoomOut',
-            '+': 'zoomIn',
-            '-': 'zoomOut',
-            ' ': 'toggleAutorotate',
-          },
-          // Add hotspots for navigation
-          plugins: [],
+          plugins: [
+            MarkersPlugin ? [MarkersPlugin, { createMarker: (m: any) => m }] : undefined,
+            GyroscopePlugin ? [GyroscopePlugin, {}] : undefined
+          ].filter(Boolean),
         })
 
-        // Resize viewer after creation
-        setTimeout(() => {
-          const rect = viewerRef.current!.getBoundingClientRect()
-          newViewer.resize({ width: `${rect.width}px`, height: `${rect.height}px` })
-        }, 100)
+        // expose to state so controls still work
+        setViewer(localViewer)
 
-        // Add click handler for hotspots
-        newViewer.on('click', (e: any) => {
-          // Handle hotspot clicks for navigation
-          if (currentScene.hotspots) {
-            currentScene.hotspots.forEach(hotspot => {
-              // Simple distance-based hotspot detection
-              const distance = Math.sqrt(
-                Math.pow(e.data.yaw - hotspot.position.yaw, 2) +
-                Math.pow(e.data.pitch - hotspot.position.pitch, 2)
-              )
+        // Attach markers if available
+        if (currentScene.hotspots && currentScene.hotspots.length && MarkersPlugin) {
+          try {
+            const markersPlugin = localViewer.getPlugin(MarkersPlugin)
+            currentScene.hotspots.forEach(h => {
+              markersPlugin.addMarker({
+                id: h.id,
+                longitude: h.position.yaw,
+                latitude: h.position.pitch,
+                image: '/hotspot-icon.png',
+                width: 32,
+                height: 32,
+                anchor: 'center center',
+                data: { target: h.target_scene_id },
+              })
+            })
 
-              if (distance < 0.5) { // Threshold for hotspot detection
-                navigateToScene(hotspot.target_scene_id)
+            localViewer.on('select-marker', (e: any, marker: any) => {
+              const targetId = marker.data?.target
+              if (targetId) {
+                // navigate by updating state (will trigger effect)
+                setCurrentScene((prev) => {
+                  if (prev?.id === targetId) return prev
+                  const scene = tourData.scenes.find(s => s.id === targetId) || prev
+                  toast.success(`Moved to ${scene?.name || 'scene'}`)
+                  return scene
+                })
               }
             })
+          } catch (err) {
+            console.warn('VirtualTour: error attaching markers', err)
           }
-        })
+        }
 
-        setViewer(newViewer)
-        // Start autorotate for Google Street View-like experience
-        newViewer.startAutorotate()
+        // ensure viewer computes layout after mount / dialog animation
+        setTimeout(() => {
+          try { localViewer.resize() } catch (e) { /* noop */ }
+        }, 120) // small delay for dialog open animation
+
+        // start autorotate if available (optional)
+        try { if (typeof localViewer.startAutorotate === 'function') localViewer.startAutorotate() } catch (e) { /* noop */ }
+
         setIsLoading(false)
-      } catch (error) {
-        console.error('Error initializing virtual tour viewer:', error)
-        toast.error('Failed to load virtual tour')
+      } catch (error: any) {
+        console.error('Error initializing virtual tour viewer:', error, error?.stack)
+        toast.error(`Failed to load virtual tour: ${error?.message || 'unknown error'}`)
         setIsLoading(false)
       }
-    }).catch(error => {
-      console.error('Error loading PhotoSphere viewer:', error)
-      toast.error('Virtual tour not supported in this browser')
+    }).catch((error: any) => {
+      console.error('Error loading PhotoSphere viewer modules:', error, error?.stack)
+      toast.error(`Virtual tour not supported: ${error?.message || 'module load failed'}`)
       setIsLoading(false)
     })
 
+    // cleanup: destroy the specific viewer instance we created
     return () => {
-      if (viewer) {
-        viewer.destroy()
-        setViewer(null)
-      }
+      try {
+        if (localViewer && typeof localViewer.destroy === 'function') localViewer.destroy()
+      } catch (e) { /* noop */ }
     }
   }, [isOpen, tourData, currentScene])
 
@@ -149,16 +212,19 @@ export function VirtualTourViewer({ tourData, isOpen, onClose, className }: Virt
   useEffect(() => {
     const handleResize = () => {
       if (viewer && viewerRef.current) {
-        const rect = viewerRef.current.getBoundingClientRect()
-        viewer.resize({ width: `${rect.width}px`, height: `${rect.height}px` })
+        try { viewer.resize() } catch (e) { console.warn('VirtualTour: resize failed', e) }
       }
     }
 
     const handleFullscreenChange = () => {
       if (viewer && viewerRef.current) {
-        const rect = viewerRef.current.getBoundingClientRect()
-        viewer.resize({ width: `${rect.width}px`, height: `${rect.height}px` })
+        try { viewer.resize() } catch (e) { console.warn('VirtualTour: resize failed', e) }
       }
+    }
+
+    // call resize when dialog opens (small delay)
+    if (isOpen) {
+      setTimeout(handleResize, 150)
     }
 
     window.addEventListener('resize', handleResize)
@@ -168,7 +234,7 @@ export function VirtualTourViewer({ tourData, isOpen, onClose, className }: Virt
       window.removeEventListener('resize', handleResize)
       document.removeEventListener('fullscreenchange', handleFullscreenChange)
     }
-  }, [viewer])
+  }, [viewer, isOpen])
 
   // Set initial scene
   useEffect(() => {
@@ -344,7 +410,7 @@ export function VirtualTourViewer({ tourData, isOpen, onClose, className }: Virt
           <div className="absolute top-20 left-4 z-10">
             <Card className="bg-black/60 backdrop-blur-sm border-white/20 p-3">
               <p className="text-white text-sm">
-                <strong>Controls:</strong> Drag to look around • Scroll to zoom • Click hotspots to navigate
+                <strong>Controls:</strong> Drag to look around • Scroll to zoom • Click markers to navigate • Device orientation enabled
               </p>
             </Card>
           </div>
