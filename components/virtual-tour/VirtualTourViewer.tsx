@@ -64,6 +64,12 @@ export function VirtualTourViewer({ tourData, isOpen, onClose, className }: Virt
 
     setIsLoading(true)
 
+    // Destroy existing viewer if any
+    if (viewer) {
+      viewer.destroy()
+      setViewer(null)
+    }
+
     // Dynamically import PhotoSphere viewer to avoid SSR issues
     import('photo-sphere-viewer').then(({ Viewer }) => {
       try {
@@ -92,6 +98,12 @@ export function VirtualTourViewer({ tourData, isOpen, onClose, className }: Virt
           plugins: [],
         })
 
+        // Resize viewer after creation
+        setTimeout(() => {
+          const rect = viewerRef.current!.getBoundingClientRect()
+          newViewer.resize({ width: `${rect.width}px`, height: `${rect.height}px` })
+        }, 100)
+
         // Add click handler for hotspots
         newViewer.on('click', (e: any) => {
           // Handle hotspot clicks for navigation
@@ -99,10 +111,10 @@ export function VirtualTourViewer({ tourData, isOpen, onClose, className }: Virt
             currentScene.hotspots.forEach(hotspot => {
               // Simple distance-based hotspot detection
               const distance = Math.sqrt(
-                Math.pow(e.data.yaw - hotspot.position.yaw, 2) + 
+                Math.pow(e.data.yaw - hotspot.position.yaw, 2) +
                 Math.pow(e.data.pitch - hotspot.position.pitch, 2)
               )
-              
+
               if (distance < 0.5) { // Threshold for hotspot detection
                 navigateToScene(hotspot.target_scene_id)
               }
@@ -126,9 +138,35 @@ export function VirtualTourViewer({ tourData, isOpen, onClose, className }: Virt
     return () => {
       if (viewer) {
         viewer.destroy()
+        setViewer(null)
       }
     }
   }, [isOpen, tourData, currentScene])
+
+  // Handle resizing
+  useEffect(() => {
+    const handleResize = () => {
+      if (viewer && viewerRef.current) {
+        const rect = viewerRef.current.getBoundingClientRect()
+        viewer.resize({ width: `${rect.width}px`, height: `${rect.height}px` })
+      }
+    }
+
+    const handleFullscreenChange = () => {
+      if (viewer && viewerRef.current) {
+        const rect = viewerRef.current.getBoundingClientRect()
+        viewer.resize({ width: `${rect.width}px`, height: `${rect.height}px` })
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    }
+  }, [viewer])
 
   // Set initial scene
   useEffect(() => {
@@ -199,10 +237,10 @@ export function VirtualTourViewer({ tourData, isOpen, onClose, className }: Virt
           </DialogHeader>
 
           {/* Main Viewer */}
-          <div 
-            ref={viewerRef} 
+          <div
+            ref={viewerRef}
             className="w-full h-full"
-            style={{ minHeight: '500px' }}
+            style={{ height: '100%' }}
           />
 
           {/* Loading Overlay */}
