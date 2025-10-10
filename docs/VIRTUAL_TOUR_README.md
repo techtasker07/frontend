@@ -56,27 +56,26 @@ docs/
 
 ## 🗄 Database Schema
 
-The virtual tour feature adds these new tables:
+The virtual tour feature adds these new tables integrated with marketplace listings:
 
-- `virtual_tours` - Main tour information
-- `virtual_tour_scenes` - Individual 360° images/rooms
-- `virtual_tour_hotspots` - Navigation points between scenes
-- Enhanced `properties` table with virtual tour flags
+- `virtual_tours` - Main tour information linked to marketplace_listings
+- `virtual_tour_scenes` - Individual 360° images/rooms with scene ordering
+- `virtual_tour_navigation` - Navigation connections between scenes
+- Enhanced `marketplace_listings` table with `has_virtual_tour` flag
 
 ## 🎯 How It Works
 
 ### For Property Owners:
-1. **Create Property** - Use the enhanced property creation form
-2. **Upload 360° Images** - Drag and drop panoramic photos
-3. **Name Rooms** - Give descriptive names to each scene
-4. **Connect Rooms** - Define navigation paths between spaces
-5. **Set Starting Point** - Choose the default entry scene
+1. **Create Property** - Fill out the marketplace listing form
+2. **Upload Virtual Tour Images** - Add 360° images in the "Virtual Tour Images" section
+3. **Automatic Processing** - Images are optimized and tour is created automatically
+4. **Tour Generated** - Virtual tour is saved and linked to the property
 
 ### For Property Viewers:
-1. **View Property** - Browse property listings as usual
-2. **Start Virtual Tour** - Click the "Virtual Tour" button
-3. **Navigate Immersively** - Look around with mouse/touch
-4. **Move Between Rooms** - Click hotspots or use room navigator
+1. **View Property** - Browse marketplace listings as usual
+2. **Virtual Tour Available** - Blue "Virtual Tour" tile appears if tour exists
+3. **Start Tour** - Click the tile to launch immersive 360° experience
+4. **Navigate Immersively** - Look around with mouse/touch, click hotspots to move between rooms
 5. **Full Experience** - Fullscreen mode for maximum immersion
 
 ## 📱 User Interface
@@ -118,10 +117,30 @@ The virtual tour feature adds these new tables:
 ## 🚦 Getting Started
 
 ### 1. Database Setup
-Run the SQL schema in your Supabase dashboard:
+**Manual Setup (Recommended):**
+
+1. Open your Supabase dashboard
+2. Go to the SQL Editor
+3. Copy and paste the contents of `docs/virtual-tour-schema.sql`
+4. Click "Run" to execute the schema
+
+This will create:
+- `virtual_tours` table
+- `virtual_tour_scenes` table
+- `virtual_tour_hotspots` table
+- All necessary indexes and RLS policies
+
+**Alternative: Setup Script**
 ```bash
-# Execute the schema file
-psql -f docs/virtual-tour-schema.sql
+# Install dependencies if needed
+npm install dotenv
+
+# Ensure your .env.local file has the required variables:
+# NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+# SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# Run the setup script
+node scripts/setup-virtual-tour-tables.js
 ```
 
 ### 2. Environment Setup
@@ -131,9 +150,9 @@ npm install photo-sphere-viewer --legacy-peer-deps
 ```
 
 ### 3. Component Integration
-The components are already integrated into:
-- `app/marketplace/create/page.tsx` - Marketplace property creation with virtual tour upload
-- `app/marketplace/[id]/page.tsx` - Marketplace property viewing with tour button
+The virtual tour functionality is integrated directly into the marketplace property creation form:
+- `app/marketplace/create/page.tsx` - Virtual tour images are uploaded as part of the main property form
+- `app/marketplace/[id]/page.tsx` - Property pages display virtual tours when available
 
 ### 4. API Integration
 You'll need to extend your API to handle virtual tour data:

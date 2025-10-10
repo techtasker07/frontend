@@ -99,10 +99,10 @@ export default function MarketPropertyDetailsPage() {
     }
   };
 
-  const fetchVirtualTourData = async (propertyId: string) => {
+  const fetchVirtualTourData = async (marketplaceListingId: string) => {
     try {
       setLoadingVirtualTour(true);
-      const response = await fetch(`/api/virtual-tour?propertyId=${propertyId}`);
+      const response = await fetch(`/api/virtual-tour?marketplaceListingId=${marketplaceListingId}`);
 
       if (response.ok) {
         const result = await response.json();

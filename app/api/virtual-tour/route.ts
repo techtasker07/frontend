@@ -2,15 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { VirtualTourData, VirtualTourScene, VirtualTourHotspot } from '@/lib/virtual-tour'
 
-// GET /api/virtual-tour?propertyId=<id> - Get virtual tour for a property
+// GET /api/virtual-tour?marketplaceListingId=<id> - Get virtual tour for a marketplace listing
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const propertyId = searchParams.get('propertyId')
+    const marketplaceListingId = searchParams.get('marketplaceListingId')
 
-    if (!propertyId) {
+    if (!marketplaceListingId) {
       return NextResponse.json(
-        { success: false, error: 'Property ID is required' },
+        { success: false, error: 'Marketplace listing ID is required' },
         { status: 400 }
       )
     }
@@ -19,7 +19,8 @@ export async function GET(request: NextRequest) {
     const { data: tour, error: tourError } = await supabase
       .from('virtual_tours')
       .select('*')
-      .eq('property_id', propertyId)
+      .eq('marketplace_listing_id', marketplaceListingId)
+      .eq('is_active', true)
       .single()
 
     if (tourError && tourError.code !== 'PGRST116') { // PGRST116 = no rows returned
@@ -41,8 +42,8 @@ export async function GET(request: NextRequest) {
     const { data: scenes, error: scenesError } = await supabase
       .from('virtual_tour_scenes')
       .select('*')
-      .eq('tour_id', tour.id)
-      .order('created_at', { ascending: true })
+      .eq('virtual_tour_id', tour.id)
+      .order('scene_order', { ascending: true })
 
     if (scenesError) {
       console.error('Error fetching tour scenes:', scenesError)
@@ -52,34 +53,52 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get hotspots for all scenes
+    // Get navigation connections for all scenes
     const sceneIds = scenes.map(s => s.id)
-    const { data: hotspots, error: hotspotsError } = await supabase
-      .from('virtual_tour_hotspots')
+    const { data: navigation, error: navigationError } = await supabase
+      .from('virtual_tour_navigation')
       .select('*')
-      .in('scene_id', sceneIds)
+      .in('from_scene_id', sceneIds)
 
-    if (hotspotsError) {
-      console.error('Error fetching hotspots:', hotspotsError)
+    if (navigationError) {
+      console.error('Error fetching navigation:', navigationError)
       return NextResponse.json(
-        { success: false, error: 'Failed to fetch hotspots' },
+        { success: false, error: 'Failed to fetch navigation' },
         { status: 500 }
       )
     }
 
+    // Convert navigation to hotspots format for compatibility
+    const hotspots: VirtualTourHotspot[] = navigation.map(nav => ({
+      id: nav.id,
+      target_scene_id: scenes.find(s => s.id === nav.to_scene_id)?.scene_order.toString() || nav.to_scene_id,
+      position: nav.hotspot_position,
+      title: nav.hotspot_title,
+      description: nav.hotspot_description,
+      type: 'navigation' as const
+    }))
+
     // Group hotspots by scene
     const scenesWithHotspots = scenes.map(scene => ({
-      ...scene,
-      hotspots: hotspots.filter(h => h.scene_id === scene.id)
+      id: scene.id,
+      scene_id: scene.scene_order.toString(),
+      name: scene.name,
+      image_url: scene.image_url,
+      description: scene.description,
+      position: scene.position,
+      hotspots: hotspots.filter(h => {
+        const fromScene = scenes.find(s => s.id === navigation.find(n => n.id === h.id)?.from_scene_id)
+        return fromScene?.id === scene.id
+      })
     }))
 
     const virtualTourData: VirtualTourData = {
       id: tour.id,
-      property_id: tour.property_id,
+      property_id: tour.marketplace_listing_id, // Keep for compatibility
       title: tour.title,
       description: tour.description,
       scenes: scenesWithHotspots,
-      default_scene_id: tour.default_scene_id,
+      default_scene_id: scenesWithHotspots[0]?.scene_id || '0',
       settings: tour.settings,
       created_at: tour.created_at,
       updated_at: tour.updated_at
@@ -104,7 +123,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const {
-      property_id,
+      property_id, // Keep for backward compatibility, but use marketplace_listing_id
+      marketplace_listing_id,
       title,
       description,
       scenes,
@@ -112,9 +132,25 @@ export async function POST(request: NextRequest) {
       settings
     } = body
 
-    if (!property_id || !title || !scenes || scenes.length === 0) {
+    const listingId = marketplace_listing_id || property_id
+
+    if (!listingId || !title || !scenes || scenes.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields: property_id, title, scenes' },
+        { success: false, error: 'Missing required fields: marketplace_listing_id, title, scenes' },
+        { status: 400 }
+      )
+    }
+
+    // Check if a virtual tour already exists for this listing
+    const { data: existingTour } = await supabase
+      .from('virtual_tours')
+      .select('id')
+      .eq('marketplace_listing_id', listingId)
+      .single()
+
+    if (existingTour) {
+      return NextResponse.json(
+        { success: false, error: 'A virtual tour already exists for this listing' },
         { status: 400 }
       )
     }
@@ -124,11 +160,11 @@ export async function POST(request: NextRequest) {
     const { data: tour, error: tourError } = await supabase
       .from('virtual_tours')
       .insert({
-        property_id,
+        marketplace_listing_id: listingId,
         title,
         description,
-        default_scene_id: default_scene_id || scenes[0]?.scene_id,
-        settings: settings || {}
+        settings: settings || {},
+        is_active: true
       })
       .select()
       .single()
@@ -142,9 +178,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Create scenes
-    const scenesToInsert = scenes.map((scene: any) => ({
-      tour_id: tour.id,
-      scene_id: scene.scene_id,
+    const scenesToInsert = scenes.map((scene: any, index: number) => ({
+      virtual_tour_id: tour.id,
+      scene_order: index,
       name: scene.name,
       image_url: scene.image_url,
       description: scene.description,
@@ -166,32 +202,37 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create hotspots if provided
-    const hotspotsToInsert: any[] = []
-    scenes.forEach((scene: any, index: number) => {
+    // Create navigation connections if hotspots are provided
+    const navigationToInsert: any[] = []
+    scenes.forEach((scene: any, sceneIndex: number) => {
       if (scene.hotspots && scene.hotspots.length > 0) {
-        const sceneRecord = createdScenes[index]
+        const fromScene = createdScenes[sceneIndex]
         scene.hotspots.forEach((hotspot: any) => {
-          hotspotsToInsert.push({
-            scene_id: sceneRecord.id,
-            target_scene_id: hotspot.target_scene_id,
-            position: hotspot.position,
-            title: hotspot.title,
-            description: hotspot.description,
-            type: hotspot.type || 'navigation'
-          })
+          // Find the target scene by scene_id (which should be the scene_order as string)
+          const targetSceneIndex = parseInt(hotspot.target_scene_id) || 0
+          const toScene = createdScenes[targetSceneIndex]
+
+          if (toScene && fromScene.id !== toScene.id) {
+            navigationToInsert.push({
+              from_scene_id: fromScene.id,
+              to_scene_id: toScene.id,
+              hotspot_position: hotspot.position,
+              hotspot_title: hotspot.title,
+              hotspot_description: hotspot.description
+            })
+          }
         })
       }
     })
 
-    if (hotspotsToInsert.length > 0) {
-      const { error: hotspotsError } = await supabase
-        .from('virtual_tour_hotspots')
-        .insert(hotspotsToInsert)
+    if (navigationToInsert.length > 0) {
+      const { error: navigationError } = await supabase
+        .from('virtual_tour_navigation')
+        .insert(navigationToInsert)
 
-      if (hotspotsError) {
-        console.error('Error creating hotspots:', hotspotsError)
-        // Don't fail the whole operation for hotspots, just log the error
+      if (navigationError) {
+        console.error('Error creating navigation:', navigationError)
+        // Don't fail the whole operation for navigation, just log the error
       }
     }
 

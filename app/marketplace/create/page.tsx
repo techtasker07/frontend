@@ -319,43 +319,48 @@ export default function CreateMarketplacePropertyPage() {
 
           // Upload virtual tour images
           const virtualTourUrls: string[] = [];
+
+          // Create FormData for multipart upload
+          const formData = new FormData();
+          formData.append('propertyId', data.id);
+
+          // Optimize and add images to FormData
           for (let i = 0; i < virtualTourImages.length; i++) {
             const file = virtualTourImages[i];
-            setUploadProgress(`Uploading virtual tour image ${i + 1} of ${virtualTourImages.length}...`);
+            setUploadProgress(`Processing virtual tour image ${i + 1} of ${virtualTourImages.length}...`);
 
             try {
               // Optimize image first
               const optimizedFile = await VirtualTourService.optimizeImage(file);
-
-              // Upload optimized image
-              const response = await fetch('/api/virtual-tour/upload-images', {
-                method: 'POST',
-                body: JSON.stringify({
-                  files: [optimizedFile],
-                  propertyId: data.id
-                }),
-                headers: {
-                  'Content-Type': 'application/json'
-                }
-              });
-
-              if (!response.ok) {
-                throw new Error(`Upload failed: ${response.statusText}`);
-              }
-
-              const result = await response.json();
-              if (result.success && result.data?.urls?.length > 0) {
-                virtualTourUrls.push(result.data.urls[0]);
-              } else {
-                throw new Error(result.error || 'Upload failed');
-              }
-            } catch (uploadError: any) {
-              toast.error(`Failed to upload virtual tour image ${file.name}: ${uploadError.message}`);
-              setError(`Failed to upload virtual tour image ${file.name}: ${uploadError.message}`);
+              formData.append('files', optimizedFile);
+            } catch (optimizeError: any) {
+              toast.error(`Failed to optimize virtual tour image ${file.name}: ${optimizeError.message}`);
+              setError(`Failed to optimize virtual tour image ${file.name}: ${optimizeError.message}`);
               setLoading(false);
               setUploadProgress("");
               return;
             }
+          }
+
+          setUploadProgress("Uploading virtual tour images...");
+
+          // Upload all images at once
+          const response = await fetch('/api/virtual-tour/upload-images', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Virtual tour upload response:', errorText);
+            throw new Error(`Upload failed: ${response.statusText}`);
+          }
+
+          const result = await response.json();
+          if (result.success && result.data?.urls?.length > 0) {
+            virtualTourUrls.push(...result.data.urls);
+          } else {
+            throw new Error(result.error || 'Upload failed');
           }
 
           // Create virtual tour data structure
@@ -369,7 +374,7 @@ export default function CreateMarketplacePropertyPage() {
 
           const tourData = {
             property_id: data.id,
-            title: `${formData.title} - Virtual Tour`,
+            title: `${data.title} - Virtual Tour`,
             scenes: processedScenes,
             default_scene_id: processedScenes[0]?.scene_id,
             settings: {

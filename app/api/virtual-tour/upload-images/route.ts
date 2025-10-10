@@ -3,15 +3,17 @@ import { createClient } from '@supabase/supabase-js'
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { files, propertyId } = body
+    // Parse multipart form data
+    const formData = await request.formData()
+    const files = formData.getAll('files') as File[]
+    const propertyId = formData.get('propertyId') as string
 
     console.log('Virtual Tour Upload: Received request with data:', {
       filesCount: files?.length,
       propertyId
     })
 
-    if (!files || !Array.isArray(files) || files.length === 0) {
+    if (!files || files.length === 0) {
       console.error('Virtual Tour Upload: No files provided')
       return NextResponse.json(
         { success: false, error: 'No files provided' },
@@ -61,21 +63,9 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        // Convert base64 or blob to buffer if needed
-        let fileBuffer: Buffer
-        let fileName = file.name
-
-        if (file.data) {
-          // Handle base64 data
-          const base64Data = file.data.replace(/^data:image\/\w+;base64,/, '')
-          fileBuffer = Buffer.from(base64Data, 'base64')
-        } else if (file instanceof File) {
-          // Handle File object
-          fileBuffer = Buffer.from(await file.arrayBuffer())
-        } else {
-          console.error(`Virtual Tour Upload: Unsupported file format for file ${i + 1}`)
-          continue
-        }
+        // Convert file to buffer
+        const fileBuffer = Buffer.from(await file.arrayBuffer())
+        const fileName = file.name
 
         // Generate unique filename for virtual tour images
         const timestamp = Date.now()
