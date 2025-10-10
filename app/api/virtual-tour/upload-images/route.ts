@@ -77,8 +77,8 @@ export async function POST(request: NextRequest) {
 
         // Upload to Supabase Storage
         const { data: uploadData, error: uploadError } = await supabaseClient.storage
-          .from('marketplace-images') // Using existing bucket
-          .upload(`virtual-tours/${uniqueFileName}`, fileBuffer, {
+          .from('property-images') // Using property-images bucket
+          .upload(`virtual_tour_images/${uniqueFileName}`, fileBuffer, {
             contentType: file.type,
             upsert: false
           })
@@ -90,8 +90,8 @@ export async function POST(request: NextRequest) {
 
         // Get public URL
         const { data: urlData } = supabaseClient.storage
-          .from('marketplace-images')
-          .getPublicUrl(`virtual-tours/${uniqueFileName}`)
+          .from('property-images')
+          .getPublicUrl(`virtual_tour_images/${uniqueFileName}`)
 
         if (urlData?.publicUrl) {
           uploadedUrls.push(urlData.publicUrl)

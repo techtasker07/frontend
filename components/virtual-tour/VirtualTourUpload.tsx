@@ -143,48 +143,54 @@ export function VirtualTourUpload({
     setUploadProgress(0)
 
     try {
-      // Upload all images
-      const files = scenes.map(s => s.file)
+      // Upload all images using FormData
       const uploadedUrls: string[] = []
 
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i]
-        setUploadProgress((i / files.length) * 50) // First 50% for uploads
+      // Create FormData for multipart upload
+      const formData = new FormData()
+      formData.append('propertyId', propertyId || 'virtual-tour')
+
+      // Optimize and add images to FormData
+      for (let i = 0; i < scenes.length; i++) {
+        const file = scenes[i].file
+        setUploadProgress((i / scenes.length) * 50) // First 50% for processing
 
         try {
           // Optimize image first
           const optimizedFile = await VirtualTourService.optimizeImage(file)
-
-          // Upload optimized image
-          const response = await fetch('/api/virtual-tour/upload-images', {
-            method: 'POST',
-            body: JSON.stringify({
-              files: [optimizedFile],
-              propertyId: propertyId || 'virtual-tour'
-            }),
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          })
-
-          if (!response.ok) {
-            throw new Error(`Upload failed: ${response.statusText}`)
-          }
-
-          const result = await response.json()
-          if (result.success && result.data?.urls?.length > 0) {
-            uploadedUrls.push(result.data.urls[0])
-            updateScene(scenes[i].id, { status: 'completed', uploadedUrl: result.data.urls[0] })
-          } else {
-            throw new Error(result.error || 'Upload failed')
-          }
-        } catch (error: any) {
-          updateScene(scenes[i].id, { status: 'error', error: error.message })
-          throw error
+          formData.append('files', optimizedFile)
+        } catch (optimizeError: any) {
+          updateScene(scenes[i].id, { status: 'error', error: optimizeError.message })
+          throw optimizeError
         }
       }
 
-      setUploadProgress(50) // Uploads complete
+      setUploadProgress(50) // Processing complete
+
+      // Upload all images at once
+      const response = await fetch('/api/virtual-tour/upload-images', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Virtual tour upload response:', errorText)
+        throw new Error(`Upload failed: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      if (result.success && result.data?.urls?.length > 0) {
+        uploadedUrls.push(...result.data.urls)
+        // Update all scenes as completed
+        scenes.forEach((scene, index) => {
+          updateScene(scene.id, { status: 'completed', uploadedUrl: uploadedUrls[index] })
+        })
+      } else {
+        throw new Error(result.error || 'Upload failed')
+      }
+
+      setUploadProgress(75)
 
       // Create tour data structure
       const processedScenes: Omit<VirtualTourScene, 'id'>[] = scenes.map((scene, index) => ({
@@ -208,8 +214,6 @@ export function VirtualTourUpload({
         }
       )
 
-      setUploadProgress(75)
-
       // Save tour to database if propertyId is provided
       if (propertyId) {
         const response = await fetch('/api/virtual-tour', {
@@ -224,6 +228,8 @@ export function VirtualTourUpload({
         })
 
         if (!response.ok) {
+          const tourErrorText = await response.text()
+          console.error('Failed to create virtual tour:', tourErrorText)
           throw new Error('Failed to save virtual tour')
         }
 
@@ -368,6 +374,8 @@ export function VirtualTourUpload({
                     onChange={handleFileSelect}
                     className="hidden"
                     disabled={disabled || isUploading}
+                    title="Select 360° images"
+                    placeholder="Select 360° images"
                   />
                 </div>
                 <div className="mt-4 text-xs text-muted-foreground">

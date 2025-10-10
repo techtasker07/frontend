@@ -1,10 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 import { VirtualTourData, VirtualTourScene, VirtualTourHotspot } from '@/lib/virtual-tour'
 
 // GET /api/virtual-tour?marketplaceListingId=<id> - Get virtual tour for a marketplace listing
 export async function GET(request: NextRequest) {
   try {
+    // Create Supabase client with service role key to bypass RLS
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl) {
+      console.error('Virtual Tour API: NEXT_PUBLIC_SUPABASE_URL not configured')
+      return NextResponse.json(
+        { success: false, error: 'Server configuration error' },
+        { status: 500 }
+      )
+    }
+
+    let supabaseClient
+    if (supabaseServiceKey) {
+      supabaseClient = createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      })
+    } else {
+      console.warn('Virtual Tour API: SUPABASE_SERVICE_ROLE_KEY not configured, using anon key')
+      supabaseClient = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      })
+    }
+
     const { searchParams } = new URL(request.url)
     const marketplaceListingId = searchParams.get('marketplaceListingId')
 
@@ -16,7 +46,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get the virtual tour
-    const { data: tour, error: tourError } = await supabase
+    const { data: tour, error: tourError } = await supabaseClient
       .from('virtual_tours')
       .select('*')
       .eq('marketplace_listing_id', marketplaceListingId)
@@ -39,7 +69,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get scenes for this tour
-    const { data: scenes, error: scenesError } = await supabase
+    const { data: scenes, error: scenesError } = await supabaseClient
       .from('virtual_tour_scenes')
       .select('*')
       .eq('virtual_tour_id', tour.id)
@@ -54,8 +84,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Get navigation connections for all scenes
-    const sceneIds = scenes.map(s => s.id)
-    const { data: navigation, error: navigationError } = await supabase
+    const sceneIds = scenes.map((s: any) => s.id)
+    const { data: navigation, error: navigationError } = await supabaseClient
       .from('virtual_tour_navigation')
       .select('*')
       .in('from_scene_id', sceneIds)
@@ -121,6 +151,36 @@ export async function GET(request: NextRequest) {
 // POST /api/virtual-tour - Create a new virtual tour
 export async function POST(request: NextRequest) {
   try {
+    // Create Supabase client with service role key to bypass RLS
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl) {
+      console.error('Virtual Tour API: NEXT_PUBLIC_SUPABASE_URL not configured')
+      return NextResponse.json(
+        { success: false, error: 'Server configuration error' },
+        { status: 500 }
+      )
+    }
+
+    let supabaseClient
+    if (supabaseServiceKey) {
+      supabaseClient = createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      })
+    } else {
+      console.warn('Virtual Tour API: SUPABASE_SERVICE_ROLE_KEY not configured, using anon key')
+      supabaseClient = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      })
+    }
+
     const body = await request.json()
     const {
       property_id, // Keep for backward compatibility, but use marketplace_listing_id
@@ -142,7 +202,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if a virtual tour already exists for this listing
-    const { data: existingTour } = await supabase
+    const { data: existingTour } = await supabaseClient
       .from('virtual_tours')
       .select('id')
       .eq('marketplace_listing_id', listingId)
@@ -157,7 +217,7 @@ export async function POST(request: NextRequest) {
 
     // Start a transaction-like operation
     // First, create the virtual tour
-    const { data: tour, error: tourError } = await supabase
+    const { data: tour, error: tourError } = await supabaseClient
       .from('virtual_tours')
       .insert({
         marketplace_listing_id: listingId,
@@ -187,7 +247,7 @@ export async function POST(request: NextRequest) {
       position: scene.position
     }))
 
-    const { data: createdScenes, error: scenesError } = await supabase
+    const { data: createdScenes, error: scenesError } = await supabaseClient
       .from('virtual_tour_scenes')
       .insert(scenesToInsert)
       .select()
@@ -195,7 +255,7 @@ export async function POST(request: NextRequest) {
     if (scenesError) {
       console.error('Error creating scenes:', scenesError)
       // Clean up the tour if scenes creation failed
-      await supabase.from('virtual_tours').delete().eq('id', tour.id)
+      await supabaseClient.from('virtual_tours').delete().eq('id', tour.id)
       return NextResponse.json(
         { success: false, error: 'Failed to create tour scenes' },
         { status: 500 }
@@ -226,7 +286,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (navigationToInsert.length > 0) {
-      const { error: navigationError } = await supabase
+      const { error: navigationError } = await supabaseClient
         .from('virtual_tour_navigation')
         .insert(navigationToInsert)
 
@@ -237,7 +297,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch the complete tour data
-    const { data: completeTour, error: fetchError } = await supabase
+    const { data: completeTour, error: fetchError } = await supabaseClient
       .from('virtual_tours')
       .select('*')
       .eq('id', tour.id)
@@ -265,6 +325,36 @@ export async function POST(request: NextRequest) {
 // PUT /api/virtual-tour?id=<id> - Update a virtual tour
 export async function PUT(request: NextRequest) {
   try {
+    // Create Supabase client with service role key to bypass RLS
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl) {
+      console.error('Virtual Tour API: NEXT_PUBLIC_SUPABASE_URL not configured')
+      return NextResponse.json(
+        { success: false, error: 'Server configuration error' },
+        { status: 500 }
+      )
+    }
+
+    let supabaseClient
+    if (supabaseServiceKey) {
+      supabaseClient = createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      })
+    } else {
+      console.warn('Virtual Tour API: SUPABASE_SERVICE_ROLE_KEY not configured, using anon key')
+      supabaseClient = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      })
+    }
+
     const { searchParams } = new URL(request.url)
     const tourId = searchParams.get('id')
 
@@ -289,7 +379,7 @@ export async function PUT(request: NextRequest) {
     if (settings !== undefined) updateData.settings = settings
     if (property_id !== undefined) updateData.property_id = property_id
 
-    const { data: tour, error: tourError } = await supabase
+    const { data: tour, error: tourError } = await supabaseClient
       .from('virtual_tours')
       .update(updateData)
       .eq('id', tourId)
@@ -322,6 +412,36 @@ export async function PUT(request: NextRequest) {
 // DELETE /api/virtual-tour/[id] - Delete a virtual tour
 export async function DELETE(request: NextRequest) {
   try {
+    // Create Supabase client with service role key to bypass RLS
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl) {
+      console.error('Virtual Tour API: NEXT_PUBLIC_SUPABASE_URL not configured')
+      return NextResponse.json(
+        { success: false, error: 'Server configuration error' },
+        { status: 500 }
+      )
+    }
+
+    let supabaseClient
+    if (supabaseServiceKey) {
+      supabaseClient = createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      })
+    } else {
+      console.warn('Virtual Tour API: SUPABASE_SERVICE_ROLE_KEY not configured, using anon key')
+      supabaseClient = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      })
+    }
+
     const { searchParams } = new URL(request.url)
     const tourId = searchParams.get('id')
 
@@ -333,7 +453,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete the tour (cascading will handle scenes and hotspots)
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await supabaseClient
       .from('virtual_tours')
       .delete()
       .eq('id', tourId)

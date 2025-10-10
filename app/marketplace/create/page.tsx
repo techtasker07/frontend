@@ -396,10 +396,30 @@ export default function CreateMarketplacePropertyPage() {
           });
 
           if (!tourResponse.ok) {
-            console.error('Failed to create virtual tour');
+            const tourErrorText = await tourResponse.text();
+            console.error('Failed to create virtual tour:', tourErrorText);
             toast.warning('Property listed successfully, but there was an issue creating the virtual tour.');
           } else {
-            console.log('Virtual tour created successfully');
+            const tourResult = await tourResponse.json();
+            console.log('Virtual tour created successfully:', tourResult);
+
+            // Update the marketplace listing with virtual_tour_url
+            try {
+              const { error: updateError } = await supabase
+                .from('marketplace_listings')
+                .update({
+                  virtual_tour_url: tourResult.data?.id || `/api/virtual-tour?marketplaceListingId=${data.id}`
+                })
+                .eq('id', data.id);
+
+              if (updateError) {
+                console.warn('Failed to update virtual_tour_url:', updateError);
+              } else {
+                console.log('Virtual tour URL updated successfully');
+              }
+            } catch (updateError) {
+              console.warn('Error updating virtual_tour_url:', updateError);
+            }
           }
         } catch (tourError) {
           console.error('Error creating virtual tour:', tourError);
@@ -897,6 +917,7 @@ export default function CreateMarketplacePropertyPage() {
                     id="pet_friendly"
                     checked={formData.pet_friendly}
                     onChange={(e) => handleInputChange('pet_friendly', e.target.checked)}
+                    title="Pet Friendly"
                   />
                   <Label htmlFor="pet_friendly">Pet Friendly</Label>
                 </div>
@@ -909,6 +930,7 @@ export default function CreateMarketplacePropertyPage() {
                     id="dining_room"
                     checked={formData.dining_room}
                     onChange={(e) => handleInputChange('dining_room', e.target.checked)}
+                    title="Dining Room"
                   />
                   <Label htmlFor="dining_room">Dining Room</Label>
                 </div>
@@ -919,6 +941,7 @@ export default function CreateMarketplacePropertyPage() {
                     id="balcony_terrace"
                     checked={formData.balcony_terrace}
                     onChange={(e) => handleInputChange('balcony_terrace', e.target.checked)}
+                    title="Balcony/Terrace"
                   />
                   <Label htmlFor="balcony_terrace">Balcony/Terrace</Label>
                 </div>
