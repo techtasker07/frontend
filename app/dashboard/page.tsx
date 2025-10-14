@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabaseApi } from '../../lib/supabase-api';
+import { supabase } from '../../lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -40,18 +41,19 @@ const Dashboard: React.FC = () => {
 
   // Enhanced navigation items mirroring the general theme sidebar
   const [navigationItems] = useState<NavigationItem[]>([
-    { id: 'home', label: 'Home', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', active: false },
-    { id: 'dashboard', label: 'Dashboard', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', active: true },
-    { id: 'marketplace', label: 'Marketplace', icon: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z', active: false },
-    { id: 'properties', label: 'Properties', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', active: false },
-    { id: 'add-property', label: 'Add Property', icon: 'M12 4v16m8-8H4', active: false },
-    { id: 'profile', label: 'Profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', active: false }
+    { id: 'home', label: 'Home', icon: '/images/home.gif', active: true },
+    { id: 'poll', label: 'Poll', icon: '/images/poll.gif', active: false },
+    { id: 'marketplace', label: 'Marketplace', icon: '/images/market_place.gif', active: false },
+    { id: 'prospect', label: 'Prospect', icon: '/images/prospects.gif', active: false },
+    { id: 'verifications', label: 'Verifications', icon: '/images/verifications.gif', active: false },
+    { id: 'investment', label: 'Investment', icon: '/images/investment.gif', active: false },
+    { id: 'consultations', label: 'Consultations', icon: '/images/consultation.gif', active: false }
   ]);
 
   const [dashboardButtons, setDashboardButtons] = useState<DashboardButton[]>([
-    { id: 'poll', label: 'Poll', icon: '/images/poll.gif', count: 0, route: '/properties', color: 'gray' },
-    { id: 'marketplace', label: 'Market Place', icon: '/images/market_place.gif', count: 0, route: '/marketplace', color: 'gray' },
-    { id: 'prospects', label: 'Prospects', icon: '/images/prospects.gif', count: 0, route: '/prospects', color: 'gray' },
+    { id: 'completed', label: 'Completed', icon: '/images/completed.gif', count: 0, route: '/completed', color: 'gray' },
+    { id: 'ongoing', label: 'Ongoing', icon: '/images/ongoing.gif', count: 0, route: '/ongoing', color: 'gray' },
+    { id: 'contacts', label: 'Contacts', icon: '/images/contact.gif', count: 0, route: '/contacts', color: 'gray' },
     { id: 'verifications', label: 'Verifications', icon: '/images/verifications.gif', count: 0, route: '/verifications', color: 'gray' },
     { id: 'investment', label: 'Investment', icon: '/images/investment.gif', count: 0, route: '/investment', color: 'gray' },
     { id: 'consultations', label: 'Consultations', icon: '/images/consultation.gif', count: 0, route: '/consultations', color: 'gray' }
@@ -62,6 +64,23 @@ const Dashboard: React.FC = () => {
   const [pollProperties, setPollProperties] = useState<PropertyCard[]>([]);
   const [marketplaceProperties, setMarketplaceProperties] = useState<PropertyCard[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // New states for status-based view
+  const [activeStatus, setActiveStatus] = useState<string | null>('completed');
+  const [activeCategory, setActiveCategory] = useState<string>('poll');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [categoryData, setCategoryData] = useState<Record<string, PropertyCard[]>>({});
+  const [activeSingleCategory, setActiveSingleCategory] = useState<string | null>(null);
+
+  // Categories for the new tabbed view
+  const categories = [
+    { id: 'poll', label: 'Poll', icon: '/images/poll.gif' },
+    { id: 'marketplace', label: 'Marketplace', icon: '/images/market_place.gif' },
+    { id: 'prospect', label: 'Prospect', icon: '/images/prospects.gif' },
+    { id: 'verifications', label: 'Verifications', icon: '/images/verifications.gif' },
+    { id: 'investment', label: 'Investment', icon: '/images/investment.gif' },
+    { id: 'consultations', label: 'Consultations', icon: '/images/consultation.gif' }
+  ];
 
   useEffect(() => {
     // Only redirect if we're not loading and definitely not authenticated
@@ -76,22 +95,121 @@ const Dashboard: React.FC = () => {
     }
   }, [isAuthenticated, authLoading]);
 
-  // Remove loading delay - initialize immediately when authenticated
+  // Initialize with completed data by default
   useEffect(() => {
-    if (isAuthenticated && !authLoading) {
-      initializeDashboard();
+    if (isAuthenticated && !authLoading && activeStatus === 'completed') {
+      fetchCategoryData('completed');
     }
-  }, [isAuthenticated, authLoading]);
+  }, [isAuthenticated, authLoading, activeStatus]);
 
   const initializeDashboard = async () => {
     try {
       setLoading(true);
 
-      // Fetch counts for dashboard buttons
-      const [pollResponse, marketplaceResponse, prospectsResponse] = await Promise.all([
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch counts for dashboard buttons from database
+      const [
+        pollResponse,
+        marketplaceResponse,
+        prospectsResponse,
+        verificationsCount,
+        investmentCount,
+        consultationsCount,
+        completedCount,
+        ongoingCount,
+        contactsCount
+      ] = await Promise.all([
         supabaseApi.getProperties({ source: 'poll', limit: 100 }),
         supabaseApi.getMarketplaceListings({ limit: 100 }),
-        supabaseApi.getUserPropertyAnalyses(100)
+        supabaseApi.getUserPropertyAnalyses(100),
+        // Fetch verifications count
+        supabase
+          .from('properties')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('type', 'verifications'),
+        // Fetch investment count
+        supabase
+          .from('properties')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('type', 'investment'),
+        // Fetch consultations count
+        supabase
+          .from('properties')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('type', 'consultations'),
+        // Fetch completed activities count
+        supabase
+          .from('properties')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('status', 'completed'),
+        // Fetch ongoing activities count (recent items from last 7 days across all categories)
+        (async () => {
+          const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+          const [
+            pollCount,
+            marketplaceCount,
+            prospectsCount,
+            verificationsCount,
+            investmentCount,
+            consultationsCount
+          ] = await Promise.all([
+            // Poll properties (recent)
+            supabase
+              .from('properties')
+              .select('id', { count: 'exact', head: true })
+              .eq('user_id', user.id)
+              .eq('source', 'poll')
+              .gte('created_at', sevenDaysAgo),
+            // Marketplace listings (recent)
+            supabase
+              .from('marketplace_listings')
+              .select('id', { count: 'exact', head: true })
+              .eq('user_id', user.id)
+              .gte('created_at', sevenDaysAgo),
+            // Prospect analyses (recent)
+            supabase
+              .from('property_analyses')
+              .select('id', { count: 'exact', head: true })
+              .eq('user_id', user.id)
+              .gte('created_at', sevenDaysAgo),
+            // Verifications (recent)
+            supabase
+              .from('properties')
+              .select('id', { count: 'exact', head: true })
+              .eq('user_id', user.id)
+              .eq('type', 'verifications')
+              .gte('created_at', sevenDaysAgo),
+            // Investment (recent)
+            supabase
+              .from('properties')
+              .select('id', { count: 'exact', head: true })
+              .eq('user_id', user.id)
+              .eq('type', 'investment')
+              .gte('created_at', sevenDaysAgo),
+            // Consultations (recent)
+            supabase
+              .from('properties')
+              .select('id', { count: 'exact', head: true })
+              .eq('user_id', user.id)
+              .eq('type', 'consultations')
+              .gte('created_at', sevenDaysAgo)
+          ]);
+
+          const totalOngoing = (pollCount.count || 0) + (marketplaceCount.count || 0) + (prospectsCount.count || 0) + (verificationsCount.count || 0) + (investmentCount.count || 0) + (consultationsCount.count || 0);
+          return { count: totalOngoing };
+        })(),
+        // Fetch contacts count (could be from a contacts table or profiles)
+        supabase
+          .from('profiles')
+          .select('id', { count: 'exact', head: true })
       ]);
 
       const pollCount = pollResponse.success ? pollResponse.data.length : 0;
@@ -100,9 +218,12 @@ const Dashboard: React.FC = () => {
 
       setDashboardButtons(prev => prev.map(btn => {
         switch (btn.id) {
-          case 'poll': return { ...btn, count: pollCount };
-          case 'marketplace': return { ...btn, count: marketplaceCount };
-          case 'prospects': return { ...btn, count: prospectsCount };
+          case 'completed': return { ...btn, count: completedCount.count || 0 };
+          case 'ongoing': return { ...btn, count: ongoingCount.count || 0 };
+          case 'contacts': return { ...btn, count: contactsCount.count || 0 };
+          case 'verifications': return { ...btn, count: verificationsCount.count || 0 };
+          case 'investment': return { ...btn, count: investmentCount.count || 0 };
+          case 'consultations': return { ...btn, count: consultationsCount.count || 0 };
           default: return btn;
         }
       }));
@@ -148,22 +269,305 @@ const Dashboard: React.FC = () => {
     // Navigation routes mapping
     const routes = {
       'home': '/',
-      'dashboard': '/dashboard',
+      'poll': '/properties',
       'marketplace': '/marketplace',
-      'properties': '/properties',
-      'add-property': '/add-property',
-      'profile': '/profile'
+      'prospect': '/prospects',
+      'verifications': '/verifications',
+      'investment': '/investment',
+      'consultations': '/consultations'
     };
 
     // Navigate to the appropriate route
     const route = routes[navItem.id as keyof typeof routes];
-    if (route && navItem.id !== 'dashboard') {
+    if (route) {
       router.push(route);
     }
   };
 
-  const handleButtonClick = (route: string) => {
-    router.push(route);
+  const handleButtonClick = (buttonId: string) => {
+    if (buttonId === 'completed' || buttonId === 'ongoing') {
+      setActiveStatus(buttonId);
+      setActiveCategory('poll'); // Default to poll
+      setCurrentPage(1);
+      fetchCategoryData(buttonId);
+    } else if (buttonId === 'contacts' || buttonId === 'verifications' || buttonId === 'investment' || buttonId === 'consultations') {
+      // For these buttons, show single category view
+      setActiveSingleCategory(buttonId);
+      setActiveStatus(null); // Hide the multi-category view
+      setCurrentPage(1);
+      fetchSingleCategoryData(buttonId);
+    } else {
+      // For other buttons, keep existing navigation
+      const routes = {
+        'contacts': '/contacts',
+        'verifications': '/verifications',
+        'investment': '/investment',
+        'consultations': '/consultations'
+      };
+      const route = routes[buttonId as keyof typeof routes];
+      if (route) {
+        router.push(route);
+      }
+    }
+  };
+
+  const fetchCategoryData = async (status: string) => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const statusFilter = status === 'completed' ? 'completed' : 'ongoing';
+      const isRecent = status === 'ongoing'; // Ongoing now shows recent items
+
+      // Fetch data for all categories
+      const [
+        pollResponse,
+        marketplaceResponse,
+        prospectsResponse,
+        verificationsResponse,
+        investmentResponse,
+        consultationsResponse
+      ] = await Promise.all([
+        supabaseApi.getProperties({ source: 'poll', limit: 100 }),
+        supabaseApi.getMarketplaceListings({ limit: 100 }),
+        supabaseApi.getUserPropertyAnalyses(100),
+        supabase
+          .from('properties')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('type', 'verifications')
+          .eq('status', statusFilter)
+          .limit(100),
+        supabase
+          .from('properties')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('type', 'investment')
+          .eq('status', statusFilter)
+          .limit(100),
+        supabase
+          .from('properties')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('type', 'consultations')
+          .eq('status', statusFilter)
+          .limit(100)
+      ]);
+
+      const newCategoryData: Record<string, PropertyCard[]> = {};
+
+      // Process poll data
+      if (pollResponse.success) {
+        let filteredPoll = pollResponse.data;
+        if (status === 'completed') {
+          filteredPoll = filteredPoll.filter(prop => prop.type === 'completed');
+        } else if (isRecent) {
+          // For ongoing (recent), show recent items
+          const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+          filteredPoll = filteredPoll.filter(prop => new Date(prop.created_at) >= sevenDaysAgo);
+        } else {
+          filteredPoll = filteredPoll.filter(prop => prop.type === 'ongoing' || prop.type === 'active');
+        }
+        newCategoryData.poll = filteredPoll.map(prop => ({
+          id: prop.id,
+          title: prop.title,
+          location: prop.location,
+          price: prop.current_worth ? `₦${prop.current_worth.toLocaleString()}` : 'Price on request',
+          image: prop.image_url || '/api/placeholder/300/200',
+          status: prop.type || 'active',
+          created_at: prop.created_at
+        }));
+      }
+
+      // Process marketplace data
+      if (marketplaceResponse.success) {
+        let filteredMarketplace = marketplaceResponse.data;
+        if (status === 'completed') {
+          filteredMarketplace = filteredMarketplace.filter(prop => prop.is_active === false);
+        } else if (isRecent) {
+          // For ongoing (recent), show recent items
+          const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+          filteredMarketplace = filteredMarketplace.filter(prop => new Date(prop.created_at) >= sevenDaysAgo);
+        } else {
+          filteredMarketplace = filteredMarketplace.filter(prop => prop.is_active === true);
+        }
+        newCategoryData.marketplace = filteredMarketplace.map(prop => ({
+          id: prop.id,
+          title: prop.title,
+          location: prop.location,
+          price: `₦${prop.price.toLocaleString()}`,
+          image: prop.images?.find(img => img.is_primary)?.image_url || '/api/placeholder/300/200',
+          status: prop.is_active ? 'available' : 'completed',
+          created_at: prop.created_at
+        }));
+      }
+
+      // Process prospects data
+      if (prospectsResponse.success) {
+        let filteredProspects = prospectsResponse.data;
+        if (status === 'completed') {
+          // For completed, include all prospects since analysis is typically completed
+          filteredProspects = filteredProspects;
+        } else if (isRecent) {
+          // For ongoing (recent), show only very recent items (last 24 hours)
+          const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+          filteredProspects = filteredProspects.filter(prop => new Date(prop.created_at) >= oneDayAgo);
+        } else {
+          // For ongoing (active), show only actively ongoing prospects
+          filteredProspects = filteredProspects.filter(prop => prop.status === 'ongoing' || prop.status === 'active');
+        }
+        newCategoryData.prospect = filteredProspects.map(prop => ({
+          id: prop.id,
+          title: prop.title || 'Prospect Analysis',
+          location: prop.location || 'N/A',
+          price: 'Analysis Complete',
+          image: '/api/placeholder/300/200',
+          status: prop.status,
+          created_at: prop.created_at
+        }));
+      }
+
+      // Process verifications data
+      if (verificationsResponse.data) {
+        newCategoryData.verifications = verificationsResponse.data.map(prop => ({
+          id: prop.id,
+          title: prop.title || 'Verification',
+          location: prop.location || 'N/A',
+          price: 'Verification Service',
+          image: '/api/placeholder/300/200',
+          status: prop.status,
+          created_at: prop.created_at
+        }));
+      }
+
+      // Process investment data
+      if (investmentResponse.data) {
+        newCategoryData.investment = investmentResponse.data.map(prop => ({
+          id: prop.id,
+          title: prop.title || 'Investment',
+          location: prop.location || 'N/A',
+          price: prop.price ? `₦${prop.price.toLocaleString()}` : 'Investment',
+          image: '/api/placeholder/300/200',
+          status: prop.status,
+          created_at: prop.created_at
+        }));
+      }
+
+      // Process consultations data
+      if (consultationsResponse.data) {
+        newCategoryData.consultations = consultationsResponse.data.map(prop => ({
+          id: prop.id,
+          title: prop.title || 'Consultation',
+          location: prop.location || 'N/A',
+          price: 'Consultation Service',
+          image: '/api/placeholder/300/200',
+          status: prop.status,
+          created_at: prop.created_at
+        }));
+      }
+
+      setCategoryData(newCategoryData);
+    } catch (error) {
+      console.error('Error fetching category data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSingleCategoryData = async (category: string) => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      let response;
+      let mappedData: PropertyCard[] = [];
+
+      switch (category) {
+        case 'contacts':
+          // Fetch contacts (profiles)
+          response = await supabase
+            .from('profiles')
+            .select('*')
+            .limit(100);
+          if (response.data) {
+            mappedData = response.data.map(profile => ({
+              id: profile.id,
+              title: profile.first_name + ' ' + (profile.last_name || ''),
+              location: 'N/A',
+              price: 'Contact',
+              image: '/api/placeholder/300/200',
+              status: 'active',
+              created_at: profile.created_at
+            }));
+          }
+          break;
+        case 'verifications':
+          response = await supabase
+            .from('properties')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('type', 'verifications')
+            .limit(100);
+          if (response.data) {
+            mappedData = response.data.map(prop => ({
+              id: prop.id,
+              title: prop.title || 'Verification',
+              location: prop.location || 'N/A',
+              price: 'Verification Service',
+              image: '/api/placeholder/300/200',
+              status: prop.status,
+              created_at: prop.created_at
+            }));
+          }
+          break;
+        case 'investment':
+          response = await supabase
+            .from('properties')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('type', 'investment')
+            .limit(100);
+          if (response.data) {
+            mappedData = response.data.map(prop => ({
+              id: prop.id,
+              title: prop.title || 'Investment',
+              location: prop.location || 'N/A',
+              price: prop.price ? `₦${prop.price.toLocaleString()}` : 'Investment',
+              image: '/api/placeholder/300/200',
+              status: prop.status,
+              created_at: prop.created_at
+            }));
+          }
+          break;
+        case 'consultations':
+          response = await supabase
+            .from('properties')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('type', 'consultations')
+            .limit(100);
+          if (response.data) {
+            mappedData = response.data.map(prop => ({
+              id: prop.id,
+              title: prop.title || 'Consultation',
+              location: prop.location || 'N/A',
+              price: 'Consultation Service',
+              image: '/api/placeholder/300/200',
+              status: prop.status,
+              created_at: prop.created_at
+            }));
+          }
+          break;
+      }
+
+      setCategoryData({ [category]: mappedData });
+    } catch (error) {
+      console.error('Error fetching single category data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getPropertiesByCategory = (properties: PropertyCard[], category: 'recent' | 'completed' | 'ongoing') => {
@@ -174,12 +578,22 @@ const Dashboard: React.FC = () => {
       case 'recent':
         return properties.filter(prop => new Date(prop.created_at) >= sevenDaysAgo);
       case 'completed':
-        return properties.filter(prop => prop.status === 'Completed');
+        return properties.filter(prop => prop.status === 'Completed' || prop.status === 'completed');
       case 'ongoing':
-        return properties.filter(prop => prop.status === 'Active' || prop.status === 'Available');
+        return properties.filter(prop => prop.status === 'Active' || prop.status === 'Available' || prop.status === 'active' || prop.status === 'available');
       default:
         return properties;
     }
+  };
+
+  const getPaginatedItems = (items: PropertyCard[], page: number, itemsPerPage: number = 6) => {
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return items.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = (items: PropertyCard[], itemsPerPage: number = 6) => {
+    return Math.ceil(items.length / itemsPerPage);
   };
 
   if (!isAuthenticated) {
@@ -217,9 +631,14 @@ const Dashboard: React.FC = () => {
                     }`}
                     title={item.label}
                   >
-                    <svg className={`w-5 h-5 ${item.active ? 'text-indigo-600' : 'text-gray-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={item.icon} />
-                    </svg>
+                    <img
+                      src={item.icon}
+                      alt={item.label}
+                      className="w-5 h-5 object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/api/placeholder/20/20';
+                      }}
+                    />
                   </button>
                   {/* Hover tooltip */}
                   <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-sm px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
@@ -234,18 +653,23 @@ const Dashboard: React.FC = () => {
 
       {/* Mobile Navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-        <div className="flex justify-around py-2">
-          {navigationItems.slice(0, 5).map((item, index) => (
+        <div className="flex justify-around py-2 overflow-x-auto">
+          {navigationItems.map((item, index) => (
             <button
               key={item.id}
               onClick={() => handleSidebarAction(index)}
-              className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors ${
+              className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors min-w-0 flex-shrink-0 ${
                 item.active ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
-              <svg className={`w-5 h-5 ${item.active ? 'text-indigo-600' : 'text-gray-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={item.icon} />
-              </svg>
+              <img
+                src={item.icon}
+                alt={item.label}
+                className="w-5 h-5 object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/api/placeholder/20/20';
+                }}
+              />
               <span className="text-xs mt-1 truncate max-w-[60px]">{item.label}</span>
             </button>
           ))}
@@ -253,7 +677,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Main content */}
-      <div className="md:ml-16 pb-16 sm:pb-20 md:pb-0">
+      <div className="md:ml-16 pb-20 md:pb-0">
         {/* Header */}
         <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
           <div className="px-2 sm:px-3 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4">
@@ -278,8 +702,10 @@ const Dashboard: React.FC = () => {
             {dashboardButtons.map(button => (
               <button
                 key={button.id}
-                onClick={() => handleButtonClick(button.route)}
-                className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-xl hover:shadow-gray-300/50 transition-all duration-300 border border-gray-200 hover:border-gray-300 group w-full shadow-md"
+                onClick={() => handleButtonClick(button.id)}
+                className={`bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-xl hover:shadow-gray-300/50 transition-all duration-300 border border-gray-200 hover:border-gray-300 group w-full shadow-md ${
+                  (activeStatus === button.id || activeSingleCategory === button.id) ? 'ring-2 ring-indigo-500 bg-indigo-50' : ''
+                }`}
               >
                 <div className="flex flex-col items-center text-center">
                   <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-2 sm:mb-3 md:mb-4 overflow-hidden">
@@ -301,107 +727,163 @@ const Dashboard: React.FC = () => {
             ))}
           </div>
 
-          {/* Properties Tabs */}
+          {/* Listing View - Always shown under buttons */}
           <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            {/* Tab Headers */}
-            <div className="border-b border-gray-200">
-              <div className="flex overflow-x-auto">
-                <button
-                  onClick={() => setActiveTab('poll')}
-                  className={`flex-1 min-w-0 px-3 sm:px-4 md:px-6 py-3 sm:py-4 text-center font-medium transition-colors text-xs sm:text-sm md:text-base ${
-                    activeTab === 'poll'
-                      ? 'text-indigo-600 border-b-2 border-indigo-600'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  Poll Properties
-                </button>
-                <button
-                  onClick={() => setActiveTab('marketplace')}
-                  className={`flex-1 min-w-0 px-3 sm:px-4 md:px-6 py-3 sm:py-4 text-center font-medium transition-colors text-xs sm:text-sm md:text-base ${
-                    activeTab === 'marketplace'
-                      ? 'text-indigo-600 border-b-2 border-indigo-600'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  Marketplace Properties
-                </button>
-              </div>
-            </div>
-
-            {/* Sub-tabs */}
-            <div className="border-b border-gray-200 bg-gray-50">
-              <div className="flex overflow-x-auto px-2 sm:px-4 md:px-6">
-                {(['recent', 'completed', 'ongoing'] as const).map(subTab => (
+            {/* Status/Category Header */}
+            <div className="border-b border-gray-200 bg-gray-50 px-3 sm:px-4 md:px-6 py-3 sm:py-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 capitalize">
+                  {activeStatus ? `${activeStatus} Activities` : activeSingleCategory ? `${activeSingleCategory.charAt(0).toUpperCase() + activeSingleCategory.slice(1)}` : 'Completed Activities'}
+                </h3>
+                {(activeStatus || activeSingleCategory) && (
                   <button
-                    key={subTab}
-                    onClick={() => setActiveSubTab(subTab)}
-                    className={`flex-1 min-w-0 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-center font-medium transition-colors text-xs sm:text-sm ${
-                      activeSubTab === subTab
-                        ? 'text-indigo-600 border-b-2 border-indigo-600 bg-white'
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
+                    onClick={() => {
+                      setActiveStatus('completed');
+                      setActiveSingleCategory(null);
+                      setActiveCategory('poll');
+                      setCurrentPage(1);
+                      fetchCategoryData('completed');
+                    }}
+                    className="text-gray-500 hover:text-gray-700 text-sm"
                   >
-                    {subTab.charAt(0).toUpperCase() + subTab.slice(1)}
+                    ← Back to Completed
                   </button>
-                ))}
+                )}
               </div>
             </div>
 
-            {/* Tab Content */}
-            <div className="p-3 sm:p-4 md:p-6">
-              {activeTab === 'poll' && (
-                <div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                    {getPropertiesByCategory(pollProperties, activeSubTab).map(property => (
-                      <div key={property.id} className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:border-indigo-300 transition-colors">
-                        <img
-                          src={property.image}
-                          alt={property.title}
-                          className="w-full h-24 sm:h-28 md:h-32 object-cover rounded-lg mb-2 sm:mb-3"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/api/placeholder/300/200';
-                          }}
-                        />
-                        <h4 className="font-semibold text-gray-900 text-xs sm:text-sm mb-1 line-clamp-2">{property.title}</h4>
-                        <p className="text-xs text-gray-600 line-clamp-1">{property.location}</p>
-                      </div>
-                    ))}
-                  </div>
-                  {getPropertiesByCategory(pollProperties, activeSubTab).length === 0 && (
-                    <div className="text-center py-6 sm:py-8">
-                      <p className="text-xs sm:text-sm text-gray-500">No {activeSubTab} poll properties found</p>
-                    </div>
-                  )}
+            {/* Category Tabs - Only show for multi-category views */}
+            {activeStatus && (
+              <div className="border-b border-gray-200">
+                <div className="flex overflow-x-auto">
+                  {categories.map(category => (
+                    <button
+                      key={category.id}
+                      onClick={() => setActiveCategory(category.id)}
+                      className={`flex-1 min-w-0 px-2 sm:px-3 md:px-4 py-3 sm:py-4 text-center font-medium transition-colors text-xs sm:text-sm flex items-center justify-center gap-2 ${
+                        activeCategory === category.id
+                          ? 'text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50'
+                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <img
+                        src={category.icon}
+                        alt={category.label}
+                        className="w-4 h-4 object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/api/placeholder/20/20';
+                        }}
+                      />
+                      <span className="truncate">{category.label}</span>
+                    </button>
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
 
-              {activeTab === 'marketplace' && (
-                <div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                    {getPropertiesByCategory(marketplaceProperties, activeSubTab).map(property => (
-                      <div key={property.id} className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:border-indigo-300 transition-colors">
-                        <img
-                          src={property.image}
-                          alt={property.title}
-                          className="w-full h-24 sm:h-28 md:h-32 object-cover rounded-lg mb-2 sm:mb-3"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/api/placeholder/300/200';
-                          }}
-                        />
-                        <h4 className="font-semibold text-gray-900 text-xs sm:text-sm mb-1 line-clamp-2">{property.title}</h4>
-                        <p className="text-xs text-gray-600 mb-1 sm:mb-2 line-clamp-1">{property.location}</p>
-                        <p className="text-xs sm:text-sm font-medium text-green-600">{property.price}</p>
+            {/* Category Content */}
+            <div className="p-3 sm:p-4 md:p-6">
+              {(() => {
+                const currentCategory = activeStatus ? activeCategory : activeSingleCategory || 'poll';
+                const currentItems = categoryData[currentCategory] || [];
+                const paginatedItems = getPaginatedItems(currentItems, currentPage);
+                const totalPages = getTotalPages(currentItems);
+
+                return (
+                  <div>
+                    {/* Items Grid/List */}
+                    {(currentCategory === 'verifications' || currentCategory === 'consultations') ? (
+                      // List view for verifications and consultations
+                      <div className="space-y-3">
+                        {paginatedItems.map(item => (
+                          <div key={item.id} className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:border-indigo-300 transition-colors">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-900 text-sm mb-1">{item.title}</h4>
+                                <p className="text-xs text-gray-600">{item.location}</p>
+                                <p className="text-xs text-gray-500 mt-1">{item.price}</p>
+                              </div>
+                              <div className="text-xs text-gray-400">
+                                {new Date(item.created_at).toLocaleDateString()}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    ) : (
+                      // Grid view for listings (poll, marketplace, prospect, investment, contacts)
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                        {paginatedItems.map(item => (
+                          <div key={item.id} className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:border-indigo-300 transition-colors">
+                            <img
+                              src={item.image}
+                              alt={item.title}
+                              className="w-full h-24 sm:h-28 md:h-32 object-cover rounded-lg mb-2 sm:mb-3"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/api/placeholder/300/200';
+                              }}
+                            />
+                            <h4 className="font-semibold text-gray-900 text-xs sm:text-sm mb-1 line-clamp-2">{item.title}</h4>
+                            <p className="text-xs text-gray-600 mb-1 line-clamp-1">{item.location}</p>
+                            {currentCategory !== 'poll' && (
+                              <p className="text-xs sm:text-sm font-medium text-green-600">{item.price}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-center mt-6 space-x-2">
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                          className="px-3 py-1 text-sm border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                        >
+                          Previous
+                        </button>
+
+                        {/* Page numbers */}
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                          if (pageNum > totalPages) return null;
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => setCurrentPage(pageNum)}
+                              className={`px-3 py-1 text-sm border rounded ${
+                                currentPage === pageNum
+                                  ? 'bg-indigo-600 text-white border-indigo-600'
+                                  : 'border-gray-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                          disabled={currentPage === totalPages}
+                          className="px-3 py-1 text-sm border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Empty state */}
+                    {currentItems.length === 0 && (
+                      <div className="text-center py-6 sm:py-8">
+                        <p className="text-xs sm:text-sm text-gray-500">
+                          No {activeStatus || activeSingleCategory} items found
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  {getPropertiesByCategory(marketplaceProperties, activeSubTab).length === 0 && (
-                    <div className="text-center py-6 sm:py-8">
-                      <p className="text-xs sm:text-sm text-gray-500">No {activeSubTab} marketplace properties found</p>
-                    </div>
-                  )}
-                </div>
-              )}
+                );
+              })()}
             </div>
           </div>
         </main>
