@@ -766,13 +766,6 @@ const Dashboard: React.FC = () => {
                           : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                       }`}
                     >
-                      <img
-                        alt={category.label}
-                        className="w-4 h-4 object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/api/placeholder/20/20';
-                        }}
-                      />
                       <span className="truncate">{category.label}</span>
                     </button>
                   ))}
