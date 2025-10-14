@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { supabaseApi } from '../../lib/supabase-api';
 import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
-import { MarketplacePropertiesUpdate } from '@/components/dashboard/MarketplacePropertiesUpdate';
 import Link from 'next/link';
 
 // Define interfaces for our data structures
@@ -15,44 +14,30 @@ interface NavigationItem {
   active: boolean;
 }
 
-interface StatItem {
+interface DashboardButton {
   id: string;
   label: string;
-  value: string;
-  trend: string;
   icon: string;
+  count: number;
+  route: string;
   color: string;
 }
 
-interface PollItem {
+interface PropertyCard {
   id: string;
   title: string;
-  description: string;
-  image: string;
+  location: string;
   price: string;
-  details: string;
-  progress: number;
-  votes: number;
-  timeLeft: string;
+  image: string;
   status: string;
-  statusColor: string;
-}
-
-
-interface ActivityItem {
-  id: string;
-  type: string;
-  message: string;
-  time: string;
-  icon: string;
-  color: string;
+  created_at: string;
 }
 
 // Dashboard component
 const Dashboard: React.FC = () => {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
-  
+
   // Enhanced navigation items mirroring the general theme sidebar
   const [navigationItems] = useState<NavigationItem[]>([
     { id: 'home', label: 'Home', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', active: false },
@@ -63,9 +48,19 @@ const Dashboard: React.FC = () => {
     { id: 'profile', label: 'Profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', active: false }
   ]);
 
-  const [statItems, setStatItems] = useState<StatItem[]>([]);
-  const [pollItems, setPollItems] = useState<PollItem[]>([]);
-  const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
+  const [dashboardButtons, setDashboardButtons] = useState<DashboardButton[]>([
+    { id: 'poll', label: 'Poll', icon: '/images/poll.gif', count: 0, route: '/properties', color: 'gray' },
+    { id: 'marketplace', label: 'Market Place', icon: '/images/market_place.gif', count: 0, route: '/marketplace', color: 'gray' },
+    { id: 'prospects', label: 'Prospects', icon: '/images/prospects.gif', count: 0, route: '/prospects', color: 'gray' },
+    { id: 'verifications', label: 'Verifications', icon: '/images/verifications.gif', count: 0, route: '/verifications', color: 'gray' },
+    { id: 'investment', label: 'Investment', icon: '/images/investment.gif', count: 0, route: '/investment', color: 'gray' },
+    { id: 'consultations', label: 'Consultations', icon: '/images/consultation.gif', count: 0, route: '/consultations', color: 'gray' }
+  ]);
+
+  const [activeTab, setActiveTab] = useState<'poll' | 'marketplace'>('poll');
+  const [activeSubTab, setActiveSubTab] = useState<'recent' | 'completed' | 'ongoing'>('recent');
+  const [pollProperties, setPollProperties] = useState<PropertyCard[]>([]);
+  const [marketplaceProperties, setMarketplaceProperties] = useState<PropertyCard[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -74,9 +69,16 @@ const Dashboard: React.FC = () => {
       router.push('/login');
       return;
     }
-    
+
     // Only fetch data if we're authenticated and not loading
     if (!authLoading && isAuthenticated) {
+      initializeDashboard();
+    }
+  }, [isAuthenticated, authLoading]);
+
+  // Remove loading delay - initialize immediately when authenticated
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
       initializeDashboard();
     }
   }, [isAuthenticated, authLoading]);
@@ -85,49 +87,51 @@ const Dashboard: React.FC = () => {
     try {
       setLoading(true);
 
-      // Fetch dashboard stats
-      const statsResponse = await supabaseApi.getDashboardStats();
-      if (statsResponse.success) {
-        const stats = statsResponse.data;
-        setStatItems([
-          {
-            id: 'active-polls',
-            label: 'Active Polls',
-            value: stats.activePolls.toString(),
-            trend: '+3 this week',
-            icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
-            color: 'indigo'
-          },
-          {
-            id: 'community-votes',
-            label: 'Community Votes',
-            value: stats.communityVotes.toString(),
-            trend: '+18 today',
-            icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
-            color: 'purple'
-          },
-          {
-            id: 'marketplace-properties',
-            label: 'Marketplace Properties',
-            value: (stats as any).marketplaceProperties?.toString() || '0',
-            trend: '+5 new this week',
-            icon: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z',
-            color: 'green'
-          }
-        ]);
+      // Fetch counts for dashboard buttons
+      const [pollResponse, marketplaceResponse, prospectsResponse] = await Promise.all([
+        supabaseApi.getProperties({ source: 'poll', limit: 100 }),
+        supabaseApi.getMarketplaceListings({ limit: 100 }),
+        supabaseApi.getUserPropertyAnalyses(100)
+      ]);
+
+      const pollCount = pollResponse.success ? pollResponse.data.length : 0;
+      const marketplaceCount = marketplaceResponse.success ? marketplaceResponse.data.length : 0;
+      const prospectsCount = prospectsResponse.success ? prospectsResponse.data.length : 0;
+
+      setDashboardButtons(prev => prev.map(btn => {
+        switch (btn.id) {
+          case 'poll': return { ...btn, count: pollCount };
+          case 'marketplace': return { ...btn, count: marketplaceCount };
+          case 'prospects': return { ...btn, count: prospectsCount };
+          default: return btn;
+        }
+      }));
+
+      // Fetch properties for tabs
+      if (pollResponse.success) {
+        const pollProps = pollResponse.data.map(prop => ({
+          id: prop.id,
+          title: prop.title,
+          location: prop.location,
+          price: prop.current_worth ? `₦${prop.current_worth.toLocaleString()}` : 'Price on request',
+          image: prop.image_url || '/api/placeholder/300/200',
+          status: 'Active',
+          created_at: prop.created_at
+        }));
+        setPollProperties(pollProps);
       }
 
-      // Fetch dashboard polls
-      const pollsResponse = await supabaseApi.getDashboardPolls(10);
-      if (pollsResponse.success) {
-        setPollItems(pollsResponse.data);
-      }
-
-
-      // Fetch dashboard activities
-      const activitiesResponse = await supabaseApi.getDashboardActivities(10);
-      if (activitiesResponse.success) {
-        setActivityItems(activitiesResponse.data);
+      if (marketplaceResponse.success) {
+        const marketProps = marketplaceResponse.data.map(prop => ({
+          id: prop.id,
+          title: prop.title,
+          location: prop.location,
+          price: `₦${prop.price.toLocaleString()}`,
+          image: prop.images?.find(img => img.is_primary)?.image_url || '/api/placeholder/300/200',
+          status: 'Available',
+          created_at: prop.created_at
+        }));
+        setMarketplaceProperties(marketProps);
       }
 
     } catch (error) {
@@ -158,37 +162,41 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleCreatePoll = () => {
-    alert('Create New Property Poll modal would open here with form fields for property details, images, and poll questions.');
+  const handleButtonClick = (route: string) => {
+    router.push(route);
   };
 
-  const handleSearch = (query: string) => {
-    alert(`Searching for properties: "${query}"`);
-  };
+  const getPropertiesByCategory = (properties: PropertyCard[], category: 'recent' | 'completed' | 'ongoing') => {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  const handlePollClick = (pollId: string) => {
-    alert(`Property poll details and voting interface would open for poll: ${pollId}`);
-  };
-
-
-  const handleViewAll = () => {
-    alert('Full list view would open here with filtering and sorting options.');
+    switch (category) {
+      case 'recent':
+        return properties.filter(prop => new Date(prop.created_at) >= sevenDaysAgo);
+      case 'completed':
+        return properties.filter(prop => prop.status === 'Completed');
+      case 'ongoing':
+        return properties.filter(prop => prop.status === 'Active' || prop.status === 'Available');
+      default:
+        return properties;
+    }
   };
 
   if (!isAuthenticated) {
     return null; // Will redirect to login
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading dashboard...</p>
-        </div>
-      </div>
-    );
-  }
+  // Remove loading screen for instant loading
+  // if (loading) {
+  //   return (
+  //     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+  //       <div className="text-center">
+  //         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+  //         <p className="mt-4 text-gray-600">Loading dashboard...</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -245,131 +253,156 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Main content */}
-      <div className="md:ml-16 pb-20 md:pb-0">
+      <div className="md:ml-16 pb-16 sm:pb-20 md:pb-0">
         {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200">
-          <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4">
+        <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+          <div className="px-2 sm:px-3 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">Smart Dashboard</h2>
+              <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900">Smart Dashboard</h2>
               <div className="flex items-center space-x-2 md:space-x-4">
-                <div className="relative hidden sm:block">
-                  <input
-                    type="text"
-                    placeholder="Search properties..."
-                    className="w-40 sm:w-48 md:w-64 px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSearch((e.target as HTMLInputElement).value);
-                      }
-                    }}
-                  />
+                <div className="text-xs sm:text-sm text-gray-600 hidden sm:block">
+                  Welcome back, {user?.first_name || 'User'}!
                 </div>
-                <button
-                  onClick={handleCreatePoll}
-                  className="bg-indigo-600 text-white px-2 sm:px-3 md:px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-xs sm:text-sm md:text-base"
-                >
-                  <span className="hidden sm:inline">Create New Poll</span>
-                  <span className="sm:hidden">Create</span>
-                </button>
+                <div className="text-xs text-gray-600 sm:hidden">
+                  Hi, {user?.first_name || 'User'}!
+                </div>
               </div>
             </div>
           </div>
         </header>
 
         {/* Dashboard content */}
-        <main className="p-3 sm:p-4 md:p-6">
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 md:mb-8">
-            {statItems.map(stat => (
-              <div key={stat.id} className="bg-white rounded-xl p-6 card-hover">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-                    <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                    <p className={`text-sm text-${stat.color}-600`}>{stat.trend}</p>
+        <main className="p-2 sm:p-3 md:p-4 lg:p-6">
+          {/* Navigation Buttons Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
+            {dashboardButtons.map(button => (
+              <button
+                key={button.id}
+                onClick={() => handleButtonClick(button.route)}
+                className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-lg transition-all duration-200 border border-gray-200 hover:border-gray-300 group w-full"
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-2 sm:mb-3 md:mb-4 overflow-hidden">
+                    <img
+                      src={button.icon}
+                      alt={button.label}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/api/placeholder/64/64';
+                      }}
+                    />
                   </div>
-                  <div className={`w-12 h-12 bg-${stat.color}-100 rounded-lg flex items-center justify-center`}>
-                    <svg className={`w-6 h-6 text-${stat.color}-600`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={stat.icon} />
-                    </svg>
+                  <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 mb-1 sm:mb-2 leading-tight">{button.label}</h3>
+                  <div className="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium bg-gray-100 text-gray-800">
+                    {button.count} items
                   </div>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
 
-          {/* Main content grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-            {/* Active Polls */}
-            <div className="lg:col-span-2">
-              <div className="bg-white rounded-xl p-4 sm:p-6">
-                <div className="flex items-center justify-between mb-4 sm:mb-6">
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Active Property Polls</h3>
-                  <button
-                    onClick={handleViewAll}
-                    className="text-indigo-600 hover:text-indigo-800 text-xs sm:text-sm font-medium"
-                  >
-                    View All
-                  </button>
-                </div>
-                <div className="space-y-3 sm:space-y-4">
-                  {pollItems.map(poll => (
-                    <div
-                      key={poll.id}
-                      className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:border-indigo-300 transition-colors cursor-pointer"
-                      onClick={() => handlePollClick(poll.id)}
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-start space-y-3 sm:space-y-0 sm:space-x-4">
-                        <img
-                          src={poll.image}
-                          alt={poll.title}
-                          className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg object-cover flex-shrink-0"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-gray-900 text-sm sm:text-base">{poll.title}</h4>
-                          <p className="text-xs sm:text-sm text-gray-600">{poll.price} • {poll.details}</p>
-                          <div className="flex flex-col sm:flex-row sm:items-center mt-2 space-y-2 sm:space-y-0 sm:space-x-4">
-                            <div className="flex items-center space-x-2">
-                              <div className="w-24 sm:w-32 bg-gray-200 rounded-full h-2">
-                                <div
-                                  className="poll-progress h-2 rounded-full bg-indigo-600"
-                                  style={{ width: `${poll.progress}%` }}
-                                ></div>
-                              </div>
-                              <span className="text-xs sm:text-sm font-medium text-gray-700">{poll.progress}% positive</span>
-                            </div>
-                            <span className="text-xs sm:text-sm text-gray-500">{poll.votes} votes</span>
-                          </div>
-                        </div>
-                        <div className="flex sm:flex-col items-center sm:items-end justify-between sm:text-right">
-                          <span className="text-xs sm:text-sm text-gray-500">{poll.timeLeft}</span>
-                          <div className="mt-1">
-                            <span className={`inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full text-xs font-medium bg-${poll.statusColor}-100 text-${poll.statusColor}-800`}>
-                              {poll.status}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+          {/* Properties Tabs */}
+          <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            {/* Tab Headers */}
+            <div className="border-b border-gray-200">
+              <div className="flex overflow-x-auto">
+                <button
+                  onClick={() => setActiveTab('poll')}
+                  className={`flex-1 min-w-0 px-3 sm:px-4 md:px-6 py-3 sm:py-4 text-center font-medium transition-colors text-xs sm:text-sm md:text-base ${
+                    activeTab === 'poll'
+                      ? 'text-indigo-600 border-b-2 border-indigo-600'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Poll Properties
+                </button>
+                <button
+                  onClick={() => setActiveTab('marketplace')}
+                  className={`flex-1 min-w-0 px-3 sm:px-4 md:px-6 py-3 sm:py-4 text-center font-medium transition-colors text-xs sm:text-sm md:text-base ${
+                    activeTab === 'marketplace'
+                      ? 'text-indigo-600 border-b-2 border-indigo-600'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Marketplace Properties
+                </button>
               </div>
             </div>
 
-            {/* Marketplace Properties Update */}
-            <div>
-              <div className="bg-white rounded-xl p-4 sm:p-6">
-                <div className="flex items-center justify-between mb-4 sm:mb-6">
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Marketplace Properties</h3>
-                  <Link href="/marketplace" className="text-indigo-600 hover:text-indigo-800 text-xs sm:text-sm font-medium">
-                    View All
-                  </Link>
-                </div>
-                <MarketplacePropertiesUpdate />
+            {/* Sub-tabs */}
+            <div className="border-b border-gray-200 bg-gray-50">
+              <div className="flex overflow-x-auto px-2 sm:px-4 md:px-6">
+                {(['recent', 'completed', 'ongoing'] as const).map(subTab => (
+                  <button
+                    key={subTab}
+                    onClick={() => setActiveSubTab(subTab)}
+                    className={`flex-1 min-w-0 px-2 sm:px-3 md:px-4 py-2 sm:py-3 text-center font-medium transition-colors text-xs sm:text-sm ${
+                      activeSubTab === subTab
+                        ? 'text-indigo-600 border-b-2 border-indigo-600 bg-white'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    {subTab.charAt(0).toUpperCase() + subTab.slice(1)}
+                  </button>
+                ))}
               </div>
+            </div>
+
+            {/* Tab Content */}
+            <div className="p-3 sm:p-4 md:p-6">
+              {activeTab === 'poll' && (
+                <div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                    {getPropertiesByCategory(pollProperties, activeSubTab).map(property => (
+                      <div key={property.id} className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:border-indigo-300 transition-colors">
+                        <img
+                          src={property.image}
+                          alt={property.title}
+                          className="w-full h-24 sm:h-28 md:h-32 object-cover rounded-lg mb-2 sm:mb-3"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/api/placeholder/300/200';
+                          }}
+                        />
+                        <h4 className="font-semibold text-gray-900 text-xs sm:text-sm mb-1 line-clamp-2">{property.title}</h4>
+                        <p className="text-xs text-gray-600 mb-1 sm:mb-2 line-clamp-1">{property.location}</p>
+                        <p className="text-xs sm:text-sm font-medium text-indigo-600">{property.price}</p>
+                      </div>
+                    ))}
+                  </div>
+                  {getPropertiesByCategory(pollProperties, activeSubTab).length === 0 && (
+                    <div className="text-center py-6 sm:py-8">
+                      <p className="text-xs sm:text-sm text-gray-500">No {activeSubTab} poll properties found</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'marketplace' && (
+                <div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                    {getPropertiesByCategory(marketplaceProperties, activeSubTab).map(property => (
+                      <div key={property.id} className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:border-indigo-300 transition-colors">
+                        <img
+                          src={property.image}
+                          alt={property.title}
+                          className="w-full h-24 sm:h-28 md:h-32 object-cover rounded-lg mb-2 sm:mb-3"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/api/placeholder/300/200';
+                          }}
+                        />
+                        <h4 className="font-semibold text-gray-900 text-xs sm:text-sm mb-1 line-clamp-2">{property.title}</h4>
+                        <p className="text-xs text-gray-600 mb-1 sm:mb-2 line-clamp-1">{property.location}</p>
+                        <p className="text-xs sm:text-sm font-medium text-green-600">{property.price}</p>
+                      </div>
+                    ))}
+                  </div>
+                  {getPropertiesByCategory(marketplaceProperties, activeSubTab).length === 0 && (
+                    <div className="text-center py-6 sm:py-8">
+                      <p className="text-xs sm:text-sm text-gray-500">No {activeSubTab} marketplace properties found</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </main>
