@@ -74,12 +74,12 @@ const Dashboard: React.FC = () => {
 
   // Categories for the new tabbed view
   const categories = [
-    { id: 'poll', label: 'Poll', icon: '/images/poll.gif' },
-    { id: 'marketplace', label: 'Marketplace', icon: '/images/market_place.gif' },
-    { id: 'prospect', label: 'Prospect', icon: '/images/prospects.gif' },
-    { id: 'verifications', label: 'Verifications', icon: '/images/verifications.gif' },
-    { id: 'investment', label: 'Investment', icon: '/images/investment.gif' },
-    { id: 'consultations', label: 'Consultations', icon: '/images/consultation.gif' }
+    { id: 'poll', label: 'Poll' },
+    { id: 'marketplace', label: 'Marketplace' },
+    { id: 'prospect', label: 'Prospect' },
+    { id: 'verifications', label: 'Verifications' },
+    { id: 'investment', label: 'Investment' },
+    { id: 'consultations', label: 'Consultations' }
   ];
 
   useEffect(() => {
@@ -661,6 +661,7 @@ const Dashboard: React.FC = () => {
               className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors min-w-0 flex-shrink-0 ${
                 item.active ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'
               }`}
+              title={item.label}
             >
               <img
                 src={item.icon}
@@ -670,7 +671,6 @@ const Dashboard: React.FC = () => {
                   (e.target as HTMLImageElement).src = '/api/placeholder/20/20';
                 }}
               />
-              <span className="text-xs mt-1 truncate max-w-[60px]">{item.label}</span>
             </button>
           ))}
         </div>
@@ -767,7 +767,6 @@ const Dashboard: React.FC = () => {
                       }`}
                     >
                       <img
-                        src={category.icon}
                         alt={category.label}
                         className="w-4 h-4 object-cover"
                         onError={(e) => {
