@@ -279,7 +279,7 @@ const Dashboard: React.FC = () => {
               <button
                 key={button.id}
                 onClick={() => handleButtonClick(button.route)}
-                className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-lg transition-all duration-200 border border-gray-200 hover:border-gray-300 group w-full"
+                className="bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-xl hover:shadow-gray-300/50 transition-all duration-300 border border-gray-200 hover:border-gray-300 group w-full shadow-md"
               >
                 <div className="flex flex-col items-center text-center">
                   <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-2 sm:mb-3 md:mb-4 overflow-hidden">
@@ -364,8 +364,7 @@ const Dashboard: React.FC = () => {
                           }}
                         />
                         <h4 className="font-semibold text-gray-900 text-xs sm:text-sm mb-1 line-clamp-2">{property.title}</h4>
-                        <p className="text-xs text-gray-600 mb-1 sm:mb-2 line-clamp-1">{property.location}</p>
-                        <p className="text-xs sm:text-sm font-medium text-indigo-600">{property.price}</p>
+                        <p className="text-xs text-gray-600 line-clamp-1">{property.location}</p>
                       </div>
                     ))}
                   </div>
