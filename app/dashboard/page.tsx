@@ -615,35 +615,42 @@ const Dashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar - Hidden on mobile, always visible on desktop */}
-      <div className="fixed inset-y-0 left-0 w-16 bg-white shadow-lg hidden md:block">
+      <div className="fixed inset-y-0 left-0 w-20 bg-white shadow-lg hidden md:block">
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-center h-16 bg-indigo-600">
             <div className="text-white text-xs font-bold">M</div>
           </div>
           <nav className="flex-1 px-2 py-6">
-            <div className="space-y-2">
+            <div className="flex flex-col items-center space-y-4">
               {navigationItems.map((item, index) => (
-                <div key={item.id} className="relative group">
-                  <button
-                    onClick={() => handleSidebarAction(index)}
-                    className={`w-full flex items-center justify-center px-2 py-3 rounded-lg transition-colors ${
-                      item.active ? 'bg-indigo-50 text-indigo-700 sidebar-active' : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                    title={item.label}
-                  >
-                    <img
-                      src={item.icon}
-                      alt={item.label}
-                      className="w-5 h-5 object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/api/placeholder/20/20';
-                      }}
-                    />
-                  </button>
-                  {/* Hover tooltip */}
-                  <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-sm px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                    {item.label}
+                <div key={item.id} className="flex flex-col items-center">
+                  <div className="relative group">
+                    <button
+                      onClick={() => handleSidebarAction(index)}
+                      className={`w-14 h-14 flex items-center justify-center rounded-lg border transition-colors ${
+                        item.active ? 'bg-orange-500 text-white border-orange-600' : 'bg-blue-500 text-white border-blue-600 hover:bg-orange-500'
+                      }`}
+                      title={item.label}
+                    >
+                      <img
+                        src={item.icon}
+                        alt={item.label}
+                        className="w-8 h-8 object-cover rounded-full"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/api/placeholder/32/32';
+                        }}
+                      />
+                    </button>
+                    {/* Hover tooltip */}
+                    <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white text-sm px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                      {item.label}
+                    </div>
                   </div>
+                  {index < navigationItems.length - 1 && (
+                    <div className="my-2">
+                      <div className="w-8 h-px bg-gray-300"></div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -659,16 +666,16 @@ const Dashboard: React.FC = () => {
               key={item.id}
               onClick={() => handleSidebarAction(index)}
               className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors min-w-0 flex-shrink-0 ${
-                item.active ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'
+                item.active ? 'bg-orange-500 text-white' : 'bg-blue-500 text-white hover:bg-orange-500'
               }`}
               title={item.label}
             >
               <img
                 src={item.icon}
                 alt={item.label}
-                className="w-5 h-5 object-cover"
+                className="w-8 h-8 object-cover rounded-full"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/api/placeholder/20/20';
+                  (e.target as HTMLImageElement).src = '/api/placeholder/32/32';
                 }}
               />
             </button>
@@ -677,7 +684,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Main content */}
-      <div className="md:ml-16 pb-20 md:pb-0">
+      <div className="md:ml-20 pb-20 md:pb-0">
         {/* Header */}
         <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
           <div className="px-2 sm:px-3 md:px-4 lg:px-6 py-2 sm:py-3 md:py-4">
@@ -699,16 +706,19 @@ const Dashboard: React.FC = () => {
         <main className="p-2 sm:p-3 md:p-4 lg:p-6">
           {/* Navigation Buttons Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
-            {dashboardButtons.map(button => (
+            {dashboardButtons.map((button, index) => (
               <button
                 key={button.id}
                 onClick={() => handleButtonClick(button.id)}
-                className={`bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-xl hover:shadow-gray-300/50 transition-all duration-300 border border-gray-200 hover:border-gray-300 group w-full shadow-md ${
-                  (activeStatus === button.id || activeSingleCategory === button.id) ? 'ring-2 ring-indigo-500 bg-indigo-50' : ''
+                className={`relative rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-xl hover:shadow-gray-300/50 transition-all duration-300 border border-gray-200 hover:border-gray-300 group w-full shadow-md overflow-hidden ${
+                  (activeStatus === button.id || activeSingleCategory === button.id) ? 'ring-2 ring-indigo-500' : ''
                 }`}
+                style={{
+                  background: index >= 3 ? 'linear-gradient(to bottom, #ffffff 50%, #3b82f6 50%)' : 'linear-gradient(to bottom, #3b82f6 50%, #ffffff 50%)'
+                }}
               >
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-2 sm:mb-3 md:mb-4 overflow-hidden">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-2 sm:mb-3 md:mb-4 overflow-hidden bg-white shadow-sm">
                     <img
                       src={button.icon}
                       alt={button.label}
