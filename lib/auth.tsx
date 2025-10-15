@@ -27,6 +27,7 @@ interface AuthContextType {
     password: string;
     phone_number?: string;
   }) => Promise<void>;
+  signInWithGoogle: (context?: 'login' | 'register') => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>; // Added refreshUser function
   loading: boolean;
@@ -209,6 +210,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const signInWithGoogle = async (context: 'login' | 'register' = 'login') => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?context=${context}`,
+        },
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+    } catch (error: any) {
+      throw error;
+    }
+  };
+
   const logout = async () => {
     try {
       await supabase.auth.signOut();
@@ -239,6 +257,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     token,
     login,
     register,
+    signInWithGoogle,
     logout,
     refreshUser, // Added refreshUser to the context value
     loading,
