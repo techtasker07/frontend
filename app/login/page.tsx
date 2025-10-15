@@ -8,11 +8,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useAuth } from '@/lib/auth'
 import { Eye, EyeOff, Loader2, ArrowLeft, Home } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
 import { Separator } from '@/components/ui/separator'
+import { supabase } from '@/lib/supabase'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -21,6 +23,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetLoading, setResetLoading] = useState(false)
   
   const { login, signInWithGoogle } = useAuth()
   const router = useRouter()
@@ -54,6 +59,29 @@ export default function LoginPage() {
       toast.error(error.message || 'Google sign-in failed. Please try again.')
       setError(error.message || 'Google sign-in failed. Please try again.')
       setGoogleLoading(false)
+    }
+  }
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setResetLoading(true)
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      })
+
+      if (error) {
+        throw error
+      }
+
+      toast.success('Password reset email sent! Check your inbox.')
+      setShowForgotPassword(false)
+      setResetEmail('')
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to send reset email. Please try again.')
+    } finally {
+      setResetLoading(false)
     }
   }
 
@@ -145,7 +173,17 @@ export default function LoginPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="px-0 font-normal text-sm"
+                    onClick={() => setShowForgotPassword(true)}
+                  >
+                    Forgot your password?
+                  </Button>
+                </div>
                 <div className="relative">
                   <Input
                     id="password"
@@ -195,6 +233,53 @@ export default function LoginPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Forgot Password Dialog */}
+        <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Reset your password</DialogTitle>
+              <DialogDescription>
+                Enter your email address and we'll send you a link to reset your password.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">Email address</Label>
+                <Input
+                  id="reset-email"
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  required
+                  disabled={resetLoading}
+                />
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowForgotPassword(false)}
+                  disabled={resetLoading}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={resetLoading} className="flex-1">
+                  {resetLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Send Reset Link'
+                  )}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
         </div>
       </div>
     </div>
