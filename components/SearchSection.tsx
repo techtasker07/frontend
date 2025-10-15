@@ -104,22 +104,22 @@ export function SearchSection({ filters, onFiltersChange, onSearch }: SearchSect
         </div>
 
         {/* Quick Stats */}
-        <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-6 mt-12 max-w-4xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-8 md:mt-12 max-w-4xl mx-auto">
           <div className="text-center">
-            <div className="text-1xl font-bold text-gray-900">1,000+</div>
-            <div className="text-gray-600">Properties Listed</div>
+            <div className="text-lg md:text-xl font-bold text-gray-900">1,000+</div>
+            <div className="text-sm md:text-base text-gray-600">Properties Listed</div>
           </div>
           <div className="text-center">
-            <div className="text-1xl font-bold text-gray-900">500+</div>
-            <div className="text-gray-600">Active Polls</div>
+            <div className="text-lg md:text-xl font-bold text-gray-900">500+</div>
+            <div className="text-sm md:text-base text-gray-600">Active Polls</div>
           </div>
           <div className="text-center">
-            <div className="text-1xl font-bold text-gray-900">98%</div>
-            <div className="text-gray-600">Satisfaction Rate</div>
+            <div className="text-lg md:text-xl font-bold text-gray-900">98%</div>
+            <div className="text-sm md:text-base text-gray-600">Satisfaction Rate</div>
           </div>
           <div className="text-center">
-            <div className="text-1xl font-bold text-gray-900">24/7</div>
-            <div className="text-gray-600">Support Available</div>
+            <div className="text-lg md:text-xl font-bold text-gray-900">24/7</div>
+            <div className="text-sm md:text-base text-gray-600">Support Available</div>
           </div>
         </div>
       </div>

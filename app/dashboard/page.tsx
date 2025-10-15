@@ -714,7 +714,7 @@ const Dashboard: React.FC = () => {
                   (activeStatus === button.id || activeSingleCategory === button.id) ? 'ring-2 ring-indigo-500' : ''
                 }`}
                 style={{
-                  background: index >= 3 ? 'linear-gradient(to bottom, #ffffff 50%, #3b82f6 50%)' : 'linear-gradient(to bottom, #3b82f6 50%, #ffffff 50%)'
+                  background: 'linear-gradient(to bottom, #3b82f6 50%, #ffffff 50%)'
                 }}
               >
                 <div className="flex flex-col items-center text-center">
