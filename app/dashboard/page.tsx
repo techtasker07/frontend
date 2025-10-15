@@ -54,8 +54,8 @@ const Dashboard: React.FC = () => {
     { id: 'completed', label: 'Completed', icon: '/images/completed.gif', count: 0, route: '/completed', color: 'gray' },
     { id: 'ongoing', label: 'Ongoing', icon: '/images/ongoing.gif', count: 0, route: '/ongoing', color: 'gray' },
     { id: 'contacts', label: 'Contacts', icon: '/images/contact.gif', count: 0, route: '/contacts', color: 'gray' },
-    { id: 'verifications', label: 'Verifications', icon: '/images/verifications.gif', count: 0, route: '/verifications', color: 'gray' },
-    { id: 'investment', label: 'Investment', icon: '/images/investment.gif', count: 0, route: '/investment', color: 'gray' },
+    { id: 'Crowd-Funding', label: 'Crowd Funding', icon: '/images/crowd-funding.gif', count: 0, route: '/verifications', color: 'gray' },
+    { id: 'Re-es Party', label: 'Re-es Party', icon: '/images/re-es paty.gif', count: 0, route: '/investment', color: 'gray' },
     { id: 'consultations', label: 'Consultations', icon: '/images/consultation.gif', count: 0, route: '/consultations', color: 'gray' }
   ]);
 
@@ -77,8 +77,8 @@ const Dashboard: React.FC = () => {
     { id: 'poll', label: 'Poll' },
     { id: 'marketplace', label: 'Marketplace' },
     { id: 'prospect', label: 'Prospect' },
-    { id: 'verifications', label: 'Verifications' },
-    { id: 'investment', label: 'Investment' },
+    { id: 'Crowd-Funding', label: 'Crowd Funding' },
+    { id: 'Re-es Party', label: 'Re-es Party' },
     { id: 'consultations', label: 'Consultations' }
   ];
 
