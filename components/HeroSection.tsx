@@ -59,7 +59,7 @@ export function HeroSection() {
   return (
     <section className="relative bg-gradient-to-br from-[#667eea] to-[#764ba2] overflow-hidden">
       <div className="max-w-6xl mx-auto px-2 sm:px-6 lg:px-3 py-1">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-12 items-center">
           {/* Left Content */}
           <div className="max-w-lg">
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#000080] mb-6 leading-tight">
