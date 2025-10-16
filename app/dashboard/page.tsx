@@ -55,7 +55,7 @@ const Dashboard: React.FC = () => {
     { id: 'ongoing', label: 'Ongoing', icon: '/images/ongoing.gif', count: 0, route: '/ongoing', color: 'gray' },
     { id: 'contacts', label: 'Contacts', icon: '/images/contact.gif', count: 0, route: '/contacts', color: 'gray' },
     { id: 'Crowd-Funding', label: 'Crowd Funding', icon: '/images/crowd-funding.gif', count: 0, route: '/verifications', color: 'gray' },
-    { id: 'Re-es Party', label: 'Re-es Party', icon: '/images/re-es paty.gif', count: 0, route: '/investment', color: 'gray' },
+    { id: 'Re-es Party', label: 'Re-es Party', icon: '/images/re-es party.gif', count: 0, route: '/investment', color: 'gray' },
     { id: 'consultations', label: 'Consultations', icon: '/images/consultation.gif', count: 0, route: '/consultations', color: 'gray' }
   ]);
 
@@ -77,8 +77,8 @@ const Dashboard: React.FC = () => {
     { id: 'poll', label: 'Poll' },
     { id: 'marketplace', label: 'Marketplace' },
     { id: 'prospect', label: 'Prospect' },
-    { id: 'Crowd-Funding', label: 'Crowd Funding' },
-    { id: 'Re-es Party', label: 'Re-es Party' },
+    { id: 'Verifications', label: 'Verifications' },
+    { id: 'Investment', label: 'Investment' },
     { id: 'consultations', label: 'Consultations' }
   ];
 
