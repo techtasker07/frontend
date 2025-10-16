@@ -6,7 +6,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth"
 import { PropertyTypeDialog } from "@/components/PropertyTypeDialog"
-import { Home, Building, Plus, User, LogOut, UserPlus, LogIn, BarChart3, ShoppingBag, FileText, Zap, Grid3X3 } from "lucide-react"
+import { Home, Building, Plus, User, LogOut, UserPlus, LogIn, BarChart3, ShoppingBag, FileText, Zap, Grid3X3, DollarSign, Users } from "lucide-react"
 
 interface SidebarProps {
   onClose?: () => void
@@ -29,21 +29,26 @@ const publicNavigation: NavigationItem[] = [
 ]
 
 const authenticatedNavigation: NavigationItem[] = [
-   { name: "Home", href: "/", icon: Home },
-   { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
-   { name: "Marketplace", href: "/marketplace", icon: ShoppingBag },
-   { name: "Properties", href: "/properties", icon: Building },
-   { name: "Gallery", href: "/gallery", icon: Grid3X3 },
-   { name: "Prospects", href: "/prospects", icon: Zap },
-   { name: "Add Property", href: "/add-property", icon: Plus },
-   { name: "Privacy Policy", href: "/privacy", icon: FileText },
-   { name: "Terms of Service", href: "/terms", icon: FileText },
- ]
+    { name: "Home", href: "/", icon: Home },
+    { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
+    { name: "Services", href: "#", icon: Grid3X3 },
+    { name: "Privacy Policy", href: "/privacy", icon: FileText },
+    { name: "Terms of Service", href: "/terms", icon: FileText },
+  ]
+
+const servicesSubNavigation: NavigationItem[] = [
+  { name: "Poll", href: "/properties", icon: Building },
+  { name: "Prospect", href: "/prospects", icon: Zap },
+  { name: "Market Place", href: "/marketplace", icon: ShoppingBag },
+  { name: "Crowd Funding", href: "/crowd-funding", icon: DollarSign },
+  { name: "Re-es Party", href: "/re-es-party", icon: Users },
+]
 
 export function Sidebar({ onClose }: SidebarProps) {
-  const pathname = usePathname()
-  const { user, isAuthenticated, logout } = useAuth()
-  const [showPropertyTypeDialog, setShowPropertyTypeDialog] = useState(false)
+   const pathname = usePathname()
+   const { user, isAuthenticated, logout } = useAuth()
+   const [showPropertyTypeDialog, setShowPropertyTypeDialog] = useState(false)
+   const [servicesExpanded, setServicesExpanded] = useState(false)
 
   // Choose navigation based on authentication status
   const navigation = isAuthenticated ? authenticatedNavigation : publicNavigation
@@ -67,7 +72,49 @@ export function Sidebar({ onClose }: SidebarProps) {
           <nav className="space-y-3 md:space-y-4 flex-1">
             {navigation.map((item) => {
               const isActive = pathname === item.href
-              
+
+              // Special handling for Services
+              if (item.name === "Services" && isAuthenticated) {
+                return (
+                  <div key={item.name}>
+                    <button
+                      onClick={() => setServicesExpanded(!servicesExpanded)}
+                      className={`flex items-center space-x-2 md:space-x-3 transition-colors text-sm md:text-base w-full text-left ${
+                        servicesExpanded || servicesSubNavigation.some(sub => pathname === sub.href)
+                          ? "text-blue-600 font-medium"
+                          : "text-gray-700 hover:text-blue-600"
+                      }`}
+                    >
+                      <item.icon className="h-4 w-4 md:h-5 md:w-5" />
+                      <span>{item.name}</span>
+                      <span className="ml-auto text-xs">{servicesExpanded ? "−" : "+"}</span>
+                    </button>
+                    {servicesExpanded && (
+                      <div className="ml-4 mt-2 space-y-2">
+                        {servicesSubNavigation.map((subItem) => {
+                          const isSubActive = pathname === subItem.href
+                          return (
+                            <Link
+                              key={subItem.name}
+                              href={subItem.href}
+                              onClick={onClose}
+                              className={`flex items-center space-x-2 md:space-x-3 transition-colors text-sm md:text-base ${
+                                isSubActive
+                                  ? "text-blue-600 font-medium"
+                                  : "text-gray-700 hover:text-blue-600"
+                              }`}
+                            >
+                              <subItem.icon className="h-4 w-4 md:h-5 md:w-5" />
+                              <span>{subItem.name}</span>
+                            </Link>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              }
+
               // Special handling for Add Property
               if (item.name === "Add Property" && isAuthenticated) {
                 return (
@@ -88,7 +135,7 @@ export function Sidebar({ onClose }: SidebarProps) {
                   </button>
                 )
               }
-              
+
               return (
                 <Link
                   key={item.name}
