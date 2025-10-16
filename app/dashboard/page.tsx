@@ -660,13 +660,13 @@ const Dashboard: React.FC = () => {
 
       {/* Mobile Navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-        <div className="flex justify-around py-2 overflow-x-auto">
+        <div className="flex justify-around py-3 overflow-x-auto">
           {navigationItems.map((item, index) => (
             <button
               key={item.id}
               onClick={() => handleSidebarAction(index)}
               className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors min-w-0 flex-shrink-0 ${
-                item.active ? 'bg-orange-500 text-white' : 'bg-blue-500 text-white hover:bg-orange-500'
+                item.active ? 'bg-orange-500 text-white' : 'bg-white text-blue-500 hover:bg-orange-500'
               }`}
               title={item.label}
             >
@@ -678,6 +678,7 @@ const Dashboard: React.FC = () => {
                   (e.target as HTMLImageElement).src = '/api/placeholder/32/32';
                 }}
               />
+              <span className={`text-[10px] mt-1 leading-tight ${item.active ? 'text-white' : 'text-gray-600'}`}>{item.label}</span>
             </button>
           ))}
         </div>
