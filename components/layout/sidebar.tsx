@@ -21,7 +21,6 @@ interface NavigationItem {
 
 const publicNavigation: NavigationItem[] = [
   { name: "Home", href: "/", icon: Home },
-  { name: "Marketplace", href: "/marketplace", icon: ShoppingBag },
   { name: "About Us", href: "/about", icon: User },
   { name: "Contact Us", href: "/contact", icon: User },
   { name: "Privacy Policy", href: "/privacy", icon: FileText },

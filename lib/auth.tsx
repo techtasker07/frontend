@@ -173,6 +173,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (data.user) {
+        // Get referrer ID from localStorage if it exists
+        const referrerId = typeof window !== 'undefined' ? localStorage.getItem('referrer_id') : null;
+
         // Create profile in profiles table
         const { error: profileError } = await supabase
           .from('profiles')
@@ -182,6 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             first_name: userData.first_name,
             last_name: userData.last_name,
             phone_number: userData.phone_number,
+            referrer_id: referrerId,
           });
 
         if (profileError) {
@@ -201,6 +205,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Don't set justLoggedIn to true during registration
           // This prevents the prospect modal from opening immediately after registration
           // setJustLoggedIn(true);
+
+          // Update referral status if this user was referred
+          if (referrerId) {
+            try {
+              await supabase
+                .from('referrals')
+                .update({
+                  status: 'registered',
+                  referee_id: data.user.id
+                })
+                .eq('referrer_id', referrerId)
+                .eq('phone_number', userData.phone_number || '')
+                .eq('status', 'invited');
+            } catch (error) {
+              console.error('Error updating referral status:', error);
+            }
+          }
+
+          // Clear referrer ID from localStorage
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('referrer_id');
+          }
         }
         // If no session, it means email confirmation is required
         // This is still a successful registration, just needs email confirmation

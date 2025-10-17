@@ -32,14 +32,21 @@ export function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Prefill email from URL params
+  // Prefill email from URL params and handle referral
   useEffect(() => {
     const email = searchParams.get('email')
+    const ref = searchParams.get('ref')
+
     if (email) {
       setFormData(prev => ({
         ...prev,
         email: email
       }))
+    }
+
+    // Store referrer ID in localStorage for later use during registration
+    if (ref) {
+      localStorage.setItem('referrer_id', ref)
     }
   }, [searchParams])
 

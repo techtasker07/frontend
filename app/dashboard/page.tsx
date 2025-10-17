@@ -54,7 +54,7 @@ const Dashboard: React.FC = () => {
     { id: 'completed', label: 'Completed', icon: '/images/completed.gif', count: 0, route: '/completed', color: 'gray' },
     { id: 'ongoing', label: 'Ongoing', icon: '/images/ongoing.gif', count: 0, route: '/ongoing', color: 'gray' },
     { id: 'contacts', label: 'Contacts', icon: '/images/contact.gif', count: 0, route: '/contacts', color: 'gray' },
-    { id: 'Crowd-Funding', label: 'Crowd Funding', icon: '/images/crowd-funding.gif', count: 0, route: '/verifications', color: 'gray' },
+    { id: 'Crowd-Funding', label: 'Crowd Funding', icon: '/images/crowd-funding.gif', count: 0, route: '/crowd-funding', color: 'gray' },
     { id: 'Re-es Party', label: 'Re-es Party', icon: '/images/re-es party.gif', count: 0, route: '/investment', color: 'gray' },
     { id: 'consultations', label: 'Consultations', icon: '/images/consultation.gif', count: 0, route: '/consultations', color: 'gray' }
   ]);
@@ -290,16 +290,15 @@ const Dashboard: React.FC = () => {
       setActiveCategory('poll'); // Default to poll
       setCurrentPage(1);
       fetchCategoryData(buttonId);
-    } else if (buttonId === 'contacts' || buttonId === 'verifications' || buttonId === 'investment' || buttonId === 'consultations') {
-      // For these buttons, show single category view
-      setActiveSingleCategory(buttonId);
-      setActiveStatus(null); // Hide the multi-category view
-      setCurrentPage(1);
-      fetchSingleCategoryData(buttonId);
+    } else if (buttonId === 'contacts') {
+      // Navigate to dedicated contacts page
+      router.push('/contacts');
+    } else if (buttonId === 'Crowd-Funding') {
+      // Navigate to crowd funding page
+      router.push('/crowd-funding');
     } else {
       // For other buttons, keep existing navigation
       const routes = {
-        'contacts': '/contacts',
         'verifications': '/verifications',
         'investment': '/investment',
         'consultations': '/consultations'
