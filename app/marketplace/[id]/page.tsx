@@ -281,23 +281,24 @@ export default function MarketPropertyDetailsPage() {
           </div>
         )}
 
+
         {/* Virtual Tour Scene Images */}
         {virtualTourData && virtualTourData.scenes && virtualTourData.scenes.length > 0 && (
-          <div
-            className="relative h-32 overflow-hidden rounded-lg cursor-pointer group"
-            onClick={() => setShowVirtualTourImages(true)}
-          >
-            <Image
-              src={virtualTourData.scenes[0].image_url}
-              alt="Virtual tour scene"
-              fill
-              className="object-cover group-hover:scale-105 transition-transform duration-200"
-            />
-            {virtualTourData.scenes.length > 1 && (
-              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                <span className="text-white text-xl font-bold">+{virtualTourData.scenes.length - 1}</span>
+          <div className="flex flex-wrap justify-center gap-2">
+            {virtualTourData.scenes.map((scene: any, index: number) => (
+              <div
+                key={`scene-${index}`}
+                className="relative w-20 h-20 overflow-hidden rounded-lg cursor-pointer group"
+                onClick={() => setShowVirtualTourImages(true)}
+              >
+                <Image
+                  src={scene.image_url}
+                  alt={`Virtual tour scene ${index + 1}`}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-200"
+                />
               </div>
-            )}
+            ))}
           </div>
         )}
 
