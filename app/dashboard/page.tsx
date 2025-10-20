@@ -677,7 +677,7 @@ const Dashboard: React.FC = () => {
                         }}
                       />
                     </div>
-                    <h3 className="text-sm sm:text-base md:text-md font-semibold text-gray-900 mb-1 sm:mb-2 leading-tight">{button.label}</h3>
+                    <h4 className="text-sm sm:text-base md:text-sm font-semibold text-gray-900 mb-1 sm:mb-2 leading-tight">{button.label}</h4>
                     <div className="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium bg-gray-100 text-gray-800">
                       {button.count} items
                     </div>
