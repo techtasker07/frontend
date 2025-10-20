@@ -262,26 +262,6 @@ export default function MarketPropertyDetailsPage() {
           </div>
         </div>
 
-        {/* Virtual Tour Button */}
-        {virtualTourData && (
-          <div
-            className="relative h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg overflow-hidden cursor-pointer group"
-            onClick={() => setShowVirtualTour(true)}
-          >
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
-            <div className="absolute inset-0 flex items-center justify-center text-white">
-              <Eye className="h-5 w-5 mr-2" />
-              <span className="text-sm font-medium">Virtual Tour</span>
-              {loadingVirtualTour && (
-                <div className="ml-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border border-white border-t-transparent"></div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-
         {/* Virtual Tour Scene Images */}
         {virtualTourData && virtualTourData.scenes && virtualTourData.scenes.length > 0 && (
           <div className="flex flex-wrap justify-center gap-2">
@@ -299,6 +279,25 @@ export default function MarketPropertyDetailsPage() {
                 />
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Virtual Tour Button */}
+        {virtualTourData && (
+          <div
+            className="relative h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg overflow-hidden cursor-pointer group"
+            onClick={() => setShowVirtualTour(true)}
+          >
+            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
+            <div className="absolute inset-0 flex items-center justify-center text-white">
+              <Eye className="h-5 w-5 mr-2" />
+              <span className="text-sm font-medium">Virtual Tour</span>
+              {loadingVirtualTour && (
+                <div className="ml-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border border-white border-t-transparent"></div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -444,7 +443,7 @@ export default function MarketPropertyDetailsPage() {
           <div className="space-y-4">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div className="space-y-2">
-                <h1 className="text-2xl md:text-3xl font-bold">{listing.title}</h1>
+                <h1 className="text-1xl md:text-2xl font-bold">{listing.title}</h1>
                 <div className="flex items-center text-gray-600">
                   <MapPin className="h-4 w-4 mr-1" />
                   <span>{listing.location}</span>
@@ -452,7 +451,7 @@ export default function MarketPropertyDetailsPage() {
               </div>
 
               <div className="text-left md:text-right">
-                <div className="text-2xl md:text-2xl font-bold text-primary">
+                <div className="text-1xl md:text-2xl font-bold text-primary">
                   {getPropertyPrice(listing)}
                 </div>
                 <div className="text-sm text-gray-500">
