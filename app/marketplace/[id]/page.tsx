@@ -224,20 +224,6 @@ export default function MarketPropertyDetailsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-600">
-        <Link href="/marketplace" className="hover:text-primary">Marketplace</Link>
-        <span>/</span>
-        <span>{listing.title}</span>
-      </div>
-
-      {/* Back Button */}
-      <Button variant="ghost" asChild className="mb-4">
-        <Link href="/marketplace">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Marketplace
-        </Link>
-      </Button>
 
       {/* Mobile Image Gallery */}
       <div className="block md:hidden space-y-4">
@@ -316,11 +302,11 @@ export default function MarketPropertyDetailsPage() {
         )}
 
         {/* Property Images Grid */}
-        <div className="grid grid-cols-3 gap-2">
-          {images.slice(1, 7).map((imageUrl, index) => (
+        <div className="flex flex-wrap justify-center gap-2">
+          {images.slice(1, 9).map((imageUrl, index) => (
             <div
               key={index + 1}
-              className="relative aspect-square overflow-hidden rounded-lg cursor-pointer group"
+              className="relative w-20 h-20 overflow-hidden rounded-lg cursor-pointer group"
               onClick={() => setCurrentImageIndex(index + 1)}
             >
               <Image
@@ -336,13 +322,13 @@ export default function MarketPropertyDetailsPage() {
           ))}
 
           {/* More Images Indicator */}
-          {images.length > 7 && (
+          {images.length > 9 && (
             <div
-              className="relative aspect-square bg-gray-900/80 rounded-lg overflow-hidden cursor-pointer group flex items-center justify-center"
+              className="relative w-20 h-20 bg-gray-900/80 rounded-lg overflow-hidden cursor-pointer group flex items-center justify-center"
               onClick={() => setShowImageTour(true)}
             >
               <div className="text-center text-white">
-                <div className="text-lg font-bold">{images.length - 7}+</div>
+                <div className="text-sm font-bold">{images.length - 9}+</div>
                 <div className="text-xs">More</div>
               </div>
             </div>
@@ -1306,7 +1292,7 @@ export default function MarketPropertyDetailsPage() {
                       <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
                       <span className="line-clamp-1">{relatedListing.location}</span>
                     </div>
-                    <div className="text-lg font-bold text-primary">
+                    <div className="text-sm font-bold text-primary">
                       {getPropertyPrice(relatedListing)}
                     </div>
                     <Button asChild size="sm" className="w-full">
