@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { PropertyCard } from "./PropertyCard";
 import { SearchSection } from "./SearchSection";
 import { Button } from "./ui/button";
@@ -18,7 +18,7 @@ type CombinedProperty = Property & {
 export function PropertyListings() {
   const [properties, setProperties] = useState<CombinedProperty[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<CombinedProperty[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [displayLimit, setDisplayLimit] = useState(6);
@@ -27,6 +27,9 @@ export function PropertyListings() {
     propertyType: '',
     priceRange: ''
   });
+  const [visibleCards, setVisibleCards] = useState<Set<number>>(new Set());
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const gridClass = viewMode === 'grid'
     ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
@@ -35,22 +38,21 @@ export function PropertyListings() {
   useEffect(() => {
     const fetchProperties = async () => {
       try {
-        setLoading(true);
         setError(null);
-        
-        // Fetch both poll properties and marketplace listings
-        const pollResponse = await supabaseApi.getProperties({ limit: 15 });
+
+        // Fetch poll properties only
+        const pollResponse = await supabaseApi.getProperties({ limit: 15, source: 'poll' });
         let marketplaceResponse;
-        
+
         try {
           marketplaceResponse = await supabaseApi.getMarketplaceListings({ limit: 15 });
         } catch (error) {
           console.warn('Marketplace listings not available:', error);
           marketplaceResponse = { success: false, data: [], error: 'Marketplace not available' };
         }
-        
+
         let allProperties: CombinedProperty[] = [];
-        
+
         // Add poll properties
         if (pollResponse.success) {
           const pollProperties = pollResponse.data.map(prop => ({
@@ -60,7 +62,7 @@ export function PropertyListings() {
           }));
           allProperties = [...allProperties, ...pollProperties];
         }
-        
+
         // Add marketplace properties, converting to Property format (if available)
         if (marketplaceResponse.success && marketplaceResponse.data.length > 0) {
           const marketplaceProperties = marketplaceResponse.data.map((listing: MarketplaceListing): CombinedProperty => ({
@@ -91,29 +93,70 @@ export function PropertyListings() {
           }));
           allProperties = [...allProperties, ...marketplaceProperties];
         }
-        
+
         // Sort by creation date (most recent first)
-        const sortedProperties = allProperties.sort((a, b) => 
+        const sortedProperties = allProperties.sort((a, b) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
-        
+
         setProperties(sortedProperties);
         setFilteredProperties(sortedProperties);
-        
+
         if (sortedProperties.length === 0) {
           console.warn('No properties found from either source');
         }
-        
+
       } catch (err) {
         console.error('Error fetching properties:', err);
         setError('Failed to load properties');
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchProperties();
   }, []);
+
+  // Intersection Observer for scroll animations
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      observerRef.current = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const index = parseInt(entry.target.getAttribute('data-index') || '0');
+              setVisibleCards(prev => new Set([...prev, index]));
+            }
+          });
+        },
+        {
+          threshold: 0.1,
+          rootMargin: '50px'
+        }
+      );
+
+      return () => {
+        if (observerRef.current) {
+          observerRef.current.disconnect();
+        }
+      };
+    }
+  }, []);
+
+  // Observe cards when they change
+  useEffect(() => {
+    cardRefs.current.forEach((ref, index) => {
+      if (ref && observerRef.current) {
+        observerRef.current.observe(ref);
+      }
+    });
+
+    return () => {
+      if (observerRef.current) {
+        cardRefs.current.forEach(ref => {
+          if (ref) observerRef.current!.unobserve(ref);
+        });
+      }
+    };
+  }, [filteredProperties, displayLimit]);
 
   const applyFilters = () => {
     let filtered = properties;
@@ -240,32 +283,88 @@ export function PropertyListings() {
 
           <TabsContent value="all" className="mt-8">
             <div className={gridClass}>
-              {filteredProperties.slice(0, displayLimit).map((property) => (
-                <PropertyCard key={property.id} property={property} />
+              {filteredProperties.slice(0, displayLimit).map((property, index) => (
+                <div
+                  key={property.id}
+                  ref={(el) => {
+                    if (el) cardRefs.current[index] = el;
+                  }}
+                  data-index={index}
+                  className={`transition-all duration-700 ease-out ${
+                    visibleCards.has(index)
+                      ? 'opacity-100 translate-y-0'
+                      : 'opacity-0 translate-y-8'
+                  }`}
+                  style={{ transitionDelay: `${index * 100}ms` }}
+                >
+                  <PropertyCard property={property} />
+                </div>
               ))}
             </div>
           </TabsContent>
 
           <TabsContent value="sale" className="mt-8">
             <div className={gridClass}>
-              {filteredProperties.filter(p => p.type === "sale").slice(0, displayLimit).map((property) => (
-                <PropertyCard key={property.id} property={property} />
+              {filteredProperties.filter(p => p.type === "sale").slice(0, displayLimit).map((property, index) => (
+                <div
+                  key={property.id}
+                  ref={(el) => {
+                    if (el) cardRefs.current[index] = el;
+                  }}
+                  data-index={index}
+                  className={`transition-all duration-700 ease-out ${
+                    visibleCards.has(index)
+                      ? 'opacity-100 translate-y-0'
+                      : 'opacity-0 translate-y-8'
+                  }`}
+                  style={{ transitionDelay: `${index * 100}ms` }}
+                >
+                  <PropertyCard property={property} />
+                </div>
               ))}
             </div>
           </TabsContent>
 
           <TabsContent value="rent" className="mt-8">
             <div className={gridClass}>
-              {filteredProperties.filter(p => p.type === "rent").slice(0, displayLimit).map((property) => (
-                <PropertyCard key={property.id} property={property} />
+              {filteredProperties.filter(p => p.type === "rent").slice(0, displayLimit).map((property, index) => (
+                <div
+                  key={property.id}
+                  ref={(el) => {
+                    if (el) cardRefs.current[index] = el;
+                  }}
+                  data-index={index}
+                  className={`transition-all duration-700 ease-out ${
+                    visibleCards.has(index)
+                      ? 'opacity-100 translate-y-0'
+                      : 'opacity-0 translate-y-8'
+                  }`}
+                  style={{ transitionDelay: `${index * 100}ms` }}
+                >
+                  <PropertyCard property={property} />
+                </div>
               ))}
             </div>
           </TabsContent>
 
           <TabsContent value="book" className="mt-8">
             <div className={gridClass}>
-              {filteredProperties.filter(p => p.type === "booking").slice(0, displayLimit).map((property) => (
-                <PropertyCard key={property.id} property={property} />
+              {filteredProperties.filter(p => p.type === "booking").slice(0, displayLimit).map((property, index) => (
+                <div
+                  key={property.id}
+                  ref={(el) => {
+                    if (el) cardRefs.current[index] = el;
+                  }}
+                  data-index={index}
+                  className={`transition-all duration-700 ease-out ${
+                    visibleCards.has(index)
+                      ? 'opacity-100 translate-y-0'
+                      : 'opacity-0 translate-y-8'
+                  }`}
+                  style={{ transitionDelay: `${index * 100}ms` }}
+                >
+                  <PropertyCard property={property} />
+                </div>
               ))}
             </div>
           </TabsContent>
@@ -275,8 +374,22 @@ export function PropertyListings() {
               {filteredProperties
                 .filter(p => p.pollPercentage && p.pollPercentage > 80)
                 .slice(0, displayLimit)
-                .map((property) => (
-                  <PropertyCard key={property.id} property={property} />
+                .map((property, index) => (
+                  <div
+                    key={property.id}
+                    ref={(el) => {
+                      if (el) cardRefs.current[index] = el;
+                    }}
+                    data-index={index}
+                    className={`transition-all duration-700 ease-out ${
+                      visibleCards.has(index)
+                        ? 'opacity-100 translate-y-0'
+                        : 'opacity-0 translate-y-8'
+                    }`}
+                    style={{ transitionDelay: `${index * 100}ms` }}
+                  >
+                    <PropertyCard property={property} />
+                  </div>
                 ))}
             </div>
           </TabsContent>

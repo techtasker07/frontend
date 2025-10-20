@@ -51,12 +51,11 @@ const Dashboard: React.FC = () => {
   ]);
 
   const [dashboardButtons, setDashboardButtons] = useState<DashboardButton[]>([
-    { id: 'completed', label: 'Completed', icon: '/images/completed.gif', count: 0, route: '/completed', color: 'gray' },
-    { id: 'ongoing', label: 'Ongoing', icon: '/images/ongoing.gif', count: 0, route: '/ongoing', color: 'gray' },
-    { id: 'contacts', label: 'Contacts', icon: '/images/contact.gif', count: 0, route: '/contacts', color: 'gray' },
     { id: 'Crowd-Funding', label: 'Crowd Funding', icon: '/images/crowd-funding.gif', count: 0, route: '/crowd-funding', color: 'gray' },
-    { id: 'Re-es Party', label: 'Re-es Party', icon: '/images/re-es party.gif', count: 0, route: '/investment', color: 'gray' },
-    { id: 'consultations', label: 'Consultations', icon: '/images/consultation.gif', count: 0, route: '/consultations', color: 'gray' }
+    { id: 'Re-es Party', label: 'Re-es Party', icon: '/images/re-es party.gif', count: 0, route: '/rees-party', color: 'gray' },
+    { id: 'contacts', label: 'Contacts', icon: '/images/contact.gif', count: 0, route: '/contacts', color: 'gray' },
+    { id: 'completed', label: 'Completed', icon: '/images/completed.gif', count: 0, route: '/completed', color: 'gray' },
+    { id: 'ongoing', label: 'Ongoing', icon: '/images/ongoing.gif', count: 0, route: '/ongoing', color: 'gray' }
   ]);
 
   const [activeTab, setActiveTab] = useState<'poll' | 'marketplace'>('poll');
@@ -78,8 +77,7 @@ const Dashboard: React.FC = () => {
     { id: 'marketplace', label: 'Marketplace' },
     { id: 'prospect', label: 'Prospect' },
     { id: 'Verifications', label: 'Verifications' },
-    { id: 'Investment', label: 'Investment' },
-    { id: 'consultations', label: 'Consultations' }
+    { id: 'Investment', label: 'Investment' }
   ];
 
   useEffect(() => {
@@ -117,7 +115,6 @@ const Dashboard: React.FC = () => {
         prospectsResponse,
         verificationsCount,
         investmentCount,
-        consultationsCount,
         completedCount,
         ongoingCount,
         contactsCount
@@ -137,12 +134,6 @@ const Dashboard: React.FC = () => {
           .select('id', { count: 'exact', head: true })
           .eq('user_id', user.id)
           .eq('type', 'investment'),
-        // Fetch consultations count
-        supabase
-          .from('properties')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('type', 'consultations'),
         // Fetch completed activities count
         supabase
           .from('properties')
@@ -158,8 +149,7 @@ const Dashboard: React.FC = () => {
             marketplaceCount,
             prospectsCount,
             verificationsCount,
-            investmentCount,
-            consultationsCount
+            investmentCount
           ] = await Promise.all([
             // Poll properties (recent)
             supabase
@@ -194,16 +184,10 @@ const Dashboard: React.FC = () => {
               .eq('user_id', user.id)
               .eq('type', 'investment')
               .gte('created_at', sevenDaysAgo),
-            // Consultations (recent)
-            supabase
-              .from('properties')
-              .select('id', { count: 'exact', head: true })
-              .eq('user_id', user.id)
-              .eq('type', 'consultations')
-              .gte('created_at', sevenDaysAgo)
+            // Consultations removed
           ]);
 
-          const totalOngoing = (pollCount.count || 0) + (marketplaceCount.count || 0) + (prospectsCount.count || 0) + (verificationsCount.count || 0) + (investmentCount.count || 0) + (consultationsCount.count || 0);
+          const totalOngoing = (pollCount.count || 0) + (marketplaceCount.count || 0) + (prospectsCount.count || 0) + (verificationsCount.count || 0) + (investmentCount.count || 0);
           return { count: totalOngoing };
         })(),
         // Fetch contacts count (could be from a contacts table or profiles)
@@ -221,9 +205,8 @@ const Dashboard: React.FC = () => {
           case 'completed': return { ...btn, count: completedCount.count || 0 };
           case 'ongoing': return { ...btn, count: ongoingCount.count || 0 };
           case 'contacts': return { ...btn, count: contactsCount.count || 0 };
-          case 'verifications': return { ...btn, count: verificationsCount.count || 0 };
-          case 'investment': return { ...btn, count: investmentCount.count || 0 };
-          case 'consultations': return { ...btn, count: consultationsCount.count || 0 };
+          case 'Crowd-Funding': return { ...btn, count: 0 }; // Crowd-Funding count not fetched yet
+          case 'Re-es Party': return { ...btn, count: 0 }; // Re-es Party count not fetched yet
           default: return btn;
         }
       }));
@@ -296,6 +279,9 @@ const Dashboard: React.FC = () => {
     } else if (buttonId === 'Crowd-Funding') {
       // Navigate to crowd funding page
       router.push('/crowd-funding');
+    } else if (buttonId === 'Re-es Party') {
+      // Navigate to rees party page
+      router.push('/rees-party');
     } else {
       // For other buttons, keep existing navigation
       const routes = {
@@ -325,8 +311,7 @@ const Dashboard: React.FC = () => {
         marketplaceResponse,
         prospectsResponse,
         verificationsResponse,
-        investmentResponse,
-        consultationsResponse
+        investmentResponse
       ] = await Promise.all([
         supabaseApi.getProperties({ source: 'poll', limit: 100 }),
         supabaseApi.getMarketplaceListings({ limit: 100 }),
@@ -343,13 +328,6 @@ const Dashboard: React.FC = () => {
           .select('*')
           .eq('user_id', user.id)
           .eq('type', 'investment')
-          .eq('status', statusFilter)
-          .limit(100),
-        supabase
-          .from('properties')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('type', 'consultations')
           .eq('status', statusFilter)
           .limit(100)
       ]);
@@ -453,18 +431,6 @@ const Dashboard: React.FC = () => {
         }));
       }
 
-      // Process consultations data
-      if (consultationsResponse.data) {
-        newCategoryData.consultations = consultationsResponse.data.map(prop => ({
-          id: prop.id,
-          title: prop.title || 'Consultation',
-          location: prop.location || 'N/A',
-          price: 'Consultation Service',
-          image: '/api/placeholder/300/200',
-          status: prop.status,
-          created_at: prop.created_at
-        }));
-      }
 
       setCategoryData(newCategoryData);
     } catch (error) {
@@ -534,25 +500,6 @@ const Dashboard: React.FC = () => {
               title: prop.title || 'Investment',
               location: prop.location || 'N/A',
               price: prop.price ? `₦${prop.price.toLocaleString()}` : 'Investment',
-              image: '/api/placeholder/300/200',
-              status: prop.status,
-              created_at: prop.created_at
-            }));
-          }
-          break;
-        case 'consultations':
-          response = await supabase
-            .from('properties')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('type', 'consultations')
-            .limit(100);
-          if (response.data) {
-            mappedData = response.data.map(prop => ({
-              id: prop.id,
-              title: prop.title || 'Consultation',
-              location: prop.location || 'N/A',
-              price: 'Consultation Service',
               image: '/api/placeholder/300/200',
               status: prop.status,
               created_at: prop.created_at
@@ -705,36 +652,71 @@ const Dashboard: React.FC = () => {
         {/* Dashboard content */}
         <main className="p-2 sm:p-3 md:p-4 lg:p-6">
           {/* Navigation Buttons Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
-            {dashboardButtons.map((button, index) => (
-              <button
-                key={button.id}
-                onClick={() => handleButtonClick(button.id)}
-                className={`relative rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-xl hover:shadow-gray-300/50 transition-all duration-300 border border-gray-200 hover:border-gray-300 group w-full shadow-md overflow-hidden ${
-                  (activeStatus === button.id || activeSingleCategory === button.id) ? 'ring-2 ring-indigo-500' : ''
-                }`}
-                style={{
-                  background: 'linear-gradient(to bottom, #3b82f6 50%, #ffffff 50%)'
-                }}
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-2 sm:mb-3 md:mb-4 overflow-hidden bg-white shadow-sm">
-                    <img
-                      src={button.icon}
-                      alt={button.label}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/api/placeholder/64/64';
-                      }}
-                    />
+          <div className="space-y-3 sm:space-y-4 md:space-y-6 mb-6 sm:mb-8">
+            {/* Top row - 3 buttons */}
+            <div className="grid grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+              {dashboardButtons.slice(0, 3).map((button, index) => (
+                <button
+                  key={button.id}
+                  onClick={() => handleButtonClick(button.id)}
+                  className={`relative rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-xl hover:shadow-gray-300/50 transition-all duration-300 border border-gray-200 hover:border-gray-300 group w-full shadow-md overflow-hidden ${
+                    (activeStatus === button.id || activeSingleCategory === button.id) ? 'ring-2 ring-indigo-500' : ''
+                  }`}
+                  style={{
+                    background: 'linear-gradient(to bottom, #3b82f6 50%, #ffffff 50%)'
+                  }}
+                >
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-2 sm:mb-3 md:mb-4 overflow-hidden bg-white shadow-sm">
+                      <img
+                        src={button.icon}
+                        alt={button.label}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/api/placeholder/64/64';
+                        }}
+                      />
+                    </div>
+                    <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 mb-1 sm:mb-2 leading-tight">{button.label}</h3>
+                    <div className="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium bg-gray-100 text-gray-800">
+                      {button.count} items
+                    </div>
                   </div>
-                  <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 mb-1 sm:mb-2 leading-tight">{button.label}</h3>
-                  <div className="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium bg-gray-100 text-gray-800">
-                    {button.count} items
+                </button>
+              ))}
+            </div>
+            {/* Bottom row - 2 buttons */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+              {dashboardButtons.slice(3, 5).map((button, index) => (
+                <button
+                  key={button.id}
+                  onClick={() => handleButtonClick(button.id)}
+                  className={`relative rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 hover:shadow-xl hover:shadow-gray-300/50 transition-all duration-300 border border-gray-200 hover:border-gray-300 group w-full shadow-md overflow-hidden ${
+                    (activeStatus === button.id || activeSingleCategory === button.id) ? 'ring-2 ring-indigo-500' : ''
+                  }`}
+                  style={{
+                    background: 'linear-gradient(to bottom, #3b82f6 50%, #ffffff 50%)'
+                  }}
+                >
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-2 sm:mb-3 md:mb-4 overflow-hidden bg-white shadow-sm">
+                      <img
+                        src={button.icon}
+                        alt={button.label}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/api/placeholder/64/64';
+                        }}
+                      />
+                    </div>
+                    <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 mb-1 sm:mb-2 leading-tight">{button.label}</h3>
+                    <div className="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium bg-gray-100 text-gray-800">
+                      {button.count} items
+                    </div>
                   </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Listing View - Always shown under buttons */}
@@ -794,7 +776,7 @@ const Dashboard: React.FC = () => {
                 return (
                   <div>
                     {/* Items Grid/List */}
-                    {(currentCategory === 'verifications' || currentCategory === 'consultations') ? (
+                    {(currentCategory === 'verifications') ? (
                       // List view for verifications and consultations
                       <div className="space-y-3">
                         {paginatedItems.map(item => (
@@ -813,7 +795,7 @@ const Dashboard: React.FC = () => {
                         ))}
                       </div>
                     ) : (
-                      // Grid view for listings (poll, marketplace, prospect, investment, contacts)
+                      // Grid view for listings (poll, marketplace, prospect, investment, contacts, consultations)
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                         {paginatedItems.map(item => (
                           <div key={item.id} className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:border-indigo-300 transition-colors">
