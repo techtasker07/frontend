@@ -303,7 +303,7 @@ export default function MarketPropertyDetailsPage() {
 
         {/* Property Images Grid */}
         <div className="flex flex-wrap justify-center gap-2">
-          {images.slice(1, 9).map((imageUrl, index) => (
+          {images.slice(1).map((imageUrl, index) => (
             <div
               key={index + 1}
               className="relative w-20 h-20 overflow-hidden rounded-lg cursor-pointer group"
@@ -320,20 +320,8 @@ export default function MarketPropertyDetailsPage() {
               )}
             </div>
           ))}
-
-          {/* More Images Indicator */}
-          {images.length > 9 && (
-            <div
-              className="relative w-20 h-20 bg-gray-900/80 rounded-lg overflow-hidden cursor-pointer group flex items-center justify-center"
-              onClick={() => setShowImageTour(true)}
-            >
-              <div className="text-center text-white">
-                <div className="text-sm font-bold">{images.length - 9}+</div>
-                <div className="text-xs">More</div>
-              </div>
-            </div>
-          )}
         </div>
+
       </div>
 
       {/* Desktop Image Gallery */}
@@ -463,7 +451,7 @@ export default function MarketPropertyDetailsPage() {
               </div>
 
               <div className="text-left md:text-right">
-                <div className="text-2xl md:text-3xl font-bold text-primary">
+                <div className="text-2xl md:text-2xl font-bold text-primary">
                   {getPropertyPrice(listing)}
                 </div>
                 <div className="text-sm text-gray-500">
