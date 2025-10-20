@@ -6,6 +6,9 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Bell } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 // Define interfaces for our data structures
 interface NavigationItem {
@@ -117,7 +120,9 @@ const Dashboard: React.FC = () => {
         investmentCount,
         completedCount,
         ongoingCount,
-        contactsCount
+        contactsCount,
+        crowdFundingDueCount,
+        reesPartyDueCount
       ] = await Promise.all([
         supabaseApi.getProperties({ source: 'poll', limit: 100 }),
         supabaseApi.getMarketplaceListings({ limit: 100 }),
@@ -193,7 +198,41 @@ const Dashboard: React.FC = () => {
         // Fetch contacts count (could be from a contacts table or profiles)
         supabase
           .from('profiles')
+          .select('id', { count: 'exact', head: true }),
+        // Fetch Crowd-Funding due count (pending invitations)
+        supabase
+          .from('crowd_funding_invitations')
           .select('id', { count: 'exact', head: true })
+          .eq('invitee_id', user.id)
+          .eq('status', 'pending'),
+        // Fetch Re-es Party due count (upcoming parties where user hasn't contributed)
+        (async () => {
+          const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+
+          // Get upcoming rees parties
+          const { data: upcomingParties, error: partiesError } = await supabase
+            .from('rees_party_properties')
+            .select('id')
+            .gte('event_date', currentDate);
+
+          if (partiesError || !upcomingParties) return { count: 0 };
+
+          const partyIds = upcomingParties.map(party => party.id);
+
+          if (partyIds.length === 0) return { count: 0 };
+
+          // Count parties where user hasn't contributed yet
+          const { count, error: countError } = await supabase
+            .from('rees_party_contributions')
+            .select('id', { count: 'exact', head: true })
+            .in('property_id', partyIds)
+            .eq('contributor_id', user.id);
+
+          if (countError) return { count: 0 };
+
+          // Return the number of upcoming parties minus contributed parties
+          return { count: Math.max(0, partyIds.length - (count || 0)) };
+        })()
       ]);
 
       const pollCount = pollResponse.success ? pollResponse.data.length : 0;
@@ -205,8 +244,8 @@ const Dashboard: React.FC = () => {
           case 'completed': return { ...btn, count: completedCount.count || 0 };
           case 'ongoing': return { ...btn, count: ongoingCount.count || 0 };
           case 'contacts': return { ...btn, count: contactsCount.count || 0 };
-          case 'Crowd-Funding': return { ...btn, count: 0 }; // Crowd-Funding count not fetched yet
-          case 'Re-es Party': return { ...btn, count: 0 }; // Re-es Party count not fetched yet
+          case 'Crowd-Funding': return { ...btn, count: crowdFundingDueCount.count || 0 };
+          case 'Re-es Party': return { ...btn, count: reesPartyDueCount.count || 0 };
           default: return btn;
         }
       }));
@@ -638,6 +677,20 @@ const Dashboard: React.FC = () => {
             <div className="flex items-center justify-between">
               <h2 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900">Smart Dashboard</h2>
               <div className="flex items-center space-x-2 md:space-x-4">
+                {/* Notifications */}
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="sm"
+                  className="relative p-2 hover:bg-gray-100"
+                >
+                  <Link href="/notifications">
+                    <Bell className="h-5 w-5" />
+                    <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 min-w-[1.25rem] h-5">
+                      3
+                    </Badge>
+                  </Link>
+                </Button>
                 <div className="text-xs sm:text-sm text-gray-600 hidden sm:block">
                   Welcome back, {user?.first_name || 'User'}!
                 </div>

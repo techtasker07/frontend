@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { Upload, Users, Coins, Calendar, MapPin, Camera, Video, Plus, CheckCircle, Clock, XCircle, MessageCircle, Send, ArrowLeft } from 'lucide-react';
+import { Upload, Users, Coins, Calendar, MapPin, Camera, Video, Plus, CheckCircle, Clock, XCircle, MessageCircle, Send, ArrowLeft, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 
 interface ReesPartyProperty {
@@ -97,8 +97,6 @@ function ReesPartyDetailsPageContent() {
   const [party, setParty] = useState<ReesPartyProperty | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'details' | 'forum'>('details');
-  const [forumMessages, setForumMessages] = useState<ForumMessage[]>([]);
-  const [newMessage, setNewMessage] = useState('');
   const [contributionAmount, setContributionAmount] = useState('');
   const [showContributionDialog, setShowContributionDialog] = useState(false);
   const [isParticipant, setIsParticipant] = useState(false);
@@ -106,7 +104,6 @@ function ReesPartyDetailsPageContent() {
 
   useEffect(() => {
     fetchPartyDetails();
-    fetchForumMessages();
     checkParticipationStatus();
   }, [partyId]);
 
@@ -128,18 +125,6 @@ function ReesPartyDetailsPageContent() {
     }
   };
 
-  const fetchForumMessages = async () => {
-    try {
-      const response = await fetch(`/api/rees-party/${partyId}/forum`);
-      const result = await response.json();
-
-      if (result.success) {
-        setForumMessages(result.data);
-      }
-    } catch (error) {
-      console.error('Error fetching forum messages:', error);
-    }
-  };
 
   const checkParticipationStatus = async () => {
     if (!user) return;
@@ -171,35 +156,6 @@ function ReesPartyDetailsPageContent() {
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || !user) return;
-
-    try {
-      const response = await fetch(`/api/rees-party/${partyId}/forum`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sender_id: user.id,
-          message: newMessage.trim(),
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setForumMessages(prev => [...prev, result.data]);
-        setNewMessage('');
-        toast.success('Message sent!');
-      } else {
-        toast.error('Failed to send message');
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast.error('Failed to send message');
-    }
-  };
 
   const handleMakeContribution = async () => {
     if (!user || !contributionAmount) return;
@@ -359,12 +315,15 @@ function ReesPartyDetailsPageContent() {
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="details" className="text-sm">Party Details</TabsTrigger>
-              <TabsTrigger value="forum" className="text-sm flex items-center gap-2">
-                <MessageCircle className="h-4 w-4" />
-                Forum
-                {isForumActive() && (
-                  <Badge variant="secondary" className="text-xs">Active</Badge>
-                )}
+              <TabsTrigger value="forum" className="text-sm flex items-center gap-2" asChild>
+                <Link href={`/rees-party/${partyId}/forum`} className="flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4" />
+                  Forum
+                  {isForumActive() && (
+                    <Badge variant="secondary" className="text-xs">Active</Badge>
+                  )}
+                  <ExternalLink className="h-3 w-3" />
+                </Link>
               </TabsTrigger>
             </TabsList>
 
@@ -663,124 +622,6 @@ function ReesPartyDetailsPageContent() {
               )}
             </TabsContent>
 
-            <TabsContent value="forum" className="space-y-6">
-              {/* Forum Status */}
-              <Card className="border-gray-200">
-                <CardContent className="pt-6 px-6 pb-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <MessageCircle className="h-5 w-5 text-gray-600" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900">Party Forum</h3>
-                        <p className="text-sm text-gray-600">
-                          {isForumActive()
-                            ? `Active until ${new Date(party.forum_expiry).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric'
-                              })}`
-                            : 'Forum has expired'
-                          }
-                        </p>
-                      </div>
-                    </div>
-                    <Badge variant={isForumActive() ? "default" : "secondary"} className="text-sm">
-                      {isForumActive() ? 'Active' : 'Expired'}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Forum Messages */}
-              <Card className="border-gray-200">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg font-semibold">Discussion</CardTitle>
-                  <CardDescription className="text-sm text-gray-600">
-                    {forumMessages.length} message{forumMessages.length !== 1 ? 's' : ''}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Messages List */}
-                  <div className="space-y-4 max-h-96 overflow-y-auto">
-                    {forumMessages.length === 0 ? (
-                      <div className="text-center py-8">
-                        <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">No messages yet</h3>
-                        <p className="text-gray-600">Be the first to start the conversation!</p>
-                      </div>
-                    ) : (
-                      forumMessages.map((message) => (
-                        <div key={message.id} className="flex gap-3">
-                          <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-sm font-medium text-gray-700">
-                              {message.sender?.first_name?.[0] || 'U'}
-                            </span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-gray-900 text-sm">
-                                {message.sender?.first_name} {message.sender?.last_name}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                {new Date(message.created_at).toLocaleString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  hour: 'numeric',
-                                  minute: '2-digit',
-                                  hour12: true
-                                })}
-                              </span>
-                            </div>
-                            <p className="text-gray-700 text-sm leading-relaxed">{message.message}</p>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-
-                  {/* Message Input */}
-                  {isParticipant && isForumActive() && (
-                    <div className="border-t border-gray-200 pt-4">
-                      <div className="flex gap-3">
-                        <Textarea
-                          value={newMessage}
-                          onChange={(e) => setNewMessage(e.target.value)}
-                          placeholder="Share your thoughts about the party..."
-                          className="flex-1 resize-none"
-                          rows={2}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              handleSendMessage();
-                            }
-                          }}
-                        />
-                        <Button
-                          onClick={handleSendMessage}
-                          disabled={!newMessage.trim()}
-                          className="flex-shrink-0"
-                        >
-                          <Send className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {(!isParticipant || !isForumActive()) && (
-                    <div className="border-t border-gray-200 pt-4 text-center">
-                      <p className="text-sm text-gray-600">
-                        {!isParticipant
-                          ? "You need to be invited to participate in the forum"
-                          : "The forum has expired and is no longer active"
-                        }
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
           </Tabs>
 
           {/* Contribution Dialog */}
