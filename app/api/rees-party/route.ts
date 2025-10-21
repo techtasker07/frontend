@@ -15,7 +15,6 @@ export async function GET(request: NextRequest) {
       .from('rees_party_properties')
       .select(`
         *,
-        category:categories(name),
         media:rees_party_media(*),
         invitations:rees_party_invitations(
           id,
@@ -68,11 +67,17 @@ export async function POST(request: NextRequest) {
       max_participants,
       deadline,
       category_id,
-      user_id
+      user_id,
+      payment_reference
     } = body;
 
     if (!user_id || !title || !description || !location || !event_date || !target_amount || !contribution_per_person || !deadline) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Validate payment reference is provided
+    if (!payment_reference) {
+      return NextResponse.json({ error: 'Payment reference is required' }, { status: 400 });
     }
 
     const { data, error } = await supabase
@@ -90,9 +95,9 @@ export async function POST(request: NextRequest) {
         contribution_per_person: parseFloat(contribution_per_person),
         max_participants: max_participants ? parseInt(max_participants) : null,
         deadline,
-        category_id,
+        category_id: category_id || null,
         user_id,
-        status: 'planning'
+        status: 'active' // Change status to active since payment is verified
       })
       .select()
       .single();

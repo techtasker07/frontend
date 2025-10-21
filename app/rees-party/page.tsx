@@ -14,9 +14,10 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { ProtectedRoute } from '@/components/auth/protected-route';
+import { PaystackPayment } from '@/components/paystack/paystack-payment';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { Upload, Users, Coins, Calendar, MapPin, Camera, Video, Plus, CheckCircle, Clock, XCircle, MessageCircle, Send } from 'lucide-react';
+import { Upload, Users, Coins, Calendar, MapPin, Camera, Video, Plus, CheckCircle, Clock, XCircle, MessageCircle, Send, ArrowLeft, CreditCard } from 'lucide-react';
 
 interface ReesPartyProperty {
   id: string;
@@ -75,6 +76,7 @@ interface Contribution {
   amount: number;
   contribution_percentage: number;
   payment_status: string;
+  payment_reference?: string;
   contributed_at: string;
   contributor?: Contact;
 }
@@ -107,6 +109,8 @@ function ReesPartyPageContent() {
   const [loading, setLoading] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<ReesPartyProperty | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createStep, setCreateStep] = useState<'form' | 'summary' | 'paystack' | 'success'>('form');
+  const [paymentReference, setPaymentReference] = useState<string>('');
   const [myContributions, setMyContributions] = useState<any[]>([]);
   const [invitedProperties, setInvitedProperties] = useState<ReesPartyProperty[]>([]);
   const [showContactsModal, setShowContactsModal] = useState(false);
@@ -127,6 +131,7 @@ function ReesPartyPageContent() {
     dress_code: '',
     target_amount: '',
     contribution_per_person: '5000',
+    creator_contribution: '',
     max_participants: '',
     deadline: '',
     category_id: '',
@@ -191,8 +196,7 @@ function ReesPartyPageContent() {
             current_amount,
             status,
             event_date,
-            created_at,
-            category:categories(name)
+            created_at
           ),
           invitation:rees_party_invitations(
             id,
@@ -223,8 +227,7 @@ function ReesPartyPageContent() {
             max_participants,
             deadline,
             event_date,
-            created_at,
-            category:categories(name)
+            created_at
           )
         `)
         .eq('invitee_id', user.id)
@@ -296,12 +299,46 @@ function ReesPartyPageContent() {
     fetchChatMessages(party.id);
   };
 
-  const handleCreateProperty = async (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
+    // Validate required fields
+    if (!formData.title || !formData.description || !formData.location || !formData.event_date || !formData.target_amount || !formData.contribution_per_person || !formData.deadline) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    // Validate creator contribution
+    const targetAmount = parseFloat(formData.target_amount);
+    const minContribution = parseFloat(formData.contribution_per_person);
+    const creatorContribution = parseFloat(formData.creator_contribution || '0');
+
+    if (creatorContribution < minContribution) {
+      toast.error(`Your contribution must be at least ₦${minContribution.toLocaleString()} (minimum per person)`);
+      return;
+    }
+
+    if (creatorContribution > targetAmount) {
+      toast.error(`Your contribution cannot exceed the target amount of ₦${targetAmount.toLocaleString()}`);
+      return;
+    }
+
+    // Move to summary step
+    setCreateStep('summary');
+  };
+
+  const handlePaymentSuccess = async (reference: string) => {
+    setPaymentReference(reference);
+    setCreateStep('success');
+  };
+
+  const handlePublishParty = async () => {
+    if (!user || !paymentReference) return;
+
     setLoading(true);
     try {
+      // Create the party
       const response = await fetch('/api/rees-party', {
         method: 'POST',
         headers: {
@@ -310,38 +347,99 @@ function ReesPartyPageContent() {
         body: JSON.stringify({
           ...formData,
           user_id: user.id,
+          payment_reference: paymentReference,
         }),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        await uploadMediaFiles(result.data.id);
-        if (selectedContacts.length > 0) {
-          await sendInvitations(result.data.id);
-        }
+        const partyId = result.data.id;
 
-        toast.success('Re-es Party created successfully!');
-        setFormData({
-          title: '',
-          description: '',
-          location: '',
-          venue_details: '',
-          event_date: '',
-          event_time: '',
-          dress_code: '',
-          target_amount: '',
-          contribution_per_person: '5000',
-          max_participants: '',
-          deadline: '',
-          category_id: '',
-          requirements: []
-        });
-        setMediaFiles([]);
-        setSelectedContacts([]);
-        fetchProperties();
-        setActiveTab('manage');
-        setShowCreateModal(false);
+        try {
+          // Upload media files
+          if (mediaFiles.length > 0) {
+            await uploadMediaFiles(partyId);
+          }
+
+          // Send invitations
+          if (selectedContacts.length > 0) {
+            await sendInvitations(partyId);
+          }
+
+          // Creator makes their initial contribution after payment
+          const creatorContributionAmount = parseFloat(formData.creator_contribution || '0');
+          const creatorResponse = await fetch(`/api/rees-party/${partyId}/contributions`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              contributor_id: user.id,
+              invitation_id: null, // Creator doesn't have an invitation
+              amount: creatorContributionAmount,
+              payment_status: 'completed',
+              payment_reference: paymentReference,
+            }),
+          });
+
+          const creatorResult = await creatorResponse.json();
+          if (!creatorResult.success) {
+            console.warn('Creator contribution failed, but party was created:', creatorResult.error);
+          }
+
+          toast.success('Re-es Party created successfully! Your contribution has been recorded.');
+          setFormData({
+            title: '',
+            description: '',
+            location: '',
+            venue_details: '',
+            event_date: '',
+            event_time: '',
+            dress_code: '',
+            target_amount: '',
+            contribution_per_person: '5000',
+            creator_contribution: '',
+            max_participants: '',
+            deadline: '',
+            category_id: '',
+            requirements: []
+          });
+          setMediaFiles([]);
+          setSelectedContacts([]);
+          fetchProperties();
+          setActiveTab('manage');
+          setShowCreateModal(false);
+          setCreateStep('form');
+          setPaymentReference('');
+        } catch (mediaError) {
+          console.error('Error with media upload or invitations:', mediaError);
+          toast.error('Party created but there was an issue with media upload. Please try again.');
+          // Still close the modal and reset form since party was created
+          setFormData({
+            title: '',
+            description: '',
+            location: '',
+            venue_details: '',
+            event_date: '',
+            event_time: '',
+            dress_code: '',
+            target_amount: '',
+            contribution_per_person: '5000',
+            creator_contribution: '',
+            max_participants: '',
+            deadline: '',
+            category_id: '',
+            requirements: []
+          });
+          setMediaFiles([]);
+          setSelectedContacts([]);
+          fetchProperties();
+          setActiveTab('manage');
+          setShowCreateModal(false);
+          setCreateStep('form');
+          setPaymentReference('');
+        }
       } else {
         toast.error(result.error || 'Failed to create party');
       }
@@ -353,33 +451,55 @@ function ReesPartyPageContent() {
     }
   };
 
+  const handlePaymentClose = () => {
+    // Stay on payment step or allow going back
+    toast.info('Payment cancelled. You can try again or go back to edit the form.');
+  };
+
+  const handleBackToForm = () => {
+    setCreateStep('form');
+  };
+
   const uploadMediaFiles = async (partyId: string) => {
-    for (const file of mediaFiles) {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${partyId}/${Date.now()}.${fileExt}`;
+    try {
+      for (const file of mediaFiles) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${partyId}/${Date.now()}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('rees-party-media')
-        .upload(fileName, file);
+        const { error: uploadError } = await supabase.storage
+          .from('rees-party-media')
+          .upload(fileName, file);
 
-      if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          throw new Error(`Failed to upload ${file.name}: ${uploadError.message}`);
+        }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('rees-party-media')
-        .getPublicUrl(fileName);
+        const { data: { publicUrl } } = supabase.storage
+          .from('rees-party-media')
+          .getPublicUrl(fileName);
 
-      const mediaType = file.type.startsWith('video/') ? 'video' : 'image';
+        const mediaType = file.type.startsWith('video/') ? 'video' : 'image';
 
-      await supabase
-        .from('rees_party_media')
-        .insert({
-          party_id: partyId,
-          media_url: publicUrl,
-          media_type: mediaType,
-          file_name: file.name,
-          file_size: file.size,
-          is_primary: mediaFiles.indexOf(file) === 0
-        });
+        const { error: insertError } = await supabase
+          .from('rees_party_media')
+          .insert({
+            party_id: partyId,
+            media_url: publicUrl,
+            media_type: mediaType,
+            file_name: file.name,
+            file_size: file.size,
+            is_primary: mediaFiles.indexOf(file) === 0
+          });
+
+        if (insertError) {
+          console.error('Insert error:', insertError);
+          throw new Error(`Failed to save media record for ${file.name}: ${insertError.message}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error in uploadMediaFiles:', error);
+      throw error; // Re-throw to be caught by the calling function
     }
   };
 
@@ -506,20 +626,36 @@ function ReesPartyPageContent() {
             <TabsContent value="manage" className="space-y-3 sm:space-y-4 md:space-y-6 px-2 sm:px-4 md:px-0">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                 {properties.map((property) => (
-                  <Card key={property.id} className={`hover:shadow-lg transition-shadow border-l-4 ${getStatusColor(property.status).split(' ')[2]}`}>
-                    <CardHeader className="pb-3 px-4 md:px-6">
+                    <Card key={property.id} className={`hover:shadow-lg transition-shadow border-l-4 ${getStatusColor(property.status).split(' ')[2]} overflow-hidden relative`}>
+                      {/* Image with diagonal cut - positioned at top right corner */}
+                      <div
+                        className="absolute top-0 right-0 w-40 h-40 md:w-56 md:h-24 bg-cover bg-center"
+                        style={{
+                          backgroundImage: `url(${(() => {
+                            const firstImage = property.media?.find(m => m.media_type === 'image') ||
+                                              null;
+                            return firstImage?.media_url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800';
+                          })()})`,
+                          clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 100% 100%)'
+                        }}
+                      >
+                        <div className="absolute top-3 right-3">
+                          <Badge className={`${getStatusColor(property.status)} text-xs md:text-sm`}>
+                            {getStatusIcon(property.status)}
+                            <span className="ml-1 capitalize hidden sm:inline">{property.status}</span>
+                          </Badge>
+                        </div>
+                      </div>
+                    
+                    <CardHeader className="pb-3 px-4 md:px-6 relative z-10">
                       <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="text-base md:text-lg line-clamp-2 leading-tight">{property.title}</CardTitle>
+                        <div className="flex-1 min-w-0 pr-48 md:pr-64">
+                          <CardTitle className="text-base md:text-sm line-clamp-2 leading-tight">{property.title}</CardTitle>
                           <CardDescription className="flex items-center gap-1 mt-1">
                             <MapPin className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
                             <span className="text-xs md:text-sm truncate">{property.location}</span>
                           </CardDescription>
                         </div>
-                        <Badge className={`${getStatusColor(property.status)} text-xs md:text-sm ml-2`}>
-                          {getStatusIcon(property.status)}
-                          <span className="ml-1 capitalize hidden sm:inline">{property.status}</span>
-                        </Badge>
                       </div>
                     </CardHeader>
                     <CardContent className="pt-0 px-4 md:px-6 pb-4 md:pb-6">
@@ -669,15 +805,28 @@ function ReesPartyPageContent() {
                                   year: 'numeric'
                                 })}
                               </div>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => openChatModal(contribution.party)}
-                                className="mt-2 text-xs h-7"
-                              >
-                                <MessageCircle className="h-3 w-3 mr-1" />
-                                Chat
-                              </Button>
+                              <div className="flex gap-2 mt-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => openChatModal(contribution.party)}
+                                  className="text-xs h-7"
+                                >
+                                  <MessageCircle className="h-3 w-3 mr-1" />
+                                  Chat
+                                </Button>
+                                {contribution.payment_status === 'completed' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => window.open(`/receipt/${contribution.payment_reference}`, '_blank')}
+                                    className="text-xs h-7"
+                                  >
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    Receipt
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           </div>
 
@@ -797,26 +946,55 @@ function ReesPartyPageContent() {
           </Tabs>
 
           {/* Create Party Modal */}
-          <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+          <Dialog open={showCreateModal} onOpenChange={(open) => {
+            setShowCreateModal(open);
+            if (!open) {
+              setCreateStep('form');
+              setPaymentReference('');
+            }
+          }}>
             <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-y-auto p-2 sm:p-4 md:p-6 !fixed !top-[50%] !left-[50%] !translate-x-[-50%] !translate-y-[-50%] z-50 sm:max-w-[85vw]">
               <DialogHeader className="space-y-2 sm:space-y-3 pb-3 sm:pb-4">
                 <div className="flex items-center gap-2 sm:gap-3">
                   <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Plus className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
+                    {createStep === 'form' ? <Plus className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" /> :
+                     createStep === 'summary' ? <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" /> :
+                     createStep === 'paystack' ? <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" /> :
+                     <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <DialogTitle className="text-base sm:text-lg md:text-xl font-semibold truncate">Create New Party</DialogTitle>
+                    <DialogTitle className="text-base sm:text-lg md:text-xl font-semibold truncate">
+                      {createStep === 'form' ? 'Create New Party' :
+                       createStep === 'summary' ? 'Review Party Details' :
+                       createStep === 'paystack' ? 'Complete Payment' :
+                       'Payment Successful'}
+                    </DialogTitle>
                     <DialogDescription className="text-xs sm:text-sm text-gray-600 line-clamp-1">
-                      Plan an amazing party and invite your contacts
+                      {createStep === 'form' ? 'Plan an amazing party and invite your contacts' :
+                       createStep === 'summary' ? 'Review your party details before proceeding to payment' :
+                       createStep === 'paystack' ? 'Make your initial contribution to launch the party' :
+                       'Your payment was successful. Click Publish Party to create your event.'}
                     </DialogDescription>
                   </div>
+                  {(createStep === 'paystack' || createStep === 'success') && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBackToForm}
+                      className="flex items-center gap-1"
+                    >
+                      <ArrowLeft className="h-3 w-3" />
+                      Back
+                    </Button>
+                  )}
                 </div>
               </DialogHeader>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 pt-2">
                 {/* Main Form */}
                 <div className="lg:col-span-2 space-y-3 sm:space-y-4 md:space-y-6">
-                  <form onSubmit={handleCreateProperty} className="space-y-3 sm:space-y-4 md:space-y-6">
+                  {createStep === 'form' ? (
+                    <form onSubmit={handleFormSubmit} className="space-y-3 sm:space-y-4 md:space-y-6">
                     {/* Party Information Section */}
                     <Card className="border-gray-200">
                       <CardHeader className="pb-3 px-3 sm:px-4 md:px-6 pt-3 sm:pt-4 md:pt-6">
@@ -955,7 +1133,7 @@ function ReesPartyPageContent() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                           <div className="space-y-1.5 sm:space-y-2">
-                            <Label htmlFor="contribution_per_person" className="text-xs sm:text-sm font-medium text-gray-700">Contribution per Person (₦)</Label>
+                            <Label htmlFor="contribution_per_person" className="text-xs sm:text-sm font-medium text-gray-700">Contribution per Person (₦) *</Label>
                             <Input
                               id="contribution_per_person"
                               type="number"
@@ -963,7 +1141,25 @@ function ReesPartyPageContent() {
                               onChange={(e) => setFormData(prev => ({ ...prev, contribution_per_person: e.target.value }))}
                               placeholder="5000"
                               className="h-9 sm:h-10 text-sm"
+                              required
                             />
+                            <p className="text-xs text-gray-500">Minimum amount others must contribute</p>
+                          </div>
+                          <div className="space-y-1.5 sm:space-y-2">
+                            <Label htmlFor="creator_contribution" className="text-xs sm:text-sm font-medium text-gray-700">Your Contribution (₦) *</Label>
+                            <Input
+                              id="creator_contribution"
+                              type="number"
+                              value={formData.creator_contribution}
+                              onChange={(e) => setFormData(prev => ({ ...prev, creator_contribution: e.target.value }))}
+                              placeholder="Enter your contribution amount"
+                              className="h-9 sm:h-10 text-sm"
+                              required
+                            />
+                            <p className="text-xs text-gray-500">
+                              Min: ₦{formData.contribution_per_person ? parseFloat(formData.contribution_per_person).toLocaleString() : '0'} |
+                              Max: ₦{formData.target_amount ? parseFloat(formData.target_amount).toLocaleString() : '0'}
+                            </p>
                           </div>
                           <div className="space-y-1.5 sm:space-y-2">
                             <Label htmlFor="max_participants" className="text-xs sm:text-sm font-medium text-gray-700">Max Participants</Label>
@@ -976,17 +1172,18 @@ function ReesPartyPageContent() {
                               className="h-9 sm:h-10 text-sm"
                             />
                           </div>
-                          <div className="space-y-1.5 sm:space-y-2">
-                            <Label htmlFor="deadline" className="text-xs sm:text-sm font-medium text-gray-700">Payment Deadline *</Label>
-                            <Input
-                              id="deadline"
-                              type="date"
-                              value={formData.deadline}
-                              onChange={(e) => setFormData(prev => ({ ...prev, deadline: e.target.value }))}
-                              className="h-9 sm:h-10 text-sm"
-                              required
-                            />
-                          </div>
+                        </div>
+
+                        <div className="space-y-1.5 sm:space-y-2">
+                          <Label htmlFor="deadline" className="text-xs sm:text-sm font-medium text-gray-700">Payment Deadline *</Label>
+                          <Input
+                            id="deadline"
+                            type="date"
+                            value={formData.deadline}
+                            onChange={(e) => setFormData(prev => ({ ...prev, deadline: e.target.value }))}
+                            className="h-9 sm:h-10 text-sm"
+                            required
+                          />
                         </div>
                       </CardContent>
                     </Card>
@@ -1089,10 +1286,172 @@ function ReesPartyPageContent() {
                         Cancel
                       </Button>
                       <Button type="submit" disabled={loading} className="flex-1 h-9 sm:h-10 bg-gray-900 hover:bg-gray-800 text-xs sm:text-sm">
-                        {loading ? 'Creating...' : 'Launch Party'}
+                        {loading ? 'Processing...' : 'Proceed to Summary'}
                       </Button>
                     </div>
                   </form>
+                  ) : createStep === 'summary' ? (
+                    <div className="space-y-6">
+                      {/* Summary Step */}
+                      <Card className="border-gray-200">
+                        <CardHeader className="pb-4">
+                          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                            <CheckCircle className="h-5 w-5 text-gray-500" />
+                            Party Summary
+                          </CardTitle>
+                          <CardDescription className="text-sm text-gray-600">
+                            Review your party details before proceeding to payment
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                          {/* Party Summary */}
+                          <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                            <h3 className="font-medium text-gray-900">{formData.title}</h3>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="text-gray-600">Target Amount:</span>
+                                <p className="font-semibold text-gray-900">{formatCurrency(parseFloat(formData.target_amount || '0'))}</p>
+                              </div>
+                              <div>
+                                <span className="text-gray-600">Your Contribution:</span>
+                                <p className="font-semibold text-gray-900">{formatCurrency(parseFloat(formData.creator_contribution || '0'))}</p>
+                              </div>
+                            </div>
+                            <div className="pt-2 border-t border-gray-200">
+                              <p className="text-xs text-gray-600">
+                                Remaining for others: {formatCurrency(Math.max(0, parseFloat(formData.target_amount || '0') - parseFloat(formData.creator_contribution || '0')))}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Pay Now Button */}
+                          <div className="flex justify-center">
+                            <Button
+                              onClick={() => setCreateStep('paystack')}
+                              className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 text-lg font-semibold"
+                            >
+                              <CreditCard className="h-5 w-5 mr-2" />
+                              Pay Now
+                            </Button>
+                          </div>
+
+                          <p className="text-xs text-gray-500 text-center">
+                            Click "Pay Now" to proceed with your initial contribution
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  ) : createStep === 'paystack' ? (
+                    <div className="space-y-6">
+                      {/* Paystack Payment Step */}
+                      <Card className="border-gray-200">
+                        <CardHeader className="pb-4">
+                          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                            <CreditCard className="h-5 w-5 text-gray-500" />
+                            Complete Payment
+                          </CardTitle>
+                          <CardDescription className="text-sm text-gray-600">
+                            Make your initial contribution to launch this party
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                          {/* Party Summary */}
+                          <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                            <h3 className="font-medium text-gray-900">{formData.title}</h3>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="text-gray-600">Target Amount:</span>
+                                <p className="font-semibold text-gray-900">{formatCurrency(parseFloat(formData.target_amount || '0'))}</p>
+                              </div>
+                              <div>
+                                <span className="text-gray-600">Your Contribution:</span>
+                                <p className="font-semibold text-gray-900">{formatCurrency(parseFloat(formData.creator_contribution || '0'))}</p>
+                              </div>
+                            </div>
+                            <div className="pt-2 border-t border-gray-200">
+                              <p className="text-xs text-gray-600">
+                                Remaining for others: {formatCurrency(Math.max(0, parseFloat(formData.target_amount || '0') - parseFloat(formData.creator_contribution || '0')))}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Paystack Payment Component */}
+                          <div className="flex justify-center">
+                            <PaystackPayment
+                              amount={parseFloat(formData.creator_contribution || '0') * 100} // Convert to kobo
+                              email={user?.email || ''}
+                              onSuccess={handlePaymentSuccess}
+                              onClose={handlePaymentClose}
+                              metadata={{
+                                party_title: formData.title,
+                                contribution_amount: formData.creator_contribution,
+                                user_id: user?.id
+                              }}
+                              className="w-full max-w-xs"
+                            />
+                          </div>
+
+                          <p className="text-xs text-gray-500 text-center">
+                            Your payment is secure and will be processed by Paystack
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* Success Step */}
+                      <Card className="border-green-200 bg-green-50">
+                        <CardHeader className="pb-4">
+                          <CardTitle className="text-lg font-semibold flex items-center gap-2 text-green-800">
+                            <CheckCircle className="h-5 w-5 text-green-600" />
+                            Payment Successful!
+                          </CardTitle>
+                          <CardDescription className="text-sm text-green-700">
+                            Your payment has been processed successfully. Ready to launch your party?
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                          {/* Party Summary */}
+                          <div className="bg-white rounded-lg p-4 border border-green-200 space-y-3">
+                            <h3 className="font-medium text-gray-900">{formData.title}</h3>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="text-gray-600">Target Amount:</span>
+                                <p className="font-semibold text-gray-900">{formatCurrency(parseFloat(formData.target_amount || '0'))}</p>
+                              </div>
+                              <div>
+                                <span className="text-gray-600">Your Contribution:</span>
+                                <p className="font-semibold text-gray-900">{formatCurrency(parseFloat(formData.creator_contribution || '0'))}</p>
+                              </div>
+                            </div>
+                            <div className="pt-2 border-t border-gray-200 space-y-1">
+                              <p className="text-xs text-gray-600">
+                                Payment Reference: <span className="font-mono text-gray-800">{paymentReference}</span>
+                              </p>
+                              <p className="text-xs text-gray-600">
+                                Remaining for others: {formatCurrency(Math.max(0, parseFloat(formData.target_amount || '0') - parseFloat(formData.creator_contribution || '0')))}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Publish Party Button */}
+                          <div className="flex justify-center">
+                            <Button
+                              onClick={handlePublishParty}
+                              disabled={loading}
+                              className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 text-lg font-semibold"
+                            >
+                              {loading ? 'Publishing Party...' : 'Publish Party'}
+                            </Button>
+                          </div>
+
+                          <p className="text-xs text-gray-500 text-center">
+                            Click "Publish Party" to create your event and send invitations
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
                 </div>
 
                 {/* Sidebar */}
@@ -1160,6 +1519,12 @@ function ReesPartyPageContent() {
                         <Label className="text-sm font-medium text-gray-700">Contribution per Person</Label>
                         <p className="text-lg font-semibold text-gray-900">
                           {formData.contribution_per_person ? formatCurrency(parseFloat(formData.contribution_per_person)) : formatCurrency(5000)}
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-sm font-medium text-gray-700">Your Contribution</Label>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {formData.creator_contribution ? formatCurrency(parseFloat(formData.creator_contribution)) : 'Not set'}
                         </p>
                       </div>
                       <div className="space-y-1">
@@ -1325,7 +1690,7 @@ function ReesPartyPageContent() {
                                       </div>
                                     </div>
                                   </div>
-
+ 
                                   <div className="text-left sm:text-right space-y-1">
                                     <div className="text-lg sm:text-xl font-bold text-gray-900">
                                       {contributionPercentage.toFixed(2)}%
@@ -1335,12 +1700,25 @@ function ReesPartyPageContent() {
                                       {formatCurrency(contributionAmount)}
                                     </div>
                                     {contribution && (
-                                      <div className="text-[10px] sm:text-xs text-gray-500">
-                                        {new Date(contribution.contributed_at).toLocaleDateString('en-US', {
-                                          month: 'short',
-                                          day: 'numeric'
-                                        })}
-                                      </div>
+                                      <>
+                                        <div className="text-[10px] sm:text-xs text-gray-500">
+                                          {new Date(contribution.contributed_at).toLocaleDateString('en-US', {
+                                            month: 'short',
+                                            day: 'numeric'
+                                          })}
+                                        </div>
+                                        {contribution.payment_status === 'completed' && (
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => window.open(`/receipt/${contribution.payment_reference}`, '_blank')}
+                                            className="mt-2 text-xs h-6"
+                                          >
+                                            <CheckCircle className="h-3 w-3 mr-1" />
+                                            Receipt
+                                          </Button>
+                                        )}
+                                      </>
                                     )}
                                   </div>
                                 </div>

@@ -17,6 +17,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { Upload, Users, Coins, Calendar, MapPin, Camera, Video, Plus, CheckCircle, Clock, XCircle, MessageCircle, Send, ArrowLeft, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
+import { PaystackPayment } from '@/components/paystack/paystack-payment';
 
 interface ReesPartyProperty {
   id: string;
@@ -37,6 +38,7 @@ interface ReesPartyProperty {
   deadline: string;
   forum_expiry: string;
   created_at: string;
+  user_id: string;
   media: ReesPartyMedia[];
   category: { name: string };
   invitations?: Invitation[];
@@ -68,6 +70,7 @@ interface Contribution {
   amount: number;
   contribution_percentage: number;
   payment_status: string;
+  payment_reference?: string;
   contributed_at: string;
   contributor?: Contact;
 }
@@ -101,6 +104,7 @@ function ReesPartyDetailsPageContent() {
   const [showContributionDialog, setShowContributionDialog] = useState(false);
   const [isParticipant, setIsParticipant] = useState(false);
   const [hasContributed, setHasContributed] = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
 
   useEffect(() => {
     fetchPartyDetails();
@@ -130,16 +134,24 @@ function ReesPartyDetailsPageContent() {
     if (!user) return;
 
     try {
-      // Check if user is invited
-      const { data: invitation } = await supabase
-        .from('rees_party_invitations')
-        .select('id, status')
-        .eq('party_id', partyId)
-        .eq('invitee_id', user.id)
-        .eq('status', 'accepted')
-        .single();
+      // Check if user is the party creator
+      const isCreator = party?.user_id === user.id;
 
-      setIsParticipant(!!invitation);
+      // Check if user is invited (only if not creator)
+      let invitation = null;
+      if (!isCreator) {
+        const { data: invData } = await supabase
+          .from('rees_party_invitations')
+          .select('id, status')
+          .eq('party_id', partyId)
+          .eq('invitee_id', user.id)
+          .eq('status', 'accepted')
+          .single();
+        invitation = invData;
+      }
+
+      // User can contribute if they are the creator OR an accepted invitee
+      setIsParticipant(isCreator || !!invitation);
 
       // Check if user has contributed
       const { data: contribution } = await supabase
@@ -157,30 +169,43 @@ function ReesPartyDetailsPageContent() {
   };
 
 
-  const handleMakeContribution = async () => {
+  const handlePaymentSuccess = async (reference: string) => {
     if (!user || !contributionAmount) return;
 
-    const amount = parseFloat(contributionAmount);
-    if (amount <= 0) {
-      toast.error('Please enter a valid amount');
-      return;
-    }
-
+    setPaymentProcessing(true);
     try {
-      // Find user's invitation
-      const { data: invitation } = await supabase
-        .from('rees_party_invitations')
-        .select('id')
-        .eq('party_id', partyId)
-        .eq('invitee_id', user.id)
-        .eq('status', 'accepted')
-        .single();
+      // Verify payment with Paystack
+      const verifyResponse = await fetch(`/api/paystack/verify?reference=${reference}`);
+      const verifyResult = await verifyResponse.json();
 
-      if (!invitation) {
-        toast.error('You are not invited to this party');
+      if (!verifyResult.success) {
+        toast.error('Payment verification failed');
         return;
       }
 
+      const amount = parseFloat(contributionAmount);
+      const isCreator = party?.user_id === user.id;
+
+      let invitationId = null;
+
+      // If user is not the creator, find their invitation
+      if (!isCreator) {
+        const { data: invitation } = await supabase
+          .from('rees_party_invitations')
+          .select('id')
+          .eq('party_id', partyId)
+          .eq('invitee_id', user.id)
+          .eq('status', 'accepted')
+          .single();
+
+        if (!invitation) {
+          toast.error('You are not invited to this party');
+          return;
+        }
+        invitationId = invitation.id;
+      }
+
+      // Create contribution record
       const response = await fetch(`/api/rees-party/${partyId}/contributions`, {
         method: 'POST',
         headers: {
@@ -188,27 +213,34 @@ function ReesPartyDetailsPageContent() {
         },
         body: JSON.stringify({
           contributor_id: user.id,
-          invitation_id: invitation.id,
+          invitation_id: invitationId, // null for creator
           amount: amount,
-          payment_status: 'completed', // Assuming payment is processed
+          payment_status: 'completed',
+          payment_reference: reference,
         }),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        toast.success('Contribution made successfully!');
+        toast.success('Payment successful! Receipt will be sent to your email.');
         setShowContributionDialog(false);
         setContributionAmount('');
         fetchPartyDetails();
         setHasContributed(true);
       } else {
-        toast.error(result.error || 'Failed to make contribution');
+        toast.error(result.error || 'Failed to record contribution');
       }
     } catch (error) {
-      console.error('Error making contribution:', error);
-      toast.error('Failed to make contribution');
+      console.error('Error processing payment:', error);
+      toast.error('Failed to process payment');
+    } finally {
+      setPaymentProcessing(false);
     }
+  };
+
+  const handlePaymentClose = () => {
+    setPaymentProcessing(false);
   };
 
   const calculatePercentage = (amount: number, target: number) => {
@@ -648,12 +680,24 @@ function ReesPartyDetailsPageContent() {
                     Suggested amount: {formatCurrency(party.contribution_per_person || 5000)}
                   </p>
                 </div>
+                {contributionAmount && parseFloat(contributionAmount) > 0 && user?.email && (
+                  <PaystackPayment
+                    amount={parseFloat(contributionAmount) * 100} // Convert to kobo
+                    email={user.email}
+                    onSuccess={handlePaymentSuccess}
+                    onClose={handlePaymentClose}
+                    metadata={{
+                      party_id: partyId,
+                      party_title: party.title,
+                      contributor_id: user.id,
+                      contribution_type: 'rees_party'
+                    }}
+                    className="w-full"
+                  />
+                )}
                 <div className="flex gap-3">
                   <Button variant="outline" onClick={() => setShowContributionDialog(false)} className="flex-1">
                     Cancel
-                  </Button>
-                  <Button onClick={handleMakeContribution} className="flex-1">
-                    Contribute
                   </Button>
                 </div>
               </div>

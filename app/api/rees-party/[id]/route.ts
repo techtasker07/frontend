@@ -12,7 +12,6 @@ export async function GET(
       .from('rees_party_properties')
       .select(`
         *,
-        category:categories(name),
         media:rees_party_media(*),
         invitations:rees_party_invitations(
           id,

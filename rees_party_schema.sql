@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS public.rees_party_properties (
     dress_code TEXT,
     requirements TEXT[], -- Array of personal requirements
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
-    category_id UUID REFERENCES public.categories(id) ON DELETE RESTRICT,
+    category_id TEXT,
     status TEXT DEFAULT 'planning' CHECK (status IN ('planning', 'active', 'completed', 'cancelled')),
     target_amount NUMERIC(12,2) NOT NULL,
     current_amount NUMERIC(12,2) DEFAULT 0,
@@ -385,6 +385,9 @@ CREATE POLICY "Users can update their own chat messages" ON public.rees_party_ch
 ------------------------------
 -- 8) Storage policies
 ------------------------------
+
+-- Enable RLS on storage.objects
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 
 -- Storage policies for rees party media
 CREATE POLICY "Anyone can view rees party media" ON storage.objects

@@ -94,6 +94,39 @@ const mockNotifications = [
     actionUrl: "/settings",
     actionText: "Review Security",
   },
+  {
+    id: "7",
+    type: "rees_party",
+    title: "Re-es Party Invitation",
+    message: "You've been invited to contribute to 'John's Birthday Bash' party. Target: ₦500,000",
+    timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
+    read: false,
+    priority: "high",
+    actionUrl: "/rees-party/party-123",
+    actionText: "View Party",
+  },
+  {
+    id: "8",
+    type: "rees_party",
+    title: "Party Contribution Reminder",
+    message: "Don't forget to contribute to 'Sarah's Wedding' party. Deadline: Tomorrow",
+    timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
+    read: false,
+    priority: "medium",
+    actionUrl: "/rees-party/party-456",
+    actionText: "Contribute Now",
+  },
+  {
+    id: "9",
+    type: "rees_party",
+    title: "Party Fully Funded!",
+    message: "Congratulations! 'Mike's Graduation Party' has reached its target amount.",
+    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+    read: true,
+    priority: "high",
+    actionUrl: "/rees-party/party-789",
+    actionText: "View Party",
+  },
 ]
 
 const notificationTypes = {
@@ -103,6 +136,7 @@ const notificationTypes = {
   social: { icon: Users, label: "Social", color: "text-pink-600" },
   system: { icon: Settings, label: "System", color: "text-gray-600" },
   security: { icon: Shield, label: "Security", color: "text-red-600" },
+  rees_party: { icon: Users, label: "Re-es Party", color: "text-orange-600" },
 }
 
 const priorityColors = {
@@ -240,13 +274,14 @@ export default function NotificationsPage() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:grid-cols-7">
+          <TabsList className="grid w-full grid-cols-8 lg:w-auto lg:grid-cols-8">
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="unread">Unread</TabsTrigger>
             <TabsTrigger value="property">Property</TabsTrigger>
             <TabsTrigger value="voting">Voting</TabsTrigger>
             <TabsTrigger value="ai_prospect">AI</TabsTrigger>
             <TabsTrigger value="social">Social</TabsTrigger>
+            <TabsTrigger value="rees_party">Re-es Party</TabsTrigger>
             <TabsTrigger value="system">System</TabsTrigger>
           </TabsList>
         </Tabs>
