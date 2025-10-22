@@ -17,6 +17,7 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { Upload, Users, DollarSign, Calendar, MapPin, Camera, Video, Plus, CheckCircle, Clock, XCircle } from 'lucide-react';
+import useSWR from 'swr';
 
 interface CrowdFundingProperty {
   id: string;
@@ -75,166 +76,174 @@ interface Contribution {
 }
 
 function CrowdFundingPageContent() {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'manage' | 'contribute'>('manage');
-  const [properties, setProperties] = useState<CrowdFundingProperty[]>([]);
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedProperty, setSelectedProperty] = useState<CrowdFundingProperty | null>(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [myContributions, setMyContributions] = useState<any[]>([]);
-  const [invitedProperties, setInvitedProperties] = useState<CrowdFundingProperty[]>([]);
-  const [showContactsModal, setShowContactsModal] = useState(false);
-  const [selectedPropertyForContacts, setSelectedPropertyForContacts] = useState<CrowdFundingProperty | null>(null);
+   const { user } = useAuth();
+   const [activeTab, setActiveTab] = useState<'manage' | 'contribute'>('manage');
+   const [loading, setLoading] = useState(false);
+   const [selectedProperty, setSelectedProperty] = useState<CrowdFundingProperty | null>(null);
+   const [showCreateModal, setShowCreateModal] = useState(false);
+   const [showContactsModal, setShowContactsModal] = useState(false);
+   const [selectedPropertyForContacts, setSelectedPropertyForContacts] = useState<CrowdFundingProperty | null>(null);
 
-  // Form states
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    location: '',
-    price: '',
-    target_amount: '',
-    min_contribution: '1000',
-    max_contribution: '',
-    deadline: '',
-    category_id: '',
-    features: [] as string[]
-  });
+   // Form states
+   const [formData, setFormData] = useState({
+     title: '',
+     description: '',
+     location: '',
+     price: '',
+     target_amount: '',
+     min_contribution: '1000',
+     max_contribution: '',
+     deadline: '',
+     category_id: '',
+     features: [] as string[]
+   });
 
-  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
-  const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
-  const [contributionAmount, setContributionAmount] = useState('');
+   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
+   const [contributionAmount, setContributionAmount] = useState('');
 
-  useEffect(() => {
-    fetchProperties();
-    fetchContacts();
-    fetchMyContributions();
-  }, []);
+   // Use SWR for properties
+   const { data: properties = [], isLoading: propertiesLoading } = useSWR(
+     user ? ['crowd-funding-properties', user.id] : null,
+     async ([, userId]) => {
+       const { data, error } = await supabase
+         .from('crowd_funding_properties')
+         .select(`
+           *,
+           category:categories(name),
+           media:crowd_funding_media(*),
+           invitations:crowd_funding_invitations(
+             id,
+             invitee_id,
+             invitee_email,
+             invitee_phone,
+             status,
+             invited_at,
+             contact:profiles!crowd_funding_invitations_invitee_id_fkey(id, first_name, last_name, email)
+           ),
+           contributions:crowd_funding_contributions(
+             id,
+             contributor_id,
+             amount,
+             contribution_percentage,
+             payment_status,
+             contributed_at,
+             contributor:profiles!crowd_funding_contributions_contributor_id_fkey(id, first_name, last_name, email)
+           )
+         `)
+         .eq('user_id', userId)
+         .order('created_at', { ascending: false });
 
-  const fetchProperties = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('crowd_funding_properties')
-        .select(`
-          *,
-          category:categories(name),
-          media:crowd_funding_media(*),
-          invitations:crowd_funding_invitations(
-            id,
-            invitee_id,
-            invitee_email,
-            invitee_phone,
-            status,
-            invited_at,
-            contact:profiles!crowd_funding_invitations_invitee_id_fkey(id, first_name, last_name, email)
-          ),
-          contributions:crowd_funding_contributions(
-            id,
-            contributor_id,
-            amount,
-            contribution_percentage,
-            payment_status,
-            contributed_at,
-            contributor:profiles!crowd_funding_contributions_contributor_id_fkey(id, first_name, last_name, email)
-          )
-        `)
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false });
+       if (error) throw error;
+       return data || [];
+     },
+     {
+       revalidateOnFocus: false,
+       revalidateOnReconnect: true,
+       dedupingInterval: 30000,
+       errorRetryCount: 3,
+       errorRetryInterval: 1000,
+     }
+   );
 
-      if (error) throw error;
-      setProperties(data || []);
-    } catch (error) {
-      console.error('Error fetching properties:', error);
-      toast.error('Failed to fetch properties');
-    }
-  };
+   // Use SWR for contacts
+   const { data: contacts = [] } = useSWR(
+     'crowd-funding-contacts',
+     async () => {
+       const { data: referrals, error: referralsError } = await supabase
+         .from('profiles')
+         .select('id, first_name, last_name, email, phone_number')
+         .neq('id', user?.id);
 
-  const fetchContacts = async () => {
-    try {
-      // Get registered contacts (referrals)
-      const { data: referrals, error: referralsError } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, email, phone_number')
-        .neq('id', user?.id);
+       if (referralsError) throw referralsError;
+       return referrals || [];
+     },
+     {
+       revalidateOnFocus: false,
+       revalidateOnReconnect: true,
+       dedupingInterval: 300000,
+       errorRetryCount: 3,
+       errorRetryInterval: 1000,
+     }
+   );
 
-      if (referralsError) throw referralsError;
-      setContacts(referrals || []);
-    } catch (error) {
-      console.error('Error fetching contacts:', error);
-      toast.error('Failed to fetch contacts');
-    }
-  };
+   // Use SWR for contributions
+   const { data: contributionsData } = useSWR(
+     user ? ['crowd-funding-contributions', user.id] : null,
+     async ([, userId]) => {
+       const { data: contributions, error: contributionsError } = await supabase
+         .from('crowd_funding_contributions')
+         .select(`
+           *,
+           property:crowd_funding_properties(
+             id,
+             title,
+             description,
+             location,
+             target_amount,
+             current_amount,
+             status,
+             created_at,
+             category:categories(name)
+           ),
+           invitation:crowd_funding_invitations(
+             id,
+             status,
+             invited_at
+           )
+         `)
+         .eq('contributor_id', userId)
+         .order('contributed_at', { ascending: false });
 
-  const fetchMyContributions = async () => {
-    try {
-      if (!user) return;
+       if (contributionsError) throw contributionsError;
 
-      // Get user's contributions with property details
-      const { data: contributions, error: contributionsError } = await supabase
-        .from('crowd_funding_contributions')
-        .select(`
-          *,
-          property:crowd_funding_properties(
-            id,
-            title,
-            description,
-            location,
-            target_amount,
-            current_amount,
-            status,
-            created_at,
-            category:categories(name)
-          ),
-          invitation:crowd_funding_invitations(
-            id,
-            status,
-            invited_at
-          )
-        `)
-        .eq('contributor_id', user.id)
-        .order('contributed_at', { ascending: false });
+       const { data: invitations, error: invitationsError } = await supabase
+         .from('crowd_funding_invitations')
+         .select(`
+           id,
+           status,
+           invited_at,
+           property:crowd_funding_properties(
+             id,
+             title,
+             description,
+             location,
+             target_amount,
+             current_amount,
+             status,
+             min_contribution,
+             max_contribution,
+             deadline,
+             created_at,
+             category:categories(name)
+           )
+         `)
+         .eq('invitee_id', userId)
+         .eq('status', 'accepted')
+         .order('invited_at', { ascending: false });
 
-      if (contributionsError) throw contributionsError;
+       if (invitationsError) throw invitationsError;
 
-      // Get properties where user was invited but hasn't contributed yet
-      const { data: invitations, error: invitationsError } = await supabase
-        .from('crowd_funding_invitations')
-        .select(`
-          id,
-          status,
-          invited_at,
-          property:crowd_funding_properties(
-            id,
-            title,
-            description,
-            location,
-            target_amount,
-            current_amount,
-            status,
-            min_contribution,
-            max_contribution,
-            deadline,
-            created_at,
-            category:categories(name)
-          )
-        `)
-        .eq('invitee_id', user.id)
-        .eq('status', 'accepted')
-        .order('invited_at', { ascending: false });
+       const contributedPropertyIds = new Set(contributions?.map(c => c.property_id) || []);
+       const pendingInvitations = invitations?.filter((inv: any) => inv.property && (inv.property as any).id && !contributedPropertyIds.has((inv.property as any).id)) || [];
 
-      if (invitationsError) throw invitationsError;
+       return {
+         contributions: contributions || [],
+         invitedProperties: pendingInvitations.map((inv: any) => inv.property).filter(Boolean) as CrowdFundingProperty[]
+       };
+     },
+     {
+       revalidateOnFocus: false,
+       revalidateOnReconnect: true,
+       dedupingInterval: 30000,
+       errorRetryCount: 3,
+       errorRetryInterval: 1000,
+     }
+   );
 
-      // Filter out properties where user has already contributed
-      const contributedPropertyIds = new Set(contributions?.map(c => c.property_id) || []);
-      const pendingInvitations = invitations?.filter((inv: any) => inv.property && (inv.property as any).id && !contributedPropertyIds.has((inv.property as any).id)) || [];
+   const myContributions = contributionsData?.contributions || [];
+   const invitedProperties = contributionsData?.invitedProperties || [];
 
-      setMyContributions(contributions || []);
-      setInvitedProperties(pendingInvitations.map((inv: any) => inv.property).filter(Boolean) as CrowdFundingProperty[]);
-    } catch (error) {
-      console.error('Error fetching contributions:', error);
-      toast.error('Failed to fetch contributions');
-    }
-  };
 
   const handleCreateProperty = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -289,7 +298,7 @@ function CrowdFundingPageContent() {
       });
       setMediaFiles([]);
       setSelectedContacts([]);
-      fetchProperties();
+      // Properties will be automatically refetched by SWR when needed
       setActiveTab('manage');
     } catch (error) {
       console.error('Error creating property:', error);
@@ -495,7 +504,7 @@ function CrowdFundingPageContent() {
                         <div className="space-y-2">
                           <Label className="text-xs md:text-sm font-medium text-gray-700">Media ({property.media.length})</Label>
                           <div className="grid grid-cols-2 gap-2">
-                            {property.media.slice(0, 2).map((media) => (
+                            {property.media.slice(0, 2).map((media: CrowdFundingMedia) => (
                               <div key={media.id} className="aspect-video bg-gray-100 rounded-md overflow-hidden border border-gray-200">
                                 {media.media_type === 'image' ? (
                                   <img

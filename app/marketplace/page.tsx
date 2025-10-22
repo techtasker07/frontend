@@ -11,66 +11,63 @@ import { useAuth } from '@/lib/auth';
 import { Search, Filter, Heart, Eye, MapPin, Bed, Bath, Car, Star, Plus } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import useSWR from 'swr';
 
 export default function MarketplacePage() {
-  const [listings, setListings] = useState<MarketplaceListing[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const { isAuthenticated } = useAuth();
+   const [searchTerm, setSearchTerm] = useState('');
+   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+   const { isAuthenticated } = useAuth();
 
-  const filteredListings = listings.filter((listing) =>
-    searchTerm === '' ||
-    listing.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    listing.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    listing.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    listing.price?.toString().includes(searchTerm)
-  );
+   // Use SWR for instant data fetching and caching
+   const { data: listings = [], error, isLoading } = useSWR(
+     'marketplace-listings',
+     async () => {
+       console.log('🔄 Marketplace: Starting to fetch listings...');
+       const params = {
+         limit: 100 // Fetch more since no server-side filtering
+       };
 
-  useEffect(() => {
-    fetchListings();
-  }, []);
+       console.log('🚀 Marketplace: Calling getMarketplaceListings API with params:', params);
+       const response = await supabaseApi.getMarketplaceListings(params);
+       const firstListing = response.data?.[0];
+       console.log('📊 Marketplace: API response:', {
+         success: response.success,
+         dataLength: response.data?.length || 0,
+         error: response.error,
+         sampleData: firstListing ? {
+           id: firstListing.id,
+           title: firstListing.title,
+           price: firstListing.price,
+           location: firstListing.location,
+           hasImages: (firstListing.images?.length ?? 0) > 0,
+           isActive: firstListing.is_active
+         } : 'No data'
+       });
 
-  const fetchListings = async () => {
-    console.log('🔄 Marketplace: Starting to fetch listings...');
-    setLoading(true);
-    try {
-      const params = {
-        limit: 100 // Fetch more since no server-side filtering
-      };
+       if (response.success) {
+         console.log('✅ Marketplace: Setting listings data, count:', response.data.length);
+         return response.data;
+       } else {
+         console.error('❌ Marketplace: Failed to fetch listings:', response.error);
+         return [];
+       }
+     },
+     {
+       revalidateOnFocus: false,
+       revalidateOnReconnect: true,
+       dedupingInterval: 30000, // Cache for 30 seconds
+       errorRetryCount: 3,
+       errorRetryInterval: 1000,
+     }
+   );
 
-      console.log('🚀 Marketplace: Calling getMarketplaceListings API with params:', params);
-      const response = await supabaseApi.getMarketplaceListings(params);
-      const firstListing = response.data?.[0];
-      console.log('📊 Marketplace: API response:', {
-        success: response.success,
-        dataLength: response.data?.length || 0,
-        error: response.error,
-        sampleData: firstListing ? {
-          id: firstListing.id,
-          title: firstListing.title,
-          price: firstListing.price,
-          location: firstListing.location,
-          hasImages: (firstListing.images?.length ?? 0) > 0,
-          isActive: firstListing.is_active
-        } : 'No data'
-      });
-
-      if (response.success) {
-        console.log('✅ Marketplace: Setting listings data, count:', response.data.length);
-        setListings(response.data);
-      } else {
-        console.error('❌ Marketplace: Failed to fetch listings:', response.error);
-        setListings([]);
-      }
-    } catch (error) {
-      console.error('💥 Marketplace: Exception during fetch:', error);
-      setListings([]);
-    } finally {
-      setLoading(false);
-      console.log('🏁 Marketplace: Fetch completed');
-    }
-  };
+   const filteredListings = listings.filter((listing) =>
+     searchTerm === '' ||
+     listing.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+     listing.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+     listing.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+     listing.price?.toString().includes(searchTerm)
+   );
 
 
   const formatPrice = (price: number, currency: string = '₦', period?: string) => {
@@ -90,11 +87,11 @@ export default function MarketplacePage() {
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
       {/* Header with Background */}
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 rounded-lg p-8 text-center space-y-4 text-white shadow-lg">
+      <div className="p-8 text-center space-y-4 text-black">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="text-center sm:text-left">
-            <h1 className="text-4xl font-bold">Property Marketplace</h1>
-            <p className="text-lg max-w-2xl opacity-90">
+            <h1 className="text-3xl font-bold">Marketplace Property</h1>
+            <p className="text-muted-foreground">
               Discover your perfect property from our curated selection of homes, apartments, and commercial spaces
             </p>
           </div>
@@ -134,23 +131,7 @@ export default function MarketplacePage() {
         </CardContent>
       </Card>
 
-      {/* Results */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h2 className="text-2xl font-semibold">
-            {filteredListings.length} Properties Found
-          </h2>
-          {isAuthenticated && (
-            <Button asChild variant="outline">
-              <Link href="/marketplace/create">
-                <Plus className="mr-2 h-4 w-4" />
-                Create Listing
-              </Link>
-            </Button>
-          )}
-        </div>
-
-        {loading ? (
+        {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
               <Card key={i} className="animate-pulse">
@@ -272,6 +253,5 @@ export default function MarketplacePage() {
           </div>
         )}
       </div>
-    </div>
   );
 }

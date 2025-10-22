@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Phone, UserPlus, MessageCircle, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { ProtectedRoute } from '@/components/auth/protected-route';
+import useSWR from 'swr';
 
 interface Referral {
   id: string;
@@ -26,33 +27,35 @@ interface PendingInvite {
 }
 
 function ContactsPageContent() {
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [referrals, setReferrals] = useState<Referral[]>([]);
-  const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(true);
+   const [phoneNumber, setPhoneNumber] = useState('');
+   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchContacts();
-  }, []);
+   // Use SWR for instant data fetching and caching
+   const { data: contactsData, error: contactsError, isLoading: fetching, mutate } = useSWR(
+     'user-contacts',
+     async () => {
+       const response = await fetch('/api/contacts');
+       if (response.ok) {
+         const data = await response.json();
+         return {
+           referrals: data.referrals || [],
+           pendingInvites: data.pendingInvites || []
+         };
+       } else {
+         throw new Error('Failed to fetch contacts');
+       }
+     },
+     {
+       revalidateOnFocus: false,
+       revalidateOnReconnect: true,
+       dedupingInterval: 30000,
+       errorRetryCount: 3,
+       errorRetryInterval: 1000,
+     }
+   );
 
-  const fetchContacts = async () => {
-    try {
-      const response = await fetch('/api/contacts');
-      if (response.ok) {
-        const data = await response.json();
-        setReferrals(data.referrals || []);
-        setPendingInvites(data.pendingInvites || []);
-      } else {
-        toast.error('Failed to fetch contacts');
-      }
-    } catch (error) {
-      console.error('Error fetching contacts:', error);
-      toast.error('Failed to fetch contacts');
-    } finally {
-      setFetching(false);
-    }
-  };
+   const referrals = contactsData?.referrals || [];
+   const pendingInvites = contactsData?.pendingInvites || [];
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,7 +86,7 @@ function ContactsPageContent() {
         }
 
         // Refresh the contacts list
-        fetchContacts();
+        mutate();
       } else {
         toast.error(data.error || 'Failed to send invite');
       }
@@ -205,7 +208,7 @@ function ContactsPageContent() {
               </p>
             ) : (
               <div className="space-y-4">
-                {referrals.map((referral) => (
+                {referrals.map((referral: Referral) => (
                   <div key={referral.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg gap-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
@@ -251,7 +254,7 @@ function ContactsPageContent() {
               </p>
             ) : (
               <div className="space-y-4">
-                {pendingInvites.map((invite) => (
+                {pendingInvites.map((invite: PendingInvite) => (
                   <div key={invite.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg gap-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">

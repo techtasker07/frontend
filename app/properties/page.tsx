@@ -42,109 +42,124 @@ import {
   SortAsc,
 } from "lucide-react"
 import { toast } from "sonner"
+import useSWR from 'swr'
 
 type ViewMode = "grid" | "list"
 type SortOption = "newest" | "oldest" | "price_high" | "price_low" | "title_asc" | "title_desc"
 
 export default function PropertiesPage() {
-  const router = useRouter()
-  const { user, isAuthenticated } = useAuth()
-  const [properties, setProperties] = useState<Property[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [loading, setLoading] = useState(true)
-  const [creating, setCreating] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState<string>("all")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [viewMode, setViewMode] = useState<ViewMode>("grid")
-  const [sortBy, setSortBy] = useState<SortOption>("newest")
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [showPropertyTypeDialog, setShowPropertyTypeDialog] = useState(false)
+   const router = useRouter()
+   const { user, isAuthenticated } = useAuth()
+   const [categories, setCategories] = useState<Category[]>([])
+   const [creating, setCreating] = useState(false)
+   const [selectedCategory, setSelectedCategory] = useState<string>("all")
+   const [searchTerm, setSearchTerm] = useState("")
+   const [viewMode, setViewMode] = useState<ViewMode>("grid")
+   const [sortBy, setSortBy] = useState<SortOption>("newest")
+   const [isDialogOpen, setIsDialogOpen] = useState(false)
+   const [showPropertyTypeDialog, setShowPropertyTypeDialog] = useState(false)
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalProperties, setTotalProperties] = useState(0)
-  const propertiesPerPage = 12
+   // Pagination
+   const [currentPage, setCurrentPage] = useState(1)
+   const propertiesPerPage = 12
 
-  // Form state
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    location: "",
-    category_id: "",
-    type: "poll",
-    current_worth: "",
-    year_of_construction: "",
-    lister_phone_number: "",
-  })
+   // Form state
+   const [formData, setFormData] = useState({
+     title: "",
+     description: "",
+     location: "",
+     category_id: "",
+     type: "poll",
+     current_worth: "",
+     year_of_construction: "",
+     lister_phone_number: "",
+   })
 
-  useEffect(() => {
-    fetchProperties()
-    fetchCategories()
-  }, [selectedCategory, currentPage, sortBy])
+   // Use SWR for instant data fetching and caching
+   const { data: propertiesData, error: propertiesError, isLoading: propertiesLoading } = useSWR(
+     ['properties', selectedCategory, currentPage, sortBy],
+     async ([, category, page, sort]) => {
+       const params: {
+         category?: string
+         limit?: number
+         offset?: number
+         source?: 'poll' | 'marketplace' | 'both'
+       } = {
+         limit: propertiesPerPage,
+         offset: (page - 1) * propertiesPerPage,
+         source: 'poll' // Only fetch poll properties
+       }
 
-  const fetchProperties = async () => {
-    try {
-      const params: {
-        category?: string
-        limit?: number
-        offset?: number
-        source?: 'poll' | 'marketplace' | 'both'
-      } = {
-        limit: propertiesPerPage,
-        offset: (currentPage - 1) * propertiesPerPage,
-        source: 'poll' // Only fetch poll properties
-      }
+       if (category !== "all") {
+         params.category = category
+       }
 
-      if (selectedCategory !== "all") {
-        params.category = selectedCategory
-      }
+       const response = await supabaseApi.getProperties(params)
+       if (response.success) {
+         const sortedProperties = [...response.data]
 
-      const response = await supabaseApi.getProperties(params)
-      if (response.success) {
-        const sortedProperties = [...response.data]
+         // Apply sorting
+         switch (sort) {
+           case "newest":
+             sortedProperties.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+             break
+           case "oldest":
+             sortedProperties.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+             break
+           case "price_high":
+             sortedProperties.sort((a, b) => (b.current_worth || 0) - (a.current_worth || 0))
+             break
+           case "price_low":
+             sortedProperties.sort((a, b) => (a.current_worth || 0) - (b.current_worth || 0))
+             break
+           case "title_asc":
+             sortedProperties.sort((a, b) => a.title.localeCompare(b.title))
+             break
+           case "title_desc":
+             sortedProperties.sort((a, b) => b.title.localeCompare(a.title))
+             break
+         }
 
-        // Apply sorting
-        switch (sortBy) {
-          case "newest":
-            sortedProperties.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-            break
-          case "oldest":
-            sortedProperties.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-            break
-          case "price_high":
-            sortedProperties.sort((a, b) => (b.current_worth || 0) - (a.current_worth || 0))
-            break
-          case "price_low":
-            sortedProperties.sort((a, b) => (a.current_worth || 0) - (b.current_worth || 0))
-            break
-          case "title_asc":
-            sortedProperties.sort((a, b) => a.title.localeCompare(b.title))
-            break
-          case "title_desc":
-            sortedProperties.sort((a, b) => b.title.localeCompare(a.title))
-            break
-        }
+         return {
+           properties: sortedProperties,
+           total: response.count || response.data.length
+         }
+       }
+       return { properties: [], total: 0 }
+     },
+     {
+       revalidateOnFocus: false,
+       revalidateOnReconnect: true,
+       dedupingInterval: 30000,
+       errorRetryCount: 3,
+       errorRetryInterval: 1000,
+     }
+   )
 
-        setProperties(sortedProperties)
-        setTotalProperties(response.count || response.data.length)
-      }
-    } catch (error) {
-      toast.error("Failed to fetch properties")
-    } finally {
-      setLoading(false)
-    }
-  }
+   const properties = propertiesData?.properties || []
+   const totalProperties = propertiesData?.total || 0
 
-  const fetchCategories = async () => {
-    try {
-      const response = await supabaseApi.getCategories()
-      if (response.success) {
-        setCategories(response.data)
-      }
-    } catch (error) {
-      console.error("Failed to fetch categories:", error)
-    }
-  }
+   // Use SWR for categories
+   const { data: categoriesData } = useSWR(
+     'categories',
+     async () => {
+       const response = await supabaseApi.getCategories()
+       return response.success ? response.data : []
+     },
+     {
+       revalidateOnFocus: false,
+       revalidateOnReconnect: true,
+       dedupingInterval: 300000, // Cache categories for 5 minutes
+       errorRetryCount: 3,
+       errorRetryInterval: 1000,
+     }
+   )
+
+   useEffect(() => {
+     if (categoriesData) {
+       setCategories(categoriesData)
+     }
+   }, [categoriesData])
 
   const handleCreateProperty = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -178,7 +193,7 @@ export default function PropertiesPage() {
           year_of_construction: "",
           lister_phone_number: "",
         })
-        fetchProperties()
+        // Properties will be automatically refetched by SWR when needed
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to create property")
@@ -215,7 +230,7 @@ export default function PropertiesPage() {
     }
   }
 
-  if (loading) {
+  if (propertiesLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="animate-pulse space-y-8">
@@ -235,7 +250,7 @@ export default function PropertiesPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Properties</h1>
+          <h1 className="text-3xl font-bold mb-2">Poll Properties</h1>
           <p className="text-muted-foreground">Browse and evaluate properties from our community-driven platform</p>
         </div>
         
@@ -370,79 +385,30 @@ export default function PropertiesPage() {
         )}
       </div>
 
-      {/* Filters and Controls */}
-      <div className="flex flex-col lg:flex-row gap-4 mb-8">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            placeholder="Search properties..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <Filter className="mr-2 h-4 w-4" />
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {categories.map((category) => (
-                <SelectItem key={category.id} value={category.name}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SortAsc className="mr-2 h-4 w-4" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest First</SelectItem>
-              <SelectItem value="oldest">Oldest First</SelectItem>
-              <SelectItem value="price_high">Price: High to Low</SelectItem>
-              <SelectItem value="price_low">Price: Low to High</SelectItem>
-              <SelectItem value="title_asc">Title: A to Z</SelectItem>
-              <SelectItem value="title_desc">Title: Z to A</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <div className="flex border rounded-lg">
-            <Button
-              variant={viewMode === "grid" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("grid")}
-              className="rounded-r-none"
-            >
-              <Grid3X3 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setViewMode("list")}
-              className="rounded-l-none"
-            >
-              <List className="h-4 w-4" />
-            </Button>
+      {/* Search and Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Search className="h-5 w-5" />
+            Search
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Search */}
+          <div className="flex gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search by location, property name, description, or price..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Button>Search</Button>
           </div>
-        </div>
-      </div>
-
-      {/* Results Summary */}
-      <div className="flex justify-between items-center mb-6">
-        <p className="text-sm text-muted-foreground">
-          Showing {filteredProperties.length} of {totalProperties} properties
-          {selectedCategory !== "all" && ` in ${selectedCategory}`}
-          {searchTerm && ` matching "${searchTerm}"`}
-        </p>
-        <p className="text-sm text-muted-foreground">Sorted by {getSortLabel(sortBy)}</p>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Properties Grid/List */}
       {filteredProperties.length === 0 ? (
@@ -465,7 +431,7 @@ export default function PropertiesPage() {
         <>
           <div
             className={
-              viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" : "space-y-4"
+              viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-8" : "space-y-4 mt-8"
             }
           >
             {filteredProperties.map((property) => (

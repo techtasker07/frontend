@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import useSWR from 'swr';
 import { PropertyCard } from "./PropertyCard";
 import { SearchSection } from "./SearchSection";
 import { Button } from "./ui/button";
@@ -15,11 +16,78 @@ type CombinedProperty = Property & {
   property_type?: { name: string };
 };
 
+// Fetcher function for combined properties
+const fetchProperties = async () => {
+  // Fetch poll properties only
+  const pollResponse = await supabaseApi.getProperties({ limit: 15, source: 'poll' });
+  let marketplaceResponse;
+
+  try {
+    marketplaceResponse = await supabaseApi.getMarketplaceListings({ limit: 15 });
+  } catch (error) {
+    console.warn('Marketplace listings not available:', error);
+    marketplaceResponse = { success: false, data: [], error: 'Marketplace not available' };
+  }
+
+  let allProperties: CombinedProperty[] = [];
+
+  // Add poll properties
+  if (pollResponse.success) {
+    const pollProperties = pollResponse.data.map(prop => ({
+      ...prop,
+      source: 'poll' as const,
+      current_worth: prop.current_worth || 0
+    }));
+    allProperties = [...allProperties, ...pollProperties];
+  }
+
+  // Add marketplace properties, converting to Property format (if available)
+  if (marketplaceResponse.success && marketplaceResponse.data.length > 0) {
+    const marketplaceProperties = marketplaceResponse.data.map((listing: MarketplaceListing): CombinedProperty => ({
+      id: listing.id,
+      title: listing.title,
+      description: listing.description,
+      location: listing.location,
+      user_id: listing.user_id,
+      category_id: listing.category_id,
+      current_worth: listing.price,
+      year_of_construction: listing.year_of_construction,
+      image_url: listing.images?.[0]?.image_url,
+      created_at: listing.created_at,
+      updated_at: listing.updated_at,
+      category_name: listing.category?.name,
+      images: listing.images?.map(img => ({
+        id: img.id,
+        property_id: listing.id,
+        image_url: img.image_url,
+        is_primary: img.is_primary,
+        created_at: listing.created_at
+      })) || [],
+      source: 'marketplace' as const,
+      type: listing.listing_type?.name?.toLowerCase().replace('for ', '') || 'sale',
+      listing_type: listing.listing_type,
+      property_type: listing.property_type,
+      vote_count: 0
+    }));
+    allProperties = [...allProperties, ...marketplaceProperties];
+  }
+
+  // Sort by creation date (most recent first)
+  const sortedProperties = allProperties.sort((a, b) =>
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+
+  return sortedProperties;
+};
+
 export function PropertyListings() {
-  const [properties, setProperties] = useState<CombinedProperty[]>([]);
+  const { data: properties, error, isLoading } = useSWR<CombinedProperty[]>('properties', fetchProperties, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: true,
+    dedupingInterval: 300000, // 5 minutes
+  });
+
   const [filteredProperties, setFilteredProperties] = useState<CombinedProperty[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [displayLimit, setDisplayLimit] = useState(6);
   const [searchFilters, setSearchFilters] = useState({
@@ -35,85 +103,12 @@ export function PropertyListings() {
     ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
     : 'grid grid-cols-1 gap-6';
 
+  // Update filtered properties when properties data changes
   useEffect(() => {
-    const fetchProperties = async () => {
-      try {
-        setError(null);
-
-        // Fetch poll properties only
-        const pollResponse = await supabaseApi.getProperties({ limit: 15, source: 'poll' });
-        let marketplaceResponse;
-
-        try {
-          marketplaceResponse = await supabaseApi.getMarketplaceListings({ limit: 15 });
-        } catch (error) {
-          console.warn('Marketplace listings not available:', error);
-          marketplaceResponse = { success: false, data: [], error: 'Marketplace not available' };
-        }
-
-        let allProperties: CombinedProperty[] = [];
-
-        // Add poll properties
-        if (pollResponse.success) {
-          const pollProperties = pollResponse.data.map(prop => ({
-            ...prop,
-            source: 'poll' as const,
-            current_worth: prop.current_worth || 0
-          }));
-          allProperties = [...allProperties, ...pollProperties];
-        }
-
-        // Add marketplace properties, converting to Property format (if available)
-        if (marketplaceResponse.success && marketplaceResponse.data.length > 0) {
-          const marketplaceProperties = marketplaceResponse.data.map((listing: MarketplaceListing): CombinedProperty => ({
-            id: listing.id,
-            title: listing.title,
-            description: listing.description,
-            location: listing.location,
-            user_id: listing.user_id,
-            category_id: listing.category_id,
-            current_worth: listing.price,
-            year_of_construction: listing.year_of_construction,
-            image_url: listing.images?.[0]?.image_url,
-            created_at: listing.created_at,
-            updated_at: listing.updated_at,
-            category_name: listing.category?.name,
-            images: listing.images?.map(img => ({
-              id: img.id,
-              property_id: listing.id,
-              image_url: img.image_url,
-              is_primary: img.is_primary,
-              created_at: listing.created_at
-            })) || [],
-            source: 'marketplace' as const,
-            type: listing.listing_type?.name?.toLowerCase().replace('for ', '') || 'sale',
-            listing_type: listing.listing_type,
-            property_type: listing.property_type,
-            vote_count: 0
-          }));
-          allProperties = [...allProperties, ...marketplaceProperties];
-        }
-
-        // Sort by creation date (most recent first)
-        const sortedProperties = allProperties.sort((a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-
-        setProperties(sortedProperties);
-        setFilteredProperties(sortedProperties);
-
-        if (sortedProperties.length === 0) {
-          console.warn('No properties found from either source');
-        }
-
-      } catch (err) {
-        console.error('Error fetching properties:', err);
-        setError('Failed to load properties');
-      }
-    };
-
-    fetchProperties();
-  }, []);
+    if (properties) {
+      setFilteredProperties(properties);
+    }
+  }, [properties]);
 
   // Intersection Observer for scroll animations
   useEffect(() => {
@@ -159,6 +154,8 @@ export function PropertyListings() {
   }, [filteredProperties, displayLimit]);
 
   const applyFilters = () => {
+    if (!properties) return;
+
     let filtered = properties;
 
     if (searchFilters.location) {
@@ -194,7 +191,7 @@ export function PropertyListings() {
     setFilteredProperties(filtered);
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -214,11 +211,15 @@ export function PropertyListings() {
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center text-red-500">
-            {error}
+            Failed to load properties
           </div>
         </div>
       </section>
     );
+  }
+
+  if (!properties) {
+    return null;
   }
   return (
     <section className="py-16 bg-gray-50">

@@ -18,6 +18,7 @@ import { PaystackPayment } from '@/components/paystack/paystack-payment';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { Upload, Users, Coins, Calendar, MapPin, Camera, Video, Plus, CheckCircle, Clock, XCircle, MessageCircle, Send, ArrowLeft, CreditCard } from 'lucide-react';
+import useSWR, { mutate } from 'swr';
 
 interface ReesPartyProperty {
   id: string;
@@ -102,150 +103,161 @@ interface ChatMessage {
 }
 
 function ReesPartyPageContent() {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'manage' | 'contribute'>('manage');
-  const [properties, setProperties] = useState<ReesPartyProperty[]>([]);
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedProperty, setSelectedProperty] = useState<ReesPartyProperty | null>(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [createStep, setCreateStep] = useState<'form' | 'summary' | 'paystack' | 'success'>('form');
-  const [paymentReference, setPaymentReference] = useState<string>('');
-  const [myContributions, setMyContributions] = useState<any[]>([]);
-  const [invitedProperties, setInvitedProperties] = useState<ReesPartyProperty[]>([]);
-  const [showContactsModal, setShowContactsModal] = useState(false);
-  const [selectedPropertyForContacts, setSelectedPropertyForContacts] = useState<ReesPartyProperty | null>(null);
-  const [selectedPropertyForChat, setSelectedPropertyForChat] = useState<ReesPartyProperty | null>(null);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [newChatMessage, setNewChatMessage] = useState('');
-  const [showChatModal, setShowChatModal] = useState(false);
+   const { user } = useAuth();
+   const [activeTab, setActiveTab] = useState<'manage' | 'contribute'>('manage');
+   const [loading, setLoading] = useState(false);
+   const [selectedProperty, setSelectedProperty] = useState<ReesPartyProperty | null>(null);
+   const [showCreateModal, setShowCreateModal] = useState(false);
+   const [createStep, setCreateStep] = useState<'form' | 'summary' | 'paystack' | 'success'>('form');
+   const [paymentReference, setPaymentReference] = useState<string>('');
+   const [showContactsModal, setShowContactsModal] = useState(false);
+   const [selectedPropertyForContacts, setSelectedPropertyForContacts] = useState<ReesPartyProperty | null>(null);
+   const [selectedPropertyForChat, setSelectedPropertyForChat] = useState<ReesPartyProperty | null>(null);
+   const [showChatModal, setShowChatModal] = useState(false);
+   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+   const [newChatMessage, setNewChatMessage] = useState('');
 
-  // Form states
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    location: '',
-    venue_details: '',
-    event_date: '',
-    event_time: '',
-    dress_code: '',
-    target_amount: '',
-    contribution_per_person: '5000',
-    creator_contribution: '',
-    max_participants: '',
-    deadline: '',
-    category_id: '',
-    requirements: [] as string[]
-  });
+   // Form states
+   const [formData, setFormData] = useState({
+     title: '',
+     description: '',
+     location: '',
+     venue_details: '',
+     event_date: '',
+     event_time: '',
+     dress_code: '',
+     target_amount: '',
+     contribution_per_person: '5000',
+     creator_contribution: '',
+     max_participants: '',
+     deadline: '',
+     category_id: '',
+     requirements: [] as string[]
+   });
 
-  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
-  const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
-  const [contributionAmount, setContributionAmount] = useState('');
+   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
+   const [contributionAmount, setContributionAmount] = useState('');
 
-  useEffect(() => {
-    fetchProperties();
-    fetchContacts();
-    fetchMyContributions();
-  }, []);
+   // Use SWR for properties
+   const { data: properties = [], isLoading: propertiesLoading } = useSWR(
+     user ? ['rees-party-properties', user.id] : null,
+     async ([, userId]) => {
+       const response = await fetch(`/api/rees-party?userId=${userId}`);
+       const result = await response.json();
+       if (result.success) {
+         return result.data;
+       } else {
+         throw new Error('Failed to fetch parties');
+       }
+     },
+     {
+       revalidateOnFocus: false,
+       revalidateOnReconnect: true,
+       dedupingInterval: 30000,
+       errorRetryCount: 3,
+       errorRetryInterval: 1000,
+     }
+   );
 
-  const fetchProperties = async () => {
-    try {
-      const response = await fetch(`/api/rees-party?userId=${user?.id}`);
-      const result = await response.json();
+   // Use SWR for contacts
+   const { data: contacts = [] } = useSWR(
+     'rees-party-contacts',
+     async () => {
+       const { data: referrals, error: referralsError } = await supabase
+         .from('profiles')
+         .select('id, first_name, last_name, email, phone_number')
+         .neq('id', user?.id);
 
-      if (result.success) {
-        setProperties(result.data);
-      } else {
-        toast.error('Failed to fetch parties');
-      }
-    } catch (error) {
-      console.error('Error fetching properties:', error);
-      toast.error('Failed to fetch parties');
-    }
-  };
+       if (referralsError) throw referralsError;
+       return referrals || [];
+     },
+     {
+       revalidateOnFocus: false,
+       revalidateOnReconnect: true,
+       dedupingInterval: 300000,
+       errorRetryCount: 3,
+       errorRetryInterval: 1000,
+     }
+   );
 
-  const fetchContacts = async () => {
-    try {
-      const { data: referrals, error: referralsError } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, email, phone_number')
-        .neq('id', user?.id);
+   // Use SWR for contributions
+   const { data: contributionsData } = useSWR(
+     user ? ['rees-party-contributions', user.id] : null,
+     async ([, userId]) => {
+       const { data: contributions, error: contributionsError } = await supabase
+         .from('rees_party_contributions')
+         .select(`
+           *,
+           party:rees_party_properties(
+             id,
+             title,
+             description,
+             location,
+             target_amount,
+             current_amount,
+             status,
+             event_date,
+             created_at
+           ),
+           invitation:rees_party_invitations(
+             id,
+             status,
+             invited_at
+           )
+         `)
+         .eq('contributor_id', userId)
+         .order('contributed_at', { ascending: false });
 
-      if (referralsError) throw referralsError;
-      setContacts(referrals || []);
-    } catch (error) {
-      console.error('Error fetching contacts:', error);
-      toast.error('Failed to fetch contacts');
-    }
-  };
+       if (contributionsError) throw contributionsError;
 
-  const fetchMyContributions = async () => {
-    try {
-      if (!user) return;
+       const { data: invitations, error: invitationsError } = await supabase
+         .from('rees_party_invitations')
+         .select(`
+           id,
+           status,
+           invited_at,
+           property:rees_party_properties(
+             id,
+             title,
+             description,
+             location,
+             target_amount,
+             current_amount,
+             status,
+             contribution_per_person,
+             max_participants,
+             deadline,
+             event_date,
+             created_at
+           )
+         `)
+         .eq('invitee_id', userId)
+         .eq('status', 'accepted')
+         .order('invited_at', { ascending: false });
 
-      const { data: contributions, error: contributionsError } = await supabase
-        .from('rees_party_contributions')
-        .select(`
-          *,
-          party:rees_party_properties(
-            id,
-            title,
-            description,
-            location,
-            target_amount,
-            current_amount,
-            status,
-            event_date,
-            created_at
-          ),
-          invitation:rees_party_invitations(
-            id,
-            status,
-            invited_at
-          )
-        `)
-        .eq('contributor_id', user.id)
-        .order('contributed_at', { ascending: false });
+       if (invitationsError) throw invitationsError;
 
-      if (contributionsError) throw contributionsError;
+       const contributedPropertyIds = new Set(contributions?.map(c => c.party_id) || []);
+       const pendingInvitations = invitations?.filter((inv: any) => inv.property && (inv.property as any).id && !contributedPropertyIds.has((inv.property as any).id)) || [];
 
-      const { data: invitations, error: invitationsError } = await supabase
-        .from('rees_party_invitations')
-        .select(`
-          id,
-          status,
-          invited_at,
-          property:rees_party_properties(
-            id,
-            title,
-            description,
-            location,
-            target_amount,
-            current_amount,
-            status,
-            contribution_per_person,
-            max_participants,
-            deadline,
-            event_date,
-            created_at
-          )
-        `)
-        .eq('invitee_id', user.id)
-        .eq('status', 'accepted')
-        .order('invited_at', { ascending: false });
+       return {
+         contributions: contributions || [],
+         invitedProperties: pendingInvitations.map((inv: any) => inv.property).filter(Boolean) as ReesPartyProperty[]
+       };
+     },
+     {
+       revalidateOnFocus: false,
+       revalidateOnReconnect: true,
+       dedupingInterval: 30000,
+       errorRetryCount: 3,
+       errorRetryInterval: 1000,
+     }
+   );
 
-      if (invitationsError) throw invitationsError;
+   const myContributions = contributionsData?.contributions || [];
+   const invitedProperties = contributionsData?.invitedProperties || [];
 
-      const contributedPropertyIds = new Set(contributions?.map(c => c.party_id) || []);
-      const pendingInvitations = invitations?.filter((inv: any) => inv.property && (inv.property as any).id && !contributedPropertyIds.has((inv.property as any).id)) || [];
-
-      setMyContributions(contributions || []);
-      setInvitedProperties(pendingInvitations.map((inv: any) => inv.property).filter(Boolean) as ReesPartyProperty[]);
-    } catch (error) {
-      console.error('Error fetching contributions:', error);
-      toast.error('Failed to fetch contributions');
-    }
-  };
 
   const fetchChatMessages = async (partyId: string) => {
     try {
@@ -407,12 +419,12 @@ function ReesPartyPageContent() {
           });
           setMediaFiles([]);
           setSelectedContacts([]);
-          fetchProperties();
+          await mutate(['rees-party-properties', user.id]);
           setActiveTab('manage');
           setShowCreateModal(false);
           setCreateStep('form');
           setPaymentReference('');
-        } catch (mediaError) {
+          } catch (mediaError) {
           console.error('Error with media upload or invitations:', mediaError);
           toast.error('Party created but there was an issue with media upload. Please try again.');
           // Still close the modal and reset form since party was created
@@ -434,7 +446,7 @@ function ReesPartyPageContent() {
           });
           setMediaFiles([]);
           setSelectedContacts([]);
-          fetchProperties();
+          await mutate(['rees-party-properties', user.id]);
           setActiveTab('manage');
           setShowCreateModal(false);
           setCreateStep('form');
@@ -625,28 +637,31 @@ function ReesPartyPageContent() {
 
             <TabsContent value="manage" className="space-y-3 sm:space-y-4 md:space-y-6 px-2 sm:px-4 md:px-0">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-                {properties.map((property) => (
-                    <Card key={property.id} className={`hover:shadow-lg transition-shadow border-l-4 ${getStatusColor(property.status).split(' ')[2]} overflow-hidden relative`}>
-                      {/* Image with diagonal cut - positioned at top right corner */}
-                      <div
-                        className="absolute top-0 right-0 w-40 h-40 md:w-56 md:h-24 bg-cover bg-center"
-                        style={{
-                          backgroundImage: `url(${(() => {
-                            const firstImage = property.media?.find(m => m.media_type === 'image') ||
-                                              null;
-                            return firstImage?.media_url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800';
-                          })()})`,
-                          clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 100% 100%)'
-                        }}
-                      >
-                        <div className="absolute top-3 right-3">
-                          <Badge className={`${getStatusColor(property.status)} text-xs md:text-sm`}>
-                            {getStatusIcon(property.status)}
-                            <span className="ml-1 capitalize hidden sm:inline">{property.status}</span>
-                          </Badge>
-                        </div>
+                {(properties as ReesPartyProperty[]).map((property: ReesPartyProperty) => (
+                  <Card
+                    key={property.id}
+                    className={`hover:shadow-lg transition-shadow border-l-4 ${getStatusColor(property.status).split(' ')[2]} overflow-hidden relative`}
+                  >
+                    {/* Image with diagonal cut - positioned at top right corner */}
+                    <div
+                      className="absolute top-0 right-0 w-40 h-40 md:w-56 md:h-24 bg-cover bg-center"
+                      style={{
+                        backgroundImage: `url(${(() => {
+                          const firstImage: ReesPartyMedia | null =
+                            property.media?.find((m: ReesPartyMedia) => m.media_type === 'image') || null;
+                          return firstImage?.media_url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800';
+                        })()})`,
+                        clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 100% 100%)'
+                      }}
+                    >
+                      <div className="absolute top-3 right-3">
+                        <Badge className={`${getStatusColor(property.status)} text-xs md:text-sm`}>
+                          {getStatusIcon(property.status)}
+                          <span className="ml-1 capitalize hidden sm:inline">{property.status}</span>
+                        </Badge>
                       </div>
-                    
+                    </div>
+
                     <CardHeader className="pb-3 px-4 md:px-6 relative z-10">
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0 pr-48 md:pr-64">
@@ -658,6 +673,7 @@ function ReesPartyPageContent() {
                         </div>
                       </div>
                     </CardHeader>
+
                     <CardContent className="pt-0 px-4 md:px-6 pb-4 md:pb-6">
                       <div className="space-y-3 md:space-y-4">
                         {/* Progress */}
