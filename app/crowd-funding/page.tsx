@@ -249,6 +249,15 @@ function CrowdFundingPageContent() {
     e.preventDefault();
     if (!user) return;
 
+    // Check if payment was completed (payment reference should be set by success redirect)
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentRef = urlParams.get('payment_reference');
+
+    if (!paymentRef) {
+      toast.error('Payment reference not found. Please complete payment first.');
+      return;
+    }
+
     setLoading(true);
     try {
       // Create property
@@ -266,7 +275,8 @@ function CrowdFundingPageContent() {
           category_id: formData.category_id,
           features: formData.features,
           user_id: user.id,
-          status: 'active'
+          status: 'active',
+          payment_reference: paymentRef
         })
         .select()
         .single();
@@ -987,8 +997,27 @@ function CrowdFundingPageContent() {
                     <Button type="button" variant="outline" onClick={() => setShowCreateModal(false)} className="flex-1 h-9 sm:h-10 text-xs sm:text-sm">
                       Cancel
                     </Button>
-                    <Button type="submit" disabled={loading} className="flex-1 h-9 sm:h-10 bg-gray-900 hover:bg-gray-800 text-xs sm:text-sm">
-                      {loading ? 'Creating...' : 'Launch Campaign'}
+                    <Button
+                      type="button"
+                      disabled={loading}
+                      onClick={() => {
+                        // Redirect to full-page payment
+                        const paymentUrl = new URL('/payment/full-page', window.location.origin);
+                        paymentUrl.searchParams.set('amount', '1000'); // Setup fee for crowd funding campaign
+                        paymentUrl.searchParams.set('email', user?.email || '');
+                        paymentUrl.searchParams.set('description', `Crowd Funding Campaign Setup: ${formData.title}`);
+                        paymentUrl.searchParams.set('type', 'crowd-funding');
+                        paymentUrl.searchParams.set('returnUrl', window.location.pathname);
+                        paymentUrl.searchParams.set('metadata', JSON.stringify({
+                          campaign_title: formData.title,
+                          setup_fee: '1000',
+                          user_id: user?.id
+                        }));
+                        window.location.href = paymentUrl.toString();
+                      }}
+                      className="flex-1 h-9 sm:h-10 bg-gray-900 hover:bg-gray-800 text-xs sm:text-sm"
+                    >
+                      {loading ? 'Processing...' : 'Proceed to Payment'}
                     </Button>
                   </div>
                 </form>

@@ -108,7 +108,7 @@ function ReesPartyPageContent() {
    const [loading, setLoading] = useState(false);
    const [selectedProperty, setSelectedProperty] = useState<ReesPartyProperty | null>(null);
    const [showCreateModal, setShowCreateModal] = useState(false);
-   const [createStep, setCreateStep] = useState<'form' | 'summary' | 'paystack' | 'success'>('form');
+   const [createStep, setCreateStep] = useState<'form' | 'summary' | 'payment_redirect' | 'success'>('form');
    const [paymentReference, setPaymentReference] = useState<string>('');
    const [showContactsModal, setShowContactsModal] = useState(false);
    const [selectedPropertyForContacts, setSelectedPropertyForContacts] = useState<ReesPartyProperty | null>(null);
@@ -340,13 +340,25 @@ function ReesPartyPageContent() {
     setCreateStep('summary');
   };
 
+  // Payment success is now handled by the full-page payment component
+  // This function is kept for backward compatibility but should not be called
   const handlePaymentSuccess = async (reference: string) => {
+    console.warn('handlePaymentSuccess called - this should not happen with full-page payment');
     setPaymentReference(reference);
     setCreateStep('success');
   };
 
   const handlePublishParty = async () => {
-    if (!user || !paymentReference) return;
+    if (!user) return;
+
+    // Check if payment was completed (payment reference should be set by success redirect)
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentRef = urlParams.get('payment_reference');
+
+    if (!paymentRef) {
+      toast.error('Payment reference not found. Please complete payment first.');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -359,7 +371,7 @@ function ReesPartyPageContent() {
         body: JSON.stringify({
           ...formData,
           user_id: user.id,
-          payment_reference: paymentReference,
+          payment_reference: paymentRef,
         }),
       });
 
@@ -391,7 +403,7 @@ function ReesPartyPageContent() {
               invitation_id: null, // Creator doesn't have an invitation
               amount: creatorContributionAmount,
               payment_status: 'completed',
-              payment_reference: paymentReference,
+              payment_reference: paymentRef,
             }),
           });
 
@@ -975,24 +987,24 @@ function ReesPartyPageContent() {
                   <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
                     {createStep === 'form' ? <Plus className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" /> :
                      createStep === 'summary' ? <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" /> :
-                     createStep === 'paystack' ? <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" /> :
+                     createStep === 'payment_redirect' ? <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" /> :
                      <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />}
                   </div>
                   <div className="min-w-0 flex-1">
                     <DialogTitle className="text-base sm:text-lg md:text-xl font-semibold truncate">
                       {createStep === 'form' ? 'Create New Party' :
                        createStep === 'summary' ? 'Review Party Details' :
-                       createStep === 'paystack' ? 'Complete Payment' :
+                       createStep === 'payment_redirect' ? 'Redirecting to Payment...' :
                        'Payment Successful'}
                     </DialogTitle>
                     <DialogDescription className="text-xs sm:text-sm text-gray-600 line-clamp-1">
                       {createStep === 'form' ? 'Plan an amazing party and invite your contacts' :
                        createStep === 'summary' ? 'Review your party details before proceeding to payment' :
-                       createStep === 'paystack' ? 'Make your initial contribution to launch the party' :
+                       createStep === 'payment_redirect' ? 'Redirecting you to secure payment page' :
                        'Your payment was successful. Click Publish Party to create your event.'}
                     </DialogDescription>
                   </div>
-                  {(createStep === 'paystack' || createStep === 'success') && (
+                  {(createStep === 'payment_redirect' || createStep === 'success') && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -1009,7 +1021,7 @@ function ReesPartyPageContent() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 pt-2">
                 {/* Main Form */}
                 <div className="lg:col-span-2 space-y-3 sm:space-y-4 md:space-y-6">
-                  {createStep === 'form' ? (
+                  {createStep === 'form' || createStep === 'payment_redirect' ? (
                     <form onSubmit={handleFormSubmit} className="space-y-3 sm:space-y-4 md:space-y-6">
                     {/* Party Information Section */}
                     <Card className="border-gray-200">
@@ -1343,7 +1355,24 @@ function ReesPartyPageContent() {
                           {/* Pay Now Button */}
                           <div className="flex justify-center">
                             <Button
-                              onClick={() => setCreateStep('paystack')}
+                              onClick={() => {
+                                setCreateStep('payment_redirect');
+                                // Auto-redirect after a brief delay to show the redirect step
+                                setTimeout(() => {
+                                  const paymentUrl = new URL('/payment/full-page', window.location.origin);
+                                  paymentUrl.searchParams.set('amount', formData.creator_contribution || '0');
+                                  paymentUrl.searchParams.set('email', user?.email || '');
+                                  paymentUrl.searchParams.set('description', `Re-es Party: ${formData.title}`);
+                                  paymentUrl.searchParams.set('type', 'rees-party');
+                                  paymentUrl.searchParams.set('returnUrl', window.location.pathname);
+                                  paymentUrl.searchParams.set('metadata', JSON.stringify({
+                                    party_title: formData.title,
+                                    contribution_amount: formData.creator_contribution,
+                                    user_id: user?.id
+                                  }));
+                                  window.location.href = paymentUrl.toString();
+                                }, 1000);
+                              }}
                               className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 text-lg font-semibold"
                             >
                               <CreditCard className="h-5 w-5 mr-2" />
@@ -1357,17 +1386,17 @@ function ReesPartyPageContent() {
                         </CardContent>
                       </Card>
                     </div>
-                  ) : createStep === 'paystack' ? (
+                  ) : createStep === 'success' ? (
                     <div className="space-y-6">
-                      {/* Paystack Payment Step */}
+                      {/* Payment Redirect Step */}
                       <Card className="border-gray-200">
                         <CardHeader className="pb-4">
                           <CardTitle className="text-lg font-semibold flex items-center gap-2">
                             <CreditCard className="h-5 w-5 text-gray-500" />
-                            Complete Payment
+                            Redirecting to Payment
                           </CardTitle>
                           <CardDescription className="text-sm text-gray-600">
-                            Make your initial contribution to launch this party
+                            You will be redirected to a secure payment page
                           </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
@@ -1391,25 +1420,10 @@ function ReesPartyPageContent() {
                             </div>
                           </div>
 
-                          {/* Paystack Payment Component */}
-                          <div className="flex justify-center">
-                            <PaystackPayment
-                              amount={parseFloat(formData.creator_contribution || '0') * 100} // Convert to kobo
-                              email={user?.email || ''}
-                              onSuccess={handlePaymentSuccess}
-                              onClose={handlePaymentClose}
-                              metadata={{
-                                party_title: formData.title,
-                                contribution_amount: formData.creator_contribution,
-                                user_id: user?.id
-                              }}
-                              className="w-full max-w-xs"
-                            />
+                          <div className="text-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+                            <p className="text-sm text-gray-600">Redirecting to secure payment page...</p>
                           </div>
-
-                          <p className="text-xs text-gray-500 text-center">
-                            Your payment is secure and will be processed by Paystack
-                          </p>
                         </CardContent>
                       </Card>
                     </div>
