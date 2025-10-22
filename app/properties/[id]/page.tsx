@@ -172,13 +172,6 @@ export default function PropertyDetailsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Back Button */}
-      <Button variant="ghost" asChild className="mb-6">
-        <Link href="/properties">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Properties
-        </Link>
-      </Button>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}

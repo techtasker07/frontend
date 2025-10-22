@@ -119,7 +119,7 @@ export default function ProspectsPage() {
   }
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
+    <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-3 sm:gap-4">
         <div>
@@ -141,7 +141,7 @@ export default function ProspectsPage() {
         </div>
         <div className="flex gap-2 sm:gap-3">
           <Button asChild size="sm" className="text-xs sm:text-sm">
-            <Link href="/ai">
+            <Link href="/ai/camera-capture">
               <Zap className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               Generate New Prospect
             </Link>
@@ -151,7 +151,7 @@ export default function ProspectsPage() {
 
       {/* Stats Overview */}
       {analyses.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6 sm:mb-8">
           <Card>
             <CardContent className="p-4 sm:p-6 text-center">
               <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-600 mb-1 sm:mb-2">
@@ -190,14 +190,14 @@ export default function ProspectsPage() {
             Start by analyzing your property with our AI to generate investment prospects and opportunities.
           </p>
           <Button asChild size="sm" className="sm:size-lg">
-            <Link href="/ai">
+            <Link href="/ai/camera-capture">
               <Zap className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
               Generate Your First Prospect Analysis
             </Link>
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {analyses.map((analysis) => (
             <Card key={analysis.id} className="hover:shadow-lg transition-shadow">
               <CardHeader className="pb-3 sm:pb-4">

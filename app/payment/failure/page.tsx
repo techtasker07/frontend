@@ -80,7 +80,7 @@ function PaymentFailurePageContent() {
                 <p>Contact our support team:</p>
                 <p className="mt-1">
                   Email: support@mipripity.com<br />
-                  Phone: +234 XXX XXX XXXX
+                  Phone: +234 806 095 9610
                 </p>
               </div>
             </div>

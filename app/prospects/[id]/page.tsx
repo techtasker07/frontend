@@ -427,7 +427,7 @@ export default function ProspectDetailPage() {
   }
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
+    <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3 sm:gap-4">
         <div className="min-w-0 flex-1">
@@ -458,7 +458,7 @@ export default function ProspectDetailPage() {
 
         <TabsContent value="overview" className="space-y-4 sm:space-y-6">
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardContent className="p-3 sm:p-4 text-center">
                 <div className="text-lg sm:text-xl lg:text-2xl font-bold text-blue-600">
@@ -508,7 +508,7 @@ export default function ProspectDetailPage() {
         </TabsContent>
 
         <TabsContent value="prospects" className="space-y-3 sm:space-y-4 lg:space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Prospects List */}
             <div className="space-y-2 sm:space-y-3 lg:space-y-4">
               <h2 className="text-sm sm:text-base lg:text-lg font-semibold">
@@ -552,7 +552,7 @@ export default function ProspectDetailPage() {
         </TabsContent>
 
         <TabsContent value="insights" className="space-y-3 sm:space-y-4 lg:space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
