@@ -386,12 +386,60 @@ function ReesPartyPageContent() {
     setCreateStep('summary');
   };
 
-  // Payment success is now handled by the full-page payment component
-  // This function is kept for backward compatibility but should not be called
   const handlePaymentSuccess = async (reference: string) => {
-    console.warn('handlePaymentSuccess called - this should not happen with full-page payment');
-    setPaymentReference(reference);
-    setCreateStep('success');
+    if (!user) return;
+    
+    setLoading(true);
+    toast.success('Payment successful! Creating your party...');
+    
+    try {
+      // Create the party
+      const response = await fetch('/api/rees-party', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, user_id: user.id, payment_reference: reference }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        const partyId = result.data.id;
+
+        // Upload media and send invitations
+        if (mediaFiles.length > 0) await uploadMediaFiles(partyId);
+        if (selectedContacts.length > 0) await sendInvitations(partyId);
+
+        // Record creator's contribution
+        await fetch(`/api/rees-party/${partyId}/contributions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contributor_id: user.id,
+            invitation_id: null,
+            amount: parseFloat(formData.creator_contribution || '0'),
+            payment_status: 'completed',
+            payment_reference: reference,
+          }),
+        });
+
+        toast.success('Re-es Party created successfully!');
+        setFormData({ title: '', description: '', location: '', venue_details: '', event_date: '', event_time: '', dress_code: '', target_amount: '', contribution_per_person: '5000', creator_contribution: '', max_participants: '', deadline: '', category_id: '', requirements: [] });
+        setMediaFiles([]);
+        setSelectedContacts([]);
+        setShowCreateModal(false);
+        setCreateStep('form');
+        await mutate(['rees-party-properties', user.id]);
+        router.push(`/rees-party/${partyId}`);
+      } else {
+        toast.error(result.error || 'Failed to create party');
+        setCreateStep('form');
+      }
+    } catch (error) {
+      console.error('Error creating party:', error);
+      toast.error('Failed to create party');
+      setCreateStep('form');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePublishParty = async () => {
@@ -526,8 +574,8 @@ function ReesPartyPageContent() {
   };
 
   const handlePaymentClose = () => {
-    // Stay on payment step or allow going back
-    toast.info('Payment cancelled. You can try again or go back to edit the form.');
+    setCreateStep('form');
+    toast.info('Payment cancelled. You can modify the form and try again.');
   };
 
   const handleBackToForm = () => {
@@ -1402,50 +1450,25 @@ function ReesPartyPageContent() {
                             </div>
                           </div>
 
-                          {/* Pay Now Button */}
-                          <div className="flex justify-center">
-                            <Button
-                              onClick={() => {
-                                // Store form data in localStorage before payment
-                                const formDataToStore = {
-                                  ...formData,
-                                  mediaFiles: mediaFiles.map(file => ({
-                                    name: file.name,
-                                    size: file.size,
-                                    type: file.type,
-                                    lastModified: file.lastModified
-                                  })),
-                                  selectedContacts
-                                };
-                                localStorage.setItem('rees_party_form_data', JSON.stringify(formDataToStore));
-
-                                setCreateStep('payment_redirect');
-                                // Auto-redirect after a brief delay to show the redirect step
-                                setTimeout(() => {
-                                  const paymentUrl = new URL('/payment/full-page', window.location.origin);
-                                  paymentUrl.searchParams.set('amount', formData.creator_contribution || '0');
-                                  paymentUrl.searchParams.set('email', user?.email || '');
-                                  paymentUrl.searchParams.set('description', `Re-es Party: ${formData.title}`);
-                                  paymentUrl.searchParams.set('type', 'rees-party');
-                                  paymentUrl.searchParams.set('returnUrl', window.location.pathname);
-                                  paymentUrl.searchParams.set('metadata', JSON.stringify({
-                                    party_title: formData.title,
-                                    contribution_amount: formData.creator_contribution,
-                                    user_id: user?.id
-                                  }));
-                                  window.location.href = paymentUrl.toString();
-                                }, 1000);
+                          {/* Inline Payment Button */}
+                          <div className="flex flex-col items-center gap-4">
+                            <PaystackPayment
+                              amount={parseFloat(formData.creator_contribution || '0') * 100}
+                              email={user?.email || ''}
+                              onSuccess={handlePaymentSuccess}
+                              onClose={handlePaymentClose}
+                              metadata={{
+                                party_title: formData.title,
+                                contribution_amount: formData.creator_contribution,
+                                user_id: user?.id,
+                                type: 'rees-party-creation'
                               }}
-                              className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 text-lg font-semibold"
-                            >
-                              <CreditCard className="h-5 w-5 mr-2" />
-                              Pay Now
-                            </Button>
+                              className="w-full max-w-md bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 text-lg font-semibold"
+                            />
+                            <p className="text-xs text-gray-500 text-center">
+                              Complete payment to create your party. Your party will be published automatically after successful payment.
+                            </p>
                           </div>
-
-                          <p className="text-xs text-gray-500 text-center">
-                            Click "Pay Now" to proceed with your initial contribution
-                          </p>
                         </CardContent>
                       </Card>
                     </div>

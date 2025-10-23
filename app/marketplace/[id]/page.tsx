@@ -1257,8 +1257,11 @@ export default function MarketPropertyDetailsPage() {
       {relatedListings.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Similar Properties</CardTitle>
-          </CardHeader>
+              <CardTitle className="text-center text-xl font-bold w-full">
+                Similar Properties
+              </CardTitle>
+              <div className="w-32 mx-auto h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full mt-2"></div>
+            </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {relatedListings.map((relatedListing) => (

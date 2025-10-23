@@ -435,30 +435,13 @@ export default function PropertiesPage() {
             }
           >
             {filteredProperties.map((property) => (
-              <Card
-                key={property.id}
-                className={`hover:shadow-lg transition-shadow cursor-pointer ${
-                  viewMode === "list" ? "" : ""
-                }`}
-              >
+              <div key={property.id} className="bg-white rounded-lg shadow-md overflow-hidden group hover:shadow-lg transition-shadow cursor-pointer">
                 <Link href={`/properties/${property.id}`} className="block">
                   {viewMode === "grid" ? (
                     // Grid View - Title above image
                     <>
-                      {/* Title and Header */}
-                      <CardHeader className="pb-3">
-                        <div className="flex justify-between items-start">
-                          <Badge variant="secondary" className="text-xs ml-2 shrink-0">
-                            {property.category_name}
-                          </Badge>
-                        </div>
-                          <CardTitle className="line-clamp-2">
-                            {property.title}
-                          </CardTitle>
-                      </CardHeader>
-                      
                       {/* Property Image */}
-                      <div className="relative overflow-hidden bg-muted flex items-center justify-center h-48">
+                      <div className="relative aspect-video overflow-hidden">
                         {property.images && property.images.length > 0 ? (
                           <Image
                             src={
@@ -468,7 +451,7 @@ export default function PropertiesPage() {
                             }
                             alt={property.location || "Property location"}   // ✅ use location as alt
                             fill
-                            className="object-cover"
+                            className="object-cover group-hover:scale-105 transition-transform duration-300"
                             onError={(e) => (e.currentTarget.src = "/placeholder.svg")}
                           />
                         ) : (
@@ -476,34 +459,22 @@ export default function PropertiesPage() {
                         )}
                       </div>
 
-                      <CardDescription className="flex items-center">
-                        <MapPin className="h-3 w-3 mr-1" />
-                        {property.location}
-                      </CardDescription>
+                      <div className="p-4 space-y-3">
+                        <h3 className="font-semibold line-clamp-1">{property.title}</h3>
 
-                      {/* Content */}
-                      <CardContent className="pt-4">
-                        <div className="flex justify-between items-center text-sm mb-4">
-                          {property.current_worth && (
-                            <div className="flex items-center space-x-2">
-                              <span className="text-sm">
-                                <strong>
-                                  ₦
-                                  {Number(property.current_worth).toLocaleString("en-US", {
-                                    minimumFractionDigits: 0,
-                                    maximumFractionDigits: 0,
-                                  })}
-                                </strong>
-                              </span>
-                            </div>
-                          )}
-                          {property.year_of_construction && (
-                            <div className="flex items-center text-muted-foreground">
-                              <Calendar className="h-3 w-3 mr-1" />
-                              <span>{property.year_of_construction}</span>
-                            </div>
-                          )}
+                        <div className="flex items-center text-gray-500 text-sm">
+                          <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
+                          <span className="line-clamp-1">{property.location}</span>
                         </div>
+
+                        {property.current_worth && (
+                          <div className="text-sm font-bold text-primary">
+                            ₦{Number(property.current_worth).toLocaleString("en-US", {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 0,
+                            })}
+                          </div>
+                        )}
 
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-4 text-xs text-muted-foreground">
@@ -518,7 +489,7 @@ export default function PropertiesPage() {
                           </div>
                           <ArrowRight className="h-4 w-4 text-muted-foreground" />
                         </div>
-                      </CardContent>
+                      </div>
                     </>
                   ) : (
                     // List View - Better mobile layout
@@ -604,7 +575,7 @@ export default function PropertiesPage() {
                     </div>
                   )}
                 </Link>
-              </Card>
+              </div>
             ))}
           </div>
 

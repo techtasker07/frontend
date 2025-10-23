@@ -89,8 +89,8 @@ export function PropertyCard({ property }: PropertyCardProps) {
     }
   };
   return (
-    <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer">
-      <div className="relative w-full h-48">
+    <div className="bg-white rounded-lg shadow-md overflow-hidden group hover:shadow-lg transition-shadow cursor-pointer">
+      <div className="relative aspect-video overflow-hidden">
         <Image
           src={imageUrl}
           alt={property.title}
@@ -120,22 +120,19 @@ export function PropertyCard({ property }: PropertyCardProps) {
         )}
       </div>
 
-      <CardContent className="p-4">
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="font-semibold text-lg text-gray-900 line-clamp-1">{property.title}</h3>
-          <div className="text-right">
-            <div className="text-xl font-bold text-gray-900">{price}</div>
-          </div>
+      <div className="p-4 space-y-3">
+        <h3 className="font-semibold line-clamp-1">{property.title}</h3>
+
+        <div className="flex items-center text-gray-500 text-sm">
+          <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
+          <span className="line-clamp-1">{property.location}</span>
         </div>
 
-        <div className="flex items-center text-gray-600 mb-3">
-          <MapPin className="h-4 w-4 mr-1" />
-          <span className="text-sm">{property.location}</span>
-        </div>
+        <div className="text-sm font-bold text-primary">{price}</div>
 
         {/* Poll Results */}
         {!isMarketProperty && pollPercentage > 0 && (
-          <div className="mb-3">
+          <div>
             <div className="flex justify-between text-xs text-gray-600 mb-1">
               <span>Top Votes</span>
               <span>{pollPercentage}%</span>
@@ -150,10 +147,10 @@ export function PropertyCard({ property }: PropertyCardProps) {
         )}
 
         <div className="flex gap-2">
-          <Button className="flex-1" onClick={handleViewDetails}>View Details</Button>
-          {!isMarketProperty && <Button variant="outline">Poll</Button>}
+          <Button size="sm" className="w-full" onClick={handleViewDetails}>View Details</Button>
+          {!isMarketProperty && <Button variant="outline" size="sm">Poll</Button>}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

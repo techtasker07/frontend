@@ -162,18 +162,16 @@ export default function MarketplacePage() {
             : "space-y-4"
           }>
             {filteredListings.map((listing) => (
-              <Card key={listing.id} className="group hover:shadow-lg transition-shadow overflow-hidden">
-                <div className="relative">
-                  <div className="aspect-video overflow-hidden">
-                    <Image
-                      src={getImageUrl(listing)}
-                      alt={listing.title || 'Property'}
-                      width={400}
-                      height={300}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                  
+              <div key={listing.id} className="bg-white rounded-lg shadow-md overflow-hidden group hover:shadow-lg transition-shadow cursor-pointer">
+                <div className="relative aspect-video overflow-hidden">
+                  <Image
+                    src={getImageUrl(listing)}
+                    alt={listing.title || 'Property'}
+                    width={400}
+                    height={300}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+
                   {/* Property Badges */}
                   <div className="absolute top-4 left-4 flex flex-wrap gap-2">
                     <Badge variant="secondary">
@@ -182,73 +180,24 @@ export default function MarketplacePage() {
                   </div>
                 </div>
 
-                <CardContent className="p-4 space-y-3">
-                  <div className="space-y-2">
-                    <h3 className="font-semibold text-lg line-clamp-1">
-                      {listing.title}
-                    </h3>
-                    <div className="flex items-center text-gray-500 text-sm">
-                      <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
-                      <span className="line-clamp-1">{listing.location}</span>
-                    </div>
+                <div className="p-4 space-y-3">
+                  <h3 className="font-semibold line-clamp-1">
+                    {listing.title}
+                  </h3>
+                  <div className="flex items-center text-gray-500 text-sm">
+                    <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
+                    <span className="line-clamp-1">{listing.location}</span>
                   </div>
-
-                  {/* Property Details */}
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    {listing.bedrooms && (
-                      <div className="flex items-center gap-1">
-                        <Bed className="h-4 w-4" />
-                        <span>{listing.bedrooms}</span>
-                      </div>
-                    )}
-                    {listing.bathrooms && (
-                      <div className="flex items-center gap-1">
-                        <Bath className="h-4 w-4" />
-                        <span>{listing.bathrooms}</span>
-                      </div>
-                    )}
-                    {listing.parking_spaces > 0 && (
-                      <div className="flex items-center gap-1">
-                        <Car className="h-4 w-4" />
-                        <span>{listing.parking_spaces}</span>
-                      </div>
-                    )}
-                    {listing.year_of_construction && (
-                      <div>Built {listing.year_of_construction}</div>
-                    )}
+                  <div className="text-sm font-bold text-primary">
+                    {formatPrice(listing.price || 0, '₦')}
                   </div>
-
-                  {/* Price */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-2xl font-bold text-primary">
-                        {formatPrice(listing.price || 0, '₦')}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {listing.category?.name}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1 text-sm text-gray-500">
-                      <Eye className="h-4 w-4" />
-                      <span>{listing.views_count || 0}</span>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex gap-2">
-                    <Button asChild className="flex-1">
-                      <Link href={`/marketplace/${listing.id}`}>
-                        View Details
-                      </Link>
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      Contact
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                  <Button asChild size="sm" className="w-full">
+                    <Link href={`/marketplace/${listing.id}`}>
+                      View Details
+                    </Link>
+                  </Button>
+                </div>
+              </div>
             ))}
           </div>
         )}
