@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -103,41 +104,52 @@ interface ChatMessage {
 }
 
 function ReesPartyPageContent() {
-   const { user } = useAuth();
-   const [activeTab, setActiveTab] = useState<'manage' | 'contribute'>('manage');
-   const [loading, setLoading] = useState(false);
-   const [selectedProperty, setSelectedProperty] = useState<ReesPartyProperty | null>(null);
-   const [showCreateModal, setShowCreateModal] = useState(false);
-   const [createStep, setCreateStep] = useState<'form' | 'summary' | 'payment_redirect' | 'success'>('form');
-   const [paymentReference, setPaymentReference] = useState<string>('');
-   const [showContactsModal, setShowContactsModal] = useState(false);
-   const [selectedPropertyForContacts, setSelectedPropertyForContacts] = useState<ReesPartyProperty | null>(null);
-   const [selectedPropertyForChat, setSelectedPropertyForChat] = useState<ReesPartyProperty | null>(null);
-   const [showChatModal, setShowChatModal] = useState(false);
-   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-   const [newChatMessage, setNewChatMessage] = useState('');
+    const { user } = useAuth();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const [activeTab, setActiveTab] = useState<'manage' | 'contribute'>('manage');
+    const [loading, setLoading] = useState(false);
+    const [selectedProperty, setSelectedProperty] = useState<ReesPartyProperty | null>(null);
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [createStep, setCreateStep] = useState<'form' | 'summary' | 'payment_redirect' | 'success'>('form');
+    const [paymentReference, setPaymentReference] = useState<string>('');
+    const [showContactsModal, setShowContactsModal] = useState(false);
+    const [selectedPropertyForContacts, setSelectedPropertyForContacts] = useState<ReesPartyProperty | null>(null);
+    const [selectedPropertyForChat, setSelectedPropertyForChat] = useState<ReesPartyProperty | null>(null);
+    const [showChatModal, setShowChatModal] = useState(false);
+    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+    const [newChatMessage, setNewChatMessage] = useState('');
 
-   // Form states
-   const [formData, setFormData] = useState({
-     title: '',
-     description: '',
-     location: '',
-     venue_details: '',
-     event_date: '',
-     event_time: '',
-     dress_code: '',
-     target_amount: '',
-     contribution_per_person: '5000',
-     creator_contribution: '',
-     max_participants: '',
-     deadline: '',
-     category_id: '',
-     requirements: [] as string[]
-   });
+    // Form states
+    const [formData, setFormData] = useState({
+      title: '',
+      description: '',
+      location: '',
+      venue_details: '',
+      event_date: '',
+      event_time: '',
+      dress_code: '',
+      target_amount: '',
+      contribution_per_person: '5000',
+      creator_contribution: '',
+      max_participants: '',
+      deadline: '',
+      category_id: '',
+      requirements: [] as string[]
+    });
 
-   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
-   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
-   const [contributionAmount, setContributionAmount] = useState('');
+    const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+    const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
+    const [contributionAmount, setContributionAmount] = useState('');
+
+   // Check for payment reference in URL on component mount
+   useEffect(() => {
+     const paymentRef = searchParams.get('payment_reference');
+     if (paymentRef) {
+       // If we have a payment reference, redirect to success page
+       router.replace(`/rees-party/success?reference=${paymentRef}`);
+     }
+   }, [searchParams, router]);
 
    // Use SWR for properties
    const { data: properties = [], isLoading: propertiesLoading } = useSWR(
@@ -1356,6 +1368,19 @@ function ReesPartyPageContent() {
                           <div className="flex justify-center">
                             <Button
                               onClick={() => {
+                                // Store form data in localStorage before payment
+                                const formDataToStore = {
+                                  ...formData,
+                                  mediaFiles: mediaFiles.map(file => ({
+                                    name: file.name,
+                                    size: file.size,
+                                    type: file.type,
+                                    lastModified: file.lastModified
+                                  })),
+                                  selectedContacts
+                                };
+                                localStorage.setItem('rees_party_form_data', JSON.stringify(formDataToStore));
+
                                 setCreateStep('payment_redirect');
                                 // Auto-redirect after a brief delay to show the redirect step
                                 setTimeout(() => {
