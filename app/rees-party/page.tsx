@@ -146,8 +146,42 @@ function ReesPartyPageContent() {
    useEffect(() => {
      const paymentRef = searchParams.get('payment_reference');
      if (paymentRef) {
-       // If we have a payment reference, redirect to success page
-       router.replace(`/rees-party/success?reference=${paymentRef}`);
+       // Store the payment reference and open the modal at success step
+       setPaymentReference(paymentRef);
+       setCreateStep('success');
+       setShowCreateModal(true);
+       
+       // Retrieve the stored form data
+       const storedData = localStorage.getItem('rees_party_form_data');
+       if (storedData) {
+         try {
+           const parsedData = JSON.parse(storedData);
+           setFormData({
+             title: parsedData.title,
+             description: parsedData.description,
+             location: parsedData.location,
+             venue_details: parsedData.venue_details,
+             event_date: parsedData.event_date,
+             event_time: parsedData.event_time,
+             dress_code: parsedData.dress_code,
+             target_amount: parsedData.target_amount,
+             contribution_per_person: parsedData.contribution_per_person,
+             creator_contribution: parsedData.creator_contribution,
+             max_participants: parsedData.max_participants,
+             deadline: parsedData.deadline,
+             category_id: parsedData.category_id,
+             requirements: parsedData.requirements
+           });
+           setSelectedContacts(parsedData.selectedContacts || []);
+           // Note: We can't restore File objects from localStorage
+           // Media files will need to be re-uploaded if needed
+         } catch (error) {
+           console.error('Error parsing stored form data:', error);
+         }
+       }
+       
+       // Clean up the URL
+       router.replace('/rees-party', { scroll: false });
      }
    }, [searchParams, router]);
 
@@ -363,11 +397,7 @@ function ReesPartyPageContent() {
   const handlePublishParty = async () => {
     if (!user) return;
 
-    // Check if payment was completed (payment reference should be set by success redirect)
-    const urlParams = new URLSearchParams(window.location.search);
-    const paymentRef = urlParams.get('payment_reference');
-
-    if (!paymentRef) {
+    if (!paymentReference) {
       toast.error('Payment reference not found. Please complete payment first.');
       return;
     }
@@ -383,7 +413,7 @@ function ReesPartyPageContent() {
         body: JSON.stringify({
           ...formData,
           user_id: user.id,
-          payment_reference: paymentRef,
+          payment_reference: paymentReference,
         }),
       });
 
@@ -415,7 +445,7 @@ function ReesPartyPageContent() {
               invitation_id: null, // Creator doesn't have an invitation
               amount: creatorContributionAmount,
               payment_status: 'completed',
-              payment_reference: paymentRef,
+              payment_reference: paymentReference,
             }),
           });
 
@@ -425,6 +455,10 @@ function ReesPartyPageContent() {
           }
 
           toast.success('Re-es Party created successfully! Your contribution has been recorded.');
+          
+          // Clean up stored form data
+          localStorage.removeItem('rees_party_form_data');
+          
           setFormData({
             title: '',
             description: '',
@@ -470,6 +504,10 @@ function ReesPartyPageContent() {
           });
           setMediaFiles([]);
           setSelectedContacts([]);
+          
+          // Clean up stored form data
+          localStorage.removeItem('rees_party_form_data');
+          
           await mutate(['rees-party-properties', user.id]);
           setActiveTab('manage');
           setShowCreateModal(false);
