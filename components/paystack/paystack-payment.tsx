@@ -71,77 +71,38 @@ export function PaystackPayment({
         },
       });
 
-      console.log('Opening Paystack iframe...');
+      // Open the Paystack modal
       handler.openIframe();
 
-      // Apply styles to ensure iframe displays properly
-      const applyPaystackStyles = () => {
-        // Find all iframes and apply styles to Paystack iframe
-        const iframes = document.querySelectorAll('iframe');
-        iframes.forEach((iframe) => {
-          if (iframe.src && (iframe.src.includes('paystack') || iframe.src.includes('checkout'))) {
-            console.log('Found Paystack iframe, applying styles');
-            iframe.classList.add('paystack-iframe');
-            
-            // Force critical styles inline
-            iframe.style.cssText = `
-              position: fixed !important;
-              top: 0 !important;
-              left: 0 !important;
-              width: 100vw !important;
-              height: 100vh !important;
-              max-width: 100vw !important;
-              max-height: 100vh !important;
-              z-index: 999999 !important;
-              pointer-events: auto !important;
-              border: none !important;
-              margin: 0 !important;
-              padding: 0 !important;
-              display: block !important;
-              visibility: visible !important;
-              opacity: 1 !important;
-            `;
-          }
-        });
+      // Apply styles to Paystack-generated elements directly
+      setTimeout(() => {
+        // Find Paystack modal elements
+        const paystackModal = document.querySelector('[class*="paystack-modal"]') as HTMLElement;
+        const paystackOverlay = document.querySelector('[class*="paystack-overlay"]') as HTMLElement;
+        const paystackIframe = document.querySelector('iframe[src*="paystack"]') as HTMLIFrameElement;
 
-        // Find and style Paystack modal containers
-        const selectors = [
-          '#paystack-modal',
-          '.paystack-modal',
-          'div[class*="paystack"]',
-          'div[id*="paystack"]'
-        ];
+        if (paystackModal) {
+          // Style the modal container for full width
+          paystackModal.style.width = '90vw';
+          paystackModal.style.maxWidth = '500px';
+          paystackModal.style.height = 'auto';
+          paystackModal.style.borderRadius = '12px';
+          paystackModal.style.zIndex = '999999';
+        }
 
-        selectors.forEach(selector => {
-          const elements = document.querySelectorAll(selector);
-          elements.forEach(element => {
-            if (element && element instanceof HTMLElement) {
-              console.log('Found Paystack container, applying styles');
-              element.style.cssText = `
-                position: fixed !important;
-                top: 0 !important;
-                left: 0 !important;
-                width: 100vw !important;
-                height: 100vh !important;
-                z-index: 999999 !important;
-                pointer-events: auto !important;
-                display: block !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-              `;
-            }
-          });
-        });
-      };
+        if (paystackOverlay) {
+          // Ensure overlay is behind modal but above content
+          paystackOverlay.style.zIndex = '999998';
+        }
 
-      // Apply styles immediately and repeatedly to catch the iframe
-      applyPaystackStyles();
-      
-      // Continue checking for a few seconds to ensure we catch the iframe
-      const intervals = [100, 300, 500, 800, 1200, 1800, 2500];
-      intervals.forEach(delay => {
-        setTimeout(applyPaystackStyles, delay);
-      });
+        if (paystackIframe) {
+          // Style the iframe directly
+          paystackIframe.style.width = '100%';
+          paystackIframe.style.height = '400px';
+          paystackIframe.style.border = 'none';
+          paystackIframe.style.borderRadius = '12px';
+        }
+      }, 100);
 
     } catch (error) {
       console.error('Error setting up Paystack payment:', error);

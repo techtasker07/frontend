@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PaystackPayment } from '@/components/paystack/paystack-payment';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { ArrowLeft, CreditCard, CheckCircle } from 'lucide-react';
+import { paystackConfig } from '@/lib/paystack';
 
 function PaymentPageContent() {
   const router = useRouter();
@@ -27,6 +28,16 @@ function PaymentPageContent() {
   const [customEmail, setCustomEmail] = useState(email);
   const [customDescription, setCustomDescription] = useState(description);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Full Page Payment - Environment check:');
+    console.log('NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY:', process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY);
+    console.log('Amount:', amount);
+    console.log('Email:', email);
+    console.log('Type:', type);
+    console.log('Paystack config:', paystackConfig);
+  }, [amount, email, type]);
 
   const handlePaymentSuccess = async (reference: string) => {
     setIsProcessing(true);

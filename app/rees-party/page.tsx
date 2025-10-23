@@ -22,7 +22,7 @@ import useSWR, { mutate } from 'swr';
 
 interface ReesPartyProperty {
   id: string;
-  title: string;
+  title: string
   description: string;
   location: string;
   venue_details?: string;
