@@ -33,6 +33,15 @@ export async function GET(request: NextRequest) {
           payment_status,
           contributed_at,
           contributor:profiles!rees_party_contributions_contributor_id_fkey(id, first_name, last_name, email)
+        ),
+        forum_messages:rees_party_forum_messages(
+          id,
+          sender_id,
+          message,
+          message_type,
+          media_url,
+          created_at,
+          sender:profiles!rees_party_forum_messages_sender_id_fkey(id, first_name, last_name)
         )
       `)
       .eq('user_id', userId)

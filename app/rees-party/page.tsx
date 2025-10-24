@@ -526,7 +526,7 @@ function ReesPartyPageContent() {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex gap-6 pt-4 justify-center">
+                        <div className="flex gap-4 pt-4 justify-center">
                           <Link href={`/rees-party/${property.id}`}>
                             <Button
                               variant="outline"
