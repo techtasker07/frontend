@@ -255,8 +255,8 @@ export default function PropertiesPage() {
         </div>
         
         {isAuthenticated && (
-          <Button 
-            onClick={() => setShowPropertyTypeDialog(true)}
+          <Button
+            onClick={() => router.push('/add-property')}
             className="mt-4 md:mt-0"
           >
             <Plus className="mr-2 h-4 w-4" />

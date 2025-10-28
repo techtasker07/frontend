@@ -6,13 +6,15 @@ import { Input } from "./ui/input";
 import { supabaseApi } from "../lib/supabase-api";
 import { useAuth } from "../lib/auth";
 import { useRouter } from "next/navigation";
+import { PropertyTypeDialog } from "./PropertyTypeDialog";
 
 export function HeroSection() {
-  const { isAuthenticated } = useAuth();
-  const router = useRouter();
-  const [heroImages, setHeroImages] = useState<{ id: string; image_url: string; alt_text?: string; is_active: boolean }[]>([]);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [email, setEmail] = useState('');
+   const { isAuthenticated } = useAuth();
+   const router = useRouter();
+   const [heroImages, setHeroImages] = useState<{ id: string; image_url: string; alt_text?: string; is_active: boolean }[]>([]);
+   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+   const [email, setEmail] = useState('');
+   const [showPropertyTypeDialog, setShowPropertyTypeDialog] = useState(false);
 
   // Function to check if URL is a video
   const isVideoUrl = (url: string): boolean => {
@@ -93,7 +95,7 @@ export function HeroSection() {
               <div className="mb-8">
                 <Button
                   className="h-12 px-8 bg-[#000080] hover:bg-[#F39322] text-white rounded-full"
-                  onClick={() => router.push('/add-property')}
+                  onClick={() => setShowPropertyTypeDialog(true)}
                 >
                   Add a Property
                 </Button>
@@ -125,6 +127,11 @@ export function HeroSection() {
           </div>
         </div>
       </div>
+
+      <PropertyTypeDialog
+        open={showPropertyTypeDialog}
+        onOpenChange={setShowPropertyTypeDialog}
+      />
     </section>
   );
 }
