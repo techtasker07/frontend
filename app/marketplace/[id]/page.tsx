@@ -281,12 +281,6 @@ export default function MarketPropertyDetailsPage() {
                 loop
                 playsInline
               />
-              {/* Play Icon Overlay */}
-              <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/50 transition-colors">
-                <div className="w-6 h-6 bg-white/80 rounded-sm flex items-center justify-center">
-                  <div className="w-3 h-3 bg-white rounded-sm ml-0.5"></div>
-                </div>
-              </div>
             </div>
           )}
 
@@ -525,7 +519,7 @@ export default function MarketPropertyDetailsPage() {
 
           {/* Property Header - Moved after price */}
           <div className="space-y-2 mb-6">
-            <h1 className="text-2xl md:text-3xl font-bold">{listing.title}</h1>
+            <h1 className="text-2xl md:text-2xl font-bold">{listing.title}</h1>
             <div className="flex items-center text-gray-600">
               <MapPin className="h-4 w-4 mr-1" />
               <span>{listing.location}</span>
