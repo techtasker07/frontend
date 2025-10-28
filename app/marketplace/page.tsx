@@ -70,8 +70,9 @@ export default function MarketplacePage() {
    );
 
 
-  const formatPrice = (price: number, currency: string = '₦', period?: string) => {
-    const formatted = `${currency}${price.toLocaleString()}`;
+  const formatPrice = (price: number, currency: string = 'NGN', period?: string) => {
+    const currencySymbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '₦';
+    const formatted = `${currencySymbol}${price.toLocaleString()}`;
     return period ? `${formatted}/${period}` : formatted;
   };
 
@@ -189,7 +190,7 @@ export default function MarketplacePage() {
                     <span className="line-clamp-1">{listing.location}</span>
                   </div>
                   <div className="text-sm font-bold text-primary">
-                    {formatPrice(listing.price || 0, '₦')}
+                    {formatPrice(listing.price || 0, listing.currency || 'NGN')}
                   </div>
                   <Button asChild size="sm" className="w-full">
                     <Link href={`/marketplace/${listing.id}`}>

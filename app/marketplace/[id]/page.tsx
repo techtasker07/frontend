@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabaseApi, MarketplaceListing } from '@/lib/supabase-api';
+import { useAuth } from '@/lib/auth';
 import {
   Heart,
   Share2,
@@ -31,6 +32,7 @@ import {
   ArrowLeft,
   CheckCircle,
   X,
+  Edit,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -39,6 +41,8 @@ import Map from '@/components/ui/map';
 
 export default function MarketPropertyDetailsPage() {
   const params = useParams();
+  const router = useRouter();
+  const { user } = useAuth();
   const [listing, setListing] = useState<MarketplaceListing | null>(null);
   const [relatedListings, setRelatedListings] = useState<MarketplaceListing[]>([]);
   const [loading, setLoading] = useState(true);
@@ -136,8 +140,9 @@ export default function MarketPropertyDetailsPage() {
     return images;
   };
 
-  const formatPrice = (price: number, currency: string = '₦', period?: string) => {
-    const formatted = `${currency}${price.toLocaleString()}`;
+  const formatPrice = (price: number, currency: string = 'NGN', period?: string) => {
+    const currencySymbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '₦';
+    const formatted = `${currencySymbol}${price.toLocaleString()}`;
     return period ? `${formatted}/${period}` : formatted;
   };
 
@@ -238,17 +243,16 @@ export default function MarketPropertyDetailsPage() {
 
           {/* Action Buttons */}
           <div className="absolute top-4 right-4 flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              className="bg-white/80 hover:bg-white"
-              onClick={toggleFavorite}
-            >
-              <Heart className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
-            </Button>
-            <Button size="sm" variant="outline" className="bg-white/80 hover:bg-white">
-              <Share2 className="h-4 w-4" />
-            </Button>
+            {user && listing.user_id === user.id && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-white/80 hover:bg-white"
+                onClick={() => router.push(`/marketplace/${params.id}/edit`)}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            )}
           </div>
 
           {/* Property Badges */}
@@ -325,9 +329,9 @@ export default function MarketPropertyDetailsPage() {
       </div>
 
       {/* Desktop Image Gallery */}
-      <div className="hidden md:grid grid-cols-4 gap-2 h-96">
+      <div className={`hidden md:grid gap-2 h-96 ${!virtualTourData ? 'grid-cols-1' : 'grid-cols-4'}`}>
         {/* Main Large Image */}
-        <div className="col-span-3 relative overflow-hidden rounded-lg bg-gray-100">
+        <div className={`${virtualTourData ? 'col-span-3' : 'col-span-1'} relative overflow-hidden rounded-lg bg-gray-100`}>
           <Image
             src={images[currentImageIndex] || '/api/placeholder/800/600'}
             alt={listing.title || 'Property'}
@@ -337,17 +341,16 @@ export default function MarketPropertyDetailsPage() {
 
           {/* Action Buttons */}
           <div className="absolute top-4 right-4 flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              className="bg-white/80 hover:bg-white"
-              onClick={toggleFavorite}
-            >
-              <Heart className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
-            </Button>
-            <Button size="sm" variant="outline" className="bg-white/80 hover:bg-white">
-              <Share2 className="h-4 w-4" />
-            </Button>
+            {user && listing.user_id === user.id && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-white/80 hover:bg-white"
+                onClick={() => router.push(`/marketplace/${params.id}/edit`)}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            )}
           </div>
 
           {/* Property Badges */}
@@ -450,13 +453,24 @@ export default function MarketPropertyDetailsPage() {
                 </div>
               </div>
 
-              <div className="text-left md:text-right">
+              <div className="text-left md:text-right flex flex-col items-end gap-2">
                 <div className="text-1xl md:text-2xl font-bold text-primary">
                   {getPropertyPrice(listing)}
                 </div>
                 <div className="text-sm text-gray-500">
                   {listing.category?.name}
                 </div>
+                {user && listing.user_id === user.id && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.push(`/marketplace/${params.id}/edit`)}
+                    className="mt-2"
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Listing
+                  </Button>
+                )}
               </div>
             </div>
 
