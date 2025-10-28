@@ -329,9 +329,9 @@ export default function MarketPropertyDetailsPage() {
       </div>
 
       {/* Desktop Image Gallery */}
-      <div className={`hidden md:grid gap-2 h-96 ${!virtualTourData ? 'grid-cols-1' : 'grid-cols-4'}`}>
+      <div className="hidden md:grid gap-2 h-96 grid-cols-4">
         {/* Main Large Image */}
-        <div className={`${virtualTourData ? 'col-span-3' : 'col-span-1'} relative overflow-hidden rounded-lg bg-gray-100`}>
+        <div className={`${virtualTourData ? 'col-span-3' : 'col-span-4'} relative overflow-hidden rounded-lg bg-gray-100`}>
           <Image
             src={images[currentImageIndex] || '/api/placeholder/800/600'}
             alt={listing.title || 'Property'}

@@ -73,7 +73,19 @@ export default function MarketplacePage() {
   const formatPrice = (price: number, currency: string = 'NGN', period?: string) => {
     const currencySymbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '₦';
     const formatted = `${currencySymbol}${price.toLocaleString()}`;
-    return period ? `${formatted}/${period}` : formatted;
+
+    // Add abbreviated version for large numbers
+    let abbreviated = '';
+    if (price >= 1000000000) { // Billions
+      abbreviated = `${currencySymbol}${(price / 1000000000).toFixed(1)}B`;
+    } else if (price >= 1000000) { // Millions
+      abbreviated = `${currencySymbol}${(price / 1000000).toFixed(1)}M`;
+    } else if (price >= 1000) { // Thousands
+      abbreviated = `${currencySymbol}${(price / 1000).toFixed(1)}K`;
+    }
+
+    const result = abbreviated ? `${formatted} (${abbreviated})` : formatted;
+    return period ? `${result}/${period}` : result;
   };
 
   const getImageUrl = (listing: MarketplaceListing) => {
