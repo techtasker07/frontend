@@ -173,6 +173,18 @@ CREATE TABLE IF NOT EXISTS public.favorites (
   UNIQUE(user_id, marketplace_listing_id)
 );
 
+-- Create marketplace_reviews table
+CREATE TABLE IF NOT EXISTS public.marketplace_reviews (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  marketplace_listing_id UUID REFERENCES public.marketplace_listings(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+  rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+  comment TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  UNIQUE(user_id, marketplace_listing_id)
+);
+
 -- Enable RLS
 ALTER TABLE public.listing_types ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.property_types ENABLE ROW LEVEL SECURITY;
@@ -180,6 +192,7 @@ ALTER TABLE public.marketplace_listings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.marketplace_images ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.favorites ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.marketplace_reviews ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS Policies
 
@@ -252,6 +265,19 @@ CREATE POLICY "Users can view their own favorites" ON public.favorites
 CREATE POLICY "Users can manage their own favorites" ON public.favorites
   FOR ALL USING (auth.uid() = user_id);
 
+-- Marketplace reviews policies
+CREATE POLICY "Anyone can view marketplace reviews" ON public.marketplace_reviews
+  FOR SELECT USING (true);
+
+CREATE POLICY "Authenticated users can create reviews" ON public.marketplace_reviews
+  FOR INSERT WITH CHECK (auth.role() = 'authenticated' AND auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own reviews" ON public.marketplace_reviews
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own reviews" ON public.marketplace_reviews
+  FOR DELETE USING (auth.uid() = user_id);
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS marketplace_listings_category_id_idx ON public.marketplace_listings(category_id);
 CREATE INDEX IF NOT EXISTS marketplace_listings_listing_type_id_idx ON public.marketplace_listings(listing_type_id);
@@ -279,6 +305,10 @@ CREATE INDEX IF NOT EXISTS bookings_status_idx ON public.bookings(status);
 CREATE INDEX IF NOT EXISTS favorites_user_id_idx ON public.favorites(user_id);
 CREATE INDEX IF NOT EXISTS favorites_marketplace_listing_id_idx ON public.favorites(marketplace_listing_id);
 
+CREATE INDEX IF NOT EXISTS marketplace_reviews_listing_id_idx ON public.marketplace_reviews(marketplace_listing_id);
+CREATE INDEX IF NOT EXISTS marketplace_reviews_user_id_idx ON public.marketplace_reviews(user_id);
+CREATE INDEX IF NOT EXISTS marketplace_reviews_created_at_idx ON public.marketplace_reviews(created_at);
+
 CREATE INDEX IF NOT EXISTS property_types_category_id_idx ON public.property_types(category_id);
 
 -- Create triggers for updating timestamps
@@ -286,6 +316,9 @@ CREATE TRIGGER update_marketplace_listings_updated_at BEFORE UPDATE ON public.ma
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_bookings_updated_at BEFORE UPDATE ON public.bookings
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_marketplace_reviews_updated_at BEFORE UPDATE ON public.marketplace_reviews
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Insert default listing types

@@ -512,7 +512,7 @@ export function ImageTourViewer({ images, isOpen, onClose }: {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[100vw] w-screen h-screen p-0 bg-black">
+      <DialogContent className="max-w-[150vw] w-screen h-screen p-2 bg-black">
         <div className="relative w-full h-full bg-black overflow-hidden">
           {/* Header */}
           <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/80 to-transparent p-6">
@@ -611,13 +611,6 @@ export function ImageTourViewer({ images, isOpen, onClose }: {
               </div>
             </div>
           )}
-
-          {/* Instructions */}
-          <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-10">
-            <div className="bg-black/60 backdrop-blur-sm text-white text-sm px-4 py-2 rounded-full">
-              Use arrow keys or swipe to navigate • Press ESC to close
-            </div>
-          </div>
         </div>
       </DialogContent>
     </Dialog>

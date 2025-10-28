@@ -33,11 +33,14 @@ import {
   CheckCircle,
   X,
   Edit,
+  Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { VirtualTourViewer, ImageTourViewer } from '@/components/virtual-tour/VirtualTourViewer';
 import Map from '@/components/ui/map';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
 export default function MarketPropertyDetailsPage() {
   const params = useParams();
@@ -54,6 +57,9 @@ export default function MarketPropertyDetailsPage() {
   const [showVirtualTourImages, setShowVirtualTourImages] = useState(false);
   const [virtualTourData, setVirtualTourData] = useState<any>(null);
   const [loadingVirtualTour, setLoadingVirtualTour] = useState(false);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   // Engagement form state
   const [engagementForm, setEngagementForm] = useState({
@@ -82,11 +88,14 @@ export default function MarketPropertyDetailsPage() {
       if (response.success) {
         setListing(response.data);
 
-        // Fetch related properties based on same category or location
-        const relatedResponse = await supabaseApi.getMarketplaceListings({
-          category: response.data.category?.name,
-          limit: 4
-        });
+        // Fetch related properties and virtual tour data in parallel
+        const [relatedResponse, virtualTourResponse] = await Promise.all([
+          supabaseApi.getMarketplaceListings({
+            category: response.data.category?.name,
+            limit: 4
+          }),
+          fetch(`/api/virtual-tour?marketplaceListingId=${response.data.id}`)
+        ]);
 
         if (relatedResponse.success) {
           // Filter out the current property from related listings
@@ -94,13 +103,34 @@ export default function MarketPropertyDetailsPage() {
           setRelatedListings(filtered.slice(0, 3));
         }
 
-        // Fetch virtual tour data
-        await fetchVirtualTourData(response.data.id);
+        // Handle virtual tour data
+        if (virtualTourResponse.ok) {
+          const result = await virtualTourResponse.json();
+          if (result.success && result.data) {
+            setVirtualTourData(result.data);
+          }
+        }
+
+        // Fetch reviews
+        const reviewsResponse = await supabase
+          .from('marketplace_reviews')
+          .select(`
+            *,
+            user:profiles(first_name, last_name)
+          `)
+          .eq('marketplace_listing_id', response.data.id)
+          .order('created_at', { ascending: false })
+          .limit(2);
+
+        if (reviewsResponse.data) {
+          setReviews(reviewsResponse.data);
+        }
       }
     } catch (error) {
       console.error('Error fetching listing details:', error);
     } finally {
       setLoading(false);
+      setLoadingVirtualTour(false);
     }
   };
 
@@ -176,7 +206,7 @@ export default function MarketPropertyDetailsPage() {
 
   const toggleFavorite = async () => {
     if (!listing) return;
-    
+
     try {
       if (isFavorite) {
         await supabaseApi.removeFromFavorites(listing.id);
@@ -186,6 +216,39 @@ export default function MarketPropertyDetailsPage() {
       setIsFavorite(!isFavorite);
     } catch (error) {
       console.error('Error toggling favorite:', error);
+    }
+  };
+
+  const submitReview = async () => {
+    if (!listing || !user || !newReview.comment.trim()) return;
+
+    setSubmittingReview(true);
+    try {
+      const { data, error } = await supabase
+        .from('marketplace_reviews')
+        .insert({
+          marketplace_listing_id: listing.id,
+          user_id: user.id,
+          rating: newReview.rating,
+          comment: newReview.comment.trim()
+        })
+        .select(`
+          *,
+          user:profiles(first_name, last_name)
+        `)
+        .single();
+
+      if (error) throw error;
+
+      // Add new review to the list and keep only latest 2
+      setReviews(prev => [data, ...prev.slice(0, 1)]);
+      setNewReview({ rating: 5, comment: '' });
+      toast.success('Review submitted successfully!');
+    } catch (error: any) {
+      console.error('Error submitting review:', error);
+      toast.error(error.message || 'Failed to submit review');
+    } finally {
+      setSubmittingReview(false);
     }
   };
 
@@ -1191,11 +1254,114 @@ export default function MarketPropertyDetailsPage() {
                 <CardHeader>
                   <CardTitle>Reviews & Ratings</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-center py-12">
-                    <p className="text-gray-500">No reviews yet for this property.</p>
-                    <p className="text-sm text-gray-400 mt-2">Be the first to leave a review!</p>
-                  </div>
+                <CardContent className="space-y-6">
+                  {/* Add Review Form */}
+                  {user && (
+                    <div className="border rounded-lg p-4 bg-gray-50">
+                      <h4 className="font-medium mb-3">Write a Review</h4>
+                      <div className="space-y-4">
+                        {/* Rating */}
+                        <div>
+                          <label className="text-sm font-medium">Rating</label>
+                          <div className="flex gap-1 mt-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                key={star}
+                                type="button"
+                                onClick={() => setNewReview(prev => ({ ...prev, rating: star }))}
+                                className="focus:outline-none"
+                                aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
+                              >
+                                <Star
+                                  className={`h-5 w-5 ${
+                                    star <= newReview.rating
+                                      ? 'fill-yellow-400 text-yellow-400'
+                                      : 'text-gray-300'
+                                  }`}
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Comment */}
+                        <div>
+                          <label className="text-sm font-medium">Your Review</label>
+                          <Textarea
+                            value={newReview.comment}
+                            onChange={(e) => setNewReview(prev => ({ ...prev, comment: e.target.value }))}
+                            placeholder="Share your experience with this property..."
+                            rows={3}
+                            className="mt-1"
+                          />
+                        </div>
+
+                        {/* Submit Button */}
+                        <Button
+                          onClick={submitReview}
+                          disabled={submittingReview || !newReview.comment.trim()}
+                          className="w-full"
+                        >
+                          {submittingReview ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Submitting...
+                            </>
+                          ) : (
+                            'Submit Review'
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Display Reviews */}
+                  {reviews.length > 0 ? (
+                    <div className="space-y-4">
+                      <h4 className="font-medium">Recent Reviews ({reviews.length})</h4>
+                      {reviews.map((review: any) => (
+                        <div key={review.id} className="border rounded-lg p-4">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-8 w-8">
+                                <AvatarFallback>
+                                  {review.user?.first_name?.[0]}{review.user?.last_name?.[0]}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium text-sm">
+                                  {review.user?.first_name} {review.user?.last_name}
+                                </p>
+                                <div className="flex items-center gap-1">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <Star
+                                      key={star}
+                                      className={`h-3 w-3 ${
+                                        star <= review.rating
+                                          ? 'fill-yellow-400 text-yellow-400'
+                                          : 'text-gray-300'
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                            <span className="text-xs text-gray-500">
+                              {new Date(review.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-700 mt-2">{review.comment}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">No reviews yet for this property.</p>
+                      <p className="text-sm text-gray-400 mt-2">
+                        {user ? 'Be the first to leave a review!' : 'Sign in to leave a review.'}
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -1321,17 +1487,17 @@ export default function MarketPropertyDetailsPage() {
 
       {/* Related Properties */}
       {relatedListings.length > 0 && (
-        <Card>
-          <CardHeader>
-              <CardTitle className="text-center text-xl font-bold w-full">
+        <Card className="bg-orange-50 border-orange-200">
+          <CardHeader className="bg-orange-100">
+              <CardTitle className="text-center text-xl font-bold w-full text-orange-900">
                 Similar Properties
               </CardTitle>
-              <div className="w-32 mx-auto h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full mt-2"></div>
+              <div className="w-32 mx-auto h-1 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full mt-2"></div>
             </CardHeader>
-          <CardContent>
+          <CardContent className="bg-orange-50">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {relatedListings.map((relatedListing) => (
-                <div key={relatedListing.id} className="bg-white rounded-lg shadow-md overflow-hidden group hover:shadow-lg transition-shadow">
+                <div key={relatedListing.id} className="bg-white rounded-lg shadow-md overflow-hidden group hover:shadow-lg transition-shadow border border-orange-100">
                   <div className="aspect-video overflow-hidden">
                     <Image
                       src={relatedListing.images?.[0]?.image_url || '/api/placeholder/400/300'}
@@ -1342,17 +1508,17 @@ export default function MarketPropertyDetailsPage() {
                     />
                   </div>
                   <div className="p-4 space-y-3">
-                    <h3 className="font-semibold line-clamp-1">
+                    <h3 className="font-semibold line-clamp-1 text-gray-900">
                       {relatedListing.title}
                     </h3>
-                    <div className="flex items-center text-gray-500 text-sm">
-                      <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
+                    <div className="flex items-center text-gray-600 text-sm">
+                      <MapPin className="h-4 w-4 mr-1 flex-shrink-0 text-orange-500" />
                       <span className="line-clamp-1">{relatedListing.location}</span>
                     </div>
-                    <div className="text-sm font-bold text-primary">
+                    <div className="text-sm font-bold text-orange-600">
                       {getPropertyPrice(relatedListing)}
                     </div>
-                    <Button asChild size="sm" className="w-full">
+                    <Button asChild size="sm" className="w-full bg-orange-500 hover:bg-orange-600 text-white">
                       <Link href={`/marketplace/${relatedListing.id}`}>
                         View Details
                       </Link>
