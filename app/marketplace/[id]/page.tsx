@@ -238,58 +238,54 @@ export default function MarketPropertyDetailsPage() {
 
       {/* Mobile Image Gallery */}
       <div className="block md:hidden space-y-4">
-        {/* Main Image with Video Play on Tap */}
-        <div className="relative h-[500px] overflow-hidden rounded-lg bg-gray-100 cursor-pointer" onClick={() => {
-          if (listing.video_url) {
-            // Open video modal
-            const modal = document.createElement('div');
-            modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
-            modal.innerHTML = `
-              <div class="bg-white p-4 rounded-lg max-w-4xl w-full mx-4">
-                <div class="flex justify-between items-center mb-4">
-                  <h3 class="text-lg font-semibold">Video Tour</h3>
-                  <button class="text-gray-500 hover:text-gray-700 text-2xl" onclick="this.closest('.fixed').remove()">&times;</button>
-                </div>
-                <div class="aspect-video bg-black rounded">
-                  <video src="${listing.video_url}" controls class="w-full h-full rounded"></video>
-                </div>
-              </div>
-            `;
-            document.body.appendChild(modal);
-            setTimeout(() => {
-              const modalVideo = modal.querySelector('video');
-              if (modalVideo) modalVideo.focus();
-            }, 100);
-          } else {
-            // Open image gallery
-            setShowImageTour(true);
-          }
-        }}>
-          {listing.video_url ? (
-            <video
-              src={listing.video_url}
-              className="w-full h-full object-cover"
-              muted
-              onMouseEnter={(e) => e.currentTarget.play()}
-              onMouseLeave={(e) => {
-                e.currentTarget.pause();
-                e.currentTarget.currentTime = 0;
-              }}
-            />
-          ) : (
-            <Image
-              src={images[currentImageIndex] || '/api/placeholder/800/600'}
-              alt={listing.title || 'Property'}
-              fill
-              className="object-cover"
-            />
-          )}
+        {/* Main Image Display */}
+        <div className="relative h-[500px] overflow-hidden rounded-lg bg-gray-100">
+          <Image
+            src={images[currentImageIndex] || '/api/placeholder/800/600'}
+            alt={listing.title || 'Property'}
+            fill
+            className="object-cover"
+          />
 
-          {/* Video Play Button Overlay */}
+          {/* Video Thumbnail - Bottom Left Corner */}
           {listing.video_url && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                <div className="w-6 h-6 bg-white rounded-sm ml-0.5"></div>
+            <div
+              className="absolute bottom-4 left-4 w-16 h-16 bg-black/50 rounded-lg overflow-hidden cursor-pointer group"
+              onClick={() => {
+                // Open video modal
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+                modal.innerHTML = `
+                  <div class="bg-white p-4 rounded-lg max-w-4xl w-full mx-4">
+                    <div class="flex justify-between items-center mb-4">
+                      <h3 class="text-lg font-semibold">Video Tour</h3>
+                      <button class="text-gray-500 hover:text-gray-700 text-2xl" onclick="this.closest('.fixed').remove()">&times;</button>
+                    </div>
+                    <div class="aspect-video bg-black rounded">
+                      <video src="${listing.video_url}" controls autoplay class="w-full h-full rounded"></video>
+                    </div>
+                  </div>
+                `;
+                document.body.appendChild(modal);
+                setTimeout(() => {
+                  const modalVideo = modal.querySelector('video');
+                  if (modalVideo) modalVideo.focus();
+                }, 100);
+              }}
+            >
+              <video
+                src={listing.video_url}
+                className="w-full h-full object-cover"
+                muted
+                autoPlay
+                loop
+                playsInline
+              />
+              {/* Play Icon Overlay */}
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/50 transition-colors">
+                <div className="w-6 h-6 bg-white/80 rounded-sm flex items-center justify-center">
+                  <div className="w-3 h-3 bg-white rounded-sm ml-0.5"></div>
+                </div>
               </div>
             </div>
           )}
@@ -301,10 +297,7 @@ export default function MarketPropertyDetailsPage() {
                 size="sm"
                 variant="outline"
                 className="bg-white/80 hover:bg-white"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  router.push(`/marketplace/${params.id}/edit`);
-                }}
+                onClick={(e) => router.push(`/marketplace/${params.id}/edit`)}
               >
                 <Edit className="h-4 w-4" />
               </Button>
@@ -320,10 +313,7 @@ export default function MarketPropertyDetailsPage() {
                 <div
                   key={index + 1}
                   className="relative flex-shrink-0 w-24 h-24 overflow-hidden rounded-lg cursor-pointer group"
-                  onClick={() => {
-                    setCurrentImageIndex(index + 1);
-                    setShowImageTour(true);
-                  }}
+                  onClick={() => setCurrentImageIndex(index + 1)}
                 >
                   <Image
                     src={imageUrl}
@@ -338,7 +328,7 @@ export default function MarketPropertyDetailsPage() {
               ))}
             </div>
             <p className="text-sm text-gray-600 text-center">
-              {images.length - 1} more photos • Tap to view gallery
+              {images.length - 1} more photos • Tap any photo to view it
             </p>
           </div>
         )}
