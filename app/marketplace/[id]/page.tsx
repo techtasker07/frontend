@@ -127,9 +127,15 @@ export default function MarketPropertyDetailsPage() {
 
     const images = [];
 
-    // Add property images
+    // Add property images, prioritizing primary image first
     if (listing.images && listing.images.length > 0) {
-      images.push(...listing.images.map(img => img.image_url));
+      // Sort images so primary image comes first
+      const sortedImages = [...listing.images].sort((a, b) => {
+        if (a.is_primary && !b.is_primary) return -1;
+        if (!a.is_primary && b.is_primary) return 1;
+        return 0;
+      });
+      images.push(...sortedImages.map(img => img.image_url));
     }
 
     // Add placeholder if no images at all
@@ -233,7 +239,7 @@ export default function MarketPropertyDetailsPage() {
       {/* Mobile Image Gallery */}
       <div className="block md:hidden space-y-4">
         {/* Main Image */}
-        <div className="relative h-64 overflow-hidden rounded-lg bg-gray-100">
+        <div className="relative h-[500px] overflow-hidden rounded-lg bg-gray-100">
           <Image
             src={images[currentImageIndex] || '/api/placeholder/800/600'}
             alt={listing.title || 'Property'}
@@ -329,117 +335,146 @@ export default function MarketPropertyDetailsPage() {
       </div>
 
       {/* Desktop Image Gallery */}
-      <div className="hidden md:grid gap-2 h-96 grid-cols-4">
-        {/* Main Large Image */}
-        <div className={`${virtualTourData ? 'col-span-3' : 'col-span-4'} relative overflow-hidden rounded-lg bg-gray-100`}>
-          <Image
-            src={images[currentImageIndex] || '/api/placeholder/800/600'}
-            alt={listing.title || 'Property'}
-            fill
-            className="object-cover"
-          />
+      <div className="hidden md:block">
+        {/* 3-Column Grid Layout */}
+        <div className="grid grid-cols-3 gap-4 mb-4">
+          {/* Primary Image - Wider, takes 2 columns */}
+          <div className="col-span-2 relative h-[500px] overflow-hidden rounded-lg bg-gray-100 cursor-pointer group" onClick={() => setCurrentImageIndex(0)}>
+            <Image
+              src={images[0] || '/api/placeholder/800/600'}
+              alt={listing.title || 'Property'}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
+            />
 
-          {/* Action Buttons */}
-          <div className="absolute top-4 right-4 flex gap-2">
-            {user && listing.user_id === user.id && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="bg-white/80 hover:bg-white"
-                onClick={() => router.push(`/marketplace/${params.id}/edit`)}
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-
-          {/* Property Badges */}
-          <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-            <Badge variant="secondary" className="bg-white/90 text-gray-800">
-              {listing.category?.name}
-            </Badge>
-            <Badge variant="outline" className="bg-white/90 text-gray-800 border-gray-300">
-              {listing.listing_type?.name || 'For Sale'}
-            </Badge>
-          </div>
-        </div>
-
-        {/* Right Side Grid */}
-        <div className="flex flex-col gap-2">
-          {/* Virtual Tour Tile */}
-          {virtualTourData && (
-            <div
-              className="relative h-[150px] bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg overflow-hidden cursor-pointer group"
-              onClick={() => setShowVirtualTour(true)}
-            >
-              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
-                <Eye className="h-6 w-6 mb-1" />
-                <span className="text-xs font-medium">Virtual Tour</span>
-                {loadingVirtualTour && (
-                  <div className="mt-1">
-                    <div className="animate-spin rounded-full h-3 w-3 border border-white border-t-transparent"></div>
-                  </div>
-                )}
+            {/* Virtual Tour Button Overlay */}
+            {virtualTourData && (
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <Button
+                  size="lg"
+                  className="bg-white/90 hover:bg-white text-gray-800 shadow-lg"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowVirtualTour(true);
+                  }}
+                >
+                  <Eye className="h-5 w-5 mr-2" />
+                  Virtual Tour
+                </Button>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Virtual Tour Scene Images */}
-          {virtualTourData && virtualTourData.scenes && virtualTourData.scenes.length > 0 && (
-            <div
-              className="relative h-[250px] overflow-hidden rounded-lg cursor-pointer group"
-              onClick={() => setShowVirtualTourImages(true)}
-            >
-              <Image
-                src={virtualTourData.scenes[0].image_url}
-                alt="Virtual tour scene"
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-200"
-              />
-              {virtualTourData.scenes.length > 1 && (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                  <span className="text-white text-lg font-bold">+{virtualTourData.scenes.length - 1}</span>
+            {/* Action Buttons */}
+            <div className="absolute top-4 right-4 flex gap-2">
+              {user && listing.user_id === user.id && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="bg-white/80 hover:bg-white"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/marketplace/${params.id}/edit`);
+                  }}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+
+            {/* Property Badges */}
+            <div className="absolute bottom-4 left-4 flex flex-wrap gap-2">
+              <Badge variant="secondary" className="bg-white/90 text-gray-800">
+                {listing.category?.name}
+              </Badge>
+              <Badge variant="outline" className="bg-white/90 text-gray-800 border-gray-300">
+                {listing.listing_type?.name || 'For Sale'}
+              </Badge>
+            </div>
+          </div>
+
+          {/* Right Column - Vertical Stack */}
+          <div className="flex flex-col gap-4">
+            {/* Video Tour Tile */}
+            {listing.video_url && (
+              <div className="relative h-[240px] bg-gray-100 rounded-lg overflow-hidden cursor-pointer group">
+                <video
+                  src={listing.video_url}
+                  className="w-full h-full object-cover"
+                  muted
+                  onMouseEnter={(e) => e.currentTarget.play()}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.pause();
+                    e.currentTarget.currentTime = 0;
+                  }}
+                  onClick={() => {
+                    // Open modal with full video player
+                    const modal = document.createElement('div');
+                    modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+                    modal.innerHTML = `
+                      <div class="bg-white p-4 rounded-lg max-w-4xl w-full mx-4">
+                        <div class="flex justify-between items-center mb-4">
+                          <h3 class="text-lg font-semibold">Video</h3>
+                          <button class="text-gray-500 hover:text-gray-700 text-2xl" onclick="this.closest('.fixed').remove()">&times;</button>
+                        </div>
+                        <div class="aspect-video bg-black rounded">
+                          <video src="${listing.video_url}" controls class="w-full h-full rounded"></video>
+                        </div>
+                      </div>
+                    `;
+                    document.body.appendChild(modal);
+                    // Focus on the video in modal
+                    setTimeout(() => {
+                      const modalVideo = modal.querySelector('video');
+                      if (modalVideo) modalVideo.focus();
+                    }, 100);
+                  }}
+                />
+                {/* Video Badge */}
+                <div className="absolute top-2 left-2">
+                  <Badge variant="secondary" className="bg-black/70 text-white text-xs">
+                    Video
+                  </Badge>
+                </div>
+              </div>
+            )}
+
+            {/* More Photos Tile */}
+            <div className="relative flex-1 min-h-[240px] overflow-hidden rounded-lg cursor-pointer group" onClick={() => setShowImageTour(true)}>
+              {images.length > 1 ? (
+                <div className="relative h-full">
+                  <Image
+                    src={images[1] || '/api/placeholder/400/300'}
+                    alt="More property photos"
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                    <div className="text-center text-white">
+                      <div className="text-3xl font-bold mb-1">{images.length - 1}+</div>
+                      <div className="text-sm font-medium">More Photos</div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full bg-gray-100 flex items-center justify-center">
+                  <div className="text-center text-gray-500">
+                    <Eye className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <div className="text-sm">No additional photos</div>
+                  </div>
                 </div>
               )}
             </div>
-          )}
-
-          {/* Additional Property Images */}
-          {images.slice(1, virtualTourData ? (virtualTourData.scenes?.length > 0 ? 3 : 4) : 5).map((imageUrl, index) => (
-            <div
-              key={index + 1}
-              className="relative h-[94px] overflow-hidden rounded-lg cursor-pointer group"
-              onClick={() => setCurrentImageIndex(index + 1)}
-            >
-              <Image
-                src={imageUrl}
-                alt={`Property image ${index + 2}`}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-200"
-              />
-              {currentImageIndex === index + 1 && (
-                <div className="absolute inset-0 ring-2 ring-blue-500 bg-blue-500/10" />
-              )}
-            </div>
-          ))}
-
-          {/* More Images Indicator */}
-          {images.length > (virtualTourData ? (virtualTourData.scenes?.length > 0 ? 3 : 4) : 5) && (
-            <div
-              className="relative h-[94px] bg-gray-900/80 rounded-lg overflow-hidden cursor-pointer group flex items-center justify-center"
-              onClick={() => setShowImageTour(true)}
-            >
-              <div className="text-center text-white">
-                <div className="text-lg font-bold">{images.length - (virtualTourData ? (virtualTourData.scenes?.length > 0 ? 3 : 4) : 5)}+</div>
-                <div className="text-xs">More Photos</div>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
+
+        {/* Full Image Viewer Trigger */}
+        {images.length > 1 && (
+          <div className="text-center mb-4">
+          </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Property Header */}
