@@ -238,14 +238,61 @@ export default function MarketPropertyDetailsPage() {
 
       {/* Mobile Image Gallery */}
       <div className="block md:hidden space-y-4">
-        {/* Main Image */}
-        <div className="relative h-[500px] overflow-hidden rounded-lg bg-gray-100">
-          <Image
-            src={images[currentImageIndex] || '/api/placeholder/800/600'}
-            alt={listing.title || 'Property'}
-            fill
-            className="object-cover"
-          />
+        {/* Main Image with Video Play on Tap */}
+        <div className="relative h-[500px] overflow-hidden rounded-lg bg-gray-100 cursor-pointer" onClick={() => {
+          if (listing.video_url) {
+            // Open video modal
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+            modal.innerHTML = `
+              <div class="bg-white p-4 rounded-lg max-w-4xl w-full mx-4">
+                <div class="flex justify-between items-center mb-4">
+                  <h3 class="text-lg font-semibold">Video Tour</h3>
+                  <button class="text-gray-500 hover:text-gray-700 text-2xl" onclick="this.closest('.fixed').remove()">&times;</button>
+                </div>
+                <div class="aspect-video bg-black rounded">
+                  <video src="${listing.video_url}" controls class="w-full h-full rounded"></video>
+                </div>
+              </div>
+            `;
+            document.body.appendChild(modal);
+            setTimeout(() => {
+              const modalVideo = modal.querySelector('video');
+              if (modalVideo) modalVideo.focus();
+            }, 100);
+          } else {
+            // Open image gallery
+            setShowImageTour(true);
+          }
+        }}>
+          {listing.video_url ? (
+            <video
+              src={listing.video_url}
+              className="w-full h-full object-cover"
+              muted
+              onMouseEnter={(e) => e.currentTarget.play()}
+              onMouseLeave={(e) => {
+                e.currentTarget.pause();
+                e.currentTarget.currentTime = 0;
+              }}
+            />
+          ) : (
+            <Image
+              src={images[currentImageIndex] || '/api/placeholder/800/600'}
+              alt={listing.title || 'Property'}
+              fill
+              className="object-cover"
+            />
+          )}
+
+          {/* Video Play Button Overlay */}
+          {listing.video_url && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                <div className="w-6 h-6 bg-white rounded-sm ml-0.5"></div>
+              </div>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="absolute top-4 right-4 flex gap-2">
@@ -254,84 +301,75 @@ export default function MarketPropertyDetailsPage() {
                 size="sm"
                 variant="outline"
                 className="bg-white/80 hover:bg-white"
-                onClick={() => router.push(`/marketplace/${params.id}/edit`)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/marketplace/${params.id}/edit`);
+                }}
               >
                 <Edit className="h-4 w-4" />
               </Button>
             )}
           </div>
-
-          {/* Property Badges */}
-          <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-            <Badge variant="secondary" className="bg-white/90 text-gray-800 text-xs">
-              {listing.category?.name}
-            </Badge>
-            <Badge variant="outline" className="bg-white/90 text-gray-800 border-gray-300 text-xs">
-              {listing.listing_type?.name || 'For Sale'}
-            </Badge>
-          </div>
         </div>
 
-        {/* Virtual Tour Scene Images */}
-        {virtualTourData && virtualTourData.scenes && virtualTourData.scenes.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-2">
-            {virtualTourData.scenes.map((scene: any, index: number) => (
-              <div
-                key={`scene-${index}`}
-                className="relative w-20 h-20 overflow-hidden rounded-lg cursor-pointer group"
-                onClick={() => setShowVirtualTourImages(true)}
-              >
-                <Image
-                  src={scene.image_url}
-                  alt={`Virtual tour scene ${index + 1}`}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-200"
-                />
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Virtual Tour Button */}
-        {virtualTourData && (
-          <div
-            className="relative h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg overflow-hidden cursor-pointer group"
-            onClick={() => setShowVirtualTour(true)}
-          >
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
-            <div className="absolute inset-0 flex items-center justify-center text-white">
-              <Eye className="h-5 w-5 mr-2" />
-              <span className="text-sm font-medium">Virtual Tour</span>
-              {loadingVirtualTour && (
-                <div className="ml-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border border-white border-t-transparent"></div>
+        {/* Horizontal Scrollable More Photos Carousel */}
+        {images.length > 1 && (
+          <div className="space-y-2">
+            <div className="flex overflow-x-auto space-x-3 pb-2 scrollbar-hide">
+              {images.slice(1).map((imageUrl, index) => (
+                <div
+                  key={index + 1}
+                  className="relative flex-shrink-0 w-24 h-24 overflow-hidden rounded-lg cursor-pointer group"
+                  onClick={() => {
+                    setCurrentImageIndex(index + 1);
+                    setShowImageTour(true);
+                  }}
+                >
+                  <Image
+                    src={imageUrl}
+                    alt={`Property image ${index + 2}`}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-200"
+                  />
+                  {currentImageIndex === index + 1 && (
+                    <div className="absolute inset-0 ring-2 ring-blue-500 bg-blue-500/10" />
+                  )}
                 </div>
-              )}
+              ))}
             </div>
+            <p className="text-sm text-gray-600 text-center">
+              {images.length - 1} more photos • Tap to view gallery
+            </p>
           </div>
         )}
 
-        {/* Property Images Grid */}
-        <div className="flex flex-wrap justify-center gap-2">
-          {images.slice(1).map((imageUrl, index) => (
-            <div
-              key={index + 1}
-              className="relative w-20 h-20 overflow-hidden rounded-lg cursor-pointer group"
-              onClick={() => setCurrentImageIndex(index + 1)}
-            >
-              <Image
-                src={imageUrl}
-                alt={`Property image ${index + 2}`}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-200"
-              />
-              {currentImageIndex === index + 1 && (
-                <div className="absolute inset-0 ring-2 ring-blue-500 bg-blue-500/10" />
-              )}
+        {/* Virtual Tour Scenes Carousel (if available) */}
+        {virtualTourData && virtualTourData.scenes && virtualTourData.scenes.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex overflow-x-auto space-x-3 pb-2 scrollbar-hide">
+              {virtualTourData.scenes.map((scene: any, index: number) => (
+                <div
+                  key={`scene-${index}`}
+                  className="relative flex-shrink-0 w-24 h-24 overflow-hidden rounded-lg cursor-pointer group"
+                  onClick={() => setShowVirtualTour(true)}
+                >
+                  <Image
+                    src={scene.image_url}
+                    alt={`Virtual tour scene ${index + 1}`}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-200"
+                  />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <Eye className="h-5 w-5 text-white" />
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-
+            <p className="text-sm text-gray-600 text-center">
+              Virtual tour available • Tap to explore
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Desktop Image Gallery */}
@@ -347,26 +385,26 @@ export default function MarketPropertyDetailsPage() {
               className="object-cover group-hover:scale-105 transition-transform duration-300"
             />
 
-            {/* Virtual Tour Button Overlay */}
-            {virtualTourData && (
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            {/* Virtual Tour Button - Always visible in top right if virtual_tour_url exists */}
+            {listing.virtual_tour_url && (
+              <div className="absolute top-4 right-4">
                 <Button
-                  size="lg"
+                  size="sm"
                   className="bg-white/90 hover:bg-white text-gray-800 shadow-lg"
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowVirtualTour(true);
                   }}
                 >
-                  <Eye className="h-5 w-5 mr-2" />
+                  <Eye className="h-4 w-4 mr-1" />
                   Virtual Tour
                 </Button>
               </div>
             )}
 
-            {/* Action Buttons */}
-            <div className="absolute top-4 right-4 flex gap-2">
-              {user && listing.user_id === user.id && (
+            {/* Edit Button - Only for owners */}
+            {user && listing.user_id === user.id && (
+              <div className="absolute top-4 left-4">
                 <Button
                   size="sm"
                   variant="outline"
@@ -378,8 +416,8 @@ export default function MarketPropertyDetailsPage() {
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Property Badges */}
             <div className="absolute bottom-4 left-4 flex flex-wrap gap-2">
@@ -477,45 +515,40 @@ export default function MarketPropertyDetailsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Property Header */}
-          <div className="space-y-4">
-            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-              <div className="space-y-2">
-                <h1 className="text-1xl md:text-2xl font-bold">{listing.title}</h1>
-                <div className="flex items-center text-gray-600">
-                  <MapPin className="h-4 w-4 mr-1" />
-                  <span>{listing.location}</span>
-                </div>
-              </div>
-
-              <div className="text-left md:text-right flex flex-col items-end gap-2">
-                <div className="text-1xl md:text-2xl font-bold text-primary">
-                  {getPropertyPrice(listing)}
-                </div>
-                <div className="text-sm text-gray-500">
-                  {listing.category?.name}
-                </div>
-                {user && listing.user_id === user.id && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => router.push(`/marketplace/${params.id}/edit`)}
-                    className="mt-2"
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Listing
-                  </Button>
-                )}
-              </div>
+          {/* Property Price - Moved up after images */}
+          <div className="text-center md:text-left">
+            <div className="text-2xl md:text-3xl font-bold text-primary mb-2">
+              {getPropertyPrice(listing)}
             </div>
+            {user && listing.user_id === user.id && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/marketplace/${params.id}/edit`)}
+                className="mt-2"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Listing
+              </Button>
+            )}
+          </div>
 
-            {/* Property Stats */}
-            <div className="flex items-center gap-4 md:gap-6">
+          {/* Property Header - Moved after price */}
+          <div className="space-y-2 mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold">{listing.title}</h1>
+            <div className="flex items-center text-gray-600">
+              <MapPin className="h-4 w-4 mr-1" />
+              <span>{listing.location}</span>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-gray-500">
+              <span>{listing.category?.name}</span>
+              <span>•</span>
+              <span>{listing.listing_type?.name || 'For Sale'}</span>
               {listing.year_of_construction && (
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-gray-500" />
+                <>
+                  <span>•</span>
                   <span>Built in {listing.year_of_construction}</span>
-                </div>
+                </>
               )}
             </div>
           </div>

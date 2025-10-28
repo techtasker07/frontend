@@ -420,73 +420,204 @@ export function VirtualTourViewer({ tourData, isOpen, onClose, className }: Virt
   )
 }
 
-// Simple 2D fallback viewer for regular images
+// Full-screen presentation-style image viewer with smooth transitions
 export function ImageTourViewer({ images, isOpen, onClose }: {
   images: string[]
   isOpen: boolean
   onClose: () => void
 }) {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [isTransitioning, setIsTransitioning] = useState(false)
 
   const nextImage = () => {
-    setCurrentIndex((prev) => (prev + 1) % images.length)
+    if (isTransitioning) return
+    setIsTransitioning(true)
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev + 1) % images.length)
+      setIsTransitioning(false)
+    }, 150)
   }
 
   const prevImage = () => {
-    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length)
+    if (isTransitioning) return
+    setIsTransitioning(true)
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev - 1 + images.length) % images.length)
+      setIsTransitioning(false)
+    }, 150)
+  }
+
+  const goToImage = (index: number) => {
+    if (isTransitioning || index === currentIndex) return
+    setIsTransitioning(true)
+    setTimeout(() => {
+      setCurrentIndex(index)
+      setIsTransitioning(false)
+    }, 150)
+  }
+
+  // Keyboard navigation
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isOpen) return
+
+      switch (e.key) {
+        case 'ArrowLeft':
+          e.preventDefault()
+          prevImage()
+          break
+        case 'ArrowRight':
+          e.preventDefault()
+          nextImage()
+          break
+        case 'Escape':
+          e.preventDefault()
+          onClose()
+          break
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, currentIndex])
+
+  // Touch/swipe support
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
+
+  const minSwipeDistance = 50
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > minSwipeDistance
+    const isRightSwipe = distance < -minSwipeDistance
+
+    if (isLeftSwipe) {
+      nextImage()
+    } else if (isRightSwipe) {
+      prevImage()
+    }
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl w-full h-[90vh] p-0">
-        <div className="relative w-full h-full bg-black rounded-lg overflow-hidden">
-          <DialogHeader className="absolute top-0 left-0 right-0 z-10 bg-black/80 backdrop-blur-sm p-4">
+      <DialogContent className="max-w-[100vw] w-screen h-screen p-0 bg-black">
+        <div className="relative w-full h-full bg-black overflow-hidden">
+          {/* Header */}
+          <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/80 to-transparent p-6">
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-white text-lg font-semibold">
-                Property Images ({currentIndex + 1} of {images.length})
-              </DialogTitle>
+              <div className="text-white">
+                <h2 className="text-xl font-semibold">Property Gallery</h2>
+                <p className="text-sm text-gray-300">{currentIndex + 1} of {images.length} photos</p>
+              </div>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={onClose}
-                className="text-white hover:bg-white/20"
+                className="text-white hover:bg-white/20 rounded-full"
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </Button>
             </div>
-          </DialogHeader>
-
-          <div className="w-full h-full flex items-center justify-center">
-            <img
-              src={images[currentIndex]}
-              alt={`Property image ${currentIndex + 1}`}
-              className="max-w-full max-h-full object-contain"
-            />
           </div>
 
+          {/* Main Image Display */}
+          <div
+            className="w-full h-full flex items-center justify-center relative"
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+          >
+            <div
+              className={`relative w-full h-full transition-opacity duration-300 ${
+                isTransitioning ? 'opacity-0' : 'opacity-100'
+              }`}
+            >
+              <img
+                src={images[currentIndex]}
+                alt={`Property image ${currentIndex + 1}`}
+                className="w-full h-full object-contain"
+              />
+            </div>
+
+            {/* Loading indicator during transition */}
+            {isTransitioning && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              </div>
+            )}
+          </div>
+
+          {/* Navigation Arrows */}
           {images.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 flex items-center space-x-2">
+            <>
               <Button
-                variant="secondary"
-                size="sm"
+                variant="ghost"
+                size="icon"
                 onClick={prevImage}
-                className="bg-black/60 backdrop-blur-sm text-white border-white/20"
+                disabled={isTransitioning}
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:bg-white/20 rounded-full w-12 h-12 z-10"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-6 w-6" />
               </Button>
-              <span className="text-white text-sm bg-black/60 backdrop-blur-sm px-3 py-1 rounded">
-                {currentIndex + 1} / {images.length}
-              </span>
               <Button
-                variant="secondary"
-                size="sm"
+                variant="ghost"
+                size="icon"
                 onClick={nextImage}
-                className="bg-black/60 backdrop-blur-sm text-white border-white/20"
+                disabled={isTransitioning}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:bg-white/20 rounded-full w-12 h-12 z-10"
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-6 w-6" />
               </Button>
+            </>
+          )}
+
+          {/* Thumbnail Strip */}
+          {images.length > 1 && (
+            <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/80 to-transparent p-4">
+              <div className="flex items-center justify-center space-x-2 overflow-x-auto max-w-full">
+                {images.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => goToImage(index)}
+                    disabled={isTransitioning}
+                    className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-all duration-200 ${
+                      index === currentIndex
+                        ? 'ring-2 ring-white ring-offset-2 ring-offset-black scale-110'
+                        : 'opacity-60 hover:opacity-80'
+                    }`}
+                  >
+                    <img
+                      src={image}
+                      alt={`Thumbnail ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    {index === currentIndex && (
+                      <div className="absolute inset-0 bg-white/20"></div>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
+
+          {/* Instructions */}
+          <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-10">
+            <div className="bg-black/60 backdrop-blur-sm text-white text-sm px-4 py-2 rounded-full">
+              Use arrow keys or swipe to navigate • Press ESC to close
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
