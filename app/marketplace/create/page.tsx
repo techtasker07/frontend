@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 interface FormData {
   // Basic Information
   title: string;
+  title_document: string;
   description: string;
   location: string;
   city: string;
@@ -65,16 +66,19 @@ interface FormData {
   // General Fields
   amenities: string[];
   keywords: string[];
+
+  // Video
+  video_url: string;
 }
 
 const initialFormData: FormData = {
-  title: '', description: '', location: '', city: '', state: '', country: 'Nigeria',
+  title: '', title_document: '', description: '', location: '', city: '', state: '', country: 'Nigeria',
   listing_type_id: '', property_type_id: '', category_id: '', price: '', currency: 'NGN',
   price_period: '', property_condition: '', property_size: '', area_sqft: '', area_sqm: '',
   year_of_construction: '', bedrooms: '', bathrooms: '', toilets: '', kitchen_size: '',
   dining_room: false, balcony_terrace: false, furnishing_status: '', parking_spaces: '',
   pet_friendly: false, contact_name: '', contact_phone: '', contact_email: '', contact_whatsapp: '',
-  amenities: [], keywords: []
+  amenities: [], keywords: [], video_url: ''
 };
 
 export default function CreateMarketplacePropertyPage() {
@@ -85,11 +89,13 @@ export default function CreateMarketplacePropertyPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [uploadProgress, setUploadProgress] = useState<string>('');
+  const [uploadStats, setUploadStats] = useState<{ completed: number; total: number; currentFile?: string } | null>(null);
   const [newAmenity, setNewAmenity] = useState('');
   const [newKeyword, setNewKeyword] = useState('');
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [virtualTourImages, setVirtualTourImages] = useState<File[]>([]);
   const [virtualTourSceneNames, setVirtualTourSceneNames] = useState<string[]>([]);
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
 
   const { isAuthenticated, loading: authLoading, user } = useAuth();
   const router = useRouter();
@@ -184,6 +190,12 @@ export default function CreateMarketplacePropertyPage() {
     }
   };
 
+  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedVideo(e.target.files[0]);
+    }
+  };
+
   const updateVirtualTourSceneName = (index: number, name: string) => {
     const newNames = [...virtualTourSceneNames];
     newNames[index] = name;
@@ -232,34 +244,15 @@ export default function CreateMarketplacePropertyPage() {
 
     setLoading(true);
     setError('');
-    setUploadProgress('');
+    setUploadProgress('Preparing your listing...');
 
     try {
-      const uploadedImageUrls: string[] = [];
-      setUploadProgress("Uploading images...");
+      // Step 1: Create listing first (early database insertion for snappy UX)
+      setUploadProgress('Creating your listing...');
 
-      for (let i = 0; i < selectedImages.length; i++) {
-        const file = selectedImages[i];
-        setUploadProgress(`Uploading image ${i + 1} of ${selectedImages.length}...`);
-
-        try {
-          const imageUrl = await uploadMarketplaceImage(file);
-          uploadedImageUrls.push(imageUrl);
-        } catch (uploadError: any) {
-          toast.error(`Failed to upload image ${file.name}: ${uploadError.message}`);
-          setError(`Failed to upload image ${file.name}: ${uploadError.message}`);
-          setLoading(false);
-          setUploadProgress("");
-          return;
-        }
-      }
-
-      setUploadProgress("Creating listing...");
-
-      // Prepare submission data
       const submissionData: any = {
         ...formData,
-        user_id: user.id, // Use user from auth context
+        user_id: user.id,
         price: parseFloat(formData.price),
         area_sqft: formData.area_sqft ? parseInt(formData.area_sqft) : null,
         area_sqm: formData.area_sqm ? parseInt(formData.area_sqm) : null,
@@ -268,11 +261,12 @@ export default function CreateMarketplacePropertyPage() {
         bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
         toilets: formData.toilets ? parseInt(formData.toilets) : null,
         parking_spaces: formData.parking_spaces ? parseInt(formData.parking_spaces) : null,
+        video_url: null, // Will be updated after upload
       };
 
-      console.log('Submitting marketplace listing:', submissionData);
+      console.log('Creating marketplace listing:', submissionData);
 
-      const { data, error: insertError } = await supabase
+      const { data: listingData, error: insertError } = await supabase
         .from('marketplace_listings')
         .insert(submissionData)
         .select()
@@ -283,152 +277,162 @@ export default function CreateMarketplacePropertyPage() {
         throw insertError;
       }
 
-      // Insert images into marketplace_images table via API
-      if (uploadedImageUrls.length > 0) {
-        try {
-          const requestData = {
-            marketplaceListingId: data.id,
-            images: uploadedImageUrls.map(url => ({ url }))
-          };
+      // Step 2: Upload all media in parallel for maximum speed
+      const uploadPromises: Promise<any>[] = [];
+      const uploadTasks: { type: string; file: File; index?: number }[] = [];
 
-          const response = await fetch('/api/marketplace/upload-images', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestData)
-          });
+      // Add images to upload queue
+      selectedImages.forEach((file, index) => {
+        uploadPromises.push(uploadMarketplaceImage(file));
+        uploadTasks.push({ type: 'image', file, index });
+      });
 
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error('API error response:', errorText);
-            toast.warning('Property listed successfully, but there was an issue saving images.');
-          } else {
-            console.log('Images saved successfully');
-          }
-        } catch (imageApiError) {
-          console.error('Image API error:', imageApiError);
-          toast.warning('Property listed successfully, but there was an issue saving images.');
-        }
+      // Add video to upload queue if selected
+      if (selectedVideo) {
+        uploadPromises.push(uploadMarketplaceImage(selectedVideo));
+        uploadTasks.push({ type: 'video', file: selectedVideo });
       }
 
-      // Handle virtual tour images if provided
+      // Add virtual tour images to upload queue
       if (virtualTourImages.length > 0) {
-        try {
-          setUploadProgress("Creating virtual tour...");
+        virtualTourImages.forEach((file, index) => {
+          // Optimize virtual tour images first
+          const optimizePromise = VirtualTourService.optimizeImage(file).then(optimizedFile => {
+            uploadTasks.push({ type: 'virtual-tour', file: optimizedFile, index });
+            return uploadMarketplaceImage(optimizedFile);
+          });
+          uploadPromises.push(optimizePromise);
+        });
+      }
 
-          // Upload virtual tour images
+      if (uploadPromises.length > 0) {
+        setUploadProgress(`Uploading ${uploadPromises.length} media file${uploadPromises.length > 1 ? 's' : ''}...`);
+        setUploadStats({ completed: 0, total: uploadPromises.length });
+
+        try {
+          // Upload all files in parallel with progress tracking
+          const uploadResults = await Promise.allSettled(
+            uploadPromises.map(async (promise, index) => {
+              const task = uploadTasks[index];
+              setUploadStats(prev => prev ? { ...prev, currentFile: task.file.name } : null);
+              try {
+                const result = await promise;
+                setUploadStats(prev => prev ? { ...prev, completed: prev.completed + 1 } : null);
+                return result;
+              } catch (error) {
+                setUploadStats(prev => prev ? { ...prev, completed: prev.completed + 1 } : null);
+                throw error;
+              }
+            })
+          );
+
+          // Process results
+          const uploadedImageUrls: string[] = [];
+          let uploadedVideoUrl: string | null = null;
           const virtualTourUrls: string[] = [];
 
-          // Create FormData for multipart upload
-          const formData = new FormData();
-          formData.append('propertyId', data.id);
-
-          // Optimize and add images to FormData
-          for (let i = 0; i < virtualTourImages.length; i++) {
-            const file = virtualTourImages[i];
-            setUploadProgress(`Processing virtual tour image ${i + 1} of ${virtualTourImages.length}...`);
-
-            try {
-              // Optimize image first
-              const optimizedFile = await VirtualTourService.optimizeImage(file);
-              formData.append('files', optimizedFile);
-            } catch (optimizeError: any) {
-              toast.error(`Failed to optimize virtual tour image ${file.name}: ${optimizeError.message}`);
-              setError(`Failed to optimize virtual tour image ${file.name}: ${optimizeError.message}`);
-              setLoading(false);
-              setUploadProgress("");
-              return;
-            }
-          }
-
-          setUploadProgress("Uploading virtual tour images...");
-
-          // Upload all images at once
-          const response = await fetch('/api/virtual-tour/upload-images', {
-            method: 'POST',
-            body: formData
-          });
-
-          if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Virtual tour upload response:', errorText);
-            throw new Error(`Upload failed: ${response.statusText}`);
-          }
-
-          const result = await response.json();
-          if (result.success && result.data?.urls?.length > 0) {
-            virtualTourUrls.push(...result.data.urls);
-          } else {
-            throw new Error(result.error || 'Upload failed');
-          }
-
-          // Create virtual tour data structure
-          const processedScenes: any[] = virtualTourUrls.map((url, index) => ({
-            scene_id: `scene_${Date.now()}_${index}`,
-            name: virtualTourSceneNames[index] || `Room ${index + 1}`,
-            image_url: url,
-            description: '',
-            hotspots: []
-          }));
-
-          const tourData = {
-            property_id: data.id,
-            title: `${data.title} - Virtual Tour`,
-            scenes: processedScenes,
-            default_scene_id: processedScenes[0]?.scene_id,
-            settings: {
-              auto_rotate: false,
-              zoom_enabled: true,
-              navigation_enabled: true,
-              controls_visible: true,
-              transition_duration: 800
-            }
-          };
-
-          // Save tour to database
-          const tourResponse = await fetch('/api/virtual-tour', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(tourData)
-          });
-
-          if (!tourResponse.ok) {
-            const tourErrorText = await tourResponse.text();
-            console.error('Failed to create virtual tour:', tourErrorText);
-            toast.warning('Property listed successfully, but there was an issue creating the virtual tour.');
-          } else {
-            const tourResult = await tourResponse.json();
-            console.log('Virtual tour created successfully:', tourResult);
-
-            // Update the marketplace listing with virtual_tour_url
-            try {
-              const { error: updateError } = await supabase
-                .from('marketplace_listings')
-                .update({
-                  virtual_tour_url: tourResult.data?.id || `/api/virtual-tour?marketplaceListingId=${data.id}`
-                })
-                .eq('id', data.id);
-
-              if (updateError) {
-                console.warn('Failed to update virtual_tour_url:', updateError);
-              } else {
-                console.log('Virtual tour URL updated successfully');
+          uploadResults.forEach((result, idx) => {
+            const task = uploadTasks[idx];
+            if (result.status === 'fulfilled') {
+              const url = result.value;
+              if (task.type === 'image') {
+                uploadedImageUrls.push(url);
+              } else if (task.type === 'video') {
+                uploadedVideoUrl = url;
+              } else if (task.type === 'virtual-tour') {
+                virtualTourUrls.push(url);
               }
-            } catch (updateError) {
-              console.warn('Error updating virtual_tour_url:', updateError);
+            } else {
+              console.error(`Failed to upload ${task.type}:`, result.reason);
+              toast.error(`Failed to upload ${task.file.name}`);
+            }
+          });
+
+          // Step 3: Update listing with video URL if uploaded
+          if (uploadedVideoUrl) {
+            await supabase
+              .from('marketplace_listings')
+              .update({ video_url: uploadedVideoUrl })
+              .eq('id', listingData.id);
+          }
+
+          // Step 4: Save images to marketplace_images table
+          if (uploadedImageUrls.length > 0) {
+            try {
+              const requestData = {
+                marketplaceListingId: listingData.id,
+                images: uploadedImageUrls.map(url => ({ url }))
+              };
+
+              await fetch('/api/marketplace/upload-images', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestData)
+              });
+            } catch (imageApiError) {
+              console.warn('Image API error:', imageApiError);
+              toast.warning('Property listed successfully, but there was an issue saving images.');
             }
           }
-        } catch (tourError) {
-          console.error('Error creating virtual tour:', tourError);
-          toast.warning('Property listed successfully, but there was an issue creating the virtual tour.');
+
+          // Step 5: Create virtual tour if images were uploaded
+          if (virtualTourUrls.length > 0) {
+            try {
+              const processedScenes: any[] = virtualTourUrls.map((url, index) => ({
+                scene_id: `scene_${Date.now()}_${index}`,
+                name: virtualTourSceneNames[index] || `Room ${index + 1}`,
+                image_url: url,
+                description: '',
+                hotspots: []
+              }));
+
+              const tourData = {
+                property_id: listingData.id,
+                title: `${listingData.title} - Virtual Tour`,
+                scenes: processedScenes,
+                default_scene_id: processedScenes[0]?.scene_id,
+                settings: {
+                  auto_rotate: false,
+                  zoom_enabled: true,
+                  navigation_enabled: true,
+                  controls_visible: true,
+                  transition_duration: 800
+                }
+              };
+
+              const tourResponse = await fetch('/api/virtual-tour', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(tourData)
+              });
+
+              if (tourResponse.ok) {
+                const tourResult = await tourResponse.json();
+                // Update listing with virtual tour URL
+                await supabase
+                  .from('marketplace_listings')
+                  .update({
+                    virtual_tour_url: tourResult.data?.id || `/api/virtual-tour?marketplaceListingId=${listingData.id}`
+                  })
+                  .eq('id', listingData.id);
+              } else {
+                toast.warning('Property listed successfully, but there was an issue creating the virtual tour.');
+              }
+            } catch (tourError) {
+              console.warn('Virtual tour creation error:', tourError);
+              toast.warning('Property listed successfully, but there was an issue creating the virtual tour.');
+            }
+          }
+
+        } catch (uploadError: any) {
+          console.error('Upload error:', uploadError);
+          toast.warning('Property listed successfully, but some media files failed to upload.');
         }
       }
 
+      setUploadProgress('Listing created successfully!');
       toast.success('Property listed successfully!');
-      router.push(`/marketplace/${data.id}`);
+      router.push(`/marketplace/${listingData.id}`);
 
     } catch (error: any) {
       console.error('Submission error:', error);
@@ -436,6 +440,7 @@ export default function CreateMarketplacePropertyPage() {
     } finally {
       setLoading(false);
       setUploadProgress("");
+      setUploadStats(null);
     }
   };
 
@@ -518,6 +523,16 @@ export default function CreateMarketplacePropertyPage() {
                   required
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="title_document">Title Document</Label>
+              <Input
+                id="title_document"
+                value={formData.title_document}
+                onChange={(e) => handleInputChange('title_document', e.target.value)}
+                placeholder="e.g., Certificate of Occupancy, Deed of Assignment"
+              />
             </div>
 
             <div className="space-y-2">
@@ -773,6 +788,33 @@ export default function CreateMarketplacePropertyPage() {
               {selectedImages.length > 0 && (
                 <div className="text-sm text-muted-foreground">
                   Selected: {selectedImages.map((file) => file.name).join(", ")}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Property Video */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Property Video (Optional)</h3>
+
+            <div className="space-y-2">
+              <Label htmlFor="video">Property Video</Label>
+              <Input
+                id="video"
+                name="video"
+                type="file"
+                onChange={handleVideoSelect}
+                disabled={loading}
+                accept="video/*"
+              />
+              <p className="text-xs text-muted-foreground">
+                Select a video file to showcase your property. This will be displayed prominently on the listing page.
+              </p>
+              {selectedVideo && (
+                <div className="text-sm text-muted-foreground">
+                  Selected: {selectedVideo.name}
                 </div>
               )}
             </div>
@@ -1084,7 +1126,15 @@ export default function CreateMarketplacePropertyPage() {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {uploadProgress || "Creating Listing..."}
+                  <div className="flex flex-col items-start">
+                    <span>{uploadProgress || "Creating Listing..."}</span>
+                    {uploadStats && (
+                      <span className="text-xs opacity-75">
+                        {uploadStats.completed}/{uploadStats.total} files
+                        {uploadStats.currentFile && ` • ${uploadStats.currentFile}`}
+                      </span>
+                    )}
+                  </div>
                 </>
               ) : (
                 'Create Listing'

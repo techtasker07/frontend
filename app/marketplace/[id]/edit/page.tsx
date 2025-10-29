@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 interface FormData {
   // Basic Information
   title: string;
+  title_document: string;
   description: string;
   location: string;
   city: string;
@@ -65,16 +66,19 @@ interface FormData {
   // General Fields
   amenities: string[];
   keywords: string[];
+
+  // Video
+  video_url: string;
 }
 
 const initialFormData: FormData = {
-  title: '', description: '', location: '', city: '', state: '', country: 'Nigeria',
+  title: '', title_document: '', description: '', location: '', city: '', state: '', country: 'Nigeria',
   listing_type_id: '', property_type_id: '', category_id: '', price: '', currency: 'NGN',
   price_period: '', property_condition: '', property_size: '', area_sqft: '', area_sqm: '',
   year_of_construction: '', bedrooms: '', bathrooms: '', toilets: '', kitchen_size: '',
   dining_room: false, balcony_terrace: false, furnishing_status: '', parking_spaces: '',
   pet_friendly: false, contact_name: '', contact_phone: '', contact_email: '', contact_whatsapp: '',
-  amenities: [], keywords: []
+  amenities: [], keywords: [], video_url: ''
 };
 
 export default function EditMarketplacePropertyPage() {
@@ -89,6 +93,7 @@ export default function EditMarketplacePropertyPage() {
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState('');
   const [uploadProgress, setUploadProgress] = useState<string>('');
+  const [uploadStats, setUploadStats] = useState<{ completed: number; total: number; currentFile?: string } | null>(null);
   const [newAmenity, setNewAmenity] = useState('');
   const [newKeyword, setNewKeyword] = useState('');
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
@@ -96,6 +101,7 @@ export default function EditMarketplacePropertyPage() {
   const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
   const [virtualTourImages, setVirtualTourImages] = useState<File[]>([]);
   const [virtualTourSceneNames, setVirtualTourSceneNames] = useState<string[]>([]);
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
 
   const { isAuthenticated, loading: authLoading, user } = useAuth();
 
@@ -154,6 +160,7 @@ export default function EditMarketplacePropertyPage() {
       // Populate form data
       const populatedData: FormData = {
         title: data.title || '',
+        title_document: data.title_document || '',
         description: data.description || '',
         location: data.location || '',
         city: data.city || '',
@@ -184,7 +191,8 @@ export default function EditMarketplacePropertyPage() {
         contact_email: data.contact_email || '',
         contact_whatsapp: data.contact_whatsapp || '',
         amenities: data.amenities || [],
-        keywords: data.keywords || []
+        keywords: data.keywords || [],
+        video_url: data.video_url || ''
       };
 
       setFormData(populatedData);
@@ -249,6 +257,12 @@ export default function EditMarketplacePropertyPage() {
     }
   };
 
+  const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedVideo(e.target.files[0]);
+    }
+  };
+
   const updateVirtualTourSceneName = (index: number, name: string) => {
     const newNames = [...virtualTourSceneNames];
     newNames[index] = name;
@@ -303,22 +317,83 @@ export default function EditMarketplacePropertyPage() {
     setUploadProgress('');
 
     try {
-      const uploadedImageUrls: string[] = [];
-      setUploadProgress("Uploading new images...");
+      // Step 2: Upload all media in parallel for maximum speed
+      const uploadPromises: Promise<any>[] = [];
+      const uploadTasks: { type: string; file: File; index?: number }[] = [];
 
-      // Upload new images
-      for (let i = 0; i < selectedImages.length; i++) {
-        const file = selectedImages[i];
-        setUploadProgress(`Uploading image ${i + 1} of ${selectedImages.length}...`);
+      // Add images to upload queue
+      selectedImages.forEach((file, index) => {
+        uploadPromises.push(uploadMarketplaceImage(file));
+        uploadTasks.push({ type: 'image', file, index });
+      });
+
+      // Add video to upload queue if selected
+      if (selectedVideo) {
+        uploadPromises.push(uploadMarketplaceImage(selectedVideo));
+        uploadTasks.push({ type: 'video', file: selectedVideo });
+      }
+
+      // Add virtual tour images to upload queue
+      if (virtualTourImages.length > 0) {
+        virtualTourImages.forEach((file, index) => {
+          // Optimize virtual tour images first
+          const optimizePromise = VirtualTourService.optimizeImage(file).then(optimizedFile => {
+            uploadTasks.push({ type: 'virtual-tour', file: optimizedFile, index });
+            return uploadMarketplaceImage(optimizedFile);
+          });
+          uploadPromises.push(optimizePromise);
+        });
+      }
+
+      // Declare variables outside the try block to maintain scope
+      let uploadedImageUrls: string[] = [];
+      let uploadedVideoUrl: string | null = null;
+      let virtualTourUrls: string[] = [];
+
+      if (uploadPromises.length > 0) {
+        setUploadProgress(`Uploading ${uploadPromises.length} media file${uploadPromises.length > 1 ? 's' : ''}...`);
+        setUploadStats({ completed: 0, total: uploadPromises.length });
 
         try {
-          const imageUrl = await uploadMarketplaceImage(file);
-          uploadedImageUrls.push(imageUrl);
+          // Upload all files in parallel with progress tracking
+          const uploadResults = await Promise.allSettled(
+            uploadPromises.map(async (promise, index) => {
+              const task = uploadTasks[index];
+              setUploadStats(prev => prev ? { ...prev, currentFile: task.file.name } : null);
+              try {
+                const result = await promise;
+                setUploadStats(prev => prev ? { ...prev, completed: prev.completed + 1 } : null);
+                return result;
+              } catch (error) {
+                setUploadStats(prev => prev ? { ...prev, completed: prev.completed + 1 } : null);
+                throw error;
+              }
+            })
+          );
+
+          // Process results
+          uploadResults.forEach((result, idx) => {
+            const task = uploadTasks[idx];
+            if (result.status === 'fulfilled') {
+              const url = result.value;
+              if (task.type === 'image') {
+                uploadedImageUrls.push(url);
+              } else if (task.type === 'video') {
+                uploadedVideoUrl = url;
+              } else if (task.type === 'virtual-tour') {
+                virtualTourUrls.push(url);
+              }
+            } else {
+              console.error(`Failed to upload ${task.type}:`, result.reason);
+              toast.error(`Failed to upload ${task.file.name}`);
+            }
+          });
         } catch (uploadError: any) {
-          toast.error(`Failed to upload image ${file.name}: ${uploadError.message}`);
-          setError(`Failed to upload image ${file.name}: ${uploadError.message}`);
+          console.error('Error uploading files:', uploadError);
+          setError(`Failed to upload files: ${uploadError.message}`);
           setLoading(false);
           setUploadProgress("");
+          setUploadStats(null);
           return;
         }
       }
@@ -336,6 +411,7 @@ export default function EditMarketplacePropertyPage() {
         bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
         toilets: formData.toilets ? parseInt(formData.toilets) : null,
         parking_spaces: formData.parking_spaces ? parseInt(formData.parking_spaces) : null,
+        video_url: uploadedVideoUrl || formData.video_url, // Use new video if uploaded, otherwise keep existing
         updated_at: new Date().toISOString()
       };
 
@@ -516,6 +592,7 @@ export default function EditMarketplacePropertyPage() {
     } finally {
       setLoading(false);
       setUploadProgress("");
+      setUploadStats(null);
     }
   };
 
@@ -614,6 +691,16 @@ export default function EditMarketplacePropertyPage() {
                   required
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="title_document">Title Document</Label>
+              <Input
+                id="title_document"
+                value={formData.title_document}
+                onChange={(e) => handleInputChange('title_document', e.target.value)}
+                placeholder="e.g., Certificate of Occupancy, Deed of Assignment"
+              />
             </div>
 
             <div className="space-y-2">
@@ -896,6 +983,38 @@ export default function EditMarketplacePropertyPage() {
               {selectedImages.length > 0 && (
                 <div className="text-sm text-muted-foreground">
                   Selected: {selectedImages.map((file) => file.name).join(", ")}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Property Video */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Property Video (Optional)</h3>
+            {formData.video_url && (
+              <div className="text-sm text-muted-foreground mb-2">
+                Current video: <a href={formData.video_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">View current video</a>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="video">Replace Property Video</Label>
+              <Input
+                id="video"
+                name="video"
+                type="file"
+                onChange={handleVideoSelect}
+                disabled={loading}
+                accept="video/*"
+              />
+              <p className="text-xs text-muted-foreground">
+                Select a new video file to replace the current one. Leave empty to keep the existing video.
+              </p>
+              {selectedVideo && (
+                <div className="text-sm text-muted-foreground">
+                  Selected: {selectedVideo.name}
                 </div>
               )}
             </div>
@@ -1209,7 +1328,15 @@ export default function EditMarketplacePropertyPage() {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {uploadProgress || "Updating Listing..."}
+                  <div className="flex flex-col items-start">
+                    <span>{uploadProgress || "Updating Listing..."}</span>
+                    {uploadStats && (
+                      <span className="text-xs opacity-75">
+                        {uploadStats.completed}/{uploadStats.total} files
+                        {uploadStats.currentFile && ` • ${uploadStats.currentFile}`}
+                      </span>
+                    )}
+                  </div>
                 </>
               ) : (
                 'Update Listing'
