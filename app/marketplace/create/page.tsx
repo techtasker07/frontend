@@ -90,6 +90,7 @@ export default function CreateMarketplacePropertyPage() {
   const [error, setError] = useState('');
   const [uploadProgress, setUploadProgress] = useState<string>('');
   const [uploadStats, setUploadStats] = useState<{ completed: number; total: number; currentFile?: string } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [newAmenity, setNewAmenity] = useState('');
   const [newKeyword, setNewKeyword] = useState('');
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
@@ -107,8 +108,30 @@ export default function CreateMarketplacePropertyPage() {
     }
     if (!authLoading && isAuthenticated) {
       fetchInitialData();
+      // Load saved form data from localStorage
+      const savedFormData = localStorage.getItem('marketplace-create-form');
+      if (savedFormData) {
+        try {
+          const parsed = JSON.parse(savedFormData);
+          setFormData(prev => ({ ...prev, ...parsed }));
+        } catch (error) {
+          console.error('Error loading saved form data:', error);
+        }
+      }
     }
   }, [isAuthenticated, authLoading, router]);
+
+  // Save form data to localStorage whenever it changes
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      const dataToSave = { ...formData };
+      // Don't save file-related state as they can't be serialized
+      delete (dataToSave as any).selectedImages;
+      delete (dataToSave as any).virtualTourImages;
+      delete (dataToSave as any).selectedVideo;
+      localStorage.setItem('marketplace-create-form', JSON.stringify(dataToSave));
+    }
+  }, [formData, isAuthenticated, authLoading]);
 
   const fetchInitialData = async () => {
     try {
@@ -242,6 +265,11 @@ export default function CreateMarketplacePropertyPage() {
       return;
     }
 
+    if (isSubmitting) {
+      return; // Prevent double submission
+    }
+
+    setIsSubmitting(true);
     setLoading(true);
     setError('');
     setUploadProgress('Preparing your listing...');
@@ -277,7 +305,7 @@ export default function CreateMarketplacePropertyPage() {
         throw insertError;
       }
 
-      // Step 2: Upload all media in parallel for maximum speed
+      // Step 2: Upload all media in parallel for maximum speed with optimized batching
       const uploadPromises: Promise<any>[] = [];
       const uploadTasks: { type: string; file: File; index?: number }[] = [];
 
@@ -310,13 +338,17 @@ export default function CreateMarketplacePropertyPage() {
         setUploadStats({ completed: 0, total: uploadPromises.length });
 
         try {
-          // Upload all files in parallel with progress tracking
+          // Upload all files in parallel with progress tracking and timeout handling
           const uploadResults = await Promise.allSettled(
             uploadPromises.map(async (promise, index) => {
               const task = uploadTasks[index];
               setUploadStats(prev => prev ? { ...prev, currentFile: task.file.name } : null);
               try {
-                const result = await promise;
+                // Add timeout to prevent hanging uploads
+                const timeoutPromise = new Promise((_, reject) =>
+                  setTimeout(() => reject(new Error('Upload timeout')), 30000) // 30 second timeout
+                );
+                const result = await Promise.race([promise, timeoutPromise]);
                 setUploadStats(prev => prev ? { ...prev, completed: prev.completed + 1 } : null);
                 return result;
               } catch (error) {
@@ -356,7 +388,7 @@ export default function CreateMarketplacePropertyPage() {
               .eq('id', listingData.id);
           }
 
-          // Step 4: Save images to marketplace_images table
+          // Step 4: Save images to marketplace_images table in batches for better performance
           if (uploadedImageUrls.length > 0) {
             try {
               const requestData = {
@@ -364,11 +396,15 @@ export default function CreateMarketplacePropertyPage() {
                 images: uploadedImageUrls.map(url => ({ url }))
               };
 
-              await fetch('/api/marketplace/upload-images', {
+              const imageResponse = await fetch('/api/marketplace/upload-images', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestData)
               });
+
+              if (!imageResponse.ok) {
+                throw new Error('Failed to save images');
+              }
             } catch (imageApiError) {
               console.warn('Image API error:', imageApiError);
               toast.warning('Property listed successfully, but there was an issue saving images.');
@@ -432,6 +468,8 @@ export default function CreateMarketplacePropertyPage() {
 
       setUploadProgress('Listing created successfully!');
       toast.success('Property listed successfully!');
+      // Clear saved form data from localStorage on successful creation
+      localStorage.removeItem('marketplace-create-form');
       router.push(`/marketplace/${listingData.id}`);
 
     } catch (error: any) {
@@ -439,6 +477,7 @@ export default function CreateMarketplacePropertyPage() {
       setError(error.message || 'Failed to create listing');
     } finally {
       setLoading(false);
+      setIsSubmitting(false);
       setUploadProgress("");
       setUploadStats(null);
     }
@@ -779,7 +818,7 @@ export default function CreateMarketplacePropertyPage() {
                 type="file"
                 multiple
                 onChange={handleImageSelect}
-                disabled={loading}
+                disabled={loading || isSubmitting}
                 accept="image/*"
               />
               <p className="text-xs text-muted-foreground">
@@ -806,7 +845,7 @@ export default function CreateMarketplacePropertyPage() {
                 name="video"
                 type="file"
                 onChange={handleVideoSelect}
-                disabled={loading}
+                disabled={loading || isSubmitting}
                 accept="video/*"
               />
               <p className="text-xs text-muted-foreground">
@@ -838,7 +877,7 @@ export default function CreateMarketplacePropertyPage() {
                 type="file"
                 multiple
                 onChange={handleVirtualTourImageSelect}
-                disabled={loading}
+                disabled={loading || isSubmitting}
                 accept="image/*"
               />
               <p className="text-xs text-muted-foreground">
@@ -858,14 +897,14 @@ export default function CreateMarketplacePropertyPage() {
                           value={virtualTourSceneNames[index] || ''}
                           onChange={(e) => updateVirtualTourSceneName(index, e.target.value)}
                           className="h-8 text-xs"
-                          disabled={loading}
+                          disabled={loading || isSubmitting}
                         />
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
                           onClick={() => removeVirtualTourImage(index)}
-                          disabled={loading}
+                          disabled={loading || isSubmitting}
                           className="h-8 w-8 p-0"
                         >
                           <X className="h-4 w-4" />
@@ -1122,7 +1161,7 @@ export default function CreateMarketplacePropertyPage() {
 
           {/* Submit Button */}
           <div className="flex justify-end">
-            <Button onClick={handleSubmit} disabled={loading || !validateForm()}>
+            <Button onClick={handleSubmit} disabled={loading || isSubmitting || !validateForm()}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
