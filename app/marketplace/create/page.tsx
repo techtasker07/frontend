@@ -672,7 +672,7 @@ export default function CreateMarketplacePropertyPage() {
                   <SelectTrigger>
                     <SelectValue placeholder={formData.category_id ? "Select property type" : "Select a category first"} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-60 overflow-y-auto">
                     {filteredPropertyTypes.length > 0 ? (
                       filteredPropertyTypes.map(type => (
                         <SelectItem key={type.id} value={type.id}>
