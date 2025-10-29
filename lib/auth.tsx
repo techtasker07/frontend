@@ -30,6 +30,7 @@ interface AuthContextType {
   signInWithGoogle: (context?: 'login' | 'register') => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>; // Added refreshUser function
+  ensureValidSession: () => Promise<boolean>; // Added session validation function
   loading: boolean;
   isAuthenticated: boolean;
   justLoggedIn: boolean; // Track if user just logged in
@@ -106,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // Auto-refresh session every 50 minutes (3000000 ms) to prevent expiration
+    // Auto-refresh session every 30 minutes (1800000 ms) to prevent expiration
     const refreshInterval = setInterval(async () => {
       if (user && token) {
         try {
@@ -122,11 +123,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.error('Failed to refresh session:', error);
         }
       }
-    }, 3000000); // 50 minutes
+    }, 1800000); // 30 minutes
+
+    // Also refresh session when tab becomes visible (user returns from minimizing)
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && user && token) {
+        try {
+          console.log('Tab became visible, checking session...');
+          const { data, error } = await supabase.auth.refreshSession();
+          if (error) {
+            console.error('Error refreshing session on visibility change:', error);
+          } else if (data.session) {
+            console.log('Session refreshed on tab visibility');
+            setToken(data.session.access_token);
+          }
+        } catch (error) {
+          console.error('Failed to refresh session on visibility change:', error);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       subscription.unsubscribe();
       clearInterval(refreshInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 
@@ -278,6 +300,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Function to proactively refresh session before critical operations
+  const ensureValidSession = async (): Promise<boolean> => {
+    try {
+      console.log('Ensuring session is valid...');
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error) {
+        console.error('Session refresh failed:', error);
+        return false;
+      }
+      if (data.session) {
+        setToken(data.session.access_token);
+        console.log('Session validated and refreshed');
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error ensuring valid session:', error);
+      return false;
+    }
+  };
+
   const value: AuthContextType = { // Explicitly type the value object
     user,
     token,
@@ -286,6 +329,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signInWithGoogle,
     logout,
     refreshUser, // Added refreshUser to the context value
+    ensureValidSession, // Added session validation to the context value
     loading,
     isAuthenticated: !!user && !!token,
     justLoggedIn,

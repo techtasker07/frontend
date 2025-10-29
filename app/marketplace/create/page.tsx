@@ -98,7 +98,7 @@ export default function CreateMarketplacePropertyPage() {
   const [virtualTourSceneNames, setVirtualTourSceneNames] = useState<string[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
 
-  const { isAuthenticated, loading: authLoading, user } = useAuth();
+  const { isAuthenticated, loading: authLoading, user, ensureValidSession } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -272,6 +272,17 @@ export default function CreateMarketplacePropertyPage() {
     setIsSubmitting(true);
     setLoading(true);
     setError('');
+    setUploadProgress('Validating session...');
+
+    // Ensure session is valid before proceeding
+    const sessionValid = await ensureValidSession();
+    if (!sessionValid) {
+      setError('Your session has expired. Please refresh the page and try again.');
+      setLoading(false);
+      setIsSubmitting(false);
+      return;
+    }
+
     setUploadProgress('Preparing your listing...');
 
     try {
@@ -474,7 +485,19 @@ export default function CreateMarketplacePropertyPage() {
 
     } catch (error: any) {
       console.error('Submission error:', error);
-      setError(error.message || 'Failed to create listing');
+
+      // Check if it's an authentication error and try to refresh session
+      if (error.message?.includes('JWT') || error.message?.includes('token') || error.message?.includes('auth')) {
+        console.log('Authentication error detected, attempting session refresh...');
+        const sessionRefreshed = await ensureValidSession();
+        if (sessionRefreshed) {
+          setError('Session refreshed. Please try submitting again.');
+        } else {
+          setError('Your session has expired. Please refresh the page and try again.');
+        }
+      } else {
+        setError(error.message || 'Failed to create listing');
+      }
     } finally {
       setLoading(false);
       setIsSubmitting(false);
