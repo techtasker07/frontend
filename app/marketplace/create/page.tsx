@@ -1160,7 +1160,19 @@ export default function CreateMarketplacePropertyPage() {
           <Separator />
 
           {/* Submit Button */}
-          <div className="flex justify-end">
+          <div className="flex justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                // Clear saved form data from localStorage
+                localStorage.removeItem('marketplace-create-form');
+                router.push('/marketplace');
+              }}
+              disabled={loading || isSubmitting}
+            >
+              Cancel
+            </Button>
             <Button onClick={handleSubmit} disabled={loading || isSubmitting || !validateForm()}>
               {loading ? (
                 <>

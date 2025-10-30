@@ -122,10 +122,6 @@ export default function MarketplacePage() {
       {/* Search and Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
-            Search
-          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Search */}
