@@ -71,7 +71,7 @@ export function HeroSection() {
 
             <p className="text-[#FFFFFF] mb-8 text-md leading-relaxed">
               Participate in polls, get ideal prospects, invest and discover the best real estate
-              opportunities.
+              opportunities tailored just for you.
             </p>
 
             {/* Conditional Content based on authentication */}
