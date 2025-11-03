@@ -55,7 +55,6 @@ const Dashboard: React.FC = () => {
 
   const [dashboardButtons, setDashboardButtons] = useState<DashboardButton[]>([
     { id: 'Crowd-Funding', label: 'Crowd Funding', icon: '/images/crowd-funding.gif', count: 0, route: '/crowd-funding', color: 'gray' },
-    { id: 'Re-es Party', label: 'Re-es Party', icon: '/images/re-es party.gif', count: 0, route: '/rees-party', color: 'gray' },
     { id: 'contacts', label: 'Contacts', icon: '/images/contact.gif', count: 0, route: '/contacts', color: 'gray' },
     { id: 'completed', label: 'Completed', icon: '/images/completed.gif', count: 0, route: '/completed', color: 'gray' },
     { id: 'ongoing', label: 'Ongoing', icon: '/images/ongoing.gif', count: 0, route: '/ongoing', color: 'gray' }
@@ -245,7 +244,6 @@ const Dashboard: React.FC = () => {
           case 'ongoing': return { ...btn, count: ongoingCount.count || 0 };
           case 'contacts': return { ...btn, count: contactsCount.count || 0 };
           case 'Crowd-Funding': return { ...btn, count: crowdFundingDueCount.count || 0 };
-          case 'Re-es Party': return { ...btn, count: reesPartyDueCount.count || 0 };
           default: return btn;
         }
       }));
@@ -318,9 +316,6 @@ const Dashboard: React.FC = () => {
     } else if (buttonId === 'Crowd-Funding') {
       // Navigate to crowd funding page
       router.push('/crowd-funding');
-    } else if (buttonId === 'Re-es Party') {
-      // Navigate to rees party page
-      router.push('/rees-party');
     } else {
       // For other buttons, keep existing navigation
       const routes = {
@@ -706,9 +701,9 @@ const Dashboard: React.FC = () => {
         <main className="p-2 sm:p-3 md:p-4 lg:p-6">
           {/* Navigation Buttons Grid */}
           <div className="space-y-3 sm:space-y-4 md:space-y-6 mb-6 sm:mb-8">
-            {/* Top row - 3 buttons */}
-            <div className="grid grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-              {dashboardButtons.slice(0, 3).map((button, index) => (
+            {/* Top row - 2 buttons */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+              {dashboardButtons.slice(0, 2).map((button, index) => (
                 <button
                   key={button.id}
                   onClick={() => handleButtonClick(button.id)}
@@ -742,7 +737,7 @@ const Dashboard: React.FC = () => {
             </div>
             {/* Bottom row - 2 buttons */}
             <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6">
-              {dashboardButtons.slice(3, 5).map((button, index) => (
+              {dashboardButtons.slice(2, 4).map((button, index) => (
                 <button
                   key={button.id}
                   onClick={() => handleButtonClick(button.id)}
