@@ -388,10 +388,6 @@ export default function PropertiesPage() {
       {/* Search and Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
-            Search
-          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Search */}
@@ -473,6 +469,38 @@ export default function PropertiesPage() {
                               minimumFractionDigits: 0,
                               maximumFractionDigits: 0,
                             })}
+                          </div>
+                        )}
+
+                        {/* Vote Progress Bar */}
+                        {property.vote_stats && property.vote_stats.length > 0 && (
+                          <div className="mb-3">
+                            <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                              <span>Top Votes</span>
+                              <span>{property.vote_count || 0} total</span>
+                            </div>
+                            <div className="space-y-1">
+                              {property.vote_stats.slice(0, 2).map((stat, index) => (
+                                <div key={stat.vote_option_id} className="flex items-center justify-between">
+                                  <span className="text-xs truncate mr-2" style={{ maxWidth: '60%' }}>
+                                    {stat.option_name}
+                                  </span>
+                                  <div className="flex items-center flex-1 ml-2">
+                                    <div className="flex-1 bg-gray-200 rounded-full h-2 mr-2">
+                                      <div
+                                        className={`h-2 rounded-full ${
+                                          index === 0 ? 'bg-blue-500' : 'bg-green-500'
+                                        }`}
+                                        style={{ width: `${stat.percentage}%` }}
+                                      ></div>
+                                    </div>
+                                    <span className="text-xs font-medium w-8 text-right">
+                                      {stat.percentage}%
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         )}
 

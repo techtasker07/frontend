@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
-import { api, type Property, type PropertyStats } from "@/lib/api"
+import { supabaseApi, type Property, type PropertyStats } from "@/lib/supabase-api"
 import { useAuth } from "@/lib/auth"
 import {
   MapPin,
@@ -61,7 +61,7 @@ export default function PropertyDetailsPage() {
 
   const fetchProperty = async () => {
     try {
-      const response = await api.getProperty(propertyId)
+      const response = await supabaseApi.getProperty(propertyId)
       if (response.success) {
         setProperty(response.data)
       } else {
@@ -78,7 +78,7 @@ export default function PropertyDetailsPage() {
 
   const fetchStats = async () => {
     try {
-      const response = await api.getPropertyStats(propertyId)
+      const response = await supabaseApi.getPropertyStats(propertyId)
       if (response.success) {
         setStats(response.data)
       }
@@ -89,7 +89,7 @@ export default function PropertyDetailsPage() {
 
   const checkIfUserVoted = async () => {
     try {
-      const response = await api.getVotesByProperty(propertyId)
+      const response = await supabaseApi.getVotesByProperty(propertyId)
       if (response.success) {
         const userVote = response.data.find((vote: any) => vote.user_id === user?.id)
         setHasVoted(!!userVote)
@@ -110,7 +110,7 @@ export default function PropertyDetailsPage() {
 
     setVoting(true)
     try {
-      const response = await api.createVote({
+      const response = await supabaseApi.createVote({
         property_id: propertyId,
         vote_option_id: selectedVoteOption,
       })
@@ -232,7 +232,7 @@ export default function PropertyDetailsPage() {
                 )}
                 <div className="flex items-center">
                   <Vote className="h-3 w-3 mr-1" />
-                  <span>{property.vote_count || 0} votes</span>
+                  <span>{property.vote_count || stats?.total_votes || 0} votes</span>
                 </div>
               </div>
             </CardContent>

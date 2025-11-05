@@ -23,29 +23,30 @@ export interface User {
 }
 
 export interface Property {
-  id: string;
-  title: string;
-  description: string;
-  location: string;
-  user_id: string;
-  category_id: string;
-  current_worth?: number;
-  year_of_construction?: number;
-  lister_phone_number?: string;
-  image_url?: string;
-  created_at: string;
-  updated_at: string;
-  owner_name?: string;
-  owner_email?: string;
-  owner_phone?: string;
-  owner_profile_picture?: string;
-  category_name?: string;
-  vote_count?: number;
-  images?: PropertyImage[];
-  vote_options?: VoteOption[];
-  type?: string;
-  pollPercentage?: number;
-}
+   id: string;
+   title: string;
+   description: string;
+   location: string;
+   user_id: string;
+   category_id: string;
+   current_worth?: number;
+   year_of_construction?: number;
+   lister_phone_number?: string;
+   image_url?: string;
+   created_at: string;
+   updated_at: string;
+   owner_name?: string;
+   owner_email?: string;
+   owner_phone?: string;
+   owner_profile_picture?: string;
+   category_name?: string;
+   vote_count?: number;
+   images?: PropertyImage[];
+   vote_options?: VoteOption[];
+   vote_stats?: VoteStatistics[];
+   type?: string;
+   pollPercentage?: number;
+ }
 
 
 export interface PropertyImage {
@@ -366,6 +367,58 @@ class SupabaseApiClient {
           return acc;
         }, {} as { [key: string]: VoteOption[] });
 
+        // Get vote counts and statistics for all poll properties
+        const propertyIds = pollData?.map(item => item.id) || [];
+        let voteCounts: { [key: string]: number } = {};
+        let voteStats: { [key: string]: VoteStatistics[] } = {};
+
+        if (propertyIds.length > 0) {
+          // Get all votes for these properties
+          const { data: voteData } = await supabase
+            .from('votes')
+            .select(`
+              property_id,
+              vote_option_id,
+              vote_options!votes_vote_option_id_fkey (
+                id,
+                name
+              )
+            `)
+            .in('property_id', propertyIds);
+
+          // Calculate vote counts and statistics
+          const voteMap: { [key: string]: { [optionId: string]: { count: number, name: string } } } = {};
+
+          voteData?.forEach(vote => {
+            const propId = vote.property_id;
+            const optionId = vote.vote_option_id;
+            const optionName = vote.vote_options?.name || 'Unknown';
+
+            if (!voteMap[propId]) voteMap[propId] = {};
+            if (!voteMap[propId][optionId]) {
+              voteMap[propId][optionId] = { count: 0, name: optionName };
+            }
+            voteMap[propId][optionId].count++;
+            voteCounts[propId] = (voteCounts[propId] || 0) + 1;
+          });
+
+          // Convert to VoteStatistics format and get top 2 for each property
+          Object.keys(voteMap).forEach(propId => {
+            const totalVotes = voteCounts[propId] || 0;
+            const stats = Object.entries(voteMap[propId])
+              .map(([optionId, data]) => ({
+                option_name: data.name,
+                vote_option_id: optionId,
+                vote_count: data.count,
+                percentage: totalVotes > 0 ? Math.round((data.count / totalVotes) * 100) : 0
+              }))
+              .sort((a, b) => b.vote_count - a.vote_count)
+              .slice(0, 2); // Only top 2
+
+            voteStats[propId] = stats;
+          });
+        }
+
         const transformedPollProperties = pollData?.map(item => ({
           ...item,
           owner_name: `${item.profiles?.first_name} ${item.profiles?.last_name}`,
@@ -375,6 +428,8 @@ class SupabaseApiClient {
           category_name: item.categories?.name,
           images: item.property_images || [],
           vote_options: voteOptionsByCategory[item.category_id] || [],
+          vote_count: voteCounts[item.id] || 0,
+          vote_stats: voteStats[item.id] || [],
           type: item.type || 'poll',
           pollPercentage: item.pollPercentage || 0
         })) || [];
