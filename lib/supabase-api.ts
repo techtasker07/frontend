@@ -379,7 +379,7 @@ class SupabaseApiClient {
             .select(`
               property_id,
               vote_option_id,
-              vote_options!votes_vote_option_id_fkey (
+              vote_options (
                 id,
                 name
               )
@@ -389,7 +389,7 @@ class SupabaseApiClient {
           // Calculate vote counts and statistics
           const voteMap: { [key: string]: { [optionId: string]: { count: number, name: string } } } = {};
 
-          voteData?.forEach(vote => {
+          voteData?.forEach((vote: any) => {
             const propId = vote.property_id;
             const optionId = vote.vote_option_id;
             const optionName = vote.vote_options?.name || 'Unknown';
