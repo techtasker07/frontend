@@ -181,6 +181,28 @@ export default function MarketplacePage() {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
 
+                  {/* Video overlay for desktop hover */}
+                  {listing.video_url && (
+                    <video
+                      src={listing.video_url}
+                      className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block"
+                      muted
+                      loop
+                      playsInline
+                      onMouseEnter={(e) => {
+                        const video = e.currentTarget as HTMLVideoElement;
+                        video.play().catch(() => {
+                          // Silently handle play errors (e.g., autoplay restrictions)
+                        });
+                      }}
+                      onMouseLeave={(e) => {
+                        const video = e.currentTarget as HTMLVideoElement;
+                        video.pause();
+                        video.currentTime = 0;
+                      }}
+                    />
+                  )}
+
                   {/* Property Badges */}
                   <div className="absolute top-4 left-4 flex flex-wrap gap-2">
                     <Badge variant="secondary">

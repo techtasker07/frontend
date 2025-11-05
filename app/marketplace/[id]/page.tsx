@@ -627,7 +627,39 @@ export default function MarketPropertyDetailsPage() {
           {/* Tab Content */}
           <div className="space-y-6">
             {activeTab === 'overview' && (
-              <div className="space-y-6">
+              <div className="space-y-8">
+                {/* Property Overview Summary */}
+                <Card className="bg-gray-50 border-gray-200">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <div className="w-2 h-8 bg-gray-400 rounded-full"></div>
+                      Property Overview
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="text-center p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+                        <div className="text-2xl font-bold text-gray-900 mb-1">
+                          {listing.property_type?.name || 'Property'}
+                        </div>
+                        <div className="text-sm text-gray-600">Property Type</div>
+                      </div>
+                      <div className="text-center p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+                        <div className="text-2xl font-bold text-gray-900 mb-1">
+                          {listing.category?.name}
+                        </div>
+                        <div className="text-sm text-gray-600">Category</div>
+                      </div>
+                      <div className="text-center p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+                        <div className="text-2xl font-bold text-gray-900 mb-1">
+                          {listing.listing_type?.name || 'For Sale'}
+                        </div>
+                        <div className="text-sm text-gray-600">Listing Type</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 {/* Description */}
                 <Card>
                   <CardHeader>
@@ -640,13 +672,13 @@ export default function MarketPropertyDetailsPage() {
                   </CardContent>
                 </Card>
 
-                {/* Property Details */}
+                {/* Key Property Details */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Property Details</CardTitle>
+                    <CardTitle>Key Details</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {listing.year_of_construction && (
                         <div className="flex items-center gap-2">
                           <CheckCircle className="h-4 w-4 text-green-500" />
@@ -657,6 +689,24 @@ export default function MarketPropertyDetailsPage() {
                         <CheckCircle className="h-4 w-4 text-green-500" />
                         <span>Category: {listing.category?.name}</span>
                       </div>
+                      {listing.bedrooms && (
+                        <div className="flex items-center gap-2">
+                          <Bed className="h-4 w-4 text-blue-500" />
+                          <span>{listing.bedrooms} Bedrooms</span>
+                        </div>
+                      )}
+                      {listing.bathrooms && (
+                        <div className="flex items-center gap-2">
+                          <Bath className="h-4 w-4 text-blue-500" />
+                          <span>{listing.bathrooms} Bathrooms</span>
+                        </div>
+                      )}
+                      {listing.parking_spaces > 0 && (
+                        <div className="flex items-center gap-2">
+                          <Car className="h-4 w-4 text-blue-500" />
+                          <span>{listing.parking_spaces} Parking Spaces</span>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -664,70 +714,75 @@ export default function MarketPropertyDetailsPage() {
             )}
 
             {activeTab === 'details' && (
-              <div className="space-y-6">
-                {/* General Property Details */}
+              <div className="space-y-8">
+                {/* Location & Basic Information */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>General Information</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                      <MapPin className="h-5 w-5 text-gray-600" />
+                      Location & Basic Information
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <span className="font-medium">Property Type:</span>
-                        <span className="ml-2">{listing.property_type?.name || 'N/A'}</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div className="p-4 bg-gray-50 rounded-lg">
+                          <h4 className="font-semibold text-gray-800 mb-3">Address Details</h4>
+                          <div className="space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-sm text-gray-600">Location:</span>
+                              <span className="text-sm font-medium">{listing.location}</span>
+                            </div>
+                            {listing.city && (
+                              <div className="flex justify-between">
+                                <span className="text-sm text-gray-600">City:</span>
+                                <span className="text-sm font-medium">{listing.city}</span>
+                              </div>
+                            )}
+                            {listing.state && (
+                              <div className="flex justify-between">
+                                <span className="text-sm text-gray-600">State:</span>
+                                <span className="text-sm font-medium">{listing.state}</span>
+                              </div>
+                            )}
+                            {listing.country && (
+                              <div className="flex justify-between">
+                                <span className="text-sm text-gray-600">Country:</span>
+                                <span className="text-sm font-medium">{listing.country}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <span className="font-medium">Category:</span>
-                        <span className="ml-2">{listing.category?.name || 'N/A'}</span>
+                      <div className="space-y-4">
+                        <div className="p-4 bg-gray-50 rounded-lg">
+                          <h4 className="font-semibold text-gray-800 mb-3">Property Details</h4>
+                          <div className="space-y-2">
+                            {listing.year_of_construction && (
+                              <div className="flex justify-between">
+                                <span className="text-sm text-gray-600">Year Built:</span>
+                                <span className="text-sm font-medium">{listing.year_of_construction}</span>
+                              </div>
+                            )}
+                            {listing.property_condition && (
+                              <div className="flex justify-between">
+                                <span className="text-sm text-gray-600">Condition:</span>
+                                <span className="text-sm font-medium">{listing.property_condition}</span>
+                              </div>
+                            )}
+                            {(listing.area_sqft || listing.area_sqm || listing.property_size) && (
+                              <div className="flex justify-between">
+                                <span className="text-sm text-gray-600">Size:</span>
+                                <span className="text-sm font-medium">
+                                  {listing.property_size && `${listing.property_size}`}
+                                  {listing.area_sqft && ` ${listing.area_sqft} sqft`}
+                                  {listing.area_sqm && ` ${listing.area_sqm} sqm`}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <span className="font-medium">Listing Type:</span>
-                        <span className="ml-2">{listing.listing_type?.name || 'N/A'}</span>
-                      </div>
-                      <div>
-                        <span className="font-medium">Location:</span>
-                        <span className="ml-2">{listing.location}</span>
-                      </div>
-                      {listing.city && (
-                        <div>
-                          <span className="font-medium">City:</span>
-                          <span className="ml-2">{listing.city}</span>
-                        </div>
-                      )}
-                      {listing.state && (
-                        <div>
-                          <span className="font-medium">State:</span>
-                          <span className="ml-2">{listing.state}</span>
-                        </div>
-                      )}
-                      {listing.country && (
-                        <div>
-                          <span className="font-medium">Country:</span>
-                          <span className="ml-2">{listing.country}</span>
-                        </div>
-                      )}
-                      {listing.year_of_construction && (
-                        <div>
-                          <span className="font-medium">Year Built:</span>
-                          <span className="ml-2">{listing.year_of_construction}</span>
-                        </div>
-                      )}
-                      {listing.property_condition && (
-                        <div>
-                          <span className="font-medium">Condition:</span>
-                          <span className="ml-2">{listing.property_condition}</span>
-                        </div>
-                      )}
-                      {(listing.area_sqft || listing.area_sqm || listing.property_size) && (
-                        <div>
-                          <span className="font-medium">Property Size:</span>
-                          <span className="ml-2">
-                            {listing.property_size && listing.property_size}
-                            {listing.area_sqft && ` ${listing.area_sqft} sqft`}
-                            {listing.area_sqm && ` ${listing.area_sqm} sqm`}
-                          </span>
-                        </div>
-                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -736,95 +791,112 @@ export default function MarketPropertyDetailsPage() {
                 {listing.category?.name === 'Residential' && (
                   <Card>
                     <CardHeader>
-                      <CardTitle>Residential Details</CardTitle>
+                      <CardTitle className="flex items-center gap-2">
+                        <Bed className="h-5 w-5 text-blue-600" />
+                        Residential Specifications
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {listing.bedrooms && (
-                          <div>
-                            <span className="font-medium">Bedrooms:</span>
-                            <span className="ml-2">{listing.bedrooms}</span>
+                      <div className="space-y-6">
+                        {/* Key Metrics */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          {listing.bedrooms && (
+                            <div className="text-center p-4 bg-blue-50 rounded-lg">
+                              <div className="text-2xl font-bold text-blue-600 mb-1">{listing.bedrooms}</div>
+                              <div className="text-sm text-gray-600">Bedrooms</div>
+                            </div>
+                          )}
+                          {listing.bathrooms && (
+                            <div className="text-center p-4 bg-green-50 rounded-lg">
+                              <div className="text-2xl font-bold text-green-600 mb-1">{listing.bathrooms}</div>
+                              <div className="text-sm text-gray-600">Bathrooms</div>
+                            </div>
+                          )}
+                          {listing.toilets && (
+                            <div className="text-center p-4 bg-purple-50 rounded-lg">
+                              <div className="text-2xl font-bold text-purple-600 mb-1">{listing.toilets}</div>
+                              <div className="text-sm text-gray-600">Toilets</div>
+                            </div>
+                          )}
+                          {listing.parking_spaces > 0 && (
+                            <div className="text-center p-4 bg-orange-50 rounded-lg">
+                              <div className="text-2xl font-bold text-orange-600 mb-1">{listing.parking_spaces}</div>
+                              <div className="text-sm text-gray-600">Parking</div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Detailed Specifications */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-4">
+                            <h4 className="font-semibold text-gray-800 border-b pb-2">Interior Features</h4>
+                            {listing.kitchen_size && (
+                              <div className="flex justify-between py-2">
+                                <span className="text-gray-600">Kitchen Size:</span>
+                                <span className="font-medium">{listing.kitchen_size}</span>
+                              </div>
+                            )}
+                            {listing.dining_room && (
+                              <div className="flex justify-between py-2">
+                                <span className="text-gray-600">Dining Room:</span>
+                                <span className="font-medium text-green-600">✓ Available</span>
+                              </div>
+                            )}
+                            {listing.balcony_terrace && (
+                              <div className="flex justify-between py-2">
+                                <span className="text-gray-600">Balcony/Terrace:</span>
+                                <span className="font-medium text-green-600">✓ Available</span>
+                              </div>
+                            )}
+                            {listing.furnishing_status && (
+                              <div className="flex justify-between py-2">
+                                <span className="text-gray-600">Furnishing:</span>
+                                <span className="font-medium">{listing.furnishing_status}</span>
+                              </div>
+                            )}
+                            {listing.pet_friendly && (
+                              <div className="flex justify-between py-2">
+                                <span className="text-gray-600">Pet Friendly:</span>
+                                <span className="font-medium text-green-600">✓ Yes</span>
+                              </div>
+                            )}
                           </div>
-                        )}
-                        {listing.bathrooms && (
-                          <div>
-                            <span className="font-medium">Bathrooms:</span>
-                            <span className="ml-2">{listing.bathrooms}</span>
+
+                          <div className="space-y-4">
+                            <h4 className="font-semibold text-gray-800 border-b pb-2">Amenities & Features</h4>
+                            {listing.appliances_included && listing.appliances_included.length > 0 && (
+                              <div>
+                                <span className="text-gray-600 block mb-2">Appliances:</span>
+                                <div className="flex flex-wrap gap-2">
+                                  {listing.appliances_included.map((appliance, index) => (
+                                    <Badge key={index} variant="secondary" className="bg-blue-100 text-blue-800">{appliance}</Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {listing.security_features && listing.security_features.length > 0 && (
+                              <div>
+                                <span className="text-gray-600 block mb-2">Security:</span>
+                                <div className="flex flex-wrap gap-2">
+                                  {listing.security_features.map((feature, index) => (
+                                    <Badge key={index} variant="secondary" className="bg-green-100 text-green-800">{feature}</Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {listing.neighbourhood_features && listing.neighbourhood_features.length > 0 && (
+                              <div>
+                                <span className="text-gray-600 block mb-2">Neighbourhood:</span>
+                                <div className="flex flex-wrap gap-2">
+                                  {listing.neighbourhood_features.map((feature, index) => (
+                                    <Badge key={index} variant="secondary" className="bg-purple-100 text-purple-800">{feature}</Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        )}
-                        {listing.toilets && (
-                          <div>
-                            <span className="font-medium">Toilets:</span>
-                            <span className="ml-2">{listing.toilets}</span>
-                          </div>
-                        )}
-                        {listing.kitchen_size && (
-                          <div>
-                            <span className="font-medium">Kitchen Size:</span>
-                            <span className="ml-2">{listing.kitchen_size}</span>
-                          </div>
-                        )}
-                        {listing.dining_room && (
-                          <div>
-                            <span className="font-medium">Dining Room:</span>
-                            <span className="ml-2">Yes</span>
-                          </div>
-                        )}
-                        {listing.balcony_terrace && (
-                          <div>
-                            <span className="font-medium">Balcony/Terrace:</span>
-                            <span className="ml-2">Yes</span>
-                          </div>
-                        )}
-                        {listing.furnishing_status && (
-                          <div>
-                            <span className="font-medium">Furnishing Status:</span>
-                            <span className="ml-2">{listing.furnishing_status}</span>
-                          </div>
-                        )}
-                        {listing.parking_spaces > 0 && (
-                          <div>
-                            <span className="font-medium">Parking Spaces:</span>
-                            <span className="ml-2">{listing.parking_spaces}</span>
-                          </div>
-                        )}
-                        {listing.pet_friendly && (
-                          <div>
-                            <span className="font-medium">Pet Friendly:</span>
-                            <span className="ml-2">Yes</span>
-                          </div>
-                        )}
+                        </div>
                       </div>
-                      {listing.appliances_included && listing.appliances_included.length > 0 && (
-                        <div className="mt-4">
-                          <span className="font-medium">Appliances Included:</span>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {listing.appliances_included.map((appliance, index) => (
-                              <Badge key={index} variant="secondary">{appliance}</Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {listing.security_features && listing.security_features.length > 0 && (
-                        <div className="mt-4">
-                          <span className="font-medium">Security Features:</span>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {listing.security_features.map((feature, index) => (
-                              <Badge key={index} variant="secondary">{feature}</Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {listing.neighbourhood_features && listing.neighbourhood_features.length > 0 && (
-                        <div className="mt-4">
-                          <span className="font-medium">Neighbourhood Features:</span>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {listing.neighbourhood_features.map((feature, index) => (
-                              <Badge key={index} variant="secondary">{feature}</Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </CardContent>
                   </Card>
                 )}
@@ -1186,40 +1258,117 @@ export default function MarketPropertyDetailsPage() {
                   </Card>
                 )}
 
-                {/* Amenities */}
+                {/* Amenities & Features Showcase */}
                 {listing.amenities && listing.amenities.length > 0 && (
-                  <Card>
+                  <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
                     <CardHeader>
-                      <CardTitle>Amenities & Features</CardTitle>
+                      <CardTitle className="flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        Amenities & Features
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                         {listing.amenities.map((amenity, index) => (
-                          <Badge key={index} variant="secondary">{amenity}</Badge>
+                          <div key={index} className="flex items-center gap-2 p-3 bg-white rounded-lg shadow-sm border">
+                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                            <span className="text-sm font-medium text-gray-700">{amenity}</span>
+                          </div>
                         ))}
                       </div>
                     </CardContent>
                   </Card>
                 )}
 
-                {/* Availability */}
-                {(listing.available_from || listing.available_to) && (
+                {/* Availability & Terms */}
+                {(listing.available_from || listing.available_to || listing.listing_type?.name === 'For Rent' || listing.listing_type?.name === 'For Lease' || listing.listing_type?.name === 'For Booking') && (
                   <Card>
                     <CardHeader>
-                      <CardTitle>Availability</CardTitle>
+                      <CardTitle className="flex items-center gap-2">
+                        <Calendar className="h-5 w-5 text-blue-600" />
+                        Availability & Terms
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {listing.available_from && (
-                          <div>
-                            <span className="font-medium">Available From:</span>
-                            <span className="ml-2">{new Date(listing.available_from).toLocaleDateString()}</span>
+                      <div className="space-y-4">
+                        {/* Availability Dates */}
+                        {(listing.available_from || listing.available_to) && (
+                          <div className="p-4 bg-blue-50 rounded-lg">
+                            <h4 className="font-semibold text-blue-800 mb-3">Availability Period</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {listing.available_from && (
+                                <div className="flex justify-between">
+                                  <span className="text-blue-700">Available From:</span>
+                                  <span className="font-medium">{new Date(listing.available_from).toLocaleDateString()}</span>
+                                </div>
+                              )}
+                              {listing.available_to && (
+                                <div className="flex justify-between">
+                                  <span className="text-blue-700">Available To:</span>
+                                  <span className="font-medium">{new Date(listing.available_to).toLocaleDateString()}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         )}
-                        {listing.available_to && (
-                          <div>
-                            <span className="font-medium">Available To:</span>
-                            <span className="ml-2">{new Date(listing.available_to).toLocaleDateString()}</span>
+
+                        {/* Rental/Lease Terms */}
+                        {(listing.listing_type?.name === 'For Rent' || listing.listing_type?.name === 'For Lease') && (
+                          <div className="p-4 bg-orange-50 rounded-lg">
+                            <h4 className="font-semibold text-orange-800 mb-3">Rental/Lease Terms</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {listing.security_deposit && (
+                                <div className="flex justify-between">
+                                  <span className="text-orange-700">Security Deposit:</span>
+                                  <span className="font-medium">{formatPrice(listing.security_deposit, listing.currency)}</span>
+                                </div>
+                              )}
+                              {listing.payment_frequency && (
+                                <div className="flex justify-between">
+                                  <span className="text-orange-700">Payment Frequency:</span>
+                                  <span className="font-medium">{listing.payment_frequency}</span>
+                                </div>
+                              )}
+                              {listing.minimum_rental_period && (
+                                <div className="flex justify-between">
+                                  <span className="text-orange-700">Min. Rental Period:</span>
+                                  <span className="font-medium">{listing.minimum_rental_period}</span>
+                                </div>
+                              )}
+                              {listing.utilities_included && (
+                                <div className="flex justify-between">
+                                  <span className="text-orange-700">Utilities Included:</span>
+                                  <span className="font-medium text-green-600">✓ Yes</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Booking Terms */}
+                        {listing.listing_type?.name === 'For Booking' && (
+                          <div className="p-4 bg-purple-50 rounded-lg">
+                            <h4 className="font-semibold text-purple-800 mb-3">Booking Terms</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {listing.minimum_stay_duration && (
+                                <div className="flex justify-between">
+                                  <span className="text-purple-700">Min. Stay:</span>
+                                  <span className="font-medium">{listing.minimum_stay_duration} days</span>
+                                </div>
+                              )}
+                              {listing.maximum_stay_duration && (
+                                <div className="flex justify-between">
+                                  <span className="text-purple-700">Max. Stay:</span>
+                                  <span className="font-medium">{listing.maximum_stay_duration} days</span>
+                                </div>
+                              )}
+                              {listing.cancellation_policy && (
+                                <div className="flex justify-between">
+                                  <span className="text-purple-700">Cancellation:</span>
+                                  <span className="font-medium">{listing.cancellation_policy}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
@@ -1230,11 +1379,22 @@ export default function MarketPropertyDetailsPage() {
                 {/* Contact Information - Hidden for Privacy
                      Contact is handled through Mipripity engagement system */}
 
-                {/* Last Updated */}
-                <Card>
+                {/* Property Status & Timeline */}
+                <Card className="bg-gray-50 border-gray-200">
                   <CardContent className="pt-6">
-                    <div className="text-sm text-gray-500 text-center">
-                      Last updated: {new Date(listing.updated_at).toLocaleDateString()} at {new Date(listing.updated_at).toLocaleTimeString()}
+                    <div className="flex items-center justify-center gap-6 text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span className="text-gray-600">Listed: {new Date(listing.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span className="text-gray-600">Last Updated: {new Date(listing.updated_at).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Eye className="h-4 w-4 text-gray-500" />
+                        <span className="text-gray-600">{listing.views_count || 0} views</span>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
