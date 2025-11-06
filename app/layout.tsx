@@ -1,7 +1,7 @@
-import type React from "react"
 import type { Metadata, Viewport } from "next"
+import type React from "react"
 import "./globals.css"
-import ClientLayout from "./client-layout"
+import { RootLayoutWrapper } from "@/components/layout/root-layout-wrapper"
 
 // Alternative font loading to avoid lightningcss issues
 const fontClass = "font-sans"
@@ -9,15 +9,18 @@ const fontClass = "font-sans"
 export const metadata: Metadata = {
   title: "Mipripity - Property Polling Platform",
   description: "Community-driven property evaluation and polling platform",
-  keywords: ["property", "polling", "evaluation", "real estate", "community"],
+  keywords: "property, polling, evaluation, real estate, community",
   authors: [{ name: "Techtasker Solutions" }],
   creator: "Techtasker Solutions",
   publisher: "Techtasker Solutions",
   manifest: "/manifest.json",
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
   formatDetection: {
-    email: false,
-    address: false,
     telephone: false,
+    address: false,
+    email: false,
   },
 }
 
@@ -26,10 +29,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
-  ],
+  themeColor: "#000000",
 }
 
 export default function RootLayout({
@@ -40,7 +40,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${fontClass} antialiased`}>
-        <ClientLayout>{children}</ClientLayout>
+        <RootLayoutWrapper>{children}</RootLayoutWrapper>
       </body>
     </html>
   )

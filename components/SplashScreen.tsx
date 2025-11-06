@@ -45,10 +45,10 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
       <div className="relative z-10 flex flex-col items-center justify-center h-full">
         <div className="mt-20"> {/* Push down from center */}
           <Image
-            src="/mipripity.png"
+            src="/logo192.png"
             alt="Mipripity Logo"
-            width={150}
-            height={150}
+            width={100}
+            height={100}
             className="object-contain"
             priority
           />

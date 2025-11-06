@@ -7,7 +7,11 @@ import { ResponsiveLayout } from "@/components/layout/responsive-layout"
 import { Toaster } from "sonner"
 import SplashScreen from "@/components/SplashScreen"
 
-function ClientLayout({ children }: { children: React.ReactNode }) {
+export function RootLayoutWrapper({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const [splashShown, setSplashShown] = useState(false)
 
   const handleSplashComplete = () => {
@@ -34,5 +38,3 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
     </>
   )
 }
-
-export default ClientLayout
