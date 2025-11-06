@@ -7,7 +7,7 @@ import { RootLayoutWrapper } from "@/components/layout/root-layout-wrapper"
 const fontClass = "font-sans"
 
 export const metadata: Metadata = {
-  title: "Mipripity - Property Polling Platform",
+  title: "",
   description: "Community-driven property evaluation and polling platform",
   keywords: "property, polling, evaluation, real estate, community",
   authors: [{ name: "Techtasker Solutions" }],

@@ -27,11 +27,11 @@ export function RootLayoutWrapper({
       <Toaster
         position="top-right"
         toastOptions={{
-          duration: 4000,
+          duration: 6000,
           style: {
             background: "white",
             color: "black",
-            border: "1px solid #e2e8f0",
+            border: "0px solid #000000ff",
           },
         }}
       />
