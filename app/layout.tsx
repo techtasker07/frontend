@@ -15,6 +15,7 @@ export const metadata: Metadata = {
   authors: [{ name: "Techtasker Solutions" }],
   creator: "Techtasker Solutions",
   publisher: "Techtasker Solutions",
+  manifest: "/manifest.json",
   formatDetection: {
     email: false,
     address: false,
