@@ -18,6 +18,8 @@ type CombinedProperty = Property & {
 
 // Fetcher function for combined properties
 const fetchProperties = async () => {
+  console.log('🔄 Fetching properties for immediate display...');
+
   // Fetch poll properties only
   const pollResponse = await supabaseApi.getProperties({ limit: 15, source: 'poll' });
   let marketplaceResponse;
@@ -77,14 +79,19 @@ const fetchProperties = async () => {
     new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
 
+  console.log('✅ Properties fetched successfully:', sortedProperties.length, 'items');
   return sortedProperties;
 };
 
 export function PropertyListings() {
-  const { data: properties, error, isLoading } = useSWR<CombinedProperty[]>('properties', fetchProperties, {
-    revalidateOnFocus: false,
+  const { data: properties, error, isLoading, mutate } = useSWR<CombinedProperty[]>('properties', fetchProperties, {
+    revalidateOnFocus: true,
     revalidateOnReconnect: true,
-    dedupingInterval: 300000, // 5 minutes
+    dedupingInterval: 30000, // 30 seconds
+    focusThrottleInterval: 2000, // 2 seconds
+    refreshInterval: 60000, // Refresh every minute when tab is active
+    revalidateOnMount: true, // Always revalidate on mount
+    revalidateIfStale: true, // Revalidate even if data is stale
   });
 
   const [filteredProperties, setFilteredProperties] = useState<CombinedProperty[]>([]);
@@ -103,12 +110,39 @@ export function PropertyListings() {
     ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
     : 'grid grid-cols-1 gap-6';
 
+  // Handle visibility change for PWA data refresh
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Revalidate data when app becomes visible (user returns to PWA)
+        mutate();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [mutate]);
+
   // Update filtered properties when properties data changes
   useEffect(() => {
     if (properties) {
+      console.log('📊 Setting filtered properties:', properties.length, 'items');
       setFilteredProperties(properties);
     }
   }, [properties]);
+
+  // Force initial data load for PWA and ensure immediate loading
+  useEffect(() => {
+    if (!properties && !isLoading && !error) {
+      mutate();
+    }
+  }, [properties, isLoading, error, mutate]);
+
+  // Preload data on component mount
+  useEffect(() => {
+    // Trigger immediate data fetch when component mounts
+    mutate();
+  }, [mutate]);
 
   // Intersection Observer for scroll animations
   useEffect(() => {
