@@ -41,6 +41,22 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${fontClass} antialiased`}>
         <RootLayoutWrapper>{children}</RootLayoutWrapper>
+        {/* Register a minimal service worker (prod only) */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function(){
+            if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+            // In development, make sure no SW is controlling to avoid caching issues
+            if (process.env.NODE_ENV === 'development') {
+              navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+              return;
+            }
+            window.addEventListener('load', function(){
+              navigator.serviceWorker.register('/sw.js').catch(function(err){
+                console.warn('SW registration failed:', err);
+              });
+            });
+          })();
+        ` }} />
       </body>
     </html>
   )

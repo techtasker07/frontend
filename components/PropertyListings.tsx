@@ -22,12 +22,15 @@ const fetchProperties = async () => {
 
   // Fetch poll properties only
   const pollResponse = await supabaseApi.getProperties({ limit: 15, source: 'poll' });
+  console.log('📊 Poll response:', pollResponse);
+  
   let marketplaceResponse;
 
   try {
     marketplaceResponse = await supabaseApi.getMarketplaceListings({ limit: 15 });
+    console.log('🏪 Marketplace response:', marketplaceResponse);
   } catch (error) {
-    console.warn('Marketplace listings not available:', error);
+    console.error('❌ Marketplace fetch error:', error);
     marketplaceResponse = { success: false, data: [], error: 'Marketplace not available' };
   }
 
@@ -85,13 +88,10 @@ const fetchProperties = async () => {
 
 export function PropertyListings() {
   const { data: properties, error, isLoading, mutate } = useSWR<CombinedProperty[]>('properties', fetchProperties, {
-    revalidateOnFocus: true,
+    revalidateOnFocus: false, // Don't revalidate on focus to avoid interference
     revalidateOnReconnect: true,
-    dedupingInterval: 30000, // 30 seconds
-    focusThrottleInterval: 2000, // 2 seconds
-    refreshInterval: 60000, // Refresh every minute when tab is active
-    revalidateOnMount: true, // Always revalidate on mount
-    revalidateIfStale: true, // Revalidate even if data is stale
+    dedupingInterval: 2000, // Short deduping to avoid duplicate requests
+    refreshInterval: 0, // No automatic refresh
   });
 
   const [filteredProperties, setFilteredProperties] = useState<CombinedProperty[]>([]);
@@ -110,19 +110,6 @@ export function PropertyListings() {
     ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
     : 'grid grid-cols-1 gap-6';
 
-  // Handle visibility change for PWA data refresh
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        // Revalidate data when app becomes visible (user returns to PWA)
-        mutate();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [mutate]);
-
   // Update filtered properties when properties data changes
   useEffect(() => {
     if (properties) {
@@ -130,19 +117,6 @@ export function PropertyListings() {
       setFilteredProperties(properties);
     }
   }, [properties]);
-
-  // Force initial data load for PWA and ensure immediate loading
-  useEffect(() => {
-    if (!properties && !isLoading && !error) {
-      mutate();
-    }
-  }, [properties, isLoading, error, mutate]);
-
-  // Preload data on component mount
-  useEffect(() => {
-    // Trigger immediate data fetch when component mounts
-    mutate();
-  }, [mutate]);
 
   // Intersection Observer for scroll animations
   useEffect(() => {
@@ -252,9 +226,28 @@ export function PropertyListings() {
     );
   }
 
-  if (!properties) {
-    return null;
+  // Log current state for debugging
+  console.log('🎯 PropertyListings render state:', { 
+    hasProperties: !!properties, 
+    propertiesLength: properties?.length, 
+    isLoading, 
+    hasError: !!error,
+    filteredLength: filteredProperties.length 
+  });
+
+  if (!properties || properties.length === 0) {
+    return (
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">No Properties Available</h2>
+            <p className="text-gray-600">Check back soon for new listings!</p>
+          </div>
+        </div>
+      </section>
+    );
   }
+  
   return (
     <section className="py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

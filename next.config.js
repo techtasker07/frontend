@@ -1,48 +1,3 @@
-const withPWA = require('next-pwa')({
-  dest: 'public',
-  disable: process.env.NODE_ENV === 'development',
-  register: true,
-  skipWaiting: true,
-  runtimeCaching: [
-    {
-      urlPattern: /^https:\/\/.*\.(js|css)$/,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'static-resources',
-        expiration: {
-          maxEntries: 32,
-          maxAgeSeconds: 24 * 60 * 60, // 24 hours
-        },
-        networkTimeoutSeconds: 10,
-      },
-    },
-    {
-      urlPattern: /^https:\/\/.*\/_next\/static\/chunks\/.*\.js$/,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'next-static-chunks',
-        expiration: {
-          maxEntries: 100,
-          maxAgeSeconds: 24 * 60 * 60, // 24 hours
-        },
-        networkTimeoutSeconds: 10,
-      },
-    },
-    {
-      urlPattern: /^https:\/\/.*\/_next\/static\/chunks\/app\/.*\.js$/,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'next-app-chunks',
-        expiration: {
-          maxEntries: 50,
-          maxAgeSeconds: 60 * 60, // 1 hour
-        },
-        networkTimeoutSeconds: 10,
-      },
-    },
-  ],
-})
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -103,10 +58,6 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react"],
   },
-  // PWA specific configurations
-  generateBuildId: async () => {
-    return 'build-' + Date.now()
-  },
   // Allow cross-origin requests for Paystack
   async headers() {
     return [
@@ -127,4 +78,4 @@ const nextConfig = {
   },
 }
 
-module.exports = withPWA(nextConfig)
+module.exports = nextConfig
