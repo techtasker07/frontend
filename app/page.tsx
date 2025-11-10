@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect } from "react";
 import { HeroSection } from "../components/HeroSection";
 import { PropertyListings } from "../components/PropertyListings";
