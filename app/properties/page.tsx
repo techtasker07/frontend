@@ -58,6 +58,7 @@ export default function PropertiesPage() {
    const [sortBy, setSortBy] = useState<SortOption>("newest")
    const [isDialogOpen, setIsDialogOpen] = useState(false)
    const [showPropertyTypeDialog, setShowPropertyTypeDialog] = useState(false)
+   const [showSearch, setShowSearch] = useState(false)
 
    // Pagination
    const [currentPage, setCurrentPage] = useState(1)
@@ -247,13 +248,33 @@ export default function PropertiesPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+      {/* Mobile Header */}
+      <div className="md:hidden mb-8">
+        <div className="flex items-center gap-6">
+          <h1 className="text-xl font-bold">Poll Properties</h1>
+          {isAuthenticated && (
+            <Button
+              onClick={() => router.push('/add-property')}
+              size="sm"
+              className="shrink-0"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Create Listing
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={() => setShowSearch(!showSearch)}>
+            <Search className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Desktop Header */}
+      <div className="hidden md:flex md:flex-col md:flex-row md:justify-between md:items-start md:items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold mb-2">Poll Properties</h1>
           <p className="text-muted-foreground">Browse and evaluate properties from our community-driven platform</p>
         </div>
-        
+
         {isAuthenticated && (
           <Button
             onClick={() => router.push('/add-property')}
@@ -386,7 +407,7 @@ export default function PropertiesPage() {
       </div>
 
       {/* Search and Filters */}
-      <Card>
+      <Card className={`${showSearch ? 'block' : 'hidden'} md:block`}>
         <CardHeader>
         </CardHeader>
         <CardContent className="space-y-6">
