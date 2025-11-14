@@ -16,6 +16,7 @@ import useSWR from 'swr';
 export default function MarketplacePage() {
    const [searchTerm, setSearchTerm] = useState('');
    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+   const [showSearch, setShowSearch] = useState(false);
    const { isAuthenticated } = useAuth();
 
    // Use SWR for instant data fetching and caching
@@ -98,12 +99,30 @@ export default function MarketplacePage() {
 
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* Header with Background */}
-      <div className="p-8 text-center space-y-4 text-black">
+    <div className="container mx-auto px-4 py-2 space-y-4">
+      {/* Mobile Header */}
+      <div className="md:hidden p-2 text-left space-y-2 text-black">
+        <div className="flex items-center gap-4">
+          <h1 className="text-lg font-bold">Marketplace Property</h1>
+          {isAuthenticated && (
+            <Button asChild variant="secondary" size="sm" className="shrink-0">
+              <Link href="/marketplace/create">
+                <Plus className="mr-2 h-4 w-4" />
+                Create Listing
+              </Link>
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={() => setShowSearch(!showSearch)}>
+            <Search className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Desktop Header */}
+      <div className="hidden md:block p-2 text-center space-y-2 text-black">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="text-center sm:text-left">
-            <h1 className="text-3xl font-bold">Marketplace Property</h1>
+            <h1 className="text-2xl font-bold">Marketplace Property</h1>
             <p className="text-muted-foreground">
               Discover your perfect property from our curated selection of homes, apartments, and commercial spaces
             </p>
@@ -120,7 +139,7 @@ export default function MarketplacePage() {
       </div>
 
       {/* Search and Filters */}
-      <Card>
+      <Card className={`${showSearch ? 'block' : 'hidden'} md:block`}>
         <CardHeader>
         </CardHeader>
         <CardContent className="space-y-6">
