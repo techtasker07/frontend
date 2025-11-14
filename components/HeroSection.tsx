@@ -68,7 +68,7 @@ export function HeroSection() {
               {isVideo ? (
                 <video
                   src={currentImage.image_url}
-                  className="w-full h-full object-contain rounded-xl transition-opacity duration-1000 ease-in-out"
+                  className="w-full h-full object-contain rounded-2xl transition-opacity duration-1000 ease-in-out"
                   autoPlay
                   muted
                   loop
@@ -79,7 +79,7 @@ export function HeroSection() {
                 <img
                   src={currentImage.image_url || "/api/placeholder/400/300"}
                   alt={currentImage.alt_text || ""}
-                  className="w-full h-full object-contain rounded-xl transition-opacity duration-1000 ease-in-out"
+                  className="w-full h-full object-contain rounded-2xl transition-opacity duration-1000 ease-in-out"
                 />
               )}
             </div>
