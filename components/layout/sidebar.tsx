@@ -40,7 +40,6 @@ const servicesSubNavigation: NavigationItem[] = [
   { name: "Prospect", href: "/prospects", icon: Zap },
   { name: "Market Place", href: "/marketplace", icon: ShoppingBag },
   { name: "Crowd Funding", href: "/crowd-funding", icon: DollarSign },
-  { name: "Re-es Party", href: "/re-es-party", icon: Users },
 ]
 
 export function Sidebar({ onClose }: SidebarProps) {
