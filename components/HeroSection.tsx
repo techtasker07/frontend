@@ -59,24 +59,47 @@ export function HeroSection() {
   const isVideo = isVideoUrl(currentImage.image_url);
 
   return (
-    <section className="relative bg-gradient-to-br from-[#667eea] to-[#764ba2] overflow-hidden">
-      <div className="max-w-6xl mx-auto px-2 sm:px-6 lg:px-3 py-1">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 lg:gap-12 items-center">
-          {/* Left Content */}
-          <div className="max-w-lg">
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#000080] mb-6 leading-tight">
+    <section className="relative bg-gradient-to-br from-[#667eea] to-[#764ba2] shadow-xl overflow-hidden">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-4 lg:py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 lg:gap-4 items-center">
+          {/* Media First on Mobile */}
+          <div className="relative lg:justify-self-end lg:order-2">
+            <div className="relative w-full max-w-full md:max-w-md lg:max-w-lg h-64 aspect-video">
+              {isVideo ? (
+                <video
+                  src={currentImage.image_url}
+                  className="w-full h-full object-contain rounded-xl transition-opacity duration-1000 ease-in-out"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  controls
+                />
+              ) : (
+                <img
+                  src={currentImage.image_url || "/api/placeholder/400/300"}
+                  alt={currentImage.alt_text || ""}
+                  className="w-full h-full object-contain rounded-xl transition-opacity duration-1000 ease-in-out"
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="max-w-lg text-center lg:text-left lg:order-1 md:bg-transparent bg-white/10 backdrop-blur-md rounded-xl shadow-xl p-4 md:p-0">
+            <h1 className="text-2xl md:text-2xl lg:text-3xl font-bold text-[#000080] mb-2 leading-tight">
               Find & Do More With Your {" "}
               <span className="text-[#FFFFFF]">Property</span>
             </h1>
 
-            <p className="text-[#FFFFFF] mb-8 text-md leading-relaxed">
+            <p className="text-[#FFFFFF] mb-8 text-sm leading-relaxed">
               Participate in polls, get ideal prospects, invest and discover the best real estate
               opportunities tailored just for you.
             </p>
 
             {/* Conditional Content based on authentication */}
             {!isAuthenticated ? (
-              <div className="flex gap-3 mb-8">
+              <div className="flex flex-col sm:flex-row gap-3 mb-2 shadow-xl">
                 <Input
                   type="email"
                   placeholder="Enter your email"
@@ -92,38 +115,15 @@ export function HeroSection() {
                 </Button>
               </div>
             ) : (
-              <div className="mb-8">
+              <div className="mb-1">
                 <Button
-                  className="h-12 px-8 bg-[#000080] hover:bg-[#F39322] text-white rounded-full"
+                  className="h-12 px-8 bg-[#000080] hover:bg-[#F39322] text-white rounded-full shadow-xl"
                   onClick={() => setShowPropertyTypeDialog(true)}
                 >
                   Add a Property
                 </Button>
               </div>
             )}
-          </div>
-
-          {/* Right Media */}
-          <div className="relative lg:justify-self-end">
-            <div className="relative w-full max-w-md lg:max-w-lg h-80">
-              {isVideo ? (
-                <video
-                  src={currentImage.image_url}
-                  className="w-full h-full object-contain transition-opacity duration-1000 ease-in-out"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  controls
-                />
-              ) : (
-                <img
-                  src={currentImage.image_url || "/api/placeholder/400/300"}
-                  alt={currentImage.alt_text || ""}
-                  className="w-full h-full object-contain transition-opacity duration-1000 ease-in-out"
-                />
-              )}
-            </div>
           </div>
         </div>
       </div>

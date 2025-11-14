@@ -6,7 +6,7 @@ import { PropertyCard } from "./PropertyCard";
 import { SearchSection } from "./SearchSection";
 import { Button } from "./ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { SlidersHorizontal, Grid3X3, List } from "lucide-react";
+import { SlidersHorizontal, Grid3X3, List, Search } from "lucide-react";
 import { supabaseApi, Property, MarketplaceListing } from "../lib/supabase-api";
 
 // Combined property type for both poll and marketplace properties
@@ -103,6 +103,7 @@ export function PropertyListings() {
     priceRange: ''
   });
   const [visibleCards, setVisibleCards] = useState<Set<number>>(new Set());
+  const [showSearchSection, setShowSearchSection] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -253,9 +254,19 @@ export function PropertyListings() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Featured Properties</h2>
-            <p className="text-gray-600">Discover your dream properties and</p>
+          <div className="flex justify-between items-center w-full md:w-auto md:block">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Featured Properties</h2>
+              <p className="text-gray-600">Discover your dream properties and</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="md:hidden p-2"
+              onClick={() => setShowSearchSection(!showSearchSection)}
+            >
+              <Search className="h-5 w-5" />
+            </Button>
           </div>
           
           <div className="hidden md:flex items-center gap-4 mt-4 md:mt-0">
@@ -281,15 +292,17 @@ export function PropertyListings() {
         </div>
 
         {/* Search Section */}
-        <SearchSection
-          filters={searchFilters}
-          onFiltersChange={setSearchFilters}
-          onSearch={applyFilters}
-        />
+        <div className={showSearchSection ? "block" : "hidden md:block"}>
+          <SearchSection
+            filters={searchFilters}
+            onFiltersChange={setSearchFilters}
+            onSearch={applyFilters}
+          />
+        </div>
 
         {/* Property Tabs */}
         <Tabs defaultValue="all" className="mb-8">
-          <TabsList className="flex flex-wrap w-full text-xs gap-2 bg-transparent">
+          <TabsList className="flex flex-wrap w-full text-xs gap-2 bg-transparent shadow-sm">
             <TabsTrigger value="all" className="bg-blue-500 text-white rounded-lg border border-blue-600 data-[state=active]:bg-orange-500 data-[state=active]:text-white">All</TabsTrigger>
             <TabsTrigger value="sale" className="bg-blue-500 text-white rounded-lg border border-blue-600 data-[state=active]:bg-orange-500 data-[state=active]:text-white">
               <span className="hidden md:inline">For Sale</span>
