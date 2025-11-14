@@ -64,7 +64,7 @@ export function HeroSection() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 lg:gap-4 items-center">
           {/* Media First on Mobile */}
           <div className="relative lg:justify-self-end lg:order-2">
-            <div className="relative w-full max-w-full md:max-w-md lg:max-w-lg h-64 aspect-video">
+            <div className="relative w-full max-w-full rounded-xl md:max-w-md lg:max-w-lg h-64 aspect-video">
               {isVideo ? (
                 <video
                   src={currentImage.image_url}
