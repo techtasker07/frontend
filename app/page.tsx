@@ -5,9 +5,22 @@ import { HeroSection } from "../components/HeroSection";
 import { PropertyListings } from "../components/PropertyListings";
 import { FeaturesSection } from "../components/FeaturesSection";
 import PWAInstallPrompt from "../components/PWAInstallPrompt";
+import { useHomeStore } from "../lib/stores/home-store";
 
 export default function App() {
+  const { forceRefresh } = useHomeStore();
+
   useEffect(() => {
+    // Check if this is a page refresh (not navigation)
+    const isRefresh = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+    const wasRefreshed = isRefresh?.type === 'reload' ||
+                        (typeof window !== 'undefined' && window.performance?.navigation?.type === 1);
+
+    if (wasRefreshed) {
+      // Force refresh data on page refresh
+      forceRefresh();
+    }
+
     // Check if service worker is available and handle first visit refresh
     if ('serviceWorker' in navigator && 'MessageChannel' in window) {
       navigator.serviceWorker.ready.then((registration) => {
@@ -31,7 +44,7 @@ export default function App() {
         window.location.reload();
       }
     }
-  }, []);
+  }, [forceRefresh]);
 
   return (
     <>

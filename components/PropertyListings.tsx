@@ -1,109 +1,43 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import useSWR from 'swr';
+import { useEffect, useRef } from "react";
+import Link from "next/link";
 import { PropertyCard } from "./PropertyCard";
 import { SearchSection } from "./SearchSection";
 import { Button } from "./ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { SlidersHorizontal, Grid3X3, List, Search } from "lucide-react";
-import { supabaseApi, Property, MarketplaceListing } from "../lib/supabase-api";
-
-// Combined property type for both poll and marketplace properties
-type CombinedProperty = Property & {
-  source?: 'poll' | 'marketplace';
-  listing_type?: { name: string };
-  property_type?: { name: string };
-};
-
-// Fetcher function for combined properties
-const fetchProperties = async () => {
-  console.log('🔄 Fetching properties for immediate display...');
-
-  // Fetch poll properties only
-  const pollResponse = await supabaseApi.getProperties({ limit: 15, source: 'poll' });
-  console.log('📊 Poll response:', pollResponse);
-  
-  let marketplaceResponse;
-
-  try {
-    marketplaceResponse = await supabaseApi.getMarketplaceListings({ limit: 15 });
-    console.log('🏪 Marketplace response:', marketplaceResponse);
-  } catch (error) {
-    console.error('❌ Marketplace fetch error:', error);
-    marketplaceResponse = { success: false, data: [], error: 'Marketplace not available' };
-  }
-
-  let allProperties: CombinedProperty[] = [];
-
-  // Add poll properties
-  if (pollResponse.success) {
-    const pollProperties = pollResponse.data.map(prop => ({
-      ...prop,
-      source: 'poll' as const,
-      current_worth: prop.current_worth || 0
-    }));
-    allProperties = [...allProperties, ...pollProperties];
-  }
-
-  // Add marketplace properties, converting to Property format (if available)
-  if (marketplaceResponse.success && marketplaceResponse.data.length > 0) {
-    const marketplaceProperties = marketplaceResponse.data.map((listing: MarketplaceListing): CombinedProperty => ({
-      id: listing.id,
-      title: listing.title,
-      description: listing.description,
-      location: listing.location,
-      user_id: listing.user_id,
-      category_id: listing.category_id,
-      current_worth: listing.price,
-      year_of_construction: listing.year_of_construction,
-      image_url: listing.images?.[0]?.image_url,
-      created_at: listing.created_at,
-      updated_at: listing.updated_at,
-      category_name: listing.category?.name,
-      images: listing.images?.map(img => ({
-        id: img.id,
-        property_id: listing.id,
-        image_url: img.image_url,
-        is_primary: img.is_primary,
-        created_at: listing.created_at
-      })) || [],
-      source: 'marketplace' as const,
-      type: listing.listing_type?.name?.toLowerCase().replace('for ', '') || 'sale',
-      listing_type: listing.listing_type,
-      property_type: listing.property_type,
-      vote_count: 0
-    }));
-    allProperties = [...allProperties, ...marketplaceProperties];
-  }
-
-  // Sort by creation date (most recent first)
-  const sortedProperties = allProperties.sort((a, b) =>
-    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  );
-
-  console.log('✅ Properties fetched successfully:', sortedProperties.length, 'items');
-  return sortedProperties;
-};
+import { Grid3X3, List, Search } from "lucide-react";
+import { useHomeStore, type CombinedProperty } from "../lib/stores/home-store";
 
 export function PropertyListings() {
-  const { data: properties, error, isLoading, mutate } = useSWR<CombinedProperty[]>('properties', fetchProperties, {
-    revalidateOnFocus: false, // Don't revalidate on focus to avoid interference
-    revalidateOnReconnect: true,
-    dedupingInterval: 2000, // Short deduping to avoid duplicate requests
-    refreshInterval: 0, // No automatic refresh
-  });
+  const {
+    properties,
+    filteredProperties,
+    isLoading,
+    error,
+    viewMode,
+    displayLimit,
+    searchFilters,
+    visibleCards,
+    showSearchSection,
+    activeTab,
+    scrollPosition,
+    lastViewedPropertyId,
+    fetchProperties,
+    setFilteredProperties,
+    setViewMode,
+    setDisplayLimit,
+    setSearchFilters,
+    applyFilters,
+    setVisibleCards,
+    setShowSearchSection,
+    setActiveTab,
+    setScrollPosition,
+    setLastViewedPropertyId,
+    saveStateToStorage,
+    loadStateFromStorage
+  } = useHomeStore();
 
-  const [filteredProperties, setFilteredProperties] = useState<CombinedProperty[]>([]);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [displayLimit, setDisplayLimit] = useState(6);
-  const [searchFilters, setSearchFilters] = useState({
-    location: '',
-    propertyType: '',
-    priceRange: ''
-  });
-  const [visibleCards, setVisibleCards] = useState<Set<number>>(new Set());
-  const [showSearchSection, setShowSearchSection] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -111,13 +45,60 @@ export function PropertyListings() {
     ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
     : 'grid grid-cols-1 gap-6';
 
+  // Load state from storage and fetch properties on mount
+  useEffect(() => {
+    loadStateFromStorage();
+    if (properties.length === 0 && !isLoading) {
+      fetchProperties();
+    }
+  }, [loadStateFromStorage, properties.length, isLoading, fetchProperties]);
+
+  // Save state to storage when it changes
+  useEffect(() => {
+    saveStateToStorage();
+  }, [viewMode, displayLimit, searchFilters, showSearchSection, activeTab, scrollPosition, lastViewedPropertyId, saveStateToStorage]);
+
+  // Restore scroll position or scroll to last viewed property when component mounts
+  useEffect(() => {
+    if (typeof window === 'undefined' || properties.length === 0) return;
+
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      if (lastViewedPropertyId) {
+        // Try to scroll to the last viewed property
+        const element = document.getElementById(`property-${lastViewedPropertyId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else if (scrollPosition > 0) {
+          // Fallback to saved scroll position
+          window.scrollTo({ top: scrollPosition, behavior: 'instant' });
+        }
+      } else if (scrollPosition > 0) {
+        window.scrollTo({ top: scrollPosition, behavior: 'instant' });
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [scrollPosition, lastViewedPropertyId, properties.length]);
+
+  // Save scroll position on scroll
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleScroll = () => {
+      setScrollPosition(window.scrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [setScrollPosition]);
+
   // Update filtered properties when properties data changes
   useEffect(() => {
-    if (properties) {
+    if (properties.length > 0) {
       console.log('📊 Setting filtered properties:', properties.length, 'items');
       setFilteredProperties(properties);
     }
-  }, [properties]);
+  }, [properties, setFilteredProperties]);
 
   // Intersection Observer for scroll animations
   useEffect(() => {
@@ -127,7 +108,7 @@ export function PropertyListings() {
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
               const index = parseInt(entry.target.getAttribute('data-index') || '0');
-              setVisibleCards(prev => new Set([...prev, index]));
+              setVisibleCards(new Set([...visibleCards, index]));
             }
           });
         },
@@ -143,7 +124,7 @@ export function PropertyListings() {
         }
       };
     }
-  }, []);
+  }, [visibleCards, setVisibleCards]);
 
   // Observe cards when they change
   useEffect(() => {
@@ -162,43 +143,6 @@ export function PropertyListings() {
     };
   }, [filteredProperties, displayLimit]);
 
-  const applyFilters = () => {
-    if (!properties) return;
-
-    let filtered = properties;
-
-    if (searchFilters.location) {
-      filtered = filtered.filter(p =>
-        p.location?.toLowerCase().includes(searchFilters.location.toLowerCase())
-      );
-    }
-
-    if (searchFilters.propertyType) {
-      // Match on title or description
-      filtered = filtered.filter(p =>
-        p.title?.toLowerCase().includes(searchFilters.propertyType.toLowerCase()) ||
-        p.description?.toLowerCase().includes(searchFilters.propertyType.toLowerCase())
-      );
-    }
-
-    if (searchFilters.priceRange) {
-      let min = 0, max = Infinity;
-      switch (searchFilters.priceRange) {
-        case '0-50m': max = 50000000; break;
-        case '50m-100m': min = 50000000; max = 100000000; break;
-        case '100m-200m': min = 100000000; max = 200000000; break;
-        case '200m-500m': min = 200000000; max = 500000000; break;
-        case '500m-1b': min = 500000000; max = 1000000000; break;
-        case '1b+': min = 1000000000; break;
-      }
-      filtered = filtered.filter(p => {
-        const price = p.current_worth || 0;
-        return price >= min && price <= max;
-      });
-    }
-
-    setFilteredProperties(filtered);
-  };
 
   if (isLoading) {
     return (
@@ -295,13 +239,17 @@ export function PropertyListings() {
         <div className={showSearchSection ? "block" : "hidden md:block"}>
           <SearchSection
             filters={searchFilters}
-            onFiltersChange={setSearchFilters}
+            onFiltersChange={(filters) => {
+              setSearchFilters(filters);
+              // Apply filters immediately when changed
+              setTimeout(applyFilters, 0);
+            }}
             onSearch={applyFilters}
           />
         </div>
 
         {/* Property Tabs */}
-        <Tabs defaultValue="all" className="mb-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
           <TabsList className="flex flex-wrap w-full text-xs gap-2 bg-transparent shadow-sm">
             <TabsTrigger value="all" className="bg-blue-500 text-white rounded-lg border border-blue-600 data-[state=active]:bg-orange-500 data-[state=active]:text-white">All</TabsTrigger>
             <TabsTrigger value="sale" className="bg-blue-500 text-white rounded-lg border border-blue-600 data-[state=active]:bg-orange-500 data-[state=active]:text-white">
@@ -338,7 +286,13 @@ export function PropertyListings() {
                   }`}
                   style={{ transitionDelay: `${index * 100}ms` }}
                 >
-                  <PropertyCard property={property} />
+                  <Link
+                    id={`property-${property.id}`}
+                    href={property.source === 'marketplace' ? `/marketplace/${property.id}` : `/properties/${property.id}`}
+                    onClick={() => setLastViewedPropertyId(property.id)}
+                  >
+                    <PropertyCard property={property} />
+                  </Link>
                 </div>
               ))}
             </div>
@@ -360,7 +314,13 @@ export function PropertyListings() {
                   }`}
                   style={{ transitionDelay: `${index * 100}ms` }}
                 >
-                  <PropertyCard property={property} />
+                  <Link
+                    id={`property-${property.id}`}
+                    href={property.source === 'marketplace' ? `/marketplace/${property.id}` : `/properties/${property.id}`}
+                    onClick={() => setLastViewedPropertyId(property.id)}
+                  >
+                    <PropertyCard property={property} />
+                  </Link>
                 </div>
               ))}
             </div>
@@ -382,7 +342,13 @@ export function PropertyListings() {
                   }`}
                   style={{ transitionDelay: `${index * 100}ms` }}
                 >
-                  <PropertyCard property={property} />
+                  <Link
+                    id={`property-${property.id}`}
+                    href={property.source === 'marketplace' ? `/marketplace/${property.id}` : `/properties/${property.id}`}
+                    onClick={() => setLastViewedPropertyId(property.id)}
+                  >
+                    <PropertyCard property={property} />
+                  </Link>
                 </div>
               ))}
             </div>
@@ -404,7 +370,12 @@ export function PropertyListings() {
                   }`}
                   style={{ transitionDelay: `${index * 100}ms` }}
                 >
-                  <PropertyCard property={property} />
+                  <Link
+                    href={property.source === 'marketplace' ? `/marketplace/${property.id}` : `/properties/${property.id}`}
+                    onClick={() => setLastViewedPropertyId(property.id)}
+                  >
+                    <PropertyCard property={property} />
+                  </Link>
                 </div>
               ))}
             </div>
@@ -429,7 +400,12 @@ export function PropertyListings() {
                     }`}
                     style={{ transitionDelay: `${index * 100}ms` }}
                   >
-                    <PropertyCard property={property} />
+                    <Link
+                      href={property.source === 'marketplace' ? `/marketplace/${property.id}` : `/properties/${property.id}`}
+                      onClick={() => setLastViewedPropertyId(property.id)}
+                    >
+                      <PropertyCard property={property} />
+                    </Link>
                   </div>
                 ))}
             </div>
@@ -441,7 +417,7 @@ export function PropertyListings() {
           <Button
             variant="outline"
             size="lg"
-            onClick={() => setDisplayLimit(prev => prev === 3 ? 12 : prev + 12)}
+            onClick={() => setDisplayLimit(displayLimit === 3 ? 12 : displayLimit + 12)}
           >
             Load More Properties
           </Button>
