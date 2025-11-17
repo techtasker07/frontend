@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { PropertyCard } from "./PropertyCard";
 import { SearchSection } from "./SearchSection";
@@ -18,7 +18,6 @@ export function PropertyListings() {
     viewMode,
     displayLimit,
     searchFilters,
-    visibleCards,
     showSearchSection,
     activeTab,
     scrollPosition,
@@ -29,7 +28,6 @@ export function PropertyListings() {
     setDisplayLimit,
     setSearchFilters,
     applyFilters,
-    setVisibleCards,
     setShowSearchSection,
     setActiveTab,
     setScrollPosition,
@@ -37,6 +35,9 @@ export function PropertyListings() {
     saveStateToStorage,
     loadStateFromStorage
   } = useHomeStore();
+
+  // Local visibility state for scroll-in animations (avoid stale global state issues)
+  const [visibleCards, setVisibleCards] = useState<Set<number>>(new Set());
 
   const observerRef = useRef<IntersectionObserver | null>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -102,29 +103,34 @@ export function PropertyListings() {
 
   // Intersection Observer for scroll animations
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      observerRef.current = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              const index = parseInt(entry.target.getAttribute('data-index') || '0');
-              setVisibleCards(new Set([...visibleCards, index]));
-            }
-          });
-        },
-        {
-          threshold: 0.1,
-          rootMargin: '50px'
-        }
-      );
+    if (typeof window === 'undefined') return;
 
-      return () => {
-        if (observerRef.current) {
-          observerRef.current.disconnect();
-        }
-      };
-    }
-  }, [visibleCards, setVisibleCards]);
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = parseInt(entry.target.getAttribute('data-index') || '0');
+            setVisibleCards((prev) => {
+              if (prev.has(index)) return prev;
+              const next = new Set(prev);
+              next.add(index);
+              return next;
+            });
+          }
+        });
+      },
+      {
+        threshold: 0.1,
+        rootMargin: '50px'
+      }
+    );
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, []);
 
   // Observe cards when they change
   useEffect(() => {

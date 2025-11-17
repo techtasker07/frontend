@@ -21,7 +21,6 @@ interface HomeState {
     propertyType: string;
     priceRange: string;
   };
-  visibleCards: Set<number>;
   showSearchSection: boolean;
   activeTab: string;
   scrollPosition: number;
@@ -34,7 +33,6 @@ interface HomeState {
   setDisplayLimit: (limit: number) => void;
   setSearchFilters: (filters: Partial<HomeState['searchFilters']>) => void;
   applyFilters: () => void;
-  setVisibleCards: (cards: Set<number>) => void;
   setShowSearchSection: (show: boolean) => void;
   setActiveTab: (tab: string) => void;
   setScrollPosition: (position: number) => void;
@@ -58,7 +56,6 @@ const initialState = {
     propertyType: '',
     priceRange: ''
   },
-  visibleCards: new Set<number>(),
   showSearchSection: false,
   activeTab: 'all',
   scrollPosition: 0,
@@ -205,8 +202,6 @@ export const useHomeStore = create<HomeState>((set, get) => ({
 
     set({ filteredProperties: filtered });
   },
-
-  setVisibleCards: (cards) => set({ visibleCards: cards }),
 
   setShowSearchSection: (show) => set({ showSearchSection: show }),
 
