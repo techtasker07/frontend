@@ -39,6 +39,7 @@ const servicesSubNavigation: NavigationItem[] = [
   { name: "Poll", href: "/properties", icon: Building },
   { name: "Prospect", href: "/prospects", icon: Zap },
   { name: "Market Place", href: "/marketplace", icon: ShoppingBag },
+  { name: "Documentations", href: "/documentations", icon: FileText },
   { name: "Crowd Funding", href: "/crowd-funding", icon: DollarSign },
 ]
 

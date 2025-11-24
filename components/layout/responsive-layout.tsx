@@ -69,14 +69,14 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
     <div className="min-h-screen bg-gray-50">
       {/* Mobile Header - Only show on non-auth, non-AI prospect, and non-dashboard pages */}
       {!isAuthPage && !isAIProspectPage && !isDashboardPage && (
-        <div className="md:hidden">
+        <div className="md:hidden sticky top-0 z-40">
           <MobileHeader onMenuClick={() => setSidebarOpen(true)} />
         </div>
       )}
 
       {/* Desktop Header - Only show on non-auth, non-AI prospect, and non-dashboard pages */}
       {!isAuthPage && !isAIProspectPage && !isDashboardPage && (
-        <div className="hidden md:block">
+        <div className="hidden md:block sticky top-0 z-40">
           <DesktopHeader onMenuClick={() => setSidebarOpen(true)} />
         </div>
       )}
@@ -145,7 +145,7 @@ export function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
 
       {/* Main Content */}
       <div className="w-full">
-        <main className={`min-h-screen ${!isAuthPage && !isAIProspectPage ? 'pt-2 md:pt-2' : ''}`}>
+        <main className={`min-h-screen ${!isAuthPage && !isAIProspectPage ? 'pt-1 md:pt-1' : ''}`}>
           {children}
         </main>
         <Footer />
