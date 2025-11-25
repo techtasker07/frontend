@@ -14,7 +14,8 @@ import {
   Map,
   BarChart3,
   Building,
-  Newspaper,
+  Shield,
+  Award,
   ArrowRight,
   X
 } from 'lucide-react';
@@ -46,12 +47,73 @@ interface ServiceDetailsModalProps {
 }
 
 const serviceDetailsData: Record<string, ServiceDetails> = {
+  'acquisition': {
+    id: 'acquisition',
+    title: 'Acquisition',
+    description: 'Due diligence verification of property status through coordinate charting and document verification',
+    icon: Shield,
+    color: 'bg-blue-500',
+    features: ['Coordinate Charting', 'Property Status Verification', 'Seller Document Verification', 'Due Diligence Report'],
+    processSteps: [
+      {
+        step: 1,
+        title: 'Property Information Submission',
+        description: 'Submit property details, location coordinates, and initial seller information.',
+        duration: '1-2 days'
+      },
+      {
+        step: 2,
+        title: 'Coordinate Charting',
+        description: 'Plot and verify property coordinates on official mapping systems.',
+        duration: '3-5 days'
+      },
+      {
+        step: 3,
+        title: 'Document Collection',
+        description: 'Gather and review seller/owner documents for authenticity.',
+        duration: '1 week'
+      },
+      {
+        step: 4,
+        title: 'Status Verification',
+        description: 'Verify property ownership status, encumbrances, and legal standing.',
+        duration: '1 week'
+      },
+      {
+        step: 5,
+        title: 'Due Diligence Report',
+        description: 'Compile comprehensive verification report with findings and recommendations.',
+        duration: '3-5 days'
+      },
+      {
+        step: 6,
+        title: 'Final Review & Delivery',
+        description: 'Review report accuracy and deliver to client with expert consultation.',
+        duration: '2-3 days'
+      }
+    ],
+    requirements: [
+      'Property location and coordinates',
+      'Seller/owner identification documents',
+      'Existing property documents (if any)',
+      'Purchase agreement details',
+      'Applicant identification'
+    ],
+    processingTime: '2-3 weeks from submission',
+    benefits: [
+      'Comprehensive property verification',
+      'Risk assessment and mitigation',
+      'Legal compliance assurance',
+      'Expert due diligence analysis',
+      'Secure transaction foundation'
+    ]
+  },
   'survey-plan': {
     id: 'survey-plan',
     title: 'Survey Plan',
     description: 'Process and file survey plans for land documentation',
     icon: FileText,
-    color: 'bg-blue-500',
+    color: 'bg-green-500',
     features: ['Fresh Survey Processing', 'Existing Coordinates', 'Direct Verification', 'Point Retaking'],
     processSteps: [
       {
@@ -76,7 +138,7 @@ const serviceDetailsData: Record<string, ServiceDetails> = {
         step: 4,
         title: 'Plan Preparation',
         description: 'Survey plan is drafted and prepared according to Lagos State standards.',
-        duration: '2-3 weeks'
+        duration: '2-3 days'
       },
       {
         step: 5,
@@ -98,7 +160,7 @@ const serviceDetailsData: Record<string, ServiceDetails> = {
       'Property address and location details',
       'Payment of applicable fees'
     ],
-    processingTime: '3-4 months from point picking',
+    processingTime: '2 weeks from point picking',
     benefits: [
       'Officially certified survey plans',
       'Legal compliance with Lagos State regulations',
@@ -107,146 +169,73 @@ const serviceDetailsData: Record<string, ServiceDetails> = {
       'Expert consultation throughout the process'
     ]
   },
-  'layout-survey': {
-    id: 'layout-survey',
-    title: 'Layout Survey',
-    description: 'Create and verify property layout surveys',
-    icon: Map,
-    color: 'bg-green-500',
-    features: ['Multi-plot Layouts', 'Zoning Compliance', 'Development Planning', 'Boundary Verification'],
+  'title-document': {
+    id: 'title-document',
+    title: 'Title Document Processing',
+    description: 'Process title documents including Deem Grant, Governor\'s Consent, and Regularisation',
+    icon: Award,
+    color: 'bg-purple-500',
+    features: ['Deem Grant (Fresh C of O)', 'Governor\'s Consent', 'Regularisation', 'Land Information Processing'],
     processSteps: [
       {
         step: 1,
-        title: 'Layout Planning',
-        description: 'Review development plans and zoning requirements for the property.',
-        duration: '1 week'
+        title: 'Document Type Selection',
+        description: 'Choose from Deem Grant, Governor\'s Consent, or Regularisation based on property status.',
+        duration: '1 day'
       },
       {
         step: 2,
-        title: 'Field Measurements',
-        description: 'Conduct comprehensive field survey of the entire layout area.',
-        duration: '1-2 weeks'
+        title: 'Requirement Assessment',
+        description: 'Review specific requirements for selected title document type.',
+        duration: '2-3 days'
       },
       {
         step: 3,
-        title: 'Plot Subdivision',
-        description: 'Define individual plot boundaries and measurements.',
+        title: 'Document Preparation',
+        description: 'Prepare and compile all required documents including Deed of Assignment and Purchase Receipt.',
         duration: '1 week'
       },
       {
         step: 4,
-        title: 'Infrastructure Mapping',
-        description: 'Map roads, utilities, and infrastructure within the layout.',
-        duration: '1 week'
+        title: 'Land Information Processing',
+        description: 'Process land information requirements for applicable document types.',
+        duration: '1-2 weeks'
       },
       {
         step: 5,
-        title: 'Compliance Verification',
-        description: 'Ensure layout meets all zoning and development regulations.',
+        title: 'Lodgement Preparation',
+        description: 'Prepare Survey Plan (Record Copy) and all documents for official lodgement.',
         duration: '3-5 days'
       },
       {
         step: 6,
-        title: 'Final Documentation',
-        description: 'Prepare and certify the complete layout survey documentation.',
+        title: 'Processing & Approval',
+        description: 'Submit to relevant authorities and monitor approval process.',
+        duration: '2-4 weeks'
+      },
+      {
+        step: 7,
+        title: 'Document Delivery',
+        description: 'Receive approved title documents and deliver to client.',
         duration: '1 week'
       }
     ],
     requirements: [
-      'Development approval documents',
-      'Zoning certificates',
-      'Site plan and architectural drawings',
-      'Infrastructure plans',
-      'Environmental impact assessment (if required)'
+      'Deed of Assignment',
+      'Purchase Receipt (Family Receipt Preferred)',
+      'Survey Plan (Record Copy) for Lodgement',
+      'Land Information (for Deem Grant and Regularisation)',
+      'Existing C of O (for Governor\'s Consent)',
+      'Applicant identification and property details'
     ],
-    processingTime: '3-4 months from submission',
+    processingTime: '4-6 weeks from submission',
     benefits: [
-      'Comprehensive layout documentation',
-      'Zoning compliance verification',
-      'Infrastructure planning support',
-      'Individual plot certifications',
-      'Development approval facilitation'
+      'Official title document processing',
+      'Multiple document type options',
+      'Expert guidance on requirements',
+      'Secure lodgement and tracking',
+      'Legal compliance assurance'
     ]
-  },
-  'survey-chart': {
-    id: 'survey-chart',
-    title: 'Chart Survey',
-    description: 'Interactive survey charting with coordinate plotting',
-    icon: BarChart3,
-    color: 'bg-purple-500',
-    features: ['Interactive Mapping', 'Coordinate Plotting', 'Data Export', 'Point Management'],
-    processSteps: [
-      {
-        step: 1,
-        title: 'Data Collection',
-        description: 'Gather survey coordinates and measurement data.',
-        duration: '2-3 days'
-      },
-      {
-        step: 2,
-        title: 'Coordinate Processing',
-        description: 'Process and validate coordinate data for accuracy.',
-        duration: '1 week'
-      },
-      {
-        step: 3,
-        title: 'Chart Generation',
-        description: 'Create interactive survey charts and maps.',
-        duration: '1 week'
-      },
-      {
-        step: 4,
-        title: 'Data Visualization',
-        description: 'Generate visual representations and export formats.',
-        duration: '3-5 days'
-      },
-      {
-        step: 5,
-        title: 'Quality Review',
-        description: 'Final verification of chart accuracy and completeness.',
-        duration: '2-3 days'
-      }
-    ],
-    requirements: [
-      'Survey coordinate data',
-      'Reference points and benchmarks',
-      'Accuracy specifications',
-      'Output format requirements'
-    ],
-    processingTime: '2-3 weeks from data submission',
-    benefits: [
-      'Interactive survey visualization',
-      'Multiple export formats',
-      'Coordinate accuracy verification',
-      'Professional charting standards',
-      'Data integration capabilities'
-    ]
-  },
-  'certificate-occupancy': {
-    id: 'certificate-occupancy',
-    title: 'Certificate of Occupancy',
-    description: 'Building approval and occupancy certificates',
-    icon: Building,
-    color: 'bg-orange-500',
-    features: ['Coming Soon'],
-    processSteps: [],
-    requirements: [],
-    processingTime: 'Coming Soon',
-    benefits: [],
-    comingSoon: true
-  },
-  'gazette': {
-    id: 'gazette',
-    title: 'Gazette Services',
-    description: 'Legal publications and property notices',
-    icon: Newspaper,
-    color: 'bg-red-500',
-    features: ['Coming Soon'],
-    processSteps: [],
-    requirements: [],
-    processingTime: 'Coming Soon',
-    benefits: [],
-    comingSoon: true
   }
 };
 

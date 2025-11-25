@@ -10,7 +10,6 @@ import {
   Map,
   BarChart3,
   Building,
-  Newspaper,
   CheckCircle,
   Clock,
   ArrowRight,
@@ -25,59 +24,40 @@ import {
   FileCheck
 } from 'lucide-react';
 import { SurveyPlanSection } from '@/components/documentations/SurveyPlanSection';
-import { CertificateOfOccupancySection } from '@/components/documentations/CertificateOfOccupancySection';
-import { GazetteSection } from '@/components/documentations/GazetteSection';
-import { SurveyChartSection } from '@/components/documentations/SurveyChartSection';
-import { LayoutSurveySection } from '@/components/documentations/LayoutSurveySection';
+import { AcquisitionSection } from '@/components/documentations/AcquisitionSection';
+import { TitleDocumentSection } from '@/components/documentations/TitleDocumentSection';
 import { ServiceDetailsModal } from '@/components/documentations/ServiceDetailsModal';
 
 const documentSections = [
+  {
+    id: 'acquisition',
+    title: 'Acquisition',
+    description: 'Due diligence verification of property status through coordinate charting and document verification',
+    icon: Shield,
+    component: AcquisitionSection,
+    color: 'bg-blue-500',
+    features: ['Coordinate Charting', 'Property Status Verification', 'Seller Document Verification', 'Due Diligence Report'],
+    comingSoon: false
+  },
   {
     id: 'survey-plan',
     title: 'Survey Plan',
     description: 'Process and file survey plans for land documentation',
     icon: FileText,
     component: SurveyPlanSection,
-    color: 'bg-blue-500',
-    features: ['Fresh Survey Processing', 'Existing Coordinates', 'Direct Verification', 'Point Retaking']
-  },
-  {
-    id: 'layout-survey',
-    title: 'Layout Survey',
-    description: 'Create and verify property layout surveys',
-    icon: Map,
-    component: LayoutSurveySection,
     color: 'bg-green-500',
-    features: ['Multi-plot Layouts', 'Zoning Compliance', 'Development Planning', 'Boundary Verification']
+    features: ['Fresh Survey Processing', 'Existing Coordinates', 'Direct Verification', 'Point Retaking'],
+    comingSoon: false
   },
   {
-    id: 'survey-chart',
-    title: 'Chart Survey',
-    description: 'Interactive survey charting with coordinate plotting',
-    icon: BarChart3,
-    component: SurveyChartSection,
+    id: 'title-document',
+    title: 'Title Document Processing',
+    description: 'Process title documents including Deem Grant, Governor\'s Consent, and Regularisation',
+    icon: Award,
+    component: TitleDocumentSection,
     color: 'bg-purple-500',
-    features: ['Interactive Mapping', 'Coordinate Plotting', 'Data Export', 'Point Management']
-  },
-  {
-    id: 'certificate-occupancy',
-    title: 'Certificate of Occupancy',
-    description: 'Building approval and occupancy certificates',
-    icon: Building,
-    component: CertificateOfOccupancySection,
-    color: 'bg-orange-500',
-    features: ['Coming Soon'],
-    comingSoon: true
-  },
-  {
-    id: 'gazette',
-    title: 'Gazette Services',
-    description: 'Legal publications and property notices',
-    icon: Newspaper,
-    component: GazetteSection,
-    color: 'bg-red-500',
-    features: ['Coming Soon'],
-    comingSoon: true
+    features: ['Deem Grant (Fresh C of O)', 'Governor\'s Consent', 'Regularisation', 'Land Information Processing'],
+    comingSoon: false
   }
 ];
 
