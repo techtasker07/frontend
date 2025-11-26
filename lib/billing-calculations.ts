@@ -203,6 +203,70 @@ const BASE_FEES = {
   }
 };
 
+// Due diligence fees for land information and charting
+const DUE_DILIGENCE_FEES = {
+  landInformation: {
+    individual: [
+      { min: 1, max: 1000, fee: 30000 },
+      { min: 1001, max: 2000, fee: 35000 },
+      { min: 2001, max: 3000, fee: 45000 },
+      { min: 3001, max: 4000, fee: 50000 },
+      { min: 4001, max: 5000, fee: 60000 },
+      { min: 5001, max: 10000, fee: 70000 }, // 5001 M2 - 1 Hectare
+      { min: 10001, max: 50000, fee: 80000 }, // 1 hectare - 5 hectares
+      { min: 50001, max: 100000, fee: 120000 }, // 5 hectares - 10 hectares
+      { min: 100001, max: 200000, fee: 160000 }, // 10 hectares - 20 hectares
+      { min: 200001, max: 300000, fee: 200000 }, // 20 hectares - 30 hectares
+      { min: 300001, max: 1000000, fee: 300000 }, // 30 hectares - 100 hectares
+      { min: 1000001, max: Infinity, fee: 500000 } // Above 100 hectares
+    ],
+    corporate: [
+      { min: 1, max: 1000, fee: 60000 },
+      { min: 1001, max: 2000, fee: 70000 },
+      { min: 2001, max: 3000, fee: 90000 },
+      { min: 3001, max: 4000, fee: 100000 },
+      { min: 4001, max: 5000, fee: 120000 },
+      { min: 5001, max: 10000, fee: 140000 }, // 5001 M2 - 1 Hectare
+      { min: 10001, max: 50000, fee: 160000 }, // 1 hectare - 5 hectares
+      { min: 50001, max: 100000, fee: 240000 }, // 5 hectares - 10 hectares
+      { min: 100001, max: 200000, fee: 320000 }, // 10 hectares - 20 hectares
+      { min: 200001, max: 300000, fee: 400000 }, // 20 hectares - 30 hectares
+      { min: 300001, max: 1000000, fee: 600000 }, // 30 hectares - 100 hectares
+      { min: 1000001, max: Infinity, fee: 1000000 } // Above 100 hectares
+    ]
+  },
+  chartingInformation: {
+    individual: [
+      { min: 1, max: 1000, fee: 15000 },
+      { min: 1001, max: 2000, fee: 17500 },
+      { min: 2001, max: 3000, fee: 22500 },
+      { min: 3001, max: 4000, fee: 25000 },
+      { min: 4001, max: 5000, fee: 30000 },
+      { min: 5001, max: 10000, fee: 35000 }, // 5001 M2 - 1 Hectare
+      { min: 10001, max: 50000, fee: 40000 }, // 1 hectare - 5 hectares
+      { min: 50001, max: 100000, fee: 60000 }, // 5 hectares - 10 hectares
+      { min: 100001, max: 200000, fee: 80000 }, // 10 hectares - 20 hectares
+      { min: 200001, max: 300000, fee: 100000 }, // 20 hectares - 30 hectares
+      { min: 300001, max: 1000000, fee: 150000 }, // 30 hectares - 100 hectares
+      { min: 1000001, max: Infinity, fee: 250000 } // Above 100 hectares
+    ],
+    corporate: [
+      { min: 1, max: 1000, fee: 30000 },
+      { min: 1001, max: 2000, fee: 35000 },
+      { min: 2001, max: 3000, fee: 45000 },
+      { min: 3001, max: 4000, fee: 50000 },
+      { min: 4001, max: 5000, fee: 60000 },
+      { min: 5001, max: 10000, fee: 70000 }, // 5001 M2 - 1 Hectare
+      { min: 10001, max: 50000, fee: 80000 }, // 1 hectare - 5 hectares
+      { min: 50001, max: 100000, fee: 120000 }, // 5 hectares - 10 hectares
+      { min: 100001, max: 200000, fee: 160000 }, // 10 hectares - 20 hectares
+      { min: 200001, max: 300000, fee: 200000 }, // 20 hectares - 30 hectares
+      { min: 300001, max: 1000000, fee: 300000 }, // 30 hectares - 100 hectares
+      { min: 1000001, max: Infinity, fee: 500000 } // Above 100 hectares
+    ]
+  }
+};
+
 // Tax rate (13% VAT in Nigeria)
 const TAX_RATE = 0.13;
 
@@ -490,7 +554,8 @@ export class BillingCalculator {
     }
 
     // Calculate service charge (20,000 per 600 sq m) - not visible to user
-    const serviceCharge = Math.ceil(plotSizeSqm / 600) * 20000;
+    // Note: Service charge is not added for survey-plan to ensure total matches displayed items
+    const serviceCharge = request.surveyType !== 'survey-plan' ? Math.ceil(plotSizeSqm / 600) * 20000 : 0;
     subtotal += serviceCharge;
 
     // Apply commercial/industrial multiplier
@@ -541,10 +606,11 @@ export class BillingCalculator {
         // Handle service subtypes for layout survey
         let serviceDescription = `Layout Survey Fee - ${plotCount} plots (${(percentage * 100).toFixed(0)}% of base fee)`;
         if (request.serviceSubtype === 'fresh-survey') {
-          finalSurveyFee += 40000; // Coordinates picking cost
+          const coordinatesPickingFee = this.calculateCoordinatesPickingFee(baseFee);
+          finalSurveyFee += coordinatesPickingFee; // Coordinates picking cost
           items.push({
             description: 'Coordinates Picking Service',
-            amount: 40000
+            amount: coordinatesPickingFee
           });
           serviceDescription = `Fresh Layout Survey Processing - ${plotCount} plots`;
         } else if (request.serviceSubtype === 'existing-coordinates') {
@@ -566,29 +632,41 @@ export class BillingCalculator {
 
         // Handle service subtypes for survey plan
         if (request.serviceSubtype === 'fresh-survey') {
-          finalSurveyFee += 40000; // Coordinates picking cost
+          // Add 29% fee (24% affiliate + 5% service charge) to the survey fee for fresh survey
+          const freshSurveyFeeWithMarkup = surveyFee + Math.round(surveyFee * 0.29);
+          const coordinatesPickingFee = this.calculateCoordinatesPickingFee(baseFee);
+          finalSurveyFee = freshSurveyFeeWithMarkup + coordinatesPickingFee; // Coordinates picking cost
           items.push({
             description: 'Coordinates Picking Service',
-            amount: 40000
+            amount: coordinatesPickingFee
           });
           items.push({
             description: 'Fresh Survey Plan Processing - ' + zone.name,
-            amount: surveyFee
+            amount: freshSurveyFeeWithMarkup
           });
         } else if (request.serviceSubtype === 'existing-coordinates') {
+          finalSurveyFee = surveyFee + Math.round(surveyFee * 0.29);
           items.push({
             description: 'Survey Plan Processing with Existing Coordinates - ' + zone.name,
             amount: finalSurveyFee
           });
         } else if (request.serviceSubtype === 'direct-verification') {
+          finalSurveyFee = 10000;
           items.push({
             description: 'Survey Plan Direct Verification - ' + zone.name,
             amount: finalSurveyFee
           });
         } else if (request.serviceSubtype === 'retaking-points') {
+          finalSurveyFee = 10000;
+          const coordinatesPickingFee = this.calculateCoordinatesPickingFee(baseFee);
+          finalSurveyFee += coordinatesPickingFee;
+          items.push({
+            description: 'Coordinates Picking Service',
+            amount: coordinatesPickingFee
+          });
           items.push({
             description: 'Survey Plan Verification by Retaking Points - ' + zone.name,
-            amount: finalSurveyFee
+            amount: 10000
           });
         } else {
           items.push({
@@ -638,13 +716,22 @@ export class BillingCalculator {
 
     subtotal += finalSurveyFee;
 
-    // Mandatory payment (80% of minimum survey fee)
-    const mandatoryPayment = baseFee * 0.8;
-    items.push({
-      description: 'Mandatory Payment',
-      amount: mandatoryPayment
-    });
-    subtotal += mandatoryPayment;
+    // Add 29% fee (24% affiliate + 5% service charge) of minimum survey fee for non-fresh survey types
+    if (request.serviceSubtype !== 'fresh-survey' && request.serviceSubtype !== 'existing-coordinates' && request.serviceSubtype !== 'direct-verification' && request.serviceSubtype !== 'retaking-points') {
+      const additionalFee = Math.round(baseFee * 0.29);
+      subtotal += additionalFee;
+    }
+
+    // For survey-plan, return total without tax to match displayed items
+    if (request.surveyType === 'survey-plan') {
+      return {
+        items,
+        subtotal,
+        tax: 0,
+        total: subtotal,
+        currency: 'NGN'
+      };
+    }
 
     return this.calculateTotal(items, subtotal);
   }
@@ -662,6 +749,58 @@ export class BillingCalculator {
       }
     }
     return null;
+  }
+
+  // Calculate due diligence fees for acquisition services
+  static calculateDueDiligenceFee(
+    landAreaSqm: number,
+    clientType: 'individual' | 'corporate'
+  ): BillingBreakdown {
+    const items: BillingItem[] = [];
+    let subtotal = 0;
+
+    // Find base land information fee
+    let landInfoFee = 0;
+    for (const feeRange of DUE_DILIGENCE_FEES.landInformation[clientType]) {
+      if (landAreaSqm >= feeRange.min && landAreaSqm <= feeRange.max) {
+        landInfoFee = feeRange.fee;
+        break;
+      }
+    }
+
+    // Find base charting information fee
+    let chartingFee = 0;
+    for (const feeRange of DUE_DILIGENCE_FEES.chartingInformation[clientType]) {
+      if (landAreaSqm >= feeRange.min && landAreaSqm <= feeRange.max) {
+        chartingFee = feeRange.fee;
+        break;
+      }
+    }
+
+    // Apply markup to individual fees: Service charge (10%) + Affiliate charges (23%) = 33% total markup
+    const markupMultiplier = 1 + 0.10 + 0.23; // 1.33
+    const markedUpLandInfoFee = Math.round(landInfoFee * markupMultiplier);
+    const markedUpChartingFee = Math.round(chartingFee * markupMultiplier);
+
+    items.push({
+      description: `Land Information Fee (${clientType.charAt(0).toUpperCase() + clientType.slice(1)})`,
+      amount: markedUpLandInfoFee
+    });
+    subtotal += markedUpLandInfoFee;
+
+    items.push({
+      description: `Charting Information Fee (${clientType.charAt(0).toUpperCase() + clientType.slice(1)})`,
+      amount: markedUpChartingFee
+    });
+    subtotal += markedUpChartingFee;
+
+    return this.calculateTotal(items, subtotal);
+  }
+
+  // Calculate coordinates picking fee: 9.4% of minimum fee, rounded up to nearest 10,000
+  static calculateCoordinatesPickingFee(minimumFee: number): number {
+    const percentageFee = minimumFee * 0.094;
+    return Math.ceil(percentageFee / 10000) * 10000;
   }
 
   // Format currency for display

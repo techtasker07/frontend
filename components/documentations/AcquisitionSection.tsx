@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { FileText, Upload, CheckCircle, AlertCircle, Info, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
+import { BillingCalculator } from '@/lib/billing-calculations';
 
 interface AcquisitionFormData {
   // Applicant Information
@@ -19,6 +21,8 @@ interface AcquisitionFormData {
   // Property Information
   propertyAddress: string;
   coordinates: string;
+  landArea: string; // in square meters
+  clientType: 'individual' | 'corporate';
 
   // Seller Information
   sellerName: string;
@@ -37,6 +41,8 @@ const initialFormData: AcquisitionFormData = {
   applicantPhone: '',
   propertyAddress: '',
   coordinates: '',
+  landArea: '',
+  clientType: 'individual',
   sellerName: '',
   sellerContact: '',
   description: '',
@@ -45,6 +51,7 @@ const initialFormData: AcquisitionFormData = {
 
 export function AcquisitionSection() {
   const [formData, setFormData] = useState<AcquisitionFormData>(initialFormData);
+  const [billingBreakdown, setBillingBreakdown] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
@@ -66,13 +73,31 @@ export function AcquisitionSection() {
     }));
   };
 
-  const handleSubmit = async () => {
-    if (formData.documents.length === 0) {
-      toast.error('Please upload at least one document');
-      return;
-    }
+  // Check if property information is filled
+  const isPropertyInfoFilled = formData.propertyAddress && formData.coordinates && formData.landArea && formData.clientType;
 
-    if (!formData.applicantName || !formData.propertyAddress || !formData.coordinates) {
+  // Calculate billing when form data changes
+  useEffect(() => {
+    if (formData.landArea && formData.clientType && isPropertyInfoFilled) {
+      try {
+        const landArea = parseFloat(formData.landArea);
+        if (!isNaN(landArea) && landArea > 0) {
+          const breakdown = BillingCalculator.calculateDueDiligenceFee(landArea, formData.clientType);
+          setBillingBreakdown(breakdown);
+        } else {
+          setBillingBreakdown(null);
+        }
+      } catch (error) {
+        console.error('Error calculating fees:', error);
+        setBillingBreakdown(null);
+      }
+    } else {
+      setBillingBreakdown(null);
+    }
+  }, [formData.landArea, formData.clientType, isPropertyInfoFilled]);
+
+  const handleSubmit = async () => {
+    if (!formData.applicantName || !formData.propertyAddress || !formData.coordinates || !formData.landArea || !formData.clientType) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -100,7 +125,7 @@ export function AcquisitionSection() {
   return (
     <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
       {/* Main Content */}
-      <div className="flex-1 order-1 lg:order-2">
+      <div className="flex-1 order-2 lg:order-2">
         <Card>
           <CardHeader>
             <CardTitle>Acquisition Due Diligence Application</CardTitle>
@@ -129,6 +154,71 @@ export function AcquisitionSection() {
                 </p>
               </div>
             )}
+
+            <Separator />
+
+            {/* Service Type Selection */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Service Type</h3>
+              <div className="space-y-2">
+                <Label>Select the type of acquisition service you need *</Label>
+                <Select
+                  value={formData.clientType}
+                  onValueChange={(value: any) => handleInputChange('clientType', value)}
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose service type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="individual">Individual Due Diligence</SelectItem>
+                    <SelectItem value="corporate">Corporate Due Diligence</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Property Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Property Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="propertyAddress">Property Address *</Label>
+                  <Input
+                    id="propertyAddress"
+                    value={formData.propertyAddress}
+                    onChange={(e) => handleInputChange('propertyAddress', e.target.value)}
+                    placeholder="Enter full property address"
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="coordinates">Property Coordinates *</Label>
+                  <Input
+                    id="coordinates"
+                    value={formData.coordinates}
+                    onChange={(e) => handleInputChange('coordinates', e.target.value)}
+                    placeholder="Enter property coordinates"
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="landArea">Land Area (sqm) *</Label>
+                  <Input
+                    id="landArea"
+                    type="number"
+                    value={formData.landArea}
+                    onChange={(e) => handleInputChange('landArea', e.target.value)}
+                    placeholder="e.g., 500"
+                    disabled={isSubmitting}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Separator />
 
             {/* Applicant Information */}
             <div className="space-y-4">
@@ -170,35 +260,6 @@ export function AcquisitionSection() {
 
             <Separator />
 
-            {/* Property Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Property Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="propertyAddress">Property Address *</Label>
-                  <Input
-                    id="propertyAddress"
-                    value={formData.propertyAddress}
-                    onChange={(e) => handleInputChange('propertyAddress', e.target.value)}
-                    placeholder="Enter full property address"
-                    disabled={isSubmitting}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="coordinates">Property Coordinates *</Label>
-                  <Input
-                    id="coordinates"
-                    value={formData.coordinates}
-                    onChange={(e) => handleInputChange('coordinates', e.target.value)}
-                    placeholder="Enter property coordinates"
-                    disabled={isSubmitting}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
             {/* Seller Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Seller Information</h3>
@@ -228,46 +289,6 @@ export function AcquisitionSection() {
 
             <Separator />
 
-            {/* Document Upload */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Document Upload</h3>
-              <div className="space-y-2">
-                <Label htmlFor="documents">Upload Documents *</Label>
-                <Input
-                  id="documents"
-                  type="file"
-                  multiple
-                  onChange={handleFileSelect}
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                  disabled={isSubmitting}
-                />
-                <p className="text-xs text-gray-500">
-                  Upload property documents, seller documents, etc.
-                </p>
-                {formData.documents.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">Uploaded Documents:</p>
-                    {formData.documents.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                        <span className="text-sm">{file.name}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeDocument(index)}
-                          disabled={isSubmitting}
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <Separator />
-
             {/* Additional Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Additional Information</h3>
@@ -290,7 +311,7 @@ export function AcquisitionSection() {
             <div className="flex justify-end">
               <Button
                 onClick={handleSubmit}
-                disabled={isSubmitting || formData.documents.length === 0}
+                disabled={isSubmitting}
                 className="min-w-32"
               >
                 {isSubmitting ? 'Submitting...' : 'Submit Application'}
@@ -300,32 +321,53 @@ export function AcquisitionSection() {
         </Card>
       </div>
 
-      {/* Sidebar - Info */}
-      <div className="w-full lg:w-80 flex-shrink-0 order-2 lg:order-1">
+      {/* Sidebar - Fee Calculation */}
+      <div className="w-full lg:w-80 flex-shrink-0 order-1 lg:order-1">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Info className="h-5 w-5" />
-              Service Information
+              <Calculator className="h-5 w-5" />
+              Fee Calculation
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">What we do:</h4>
-              <div className="text-xs space-y-1 text-gray-600">
-                <div>• Chart property coordinates</div>
-                <div>• Verify property status</div>
-                <div>• Review seller documents</div>
-                <div>• Provide due diligence report</div>
-              </div>
-            </div>
+            {isPropertyInfoFilled ? (
+              billingBreakdown ? (
+                <div className="space-y-3">
+                  <div className="text-sm space-y-2">
+                    {billingBreakdown.items.map((item: any, index: number) => (
+                      <div key={index} className="flex justify-between">
+                        <span className="text-gray-600">{item.description}:</span>
+                        <span className="font-medium">{BillingCalculator.formatCurrency(item.amount)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between font-semibold">
+                    <span>Total:</span>
+                    <span>{BillingCalculator.formatCurrency(billingBreakdown.subtotal)}</span>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  Fill in land area and client type to see fee calculation
+                </p>
+              )
+            ) : (
+              <p className="text-sm text-gray-500">
+                Complete the Property Information section to view fee calculation
+              </p>
+            )}
 
             <Separator />
 
             <div className="space-y-2">
-              <h4 className="font-medium text-sm">Processing Time</h4>
-              <div className="text-xs text-gray-600">
-                2-3 weeks from submission
+              <h4 className="font-medium text-sm">Service Information</h4>
+              <div className="text-xs space-y-1 text-gray-600">
+                <div>• Document verification</div>
+                <div>• Coordinate charting</div>
+                <div>• Due diligence report</div>
+                <div>• Processing: 2-3 weeks</div>
               </div>
             </div>
           </CardContent>

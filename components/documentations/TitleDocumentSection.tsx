@@ -112,7 +112,7 @@ export function TitleDocumentSection() {
   return (
     <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
       {/* Main Content */}
-      <div className="flex-1 order-1 lg:order-2">
+      <div className="flex-1 order-2 lg:order-2">
         <Card>
           <CardHeader>
             <CardTitle>Title Document Processing Application</CardTitle>
@@ -141,6 +141,57 @@ export function TitleDocumentSection() {
                 </p>
               </div>
             )}
+
+            {/* Property Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Property Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="propertyAddress">Property Address *</Label>
+                  <Input
+                    id="propertyAddress"
+                    value={formData.propertyAddress}
+                    onChange={(e) => handleInputChange('propertyAddress', e.target.value)}
+                    placeholder="Enter full property address"
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="state">State *</Label>
+                  <Select
+                    value={formData.state}
+                    onValueChange={(value) => handleInputChange('state', value)}
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select state" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Lagos">Lagos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lga">Local Government Area *</Label>
+                  <Select
+                    value={formData.lga}
+                    onValueChange={(value) => handleInputChange('lga', value)}
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select LGA" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LAGOS_LGAS.map((lga) => (
+                        <SelectItem key={lga} value={lga}>{lga}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
 
             {/* Document Type Selection */}
             <div className="space-y-4">
@@ -200,57 +251,6 @@ export function TitleDocumentSection() {
                     placeholder="+234 xxx xxx xxxx"
                     disabled={isSubmitting}
                   />
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Property Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Property Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="propertyAddress">Property Address *</Label>
-                  <Input
-                    id="propertyAddress"
-                    value={formData.propertyAddress}
-                    onChange={(e) => handleInputChange('propertyAddress', e.target.value)}
-                    placeholder="Enter full property address"
-                    disabled={isSubmitting}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="state">State *</Label>
-                  <Select
-                    value={formData.state}
-                    onValueChange={(value) => handleInputChange('state', value)}
-                    disabled={isSubmitting}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select state" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Lagos">Lagos</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lga">Local Government Area *</Label>
-                  <Select
-                    value={formData.lga}
-                    onValueChange={(value) => handleInputChange('lga', value)}
-                    disabled={isSubmitting}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select LGA" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {LAGOS_LGAS.map((lga) => (
-                        <SelectItem key={lga} value={lga}>{lga}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
             </div>

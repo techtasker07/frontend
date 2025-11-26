@@ -229,7 +229,7 @@ export function SurveyChartSection() {
   return (
     <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
       {/* Main Content */}
-      <div className="flex-1 space-y-4 lg:space-y-6 order-1 lg:order-2">
+      <div className="flex-1 space-y-4 lg:space-y-6 order-2 lg:order-2">
         {/* Survey Information */}
         <Card>
           <CardHeader>

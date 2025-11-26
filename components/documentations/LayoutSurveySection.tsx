@@ -113,9 +113,12 @@ export function LayoutSurveySection() {
     }));
   };
 
+  // Check if property information is filled
+  const isPropertyInfoFilled = formData.propertyAddress && formData.state && formData.lga && formData.plotSize && formData.plotCount && formData.titleType;
+
   // Calculate billing when form data changes
   useEffect(() => {
-    if (formData.plotSize && formData.lga && formData.plotCount) {
+    if (formData.plotSize && formData.lga && formData.plotCount && isPropertyInfoFilled) {
       try {
         const zone = BillingCalculator.getZoneByLGA(formData.lga);
         if (zone) {
@@ -140,14 +143,9 @@ export function LayoutSurveySection() {
     } else {
       setBillingBreakdown(null);
     }
-  }, [formData.plotSize, formData.lga, formData.plotCount, formData.serviceType, formData.titleType]);
+  }, [formData.plotSize, formData.lga, formData.plotCount, formData.serviceType, formData.titleType, isPropertyInfoFilled]);
 
   const handleSubmit = async () => {
-    if (formData.documents.length === 0) {
-      toast.error('Please upload at least one document');
-      return;
-    }
-
     if (!formData.applicantName || !formData.propertyAddress || !formData.lga || !formData.plotSize || !formData.plotCount) {
       toast.error('Please fill in all required fields');
       return;
@@ -178,7 +176,7 @@ export function LayoutSurveySection() {
   return (
     <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
       {/* Main Content */}
-      <div className="flex-1 order-1 lg:order-2">
+      <div className="flex-1 order-2 lg:order-2">
         <Card>
           <CardHeader>
             <CardTitle>Layout Survey Application</CardTitle>
@@ -208,6 +206,8 @@ export function LayoutSurveySection() {
               </div>
             )}
 
+            <Separator />
+
             {/* Service Type Selection */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Service Type</h3>
@@ -228,46 +228,6 @@ export function LayoutSurveySection() {
                     <SelectItem value="retaking-points">Verify Layout Survey (Retaking Survey Points)</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Applicant Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Applicant Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="applicantName">Full Name *</Label>
-                  <Input
-                    id="applicantName"
-                    value={formData.applicantName}
-                    onChange={(e) => handleInputChange('applicantName', e.target.value)}
-                    placeholder="Enter your full name"
-                    disabled={isSubmitting}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="applicantEmail">Email Address</Label>
-                  <Input
-                    id="applicantEmail"
-                    type="email"
-                    value={formData.applicantEmail}
-                    onChange={(e) => handleInputChange('applicantEmail', e.target.value)}
-                    placeholder="your@email.com"
-                    disabled={isSubmitting}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="applicantPhone">Phone Number</Label>
-                  <Input
-                    id="applicantPhone"
-                    value={formData.applicantPhone}
-                    onChange={(e) => handleInputChange('applicantPhone', e.target.value)}
-                    placeholder="+234 xxx xxx xxxx"
-                    disabled={isSubmitting}
-                  />
-                </div>
               </div>
             </div>
 
@@ -357,6 +317,46 @@ export function LayoutSurveySection() {
                       <SelectItem value="industrial">Industrial</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Applicant Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Applicant Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="applicantName">Full Name *</Label>
+                  <Input
+                    id="applicantName"
+                    value={formData.applicantName}
+                    onChange={(e) => handleInputChange('applicantName', e.target.value)}
+                    placeholder="Enter your full name"
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="applicantEmail">Email Address</Label>
+                  <Input
+                    id="applicantEmail"
+                    type="email"
+                    value={formData.applicantEmail}
+                    onChange={(e) => handleInputChange('applicantEmail', e.target.value)}
+                    placeholder="your@email.com"
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="applicantPhone">Phone Number</Label>
+                  <Input
+                    id="applicantPhone"
+                    value={formData.applicantPhone}
+                    onChange={(e) => handleInputChange('applicantPhone', e.target.value)}
+                    placeholder="+234 xxx xxx xxxx"
+                    disabled={isSubmitting}
+                  />
                 </div>
               </div>
             </div>
@@ -524,46 +524,6 @@ export function LayoutSurveySection() {
 
             <Separator />
 
-            {/* Document Upload */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Document Upload</h3>
-              <div className="space-y-2">
-                <Label htmlFor="documents">Upload Documents *</Label>
-                <Input
-                  id="documents"
-                  type="file"
-                  multiple
-                  onChange={handleFileSelect}
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                  disabled={isSubmitting}
-                />
-                <p className="text-xs text-gray-500">
-                  Accepted formats: PDF, JPG, JPEG, PNG, DOC, DOCX. Maximum file size: 10MB each.
-                </p>
-                {formData.documents.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">Uploaded Documents:</p>
-                    {formData.documents.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                        <span className="text-sm">{file.name}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeDocument(index)}
-                          disabled={isSubmitting}
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <Separator />
-
             {/* Additional Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Additional Information</h3>
@@ -586,7 +546,7 @@ export function LayoutSurveySection() {
             <div className="flex justify-end">
               <Button
                 onClick={handleSubmit}
-                disabled={isSubmitting || formData.documents.length === 0}
+                disabled={isSubmitting}
                 className="min-w-32"
               >
                 {isSubmitting ? 'Submitting...' : 'Submit Application'}
@@ -597,7 +557,7 @@ export function LayoutSurveySection() {
       </div>
 
       {/* Sidebar - Fee Calculation & Info */}
-      <div className="w-full lg:w-80 flex-shrink-0 order-2 lg:order-1">
+      <div className="w-full lg:w-80 flex-shrink-0 order-1 lg:order-1">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -606,39 +566,33 @@ export function LayoutSurveySection() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {billingBreakdown ? (
-              <div className="space-y-3">
-                <div className="text-sm space-y-2">
-                  {billingBreakdown.items.map((item: any, index: number) => (
-                    <div key={index} className="flex justify-between">
-                      <span className="text-gray-600">{item.description}:</span>
-                      <span className="font-medium">{BillingCalculator.formatCurrency(item.amount)}</span>
-                    </div>
-                  ))}
+            {isPropertyInfoFilled ? (
+              billingBreakdown ? (
+                <div className="space-y-3">
+                  <div className="text-sm space-y-2">
+                    {billingBreakdown.items.map((item: any, index: number) => (
+                      <div key={index} className="flex justify-between">
+                        <span className="text-gray-600">{item.description}:</span>
+                        <span className="font-medium">{BillingCalculator.formatCurrency(item.amount)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between font-semibold">
+                    <span>Total:</span>
+                    <span>{BillingCalculator.formatCurrency(billingBreakdown.total)}</span>
+                  </div>
                 </div>
-                <Separator />
-                <div className="flex justify-between font-semibold">
-                  <span>Total:</span>
-                  <span>{BillingCalculator.formatCurrency(billingBreakdown.total)}</span>
-                </div>
-              </div>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  Fill in plot size, LGA, and plot count to see fee calculation
+                </p>
+              )
             ) : (
               <p className="text-sm text-gray-500">
-                Fill in plot size, LGA, and plot count to see fee calculation
+                Complete the Property Information section to view fee calculation
               </p>
             )}
-
-            <Separator />
-
-            <div className="space-y-2">
-              <h4 className="font-medium text-sm">Service Types</h4>
-              <div className="text-xs space-y-1 text-gray-600">
-                <div><strong>Fresh Survey:</strong> New layout with coordinates</div>
-                <div><strong>Existing Coordinates:</strong> Use your survey points</div>
-                <div><strong>Direct Verification:</strong> Verify existing layout</div>
-                <div><strong>Retaking Points:</strong> Field verification</div>
-              </div>
-            </div>
 
             <Separator />
 

@@ -23,7 +23,6 @@ interface SurveyPlanFormData {
   applicantPhone: string;
 
   // Property Information
-  propertyAddress: string;
   state: string;
   lga: string;
   plotSize: string;
@@ -38,6 +37,8 @@ interface SurveyPlanFormData {
   // Survey Information (for verification)
   existingSurveyNumber?: string;
   surveyDate?: string;
+  surveyorName?: string;
+  surveyorContact?: string;
 
   // Documents
   documents: File[];
@@ -51,7 +52,6 @@ const initialFormData: SurveyPlanFormData = {
   applicantName: '',
   applicantEmail: '',
   applicantPhone: '',
-  propertyAddress: '',
   state: '',
   lga: '',
   plotSize: '',
@@ -95,9 +95,12 @@ export function SurveyPlanSection() {
     }));
   };
 
+  // Check if property information is filled
+  const isPropertyInfoFilled = formData.state && formData.lga && formData.plotSize && formData.titleType;
+
   // Calculate billing when form data changes
   useEffect(() => {
-    if (formData.plotSize && formData.lga) {
+    if (formData.plotSize && formData.lga && isPropertyInfoFilled) {
       try {
         const zone = BillingCalculator.getZoneByLGA(formData.lga);
         if (zone) {
@@ -120,15 +123,10 @@ export function SurveyPlanSection() {
     } else {
       setBillingBreakdown(null);
     }
-  }, [formData.plotSize, formData.lga, formData.serviceType, formData.titleType]);
+  }, [formData.plotSize, formData.lga, formData.serviceType, formData.titleType, isPropertyInfoFilled]);
 
   const handleSubmit = async () => {
-    if (formData.documents.length === 0) {
-      toast.error('Please upload at least one document');
-      return;
-    }
-
-    if (!formData.applicantName || !formData.propertyAddress || !formData.lga || !formData.plotSize) {
+    if (!formData.applicantName || !formData.lga || !formData.plotSize) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -158,7 +156,7 @@ export function SurveyPlanSection() {
   return (
     <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
       {/* Main Content */}
-      <div className="flex-1 order-1 lg:order-2">
+      <div className="flex-1 order-2 lg:order-2">
         <Card>
           <CardHeader>
             <CardTitle>Survey Plan Application</CardTitle>
@@ -188,6 +186,8 @@ export function SurveyPlanSection() {
               </div>
             )}
 
+            <Separator />
+
             {/* Service Type Selection */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Service Type</h3>
@@ -208,6 +208,75 @@ export function SurveyPlanSection() {
                     <SelectItem value="retaking-points">Verify Survey (Retaking Survey Points)</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Property Information */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Property Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="state">State *</Label>
+                  <Select
+                    value={formData.state}
+                    onValueChange={(value) => handleInputChange('state', value)}
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select state" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Lagos">Lagos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lga">Local Government Area *</Label>
+                  <Select
+                    value={formData.lga}
+                    onValueChange={(value) => handleInputChange('lga', value)}
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select LGA" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-48 overflow-y-auto">
+                      {LAGOS_LGAS.map((lga) => (
+                        <SelectItem key={lga} value={lga}>{lga}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="plotSize">Plot Size (sqm) *</Label>
+                  <Input
+                    id="plotSize"
+                    type="number"
+                    value={formData.plotSize}
+                    onChange={(e) => handleInputChange('plotSize', e.target.value)}
+                    placeholder="e.g., 500"
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="titleType">Title Type *</Label>
+                  <Select
+                    value={formData.titleType}
+                    onValueChange={(value: any) => handleInputChange('titleType', value)}
+                    disabled={isSubmitting}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select title type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="private">Private</SelectItem>
+                      <SelectItem value="commercial">Commercial</SelectItem>
+                      <SelectItem value="industrial">Industrial</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
@@ -247,85 +316,6 @@ export function SurveyPlanSection() {
                     placeholder="+234 xxx xxx xxxx"
                     disabled={isSubmitting}
                   />
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Property Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Property Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="propertyAddress">Property Address *</Label>
-                  <Input
-                    id="propertyAddress"
-                    value={formData.propertyAddress}
-                    onChange={(e) => handleInputChange('propertyAddress', e.target.value)}
-                    placeholder="Enter full property address"
-                    disabled={isSubmitting}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="state">State *</Label>
-                  <Select
-                    value={formData.state}
-                    onValueChange={(value) => handleInputChange('state', value)}
-                    disabled={isSubmitting}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select state" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Lagos">Lagos</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lga">Local Government Area *</Label>
-                  <Select
-                    value={formData.lga}
-                    onValueChange={(value) => handleInputChange('lga', value)}
-                    disabled={isSubmitting}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select LGA" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {LAGOS_LGAS.map((lga) => (
-                        <SelectItem key={lga} value={lga}>{lga}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="plotSize">Plot Size (sqm) *</Label>
-                  <Input
-                    id="plotSize"
-                    type="number"
-                    value={formData.plotSize}
-                    onChange={(e) => handleInputChange('plotSize', e.target.value)}
-                    placeholder="e.g., 500"
-                    disabled={isSubmitting}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="titleType">Title Type *</Label>
-                  <Select
-                    value={formData.titleType}
-                    onValueChange={(value: any) => handleInputChange('titleType', value)}
-                    disabled={isSubmitting}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select title type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="private">Private</SelectItem>
-                      <SelectItem value="commercial">Commercial</SelectItem>
-                      <SelectItem value="industrial">Industrial</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
             </div>
@@ -396,50 +386,30 @@ export function SurveyPlanSection() {
                         disabled={isSubmitting}
                       />
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="surveyorName">Surveyor's Name</Label>
+                      <Input
+                        id="surveyorName"
+                        value={formData.surveyorName || ''}
+                        onChange={(e) => handleInputChange('surveyorName', e.target.value)}
+                        placeholder="Name of the surveyor"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="surveyorContact">Surveyor's Contact</Label>
+                      <Input
+                        id="surveyorContact"
+                        value={formData.surveyorContact || ''}
+                        onChange={(e) => handleInputChange('surveyorContact', e.target.value)}
+                        placeholder="Phone or email"
+                        disabled={isSubmitting}
+                      />
+                    </div>
                   </div>
                 </div>
               </>
             )}
-
-            <Separator />
-
-            {/* Document Upload */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Document Upload</h3>
-              <div className="space-y-2">
-                <Label htmlFor="documents">Upload Documents *</Label>
-                <Input
-                  id="documents"
-                  type="file"
-                  multiple
-                  onChange={handleFileSelect}
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                  disabled={isSubmitting}
-                />
-                <p className="text-xs text-gray-500">
-                  Accepted formats: PDF, JPG, JPEG, PNG, DOC, DOCX. Maximum file size: 10MB each.
-                </p>
-                {formData.documents.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">Uploaded Documents:</p>
-                    {formData.documents.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                        <span className="text-sm">{file.name}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeDocument(index)}
-                          disabled={isSubmitting}
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
 
             <Separator />
 
@@ -465,7 +435,7 @@ export function SurveyPlanSection() {
             <div className="flex justify-end">
               <Button
                 onClick={handleSubmit}
-                disabled={isSubmitting || formData.documents.length === 0}
+                disabled={isSubmitting}
                 className="min-w-32"
               >
                 {isSubmitting ? 'Submitting...' : 'Submit Application'}
@@ -476,7 +446,7 @@ export function SurveyPlanSection() {
       </div>
 
       {/* Sidebar - Fee Calculation & Info */}
-      <div className="w-full lg:w-80 flex-shrink-0 order-2 lg:order-1">
+      <div className="w-full lg:w-80 flex-shrink-0 order-1 lg:order-1">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -485,48 +455,41 @@ export function SurveyPlanSection() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {billingBreakdown ? (
-              <div className="space-y-3">
-                <div className="text-sm space-y-2">
-                  {billingBreakdown.items.map((item: any, index: number) => (
-                    <div key={index} className="flex justify-between">
-                      <span className="text-gray-600">{item.description}:</span>
-                      <span className="font-medium">{BillingCalculator.formatCurrency(item.amount)}</span>
-                    </div>
-                  ))}
+            {isPropertyInfoFilled ? (
+              billingBreakdown ? (
+                <div className="space-y-3">
+                  <div className="text-sm space-y-2">
+                    {billingBreakdown.items.map((item: any, index: number) => (
+                      <div key={index} className="flex justify-between">
+                        <span className="text-gray-600">{item.description}:</span>
+                        <span className="font-medium">{BillingCalculator.formatCurrency(item.amount)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between font-semibold">
+                    <span>Total:</span>
+                    <span>{BillingCalculator.formatCurrency(billingBreakdown.total)}</span>
+                  </div>
                 </div>
-                <Separator />
-                <div className="flex justify-between font-semibold">
-                  <span>Total:</span>
-                  <span>{BillingCalculator.formatCurrency(billingBreakdown.total)}</span>
-                </div>
-              </div>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  Fill in plot size and LGA to see fee calculation
+                </p>
+              )
             ) : (
               <p className="text-sm text-gray-500">
-                Fill in plot size and LGA to see fee calculation
+                Complete the Property Information section to view fee calculation
               </p>
             )}
 
             <Separator />
 
             <div className="space-y-2">
-              <h4 className="font-medium text-sm">Service Types</h4>
-              <div className="text-xs space-y-1 text-gray-600">
-                <div><strong>Fresh Survey:</strong> New survey with coordinates</div>
-                <div><strong>Existing Coordinates:</strong> Use your survey points</div>
-                <div><strong>Direct Verification:</strong> Verify existing survey</div>
-                <div><strong>Retaking Points:</strong> Field verification</div>
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-2">
               <h4 className="font-medium text-sm">Processing Time</h4>
               <div className="text-xs text-gray-600 space-y-1">
-                <div><strong>Fresh Survey:</strong> 3-4 months from point picking</div>
-                <div><strong>Existing Coordinates:</strong> 3-4 months from submission</div>
-                <div><strong>Verification:</strong> 1 month</div>
+                <div><strong>Survey Plan Processing:</strong> {formData.serviceType === 'direct-verification' ? '1 week' : '1-2 weeks'}</div>
+                <div><strong>Record Copy Submission:</strong> Up to 3 months</div>
               </div>
             </div>
           </CardContent>
