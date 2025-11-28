@@ -84,15 +84,31 @@ CREATE TABLE IF NOT EXISTS public.prospect_properties (
 
 -- Create property_prospects table (investment ideas for prospect properties)
 CREATE TABLE IF NOT EXISTS public.property_prospects (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  prospect_property_id UUID REFERENCES public.prospect_properties(id) ON DELETE CASCADE NOT NULL,
-  title TEXT NOT NULL,
-  description TEXT NOT NULL,
-  estimated_cost NUMERIC(12,2) NOT NULL,
-  total_cost NUMERIC(12,2) NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
-);
+   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+   prospect_property_id UUID REFERENCES public.prospect_properties(id) ON DELETE CASCADE NOT NULL,
+   title TEXT NOT NULL,
+   description TEXT NOT NULL,
+   estimated_cost NUMERIC(12,2) NOT NULL,
+   total_cost NUMERIC(12,2) NOT NULL,
+   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+ );
+
+-- Create notifications table
+CREATE TABLE IF NOT EXISTS public.notifications (
+   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+   user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+   type TEXT NOT NULL CHECK (type IN ('property', 'voting', 'ai_prospect', 'social', 'system', 'security', 'rees_party')),
+   title TEXT NOT NULL,
+   message TEXT NOT NULL,
+   timestamp TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+   read BOOLEAN DEFAULT false NOT NULL,
+   priority TEXT DEFAULT 'medium' CHECK (priority IN ('high', 'medium', 'low')),
+   action_url TEXT,
+   action_text TEXT,
+   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+ );
 
 -- Enable Row Level Security on all tables
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -103,6 +119,7 @@ ALTER TABLE public.property_images ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.prospect_properties ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.property_prospects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS Policies
 
@@ -189,10 +206,23 @@ CREATE POLICY "Authenticated users can insert prospect properties" ON public.pro
 
 -- Property prospects policies
 CREATE POLICY "Anyone can view property prospects" ON public.property_prospects
-  FOR SELECT USING (true);
+   FOR SELECT USING (true);
 
 CREATE POLICY "Authenticated users can insert property prospects" ON public.property_prospects
-  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+   FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+-- Notifications policies
+CREATE POLICY "Users can view their own notifications" ON public.notifications
+   FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert notifications for themselves" ON public.notifications
+   FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own notifications" ON public.notifications
+   FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own notifications" ON public.notifications
+   FOR DELETE USING (auth.uid() = user_id);
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS profiles_email_idx ON public.profiles(email);
@@ -205,6 +235,9 @@ CREATE INDEX IF NOT EXISTS votes_user_property_idx ON public.votes(user_id, prop
 CREATE INDEX IF NOT EXISTS vote_options_category_id_idx ON public.vote_options(category_id);
 CREATE INDEX IF NOT EXISTS prospect_properties_category_id_idx ON public.prospect_properties(category_id);
 CREATE INDEX IF NOT EXISTS property_prospects_prospect_property_id_idx ON public.property_prospects(prospect_property_id);
+CREATE INDEX IF NOT EXISTS notifications_user_id_idx ON public.notifications(user_id);
+CREATE INDEX IF NOT EXISTS notifications_timestamp_idx ON public.notifications(timestamp);
+CREATE INDEX IF NOT EXISTS notifications_read_idx ON public.notifications(read);
 
 -- Create triggers for updating timestamps
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -225,6 +258,9 @@ CREATE TRIGGER update_prospect_properties_updated_at BEFORE UPDATE ON public.pro
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_property_prospects_updated_at BEFORE UPDATE ON public.property_prospects
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_notifications_updated_at BEFORE UPDATE ON public.notifications
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Function to handle new user creation

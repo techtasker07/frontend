@@ -562,38 +562,48 @@ export default function MarketPropertyDetailsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Property Price - Moved up after images */}
-          <div className="text-center md:text-left">
-            <div className="text-2xl md:text-3xl font-bold text-primary mb-2">
+          {/* ===== PRICE SECTION ===== */}
+          <div className="text-center md:text-left mb-6">
+            <div className="text-2xl md:text-2xl font-extrabold text-primary mb-3">
               {getPropertyPrice(listing)}
             </div>
+
             {user && listing.user_id === user.id && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => router.push(`/marketplace/${params.id}/edit`)}
-                className="mt-2"
+                className="flex items-center mx-auto md:mx-0 gap-2"
               >
-                <Edit className="h-4 w-4 mr-2" />
+                <Edit className="h-4 w-4" />
                 Edit Listing
               </Button>
             )}
           </div>
 
-          {/* Property Header - Moved after price */}
-          <div className="space-y-2 mb-6">
-            <h1 className="text-2xl md:text-2xl font-bold">{listing.title}</h1>
-            <div className="flex items-center text-gray-600">
+          {/* ===== PROPERTY HEADER SECTION ===== */}
+          <div className="text-center md:text-left space-y-3 mb-8">
+            {/* Title */}
+            <h1 className="text-lg font-bold text-gray-900">
+              {listing.title}
+            </h1>
+
+            {/* Location */}
+            <div className="flex items-center justify-center md:justify-start text-gray-600">
               <MapPin className="h-4 w-4 mr-1" />
               <span>{listing.location}</span>
             </div>
-            <div className="flex items-center gap-4 text-sm text-gray-500">
-              <span>{listing.category?.name}</span>
-              <span>•</span>
-              <span>{listing.listing_type?.name || 'For Sale'}</span>
+
+            {/* Category / Type / Year */}
+            <div className="flex items-center justify-center md:justify-start gap-3 text-sm text-gray-500">
+              <span className="font-medium">{listing.category?.name}</span>
+              <span className="opacity-40">•</span>
+
+              <span className="font-medium">{listing.listing_type?.name || 'For Sale'}</span>
+
               {listing.year_of_construction && (
                 <>
-                  <span>•</span>
+                  <span className="opacity-40">•</span>
                   <span>Built in {listing.year_of_construction}</span>
                 </>
               )}
@@ -639,19 +649,19 @@ export default function MarketPropertyDetailsPage() {
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="text-center p-4 bg-white rounded-lg shadow-sm border border-gray-200">
-                        <div className="text-2xl font-bold text-gray-900 mb-1">
+                        <div className="text-lg font-bold text-gray-900 mb-1">
                           {listing.property_type?.name || 'Property'}
                         </div>
                         <div className="text-sm text-gray-600">Property Type</div>
                       </div>
                       <div className="text-center p-4 bg-white rounded-lg shadow-sm border border-gray-200">
-                        <div className="text-2xl font-bold text-gray-900 mb-1">
+                        <div className="text-lg font-bold text-gray-900 mb-1">
                           {listing.category?.name}
                         </div>
                         <div className="text-sm text-gray-600">Category</div>
                       </div>
                       <div className="text-center p-4 bg-white rounded-lg shadow-sm border border-gray-200">
-                        <div className="text-2xl font-bold text-gray-900 mb-1">
+                        <div className="text-lg font-bold text-gray-900 mb-1">
                           {listing.listing_type?.name || 'For Sale'}
                         </div>
                         <div className="text-sm text-gray-600">Listing Type</div>
@@ -1381,7 +1391,7 @@ export default function MarketPropertyDetailsPage() {
 
                 {/* Property Status & Timeline */}
                 <Card className="bg-gray-50 border-gray-200">
-                  <CardContent className="pt-6">
+                  <CardContent className="pt-1">
                     <div className="flex items-center justify-center gap-6 text-sm">
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>

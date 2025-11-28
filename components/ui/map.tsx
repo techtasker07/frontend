@@ -224,35 +224,6 @@ const SimpleMap: React.FC<{ address: string; height: string }> = ({
   if (error) {
     return (
       <div className="space-y-4">
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-amber-800 mb-2">
-            <MapPin className="h-4 w-4" />
-            <span className="text-sm font-medium">Map Unavailable</span>
-          </div>
-          <p className="text-xs text-amber-700 mb-3">{error}</p>
-          <div className="flex gap-2">
-            {retryCount < 3 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={retryMap}
-                className="flex items-center gap-2 text-amber-700 border-amber-300"
-              >
-                <RotateCcw className="h-4 w-4" />
-                Retry Map
-              </Button>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={openInGoogleMaps}
-              className="flex items-center gap-2"
-            >
-              <ExternalLink className="h-4 w-4" />
-              Open in Google Maps
-            </Button>
-          </div>
-        </div>
         
         {/* Simple fallback display */}
         <div

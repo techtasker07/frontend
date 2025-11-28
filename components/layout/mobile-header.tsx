@@ -4,6 +4,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/lib/auth"
+import { useNotificationCount } from "@/lib/hooks/use-notification-count"
 import { Menu, Bell, User } from 'lucide-react'
 
 interface MobileHeaderProps {
@@ -12,6 +13,7 @@ interface MobileHeaderProps {
 
 export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
   const { user, isAuthenticated } = useAuth()
+  const { unreadCount } = useNotificationCount()
 
   return (
     <header className="w-full border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
@@ -54,9 +56,11 @@ export function MobileHeader({ onMenuClick }: MobileHeaderProps) {
             >
               <Link href="/notifications">
                 <Bell className="h-5 w-5" />
-                <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 min-w-[1.25rem] h-5">
-                  3
-                </Badge>
+                {unreadCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 min-w-[1.25rem] h-5">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Badge>
+                )}
               </Link>
             </Button>
           )}

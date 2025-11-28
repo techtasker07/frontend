@@ -1,11 +1,25 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
+import { supabase } from "@/lib/supabase"
+
+interface Notification {
+  id: string
+  type: string
+  title: string
+  message: string
+  timestamp: Date
+  read: boolean
+  priority: string
+  actionUrl?: string
+  actionText?: string
+}
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
@@ -26,108 +40,6 @@ import {
   CheckCircle2,
 } from "lucide-react"
 
-// Mock notification data
-const mockNotifications = [
-  {
-    id: "1",
-    type: "property",
-    title: "New Property Evaluation",
-    message: "Your property at 123 Lagos Street has received a new evaluation of ₦45,000,000",
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-    read: false,
-    priority: "high",
-    actionUrl: "/properties/123",
-    actionText: "View Property",
-  },
-  {
-    id: "2",
-    type: "voting",
-    title: "New Vote on Your Property",
-    message: "Someone voted on your property evaluation. Current average: ₦42,500,000",
-    timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
-    read: false,
-    priority: "medium",
-    actionUrl: "/properties/123",
-    actionText: "View Votes",
-  },
-  {
-    id: "3",
-    type: "ai_prospect",
-    title: "New AI Investment Opportunity",
-    message: "We found a promising investment opportunity in Victoria Island matching your preferences",
-    timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
-    read: true,
-    priority: "high",
-    actionUrl: "/prospectProperties",
-    actionText: "View Prospects",
-  },
-  {
-    id: "4",
-    type: "social",
-    title: "New Follower",
-    message: "John Doe started following your property evaluations",
-    timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
-    read: true,
-    priority: "low",
-    actionUrl: "/profile",
-    actionText: "View Profile",
-  },
-  {
-    id: "5",
-    type: "system",
-    title: "Platform Update",
-    message: "New features added: Enhanced AI property matching and improved mobile experience",
-    timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-    read: false,
-    priority: "medium",
-    actionUrl: "/help",
-    actionText: "Learn More",
-  },
-  {
-    id: "6",
-    type: "security",
-    title: "Security Alert",
-    message: "New login detected from Lagos, Nigeria on Chrome browser",
-    timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-    read: true,
-    priority: "high",
-    actionUrl: "/settings",
-    actionText: "Review Security",
-  },
-  {
-    id: "7",
-    type: "rees_party",
-    title: "Re-es Party Invitation",
-    message: "You've been invited to contribute to 'John's Birthday Bash' party. Target: ₦500,000",
-    timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
-    read: false,
-    priority: "high",
-    actionUrl: "/rees-party/party-123",
-    actionText: "View Party",
-  },
-  {
-    id: "8",
-    type: "rees_party",
-    title: "Party Contribution Reminder",
-    message: "Don't forget to contribute to 'Sarah's Wedding' party. Deadline: Tomorrow",
-    timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
-    read: false,
-    priority: "medium",
-    actionUrl: "/rees-party/party-456",
-    actionText: "Contribute Now",
-  },
-  {
-    id: "9",
-    type: "rees_party",
-    title: "Party Fully Funded!",
-    message: "Congratulations! 'Mike's Graduation Party' has reached its target amount.",
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-    read: true,
-    priority: "high",
-    actionUrl: "/rees-party/party-789",
-    actionText: "View Party",
-  },
-]
 
 const notificationTypes = {
   property: { icon: Building, label: "Property", color: "text-blue-600" },
@@ -146,10 +58,41 @@ const priorityColors = {
 }
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState(mockNotifications)
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [loading, setLoading] = useState(true)
   const [selectedNotifications, setSelectedNotifications] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("all")
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('notifications')
+          .select('*')
+          .order('timestamp', { ascending: false })
+
+        if (error) {
+          console.error('Error fetching notifications:', error)
+          return
+        }
+
+        // Convert timestamp strings to Date objects
+        const formattedNotifications = data.map(notification => ({
+          ...notification,
+          timestamp: new Date(notification.timestamp)
+        }))
+
+        setNotifications(formattedNotifications)
+      } catch (error) {
+        console.error('Error fetching notifications:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchNotifications()
+  }, [])
 
   // Filter notifications based on search and tab
   const filteredNotifications = useMemo(() => {
@@ -177,6 +120,7 @@ export default function NotificationsPage() {
   }, [notifications, searchQuery, activeTab])
 
   const unreadCount = notifications.filter((n) => !n.read).length
+  const totalCount = notifications.length
 
   const formatTimestamp = (timestamp: Date) => {
     const now = new Date()
@@ -190,17 +134,45 @@ export default function NotificationsPage() {
     return `${days}d ago`
   }
 
-  const markAsRead = (notificationIds: string[]) => {
-    setNotifications((prev) =>
-      prev.map((notification) =>
-        notificationIds.includes(notification.id) ? { ...notification, read: true } : notification,
-      ),
-    )
+  const markAsRead = async (notificationIds: string[]) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .in('id', notificationIds)
+
+      if (error) {
+        console.error('Error marking notifications as read:', error)
+        return
+      }
+
+      setNotifications((prev) =>
+        prev.map((notification) =>
+          notificationIds.includes(notification.id) ? { ...notification, read: true } : notification,
+        ),
+      )
+    } catch (error) {
+      console.error('Error marking notifications as read:', error)
+    }
   }
 
-  const deleteNotifications = (notificationIds: string[]) => {
-    setNotifications((prev) => prev.filter((notification) => !notificationIds.includes(notification.id)))
-    setSelectedNotifications([])
+  const deleteNotifications = async (notificationIds: string[]) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .in('id', notificationIds)
+
+      if (error) {
+        console.error('Error deleting notifications:', error)
+        return
+      }
+
+      setNotifications((prev) => prev.filter((notification) => !notificationIds.includes(notification.id)))
+      setSelectedNotifications([])
+    } catch (error) {
+      console.error('Error deleting notifications:', error)
+    }
   }
 
   const toggleSelectNotification = (notificationId: string) => {
@@ -225,15 +197,15 @@ export default function NotificationsPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
-              <Bell className="h-8 w-8 text-blue-600" />
+              <Bell className="h-6 w-6 text-blue-600" />
               <div>
-                <h1 className="text-3xl font-bold text-slate-800">Notifications</h1>
-                <p className="text-slate-600">
-                  {unreadCount > 0 ? `${unreadCount} unread notifications` : "All caught up!"}
+                <h1 className="text-2xl font-bold text-slate-600">Notifications</h1>
+                <p className="text-slate-400">
+                  {!loading && totalCount > 0 ? `${totalCount} notifications` : "All caught up!"}
                 </p>
               </div>
             </div>
-            {unreadCount > 0 && <Badge className="bg-red-500 text-white px-3 py-1">{unreadCount} new</Badge>}
+            {!loading && unreadCount > 0 && <Badge className="bg-red-500 text-white px-3 py-1">{unreadCount} new</Badge>}
           </div>
 
           {/* Search and Actions */}
@@ -273,22 +245,43 @@ export default function NotificationsPage() {
         </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList className="grid w-full grid-cols-8 lg:w-auto lg:grid-cols-8">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="unread">Unread</TabsTrigger>
-            <TabsTrigger value="property">Property</TabsTrigger>
-            <TabsTrigger value="voting">Voting</TabsTrigger>
-            <TabsTrigger value="ai_prospect">AI</TabsTrigger>
-            <TabsTrigger value="social">Social</TabsTrigger>
-            <TabsTrigger value="rees_party">Re-es Party</TabsTrigger>
-            <TabsTrigger value="system">System</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="mb-6">
+          <div className="lg:hidden">
+            <Select value={activeTab} onValueChange={setActiveTab}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select filter" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="unread">Unread</SelectItem>
+                <SelectItem value="property">Property</SelectItem>
+                <SelectItem value="voting">Voting</SelectItem>
+                <SelectItem value="ai_prospect">AI</SelectItem>
+                <SelectItem value="social">Social</SelectItem>
+                <SelectItem value="rees_party">Re-es Party</SelectItem>
+                <SelectItem value="system">System</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="hidden lg:block">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-8">
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="unread">Unread</TabsTrigger>
+                <TabsTrigger value="property">Property</TabsTrigger>
+                <TabsTrigger value="voting">Voting</TabsTrigger>
+                <TabsTrigger value="ai_prospect">AI</TabsTrigger>
+                <TabsTrigger value="social">Social</TabsTrigger>
+                <TabsTrigger value="rees_party">Re-es Party</TabsTrigger>
+                <TabsTrigger value="system">System</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        </div>
 
         {/* Bulk Actions */}
-        {filteredNotifications.length > 0 && (
-          <div className="flex items-center justify-between mb-4 p-3 bg-white rounded-lg shadow-sm">
+        {!loading && filteredNotifications.length > 0 && (
+          <div className="hidden sm:flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 mb-4 p-3 bg-white rounded-lg shadow-sm">
             <div className="flex items-center space-x-3">
               <Checkbox
                 checked={selectedNotifications.length === filteredNotifications.length}
@@ -316,12 +309,17 @@ export default function NotificationsPage() {
 
         {/* Notifications List */}
         <div className="space-y-4">
-          {filteredNotifications.length === 0 ? (
+          {loading ? (
+            <Card className="p-8 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-500">Loading notifications...</p>
+            </Card>
+          ) : filteredNotifications.length === 0 ? (
             <Card className="p-8 text-center">
               <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications found</h3>
               <p className="text-gray-500">
-                {searchQuery ? "Try adjusting your search terms" : "You're all caught up!"}
+                {searchQuery ? "Try adjusting your search terms" : "You're all caught up! No new notifications."}
               </p>
             </Card>
           ) : (
@@ -345,7 +343,7 @@ export default function NotificationsPage() {
                       <Checkbox
                         checked={isSelected}
                         onCheckedChange={() => toggleSelectNotification(notification.id)}
-                        className="mt-1"
+                        className="mt-1 hidden sm:block"
                       />
 
                       <div className="flex-shrink-0">
@@ -357,20 +355,20 @@ export default function NotificationsPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-1">
+                            <div className="flex flex-wrap items-center gap-2 mb-1">
                               <h3
                                 className={`text-sm font-medium ${!notification.read ? "text-gray-900" : "text-gray-700"}`}
                               >
                                 {notification.title}
                               </h3>
-                              {!notification.read && <div className="w-2 h-2 bg-blue-500 rounded-full"></div>}
+                              {!notification.read && <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>}
                               <Badge variant="outline" className="text-xs">
                                 {notificationTypes[notification.type as keyof typeof notificationTypes].label}
                               </Badge>
-                              {notification.priority === "high" && <AlertCircle className="h-4 w-4 text-red-500" />}
+                              {notification.priority === "high" && <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />}
                             </div>
                             <p className="text-sm text-gray-600 mb-2">{notification.message}</p>
-                            <div className="flex items-center space-x-4 text-xs text-gray-500">
+                            <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
                               <div className="flex items-center space-x-1">
                                 <Clock className="h-3 w-3" />
                                 <span>{formatTimestamp(notification.timestamp)}</span>
@@ -429,7 +427,7 @@ export default function NotificationsPage() {
         </div>
 
         {/* Load More */}
-        {filteredNotifications.length > 0 && (
+        {!loading && filteredNotifications.length > 0 && (
           <div className="text-center mt-8">
             <Button variant="outline">Load More Notifications</Button>
           </div>
